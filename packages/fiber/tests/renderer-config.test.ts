@@ -102,7 +102,12 @@ describe('parseRendererConfig', () => {
     })
 
     it('extracts both primaryCanvas and scheduler, leaving only the renderer options', () => {
-      const scheduler = { after: 'main', fps: 30 }
+      const scheduler = {
+        before: ['overlay'],
+        after: 'main',
+        order: 2,
+        fps: 30,
+      }
       const prop = { primaryCanvas: 'main', scheduler, antialias: true } as any
       const result = parseRendererConfig(prop)
       expect(result.primaryCanvas).toBe('main')

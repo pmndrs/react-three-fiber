@@ -5,7 +5,9 @@ import type { CanvasProps } from '#types'
 
 /** Scheduler config extracted from a `renderer` config bag. */
 export interface RendererScheduler {
-  after?: string
+  before?: string | string[]
+  after?: string | string[]
+  order?: number
   fps?: number
 }
 

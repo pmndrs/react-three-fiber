@@ -33,6 +33,26 @@ interface FrameState extends RootState {
 
 The `delta` passed as the second callback argument is the same value as `state.delta`.
 
+## Ordering Canvas roots {#root-ordering}
+
+When canvases share a renderer, order the complete Canvas roots through `renderer.scheduler`. Root ordering keeps every job owned by a Canvas together instead of ordering only its final render:
+
+```tsx
+<Canvas id="main" renderer />
+
+<Canvas
+  id="secondary"
+  renderer={{
+    primaryCanvas: 'main',
+    scheduler: { after: 'main', order: 1, fps: 40 },
+  }}
+/>
+```
+
+`before` and `after` accept a Canvas `id` or an array of ids. References can mount in either order; an unresolved reference remains dormant and becomes active when that root registers. `order` provides numeric root ordering, with lower values running first.
+
+`fps` is intentionally different: it throttles only that Canvas's default render job. Other jobs on the root, including `useFrame` updates, can continue each frame.
+
 ## Phases {#phases}
 
 Jobs run inside named **phases** that execute in a fixed sequence each frame. The six default phases are:
@@ -381,7 +401,7 @@ function GameLoop() {
 
 **Phases:** `addPhase(name, { before?, after? })`, `hasPhase(name)`, `phases` (getter).
 
-**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `getRootIds()`, `getRootFrameloop(id)`, `setRootFrameloop(id, mode)`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically.
+**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `getRootIds()`, `getRootFrameloop(id)`, `setRootFrameloop(id, mode)`, `setRootOrder(id, order)`, `setRootConstraints(id, { before?, after? })`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically.
 
 **Jobs:** `register(callback, options?)`, `unregister(id, rootId?)`, `updateJob(id, partialOptions)`, `getJobCount()`, `getJobIds()`, `hasUserJobsInPhase(phase, rootId?)`.
 
