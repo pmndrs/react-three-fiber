@@ -5,6 +5,7 @@ import { pass } from '#three/tsl'
 
 // Types are declared globally in types/renderPipeline.d.ts:
 // - PassRecord
+// - RenderPipelineCallbackState
 // - RenderPipelineSetupCallback
 // - RenderPipelineMainCallback
 // - UseRenderPipelineReturn
@@ -200,7 +201,10 @@ export function useRenderPipeline(
         //* Run setupCB (MRT configuration) ==============================
         // IMPORTANT: setupCB runs first so MRT is configured before any rendering
         if (setupCBRef.current) {
-          const freshState = store.getState()
+          const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
+            renderPipeline: pipeline,
+            passes: currentPasses,
+          })
           const setupResult = setupCBRef.current(freshState)
 
           if (setupResult && typeof setupResult === 'object') {
@@ -211,7 +215,10 @@ export function useRenderPipeline(
 
         //* Run mainCB ==============================
         if (mainCBRef.current) {
-          const freshState = store.getState()
+          const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
+            renderPipeline: pipeline,
+            passes: currentPasses,
+          })
           const mainResult = mainCBRef.current(freshState)
 
           if (mainResult && typeof mainResult === 'object') {
