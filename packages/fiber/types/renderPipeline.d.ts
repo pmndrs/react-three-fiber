@@ -15,11 +15,16 @@ declare global {
   /** Pass record - stores TSL pass nodes for render pipeline */
   type PassRecord = Record<string, any>
 
+  /** State passed to pipeline callbacks after the active pipeline has been created */
+  type RenderPipelineCallbackState = RootState & {
+    renderPipeline: ThreeRenderPipeline
+  }
+
   /** Setup callback - runs first to configure MRT, create additional passes */
-  type RenderPipelineSetupCallback = (state: RootState) => PassRecord | void
+  type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => PassRecord | void
 
   /** Main callback - runs second to configure outputNode, create effect passes */
-  type RenderPipelineMainCallback = (state: RootState) => PassRecord | void
+  type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => PassRecord | void
 
   /** Return type for useRenderPipeline hook */
   interface UseRenderPipelineReturn {

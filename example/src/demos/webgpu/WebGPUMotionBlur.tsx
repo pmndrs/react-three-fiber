@@ -202,11 +202,7 @@ interface AnimatedTorusProps {
 function AnimatedTorus({ position, direction = 1 }: AnimatedTorusProps) {
   const meshRef = useRef<THREE.Mesh>(null!)
   const map = useTexture('/images/uv_grid_opengl.jpg')
-
-  // Configure texture properties
-  useEffect(() => {
-    map.colorSpace = THREE.SRGBColorSpace
-  }, [map])
+  map.colorSpace = THREE.SRGBColorSpace
 
   // Animate rotation
   useFrame((_, delta) => {
@@ -227,18 +223,12 @@ function AnimatedTorus({ position, direction = 1 }: AnimatedTorusProps) {
 
 function ScalingTorus({ position }: { position: [number, number, number] }) {
   const meshRef = useRef<THREE.Mesh>(null!)
-  const clockRef = useRef(new THREE.Clock())
   const map = useTexture('/images/uv_grid_opengl.jpg')
-
-  // Configure texture properties
-  useEffect(() => {
-    map.colorSpace = THREE.SRGBColorSpace
-  }, [map])
+  map.colorSpace = THREE.SRGBColorSpace
 
   // Animate scale pulsing
-  useFrame(() => {
+  useFrame(({ elapsed }) => {
     if (!meshRef.current) return
-    const elapsed = clockRef.current.getElapsedTime()
     const scale = 1 + Math.sin(elapsed * 10) * 0.2
     meshRef.current.scale.setScalar(scale)
   })

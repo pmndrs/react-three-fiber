@@ -46,8 +46,7 @@ function SeaSurface(props: ThreeElements['mesh']) {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }}>
-      <color attach="background" args={['#271442']} />
+    <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }} background={'#271442'}>
       <Experience />
     </Canvas>
   )
