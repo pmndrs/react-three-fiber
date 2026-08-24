@@ -224,10 +224,10 @@ function AnimatedTorus({ position, direction = 1 }: AnimatedTorusProps) {
 function ScalingTorus({ position }: { position: [number, number, number] }) {
   const meshRef = useRef<THREE.Mesh>(null!)
   const map = useTexture('/images/uv_grid_opengl.jpg')
-  map.colorSpace = THREE.SRGBColorSpace;
-  
+  map.colorSpace = THREE.SRGBColorSpace
+
   // Animate scale pulsing
-  useFrame(({elapsed}) => {
+  useFrame(({ elapsed }) => {
     if (!meshRef.current) return
     const scale = 1 + Math.sin(elapsed * 10) * 0.2
     meshRef.current.scale.setScalar(scale)
