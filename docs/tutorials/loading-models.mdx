@@ -6,7 +6,7 @@ nav: 15
 
 > All the models in this page were created by Sara Vieira and are freely available to download from any of the sandboxes.
 
-There are many types of 3D model extensions, in this page we will focus on loading the three most common ones: `GLTF`, `FBX` and `OBJ`. All of these will use the `useLoader` function but in slightly different ways.
+There are many types of 3D model extensions, in this page we will focus on loading the most common ones: `GLTF`, `FBX`, `OBJ` and `STL`. All of these will use the `useLoader` function but in slightly different ways.
 
 This whole section will assume you have placed your models in the public folder or in a place in your application where you can import them easily.
 
@@ -153,6 +153,40 @@ function Scene() {
 You can play with the sandbox here:
 
 <Codesandbox id="m6p73" />
+
+## Loading STL models
+
+`STL` is a common format for 3D printing and CAD, and it loads a little differently from the others: `STLLoader` returns a `BufferGeometry` rather than a scene or a group, so you attach it to your own `mesh` and give it a material.
+
+```js
+import { useLoader } from '@react-three/fiber'
+import { STLLoader } from 'three/addons/loaders/STLLoader.js'
+```
+
+```jsx
+function Scene() {
+  const geometry = useLoader(STLLoader, '/model.stl')
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  )
+}
+```
+
+`STLLoader` fills the `normal` attribute from the per-face normals stored in the file, so the model renders with flat (faceted) shading by default. If you want smooth shading, or your `STL` was exported without valid normals, recompute them after loading:
+
+```jsx
+function Scene() {
+  const geometry = useLoader(STLLoader, '/model.stl')
+  geometry.computeVertexNormals()
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  )
+}
+```
 
 ## Showing a loader
 
