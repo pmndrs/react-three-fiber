@@ -1,6 +1,6 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
-import { Canvas } from '../src'
+import { Canvas, RootState } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -61,6 +61,33 @@ describe('web Canvas', () => {
     )
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  it('should survive a StrictMode remount', async () => {
+    jest.useFakeTimers()
+
+    try {
+      let state!: RootState
+      await act(async () =>
+        render(
+          <React.StrictMode>
+            <Canvas onCreated={(created) => (state = created)}>
+              <group />
+            </Canvas>
+          </React.StrictMode>,
+        ),
+      )
+
+      // StrictMode already remounted the Canvas into the same root; the
+      // teardown deferred by the simulated unmount must not fire on it.
+      const forceContextLoss = jest.spyOn(state.gl, 'forceContextLoss')
+      await act(async () => void jest.advanceTimersByTime(1000))
+
+      expect(forceContextLoss).not.toHaveBeenCalled()
+      expect(state.get().internal.active).toBe(true)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('plays nice with react SSR', async () => {
