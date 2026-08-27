@@ -9,8 +9,8 @@
  * Visually shows how FPS throttling affects animation smoothness.
  */
 
-import { useRef, useMemo } from 'react'
-import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
+import { useEffect, useMemo, useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three'
 
@@ -35,6 +35,27 @@ function FPSCube({ fps, baseColor, position, label }: FPSCubeProps) {
     return mix(highlight, base, pulse)
   }, [baseColor])
 
+  const labelTexture = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 256
+    canvas.height = 64
+
+    const context = canvas.getContext('2d')!
+    context.fillStyle = baseColor
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = 'white'
+    context.font = '600 28px system-ui, sans-serif'
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    context.fillText(label, canvas.width / 2, canvas.height / 2)
+
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  }, [baseColor, label])
+
+  useEffect(() => () => labelTexture.dispose(), [labelTexture])
+
   // Rotate the cube each frame, throttled by FPS option
   useFrame(
     (state, delta) => {
@@ -53,8 +74,8 @@ function FPSCube({ fps, baseColor, position, label }: FPSCubeProps) {
 
       {/* Label below cube */}
       <mesh position={[0, -1.5, 0]}>
-        <planeGeometry args={[2, 0.5]} />
-        <meshBasicMaterial color={baseColor} transparent opacity={0.8} />
+        <planeGeometry args={[1.8, 0.5]} />
+        <meshBasicMaterial map={labelTexture} toneMapped={false} />
       </mesh>
     </group>
   )
@@ -66,7 +87,7 @@ function InfoPanel() {
   return (
     <group position={[0, 2.5, 0]}>
       <mesh>
-        <planeGeometry args={[8, 1]} />
+        <planeGeometry args={[6.5, 1]} />
         <meshBasicMaterial color="#222" transparent opacity={0.8} />
       </mesh>
     </group>
@@ -82,9 +103,9 @@ function Scene() {
       <directionalLight position={[5, 5, 5]} intensity={1} />
 
       {/* Three cubes at different FPS rates */}
-      <FPSCube fps={undefined} baseColor="#22c55e" position={[-3, 0, 0]} label="60 FPS" />
+      <FPSCube fps={undefined} baseColor="#22c55e" position={[-2.25, 0, 0]} label="60 FPS" />
       <FPSCube fps={15} baseColor="#eab308" position={[0, 0, 0]} label="15 FPS" />
-      <FPSCube fps={5} baseColor="#ef4444" position={[3, 0, 0]} label="5 FPS" />
+      <FPSCube fps={5} baseColor="#ef4444" position={[2.25, 0, 0]} label="5 FPS" />
 
       <InfoPanel />
     </>
@@ -99,9 +120,4 @@ export default function useFrameFPS() {
       <Scene />
     </Canvas>
   )
-}
-
-// calculate fps from delta (deltaTime is in milliseconds)
-function fpsFromDelta(deltaTime: number) {
-  return 1000 / deltaTime
 }
