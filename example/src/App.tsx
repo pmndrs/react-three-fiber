@@ -11,10 +11,12 @@ const DEFAULT_COMPONENT_NAME = 'ClickAndHover'
 
 //* Component Categories ==============================
 const defaultExamples = [
+  'Activity',
   'AutoDispose',
   'ChangeTexture',
   'ClickAndHover',
   'ContextMenuOverride',
+  'FileDragDrop',
   'FlushSync',
   'Gestures',
   'Gltf',
@@ -23,6 +25,8 @@ const defaultExamples = [
   'Layers',
   'MultiMaterial',
   'MultiRender',
+  'NestedCamera',
+  'PortalTest',
   'ResetProps',
   'Selection',
   'StopPropagation',
@@ -32,19 +36,29 @@ const defaultExamples = [
   'ViewTracking',
 ]
 
-const legacyExamples = ['Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
+const legacyExamples = ['EventPriority', 'Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
 
 const webgpuExamples = [
-  'WebGPU',
-  'WebGPUSharedUniforms',
-  'WebGPURagingSea',
+  'UseFrameNextControls',
   'UseFrameNextFPS',
   'UseFrameNextPhases',
-  'UseFrameNextControls',
+  'VerekiaFpsDrop',
   'VisibilityEvents',
+  'WebGPU',
+  'WebGPUIndirect',
+  'WebGPUMotionBlur',
+  'WebGPUMultiCanvas',
+  'WebGPURagingSea',
+  'WebGPUSharedUniforms',
 ]
 
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
+const exampleGroups = [defaultExamples, legacyExamples, webgpuExamples]
+const exampleType = new Map(exampleGroups.flatMap((examples, type) => examples.map((name) => [name, type] as const)))
+const visibleComponentEntries = Object.entries(visibleComponents).sort(([a], [b]) => {
+  const typeDifference = (exampleType.get(a) ?? 0) - (exampleType.get(b) ?? 0)
+  return typeDifference || a.localeCompare(b)
+})
 
 function ErrorBoundary({ children, fallback, name }: any) {
   const { ErrorBoundary, didCatch, error } = useErrorBoundary()
@@ -69,15 +83,15 @@ function Dots() {
 
   const getBackground = (name: string) => {
     if (params.name === name) return 'salmon'
-    if (legacyExamples.includes(name)) return '#ffcc00' // Yellow for legacy
-    if (webgpuExamples.includes(name)) return '#00ccff' // Cyan for WebGPU
+    if (exampleType.get(name) === 1) return '#ffcc00' // Yellow for legacy
+    if (exampleType.get(name) === 2) return '#00ccff' // Cyan for WebGPU
     return '#fff' // White for default
   }
 
   return (
     <>
       <DemoPanel>
-        {Object.entries(visibleComponents).map(function mapper([name, item]) {
+        {visibleComponentEntries.map(function mapper([name]) {
           const background = getBackground(name)
           return <Dot key={name} to={`/demo/${name}`} style={{ background }} />
         })}
