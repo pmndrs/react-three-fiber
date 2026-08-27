@@ -45,7 +45,6 @@ const webgpuExamples = [
   'VerekiaFpsDrop',
   'VisibilityEvents',
   'WebGPU',
-  'WebGPUIndirect',
   'WebGPUMotionBlur',
   'WebGPUMultiCanvas',
   'WebGPURagingSea',

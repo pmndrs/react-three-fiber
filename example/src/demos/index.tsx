@@ -40,7 +40,6 @@ const SVGRenderer = { Component: lazy(() => import('./legacy/SVGRenderer')) }
 //* WebGPU Examples ==============================
 // Examples showcasing WebGPU renderer with TSL
 const WebGPU = { Component: lazy(() => import('./webgpu/WebGPU')) }
-const WebGPUIndirect = { Component: lazy(() => import('./webgpu/WebGPUIndirect')) }
 const WebGPUMultiCanvas = { Component: lazy(() => import('./webgpu/WebGPUMultiCanvas')) }
 const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUSharedUniforms')) }
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
@@ -91,7 +90,6 @@ export {
   WebGPUSharedUniforms,
   WebGPURagingSea,
   WebGPUMotionBlur,
-  WebGPUIndirect,
   // useFrameNext
   UseFrameNextFPS,
   UseFrameNextPhases,
