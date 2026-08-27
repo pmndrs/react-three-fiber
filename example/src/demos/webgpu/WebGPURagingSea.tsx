@@ -16,7 +16,7 @@ const Experience = () => {
     <>
       <Lights />
       <SeaSurface />
-      <CameraControls />
+      <CameraControls makeDefault target={[0, 0, 0]} />
     </>
   )
 }
@@ -47,7 +47,7 @@ function SeaSurface(props: ThreeElements['mesh']) {
 export default function App() {
   return (
     <>
-      <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }} background={'#271442'}>
+      <Canvas renderer camera={{ fov: 50, position: [0, 1.5, 2.5] }} background={'#271442'}>
         <Experience />
       </Canvas>
       <Leva collapsed />
