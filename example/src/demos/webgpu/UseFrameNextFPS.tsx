@@ -1,123 +1,100 @@
-/**
- * useFrame FPS Throttling Demo
- *
- * Three rotating cubes demonstrating FPS throttling:
- * - Green cube: No limit (60fps)
- * - Yellow cube: 15fps
- * - Red cube: 5fps
- *
- * Visually shows how FPS throttling affects animation smoothness.
- */
+/** Three apple cores spinning at the same speed with different FPS limits. */
 
-import { useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { color, mix, sin, time } from 'three/tsl'
+import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
-//* FPS Cube Component ==============================
+const APPLE_URL = '/models/apple.gltf'
 
-interface FPSCubeProps {
-  fps?: number
-  baseColor: string
-  position: [number, number, number]
+interface AppleProps {
   label: string
+  position: [number, number, number]
+  fps?: number
 }
 
-function FPSCube({ fps, baseColor, position, label }: FPSCubeProps) {
-  const meshRef = useRef<THREE.Mesh>(null!)
-
-  // TSL color node - shifts hue slightly over time
-  const colorNode = useMemo(() => {
-    const base = color(baseColor)
-    const highlight = color('white')
-    // Subtle pulse effect
-    const pulse = sin(time.mul(3)).mul(0.1).add(0.9)
-    return mix(highlight, base, pulse)
-  }, [baseColor])
-
-  const labelTexture = useMemo(() => {
+function Label({ children }: { children: string }) {
+  const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
-    canvas.width = 256
-    canvas.height = 64
+    canvas.width = 512
+    canvas.height = 128
 
     const context = canvas.getContext('2d')!
-    context.fillStyle = baseColor
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    context.fillStyle = 'white'
-    context.font = '600 28px system-ui, sans-serif'
+    context.fillStyle = '#404040'
+    context.font = '600 56px Inter var, system-ui, sans-serif'
     context.textAlign = 'center'
     context.textBaseline = 'middle'
-    context.fillText(label, canvas.width / 2, canvas.height / 2)
+    context.fillText(children, canvas.width / 2, canvas.height / 2)
 
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
+    texture.anisotropy = 4
     return texture
-  }, [baseColor, label])
+  }, [children])
 
-  useEffect(() => () => labelTexture.dispose(), [labelTexture])
+  useEffect(() => () => texture.dispose(), [texture])
 
-  // Rotate the cube each frame, throttled by FPS option
+  return (
+    <mesh position={[0, -1.75, 0]}>
+      <planeGeometry args={[2, 0.5]} />
+      <meshBasicMaterial map={texture} transparent toneMapped={false} />
+    </mesh>
+  )
+}
+
+function Apple({ label, position, fps }: AppleProps) {
+  const groupRef = useRef<THREE.Group>(null!)
+  const { scene } = useGLTF(APPLE_URL)
+
+  const object = useMemo(() => {
+    const object = scene.clone()
+    object.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+      const material = (child.material as THREE.MeshStandardMaterial).clone()
+      material.metalness = 0
+      child.material = material
+    })
+    return object
+  }, [scene])
+
+  useEffect(
+    () => () =>
+      object.traverse((child) => {
+        if (child instanceof THREE.Mesh) child.material.dispose()
+      }),
+    [object],
+  )
+
   useFrame(
-    (state, delta) => {
-      meshRef.current.rotation.x += delta * 1.5
-      meshRef.current.rotation.y += delta * 2
+    (_, delta) => {
+      groupRef.current.rotation.y += delta * 1.2
     },
-    { fps, id: `cube-${fps ?? 'unlimited'}` },
+    { fps },
   )
 
   return (
     <group position={position}>
-      <mesh ref={meshRef}>
-        <boxGeometry args={[1.2, 1.2, 1.2]} />
-        <meshStandardNodeMaterial colorNode={colorNode} roughness={0.3} metalness={0.2} />
-      </mesh>
-
-      {/* Label below cube */}
-      <mesh position={[0, -1.5, 0]}>
-        <planeGeometry args={[1.8, 0.5]} />
-        <meshBasicMaterial map={labelTexture} toneMapped={false} />
-      </mesh>
+      <group ref={groupRef}>
+        <primitive object={object} position={[-0.5, -0.95, 0]} scale={10} />
+      </group>
+      <Label>{label}</Label>
     </group>
   )
 }
-
-//* Info Panel ==============================
-
-function InfoPanel() {
-  return (
-    <group position={[0, 2.5, 0]}>
-      <mesh>
-        <planeGeometry args={[6.5, 1]} />
-        <meshBasicMaterial color="#222" transparent opacity={0.8} />
-      </mesh>
-    </group>
-  )
-}
-
-//* Scene ==============================
-
-function Scene() {
-  return (
-    <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
-
-      {/* Three cubes at different FPS rates */}
-      <FPSCube fps={undefined} baseColor="#22c55e" position={[-2.25, 0, 0]} label="60 FPS" />
-      <FPSCube fps={15} baseColor="#eab308" position={[0, 0, 0]} label="15 FPS" />
-      <FPSCube fps={5} baseColor="#ef4444" position={[2.25, 0, 0]} label="5 FPS" />
-
-      <InfoPanel />
-    </>
-  )
-}
-
-//* Main Export ==============================
 
 export default function useFrameFPS() {
   return (
-    <Canvas renderer camera={{ position: [0, 0, 8], fov: 50 }}>
-      <Scene />
+    <Canvas renderer={{ toneMapping: THREE.NoToneMapping }} camera={{ position: [0, 1, 8], fov: 50 }}>
+      <ambientLight intensity={Math.PI * 0.6} />
+      <directionalLight intensity={Math.PI * 0.4} position={[5, 10, 5]} />
+
+      <Suspense fallback={null}>
+        <Apple label="unlimited" position={[-2.5, 0, 0]} />
+        <Apple label="15 fps" position={[0, 0, 0]} fps={15} />
+        <Apple label="5 fps" position={[2.5, 0, 0]} fps={5} />
+      </Suspense>
     </Canvas>
   )
 }
+
+useGLTF.preload(APPLE_URL)
