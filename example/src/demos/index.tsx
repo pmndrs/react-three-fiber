@@ -4,7 +4,6 @@ import { Component, lazy } from 'react'
 // Examples that work with both WebGL and WebGPU renderers
 const Activity = { Component: lazy(() => import('./default/Activity')) }
 const AutoDispose = { Component: lazy(() => import('./default/AutoDispose')) }
-const CanvasDebounceFixed = { Component: lazy(() => import('./default/CanvasDebounceFixed')) }
 const ChangeTexture = { Component: lazy(() => import('./default/ChangeTexture')) }
 const ClickAndHover = { Component: lazy(() => import('./default/ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./default/ContextMenuOverride')) }
@@ -58,7 +57,6 @@ export {
   // Default
   Activity,
   AutoDispose,
-  CanvasDebounceFixed,
   ChangeTexture,
   ClickAndHover,
   ContextMenuOverride,
