@@ -18,6 +18,7 @@ const defaultExamples = [
   'FlushSync',
   'Gestures',
   'Gltf',
+  'HtmlBetweenCanvases',
   'Inject',
   'Layers',
   'MultiMaterial',

@@ -13,7 +13,7 @@ const Gestures = { Component: lazy(() => import('./default/Gestures')) }
 const Gltf = { Component: lazy(() => import('./default/Gltf')) }
 const Inject = { Component: lazy(() => import('./default/Inject')) }
 const Layers = { Component: lazy(() => import('./default/Layers')) }
-const LayeredReality = { Component: lazy(() => import('./default/Layered')) }
+const HtmlBetweenCanvases = { Component: lazy(() => import('./default/HtmlBetweenCanvases')) }
 const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
 const NestedCamera = { Component: lazy(() => import('./default/NestedCamera')) }
@@ -64,7 +64,7 @@ export {
   Gltf,
   Inject,
   Layers,
-  LayeredReality,
+  HtmlBetweenCanvases,
   MultiMaterial,
   MultiRender,
   NestedCamera,
