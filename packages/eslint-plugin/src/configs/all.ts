@@ -5,6 +5,8 @@ export default {
   plugins: ['@react-three'],
   rules: {
     '@react-three/no-clone-in-loop': 'error',
+    '@react-three/no-fast-state': 'error',
     '@react-three/no-new-in-loop': 'error',
+    '@react-three/prefer-useloader': 'error',
   },
 }
