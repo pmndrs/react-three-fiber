@@ -1,91 +1,59 @@
 import { easing } from 'maath'
 import { useState } from 'react'
-import { color, mix, positionLocal, sin, time, uniform, vec3, Fn } from 'three/tsl'
-import * as THREE from 'three/webgpu'
-import {
-  Canvas,
-  useFrame,
-  type ThreeElements,
-  useUniforms,
-  useNodes,
-  useUniform,
-  useLocalNodes,
-} from '@react-three/fiber/webgpu'
+import { mix, positionLocal, sin, time, vec3 } from 'three/tsl'
+import { Canvas, useFrame, useNodes, useUniform, useUniforms, type ThreeElements } from '@react-three/fiber/webgpu'
 
-// single setup of nodes for the app
-const Builder = () => {
-  useUniform('uRotationSpeed', 1.0)
-  useUniforms(() => {
+function Scene() {
+  const [hovered, setHovered] = useState(false)
+  const speed = useUniform('speed', 1.5)
+  const hover = useUniform('hover', 0)
+  const { uBaseColor, uAccentColor, uHoverColor } = useUniforms(() => ({
+    uBaseColor: 'orange',
+    uAccentColor: 'hotpink',
+    uHoverColor: 'aquamarine',
+  }))
+
+  useNodes(() => {
+    const wave = sin(time.mul(speed))
     return {
-      uBaseColor: uniform(new THREE.Color('red')),
-      uRipplePoint: uniform(new THREE.Vector3(0, 0, 0)),
+      colorNode: mix(mix(uBaseColor, uAccentColor, wave.add(1).div(2)), uHoverColor, hover),
+      positionNode: positionLocal.add(vec3(0, wave.mul(0.06), 0)),
     }
   })
 
-  useNodes(({ uniforms }) => {
-    const baseColor = uniforms.uBaseColor
+  useFrame((_, delta) => easing.damp(hover, 'value', hovered ? 1 : 0, 0.1, delta))
 
-    // Local only unshared nodes.
-    const col1 = color('orange')
-    const currentTime = time.mul(2)
-
-    const blendColorFn = Fn(([color2, isHovered]) => {
-      // this node is private to this FN
-      const rootColor = mix(col1, color2, sin(currentTime).add(1).div(2))
-      return mix(rootColor, baseColor, isHovered)
-    })
-    return {
-      positionNode: positionLocal.add(vec3(0, sin(currentTime).mul(0.05), 0)),
-      blendColorFn: blendColorFn,
-    }
-  })
-
-  return null
-}
-
-function Box(props: ThreeElements['mesh']) {
-  const { colorNode } = useNodes()
-  console.log('colorNode', colorNode)
   return (
-    <mesh {...props} rotation-x={Math.PI / 2}>
-      <boxGeometry />
-      <meshBasicNodeMaterial colorNode={colorNode} />
-    </mesh>
+    <group onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
+      <Shape position={[-2, 0, 0]}>
+        <circleGeometry args={[0.75, 64]} />
+      </Shape>
+      <Shape position={[0, 0, 0]}>
+        <ringGeometry args={[0.35, 0.75, 64]} />
+      </Shape>
+      <Shape position={[2, 0, 0]} rotation-z={Math.PI / 4}>
+        <planeGeometry args={[1.15, 1.15]} />
+      </Shape>
+    </group>
   )
 }
 
-function Plane(props: ThreeElements['mesh']) {
-  const [hovered, hover] = useState(false)
-
-  useFrame((state, delta) => {
-    easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
-  })
-
-  const { uHovered, ...matNodes } = useLocalNodes(({ nodes }) => {
-    const uHovered = uniform(0.0)
-    const { blendColorFn, positionNode } = nodes
-
-    const col3 = color('aquamarine')
-
-    return { colorNode: blendColorFn(col3, uHovered), positionNode, uHovered }
-  })
+function Shape({ children, ...props }: ThreeElements['mesh']) {
+  const { colorNode, positionNode } = useNodes()
 
   return (
-    <mesh onPointerOver={() => hover(true)} onPointerOut={() => hover(false)} {...props}>
-      <planeGeometry />
-      <meshBasicNodeMaterial key={uHovered.uuid} {...matNodes} />
+    <mesh {...props}>
+      {children}
+      <meshBasicNodeMaterial colorNode={colorNode} positionNode={positionNode} />
     </mesh>
   )
 }
 
 export default function App() {
   return (
-    <Canvas renderer>
-      <ambientLight intensity={Math.PI} />
-      <Builder />
-      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
-      <Plane scale={1.5} position={[-1.3, 0, 0]} />
-      <Plane scale={1.5} position={[0.6, 0, 2]} />
+    <Canvas renderer camera={{ position: [0, 0, 6], fov: 45 }}>
+      <color attach="background" args={['#271442']} />
+      <Scene />
     </Canvas>
   )
 }
