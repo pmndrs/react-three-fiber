@@ -1,11 +1,21 @@
 //* Visibility Events ==============================
 
 import { Canvas, useLocalNodes, useUniform } from '@react-three/fiber/webgpu'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, useGLTF } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 import { useFrame } from '@react-three/fiber'
 import { color, mix } from 'three/tsl'
+
+const LIGHTNING_URL = '/models/lightning.gltf'
+const palette = {
+  background: '#0f172a',
+  framed: '#38bdf8',
+  occluded: '#fbbf24',
+  visible: '#fb7185',
+  panel: '#8b5cf6',
+  panelOccluded: '#2dd4bf',
+}
 
 type VisibilityState = {
   framed: boolean | null
@@ -44,7 +54,7 @@ function OrbitingSphere({ onVisibilityChange }: { onVisibilityChange: Visibility
   return (
     <mesh ref={meshRef} onFramed={handleFramed}>
       <sphereGeometry args={[0.5, 32, 32]} />
-      <meshStandardMaterial color="#3b82f6" />
+      <meshStandardMaterial color={palette.framed} />
     </mesh>
   )
 }
@@ -53,6 +63,7 @@ function OrbitingSphere({ onVisibilityChange }: { onVisibilityChange: Visibility
 
 function OccludedShape({ onVisibilityChange }: { onVisibilityChange: VisibilityChangeHandler }) {
   const uIsOccluded = useUniform('isOccluded', 0)
+  const { meshes } = useGLTF(LIGHTNING_URL)
 
   const handleOccluded = useCallback(
     (occluded: boolean) => {
@@ -65,9 +76,8 @@ function OccludedShape({ onVisibilityChange }: { onVisibilityChange: VisibilityC
   return (
     <group>
       <OrbitingPanels />
-      <mesh onOccluded={handleOccluded}>
-        <icosahedronGeometry args={[0.5, 1]} />
-        <meshStandardMaterial color="#CC24FB" />
+      <mesh geometry={meshes.lightning.geometry} onOccluded={handleOccluded} rotation={[Math.PI / 2, 0, 0]} scale={0.9}>
+        <meshStandardMaterial color={palette.occluded} roughness={0.45} />
       </mesh>
     </group>
   )
@@ -83,7 +93,7 @@ function OrbitingPanels() {
   const { colorNode } = useLocalNodes(({ uniforms }) => {
     const uIsOccluded = uniforms.isOccluded as UniformNode<number>
     return {
-      colorNode: mix(color('#FF0458'), color('#00FFEE'), uIsOccluded),
+      colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
     }
   })
   return (
@@ -104,15 +114,30 @@ function OrbitingPanels() {
 
 function BlinkingCube({ onVisibilityChange }: { onVisibilityChange: VisibilityChangeHandler }) {
   const boxRef = useRef<THREE.Mesh>(null)
+  const target = useRef(new THREE.Vector3(3, -1, 0))
   const [show, setShow] = useState(true)
 
   useEffect(() => {
-    const interval = setInterval(() => setShow((visible) => !visible), 2500)
-    return () => clearInterval(interval)
+    const chooseTarget = () => {
+      target.current.set(
+        THREE.MathUtils.randFloatSpread(6),
+        THREE.MathUtils.randFloat(-1.25, 1.5),
+        THREE.MathUtils.randFloatSpread(3),
+      )
+    }
+
+    chooseTarget()
+    const movement = setInterval(chooseTarget, 1400)
+    const blinking = setInterval(() => setShow((visible) => !visible), 2500)
+    return () => {
+      clearInterval(movement)
+      clearInterval(blinking)
+    }
   }, [])
 
   useFrame(({ delta }) => {
     if (!boxRef.current) return
+    boxRef.current.position.lerp(target.current, 1 - Math.exp(-delta * 2))
     boxRef.current.rotation.x += delta
     boxRef.current.rotation.y += delta
     boxRef.current.rotation.z += delta
@@ -128,7 +153,7 @@ function BlinkingCube({ onVisibilityChange }: { onVisibilityChange: VisibilityCh
   return (
     <mesh ref={boxRef} position={[3, -1, 0]} visible={show} onVisible={handleVisible} rotation={[0.4, 0.6, 0]}>
       <boxGeometry args={[0.3, 0.3, 0.3]} />
-      <meshStandardMaterial color="#FF5703" />
+      <meshStandardMaterial color={palette.visible} />
     </mesh>
   )
 }
@@ -145,7 +170,6 @@ function Scene({ onVisibilityChange }: { onVisibilityChange: VisibilityChangeHan
       <OccludedShape onVisibilityChange={onVisibilityChange} />
       <BlinkingCube onVisibilityChange={onVisibilityChange} />
 
-      <gridHelper args={[20, 20, '#444', '#333']} position={[0, -2, 0]} />
       <OrbitControls makeDefault minDistance={3} maxDistance={25} />
     </>
   )
@@ -195,15 +219,16 @@ function Status({ state }: { state: VisibilityState }) {
         gap: 10,
         padding: '10px 12px',
         borderRadius: 8,
-        background: 'rgba(0, 0, 0, 0.6)',
+        background: 'rgba(15, 23, 42, 0.82)',
+        border: '1px solid rgba(148, 163, 184, 0.2)',
       }}>
-      <StatusIndicator color="#3b82f6" visible={state.framed} label="Orbiting sphere · onFramed" />
+      <StatusIndicator color={palette.framed} visible={state.framed} label="Orbiting sphere · onFramed" />
       <StatusIndicator
-        color="#CC24FB"
+        color={palette.occluded}
         visible={state.occluded === null ? null : !state.occluded}
-        label="Center shape · onOccluded"
+        label="Center model · onOccluded"
       />
-      <StatusIndicator color="#FF5703" visible={state.visible} label="Blinking cube · onVisible" square />
+      <StatusIndicator color={palette.visible} visible={state.visible} label="Blinking cube · onVisible" square />
     </div>
   )
 }
@@ -220,10 +245,12 @@ export default function VisibilityEventsDemo() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas camera={{ position: [0, 0, 7], fov: 50, near: 0.01, far: 100 }} renderer>
-        <color attach="background" args={['#1a1a2e']} />
+        <color attach="background" args={[palette.background]} />
         <Scene onVisibilityChange={handleVisibilityChange} />
       </Canvas>
       <Status state={state} />
     </div>
   )
 }
+
+useGLTF.preload(LIGHTNING_URL)
