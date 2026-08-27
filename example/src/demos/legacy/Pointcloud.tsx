@@ -9,9 +9,9 @@ class DotMaterialImpl extends THREE.ShaderMaterial {
       uniforms: { size: { value: 15 }, scale: { value: 1 } },
       vertexShader: THREE.ShaderLib.points.vertexShader,
       fragmentShader: `
-      varying vec3 vColor;
+      varying vec4 vColor;
       void main() {
-        gl_FragColor = vec4(vColor, step(length(gl_PointCoord.xy - vec2(0.5)), 0.5));
+        gl_FragColor = vec4(vColor.rgb, vColor.a * step(length(gl_PointCoord.xy - vec2(0.5)), 0.5));
       }`,
     })
   }
