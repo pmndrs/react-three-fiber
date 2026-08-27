@@ -45,11 +45,11 @@ const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUShar
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
 const WebGPUMotionBlur = { Component: lazy(() => import('./webgpu/WebGPUMotionBlur')) }
 
-//* useFrameNext Examples ==============================
-// Showcasing the new useFrameNext hook features
-const UseFrameNextFPS = { Component: lazy(() => import('./webgpu/UseFrameNextFPS')) }
-const UseFrameNextPhases = { Component: lazy(() => import('./webgpu/UseFrameNextPhases')) }
-const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNextControls')) }
+//* useFrame Examples ==============================
+// Showcasing the new useFrame hook features
+const UseFrameFPS = { Component: lazy(() => import('./webgpu/UseFrameFPS')) }
+const UseFramePhases = { Component: lazy(() => import('./webgpu/UseFramePhases')) }
+const UseFrameControls = { Component: lazy(() => import('./webgpu/UseFrameControls')) }
 export {
   // Default
   Activity,
@@ -90,8 +90,8 @@ export {
   WebGPUSharedUniforms,
   WebGPURagingSea,
   WebGPUMotionBlur,
-  // useFrameNext
-  UseFrameNextFPS,
-  UseFrameNextPhases,
-  UseFrameNextControls,
+  // useFrame
+  UseFrameFPS,
+  UseFramePhases,
+  UseFrameControls,
 }

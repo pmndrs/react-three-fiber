@@ -39,9 +39,9 @@ const defaultExamples = [
 const legacyExamples = ['EventPriority', 'Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
 
 const webgpuExamples = [
-  'UseFrameNextControls',
-  'UseFrameNextFPS',
-  'UseFrameNextPhases',
+  'UseFrameControls',
+  'UseFrameFPS',
+  'UseFramePhases',
   'VerekiaFpsDrop',
   'VisibilityEvents',
   'WebGPU',
