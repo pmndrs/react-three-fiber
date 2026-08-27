@@ -181,6 +181,60 @@ describe('scheduler integration', () => {
   //* 2. fps throttling end-to-end ==============================
 
   describe('fps throttling end-to-end', () => {
+    it('keeps a 60fps render job in sync with near-60Hz frames', async () => {
+      const renderer = new MockWebGPURenderer({ canvas })
+      const renderSpy = vi.spyOn(renderer, 'render')
+
+      const userCalls: number[] = []
+
+      const RenderJob = () => {
+        useFrame(
+          ({ renderer, scene, camera }) => {
+            userCalls.push(1)
+            renderer.render(scene, camera)
+          },
+          { fps: 60, phase: 'render' },
+        )
+        return null
+      }
+
+      await act(async () => (await root.configure({ renderer, frameloop: 'never' })).render(<RenderJob />))
+
+      renderSpy.mockClear()
+      const scheduler = getScheduler()
+      const frames = 10
+      const frameInterval = 1000 / 60 - 0.1
+
+      await act(async () => {
+        for (let i = 0; i < frames; i++) scheduler.step(100_000 + i * frameInterval)
+      })
+
+      expect(userCalls).toHaveLength(frames)
+      expect(renderSpy).toHaveBeenCalledTimes(frames)
+    })
+
+    it('still throttles a 60fps render job when the driver runs at 120Hz', async () => {
+      const renderer = new MockWebGPURenderer({ canvas })
+      const renderSpy = vi.spyOn(renderer, 'render')
+
+      const RenderJob = () => {
+        useFrame(({ renderer, scene, camera }) => renderer.render(scene, camera), { fps: 60, phase: 'render' })
+        return null
+      }
+
+      await act(async () => (await root.configure({ renderer, frameloop: 'never' })).render(<RenderJob />))
+
+      renderSpy.mockClear()
+      const scheduler = getScheduler()
+      const frames = 60
+
+      await act(async () => {
+        for (let i = 0; i < frames; i++) scheduler.step(100_000 + i * (1000 / 120))
+      })
+
+      expect(renderSpy).toHaveBeenCalledTimes(frames / 2)
+    })
+
     it('throttles callback frequency with { fps } (drop: true default)', async () => {
       const throttled: number[] = []
       const unthrottled: number[] = []
