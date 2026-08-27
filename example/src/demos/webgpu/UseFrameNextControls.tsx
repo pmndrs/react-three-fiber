@@ -10,13 +10,39 @@
  * Shows both individual job control AND scheduler-level control.
  */
 
-import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree, type FrameNextControls } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three/webgpu'
 import { CameraControls } from '@react-three/drei'
-import { ControlPanel, SpotlightControls } from './ControlPanel'
-import { useLocalNodes } from '@react-three/fiber/webgpu'
+
+const SPOTLIGHT = 'moving-spotlight'
+
+const buttonStyle: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  padding: 0,
+  border: 0,
+  borderRadius: 6,
+  background: 'rgba(255,255,255,0.1)',
+  cursor: 'pointer',
+}
+
+const groupStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 4,
+  margin: 0,
+  padding: '3px 5px 5px',
+  border: '1px solid rgba(255,255,255,0.16)',
+  borderRadius: 6,
+}
+
+const labelStyle: React.CSSProperties = {
+  padding: '0 3px',
+  color: 'rgba(255,255,255,0.7)',
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 10,
+}
 
 //* Orbiting Ball + Light ==============================
 // Uses plain useFrame with no config - just like normal animation
@@ -72,7 +98,7 @@ function MovingSpotlight() {
     ({ elapsed }, delta) => {
       const light = lightRef.current
       const maxX = 5
-      const speed = 0.1 // Speed multiplier
+      const speed = 0.4
 
       // Ping-pong using sin wave
       light.position.x = Math.sin(elapsed * speed) * maxX
@@ -112,7 +138,7 @@ function MovingSpotlight() {
 //* Scene ==============================
 
 interface SceneProps {
-  onControlsReady: (controls: any) => void
+  onControlsReady: (controls: FrameNextControls) => void
 }
 
 function DemoScene({ onControlsReady }: SceneProps) {
@@ -122,7 +148,6 @@ function DemoScene({ onControlsReady }: SceneProps) {
       <directionalLight position={[5, 5, 5]} intensity={1} />
       <OrbitingElements />
       <MovingSpotlight />
-      <SpotlightControls />
       <ControlledSphereWithCallback onControlsReady={onControlsReady} />
       <mesh position={[0, -0.99, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[10, 10]} />
@@ -135,7 +160,7 @@ function DemoScene({ onControlsReady }: SceneProps) {
 //* Sphere wrapper that reports controls ==============================
 
 interface ControlledSphereWithCallbackProps {
-  onControlsReady: (controls: any) => void
+  onControlsReady: (controls: FrameNextControls) => void
 }
 
 function ControlledSphereWithCallback({ onControlsReady }: ControlledSphereWithCallbackProps) {
@@ -151,18 +176,15 @@ function ControlledSphereWithCallback({ onControlsReady }: ControlledSphereWithC
 
   // useFrame with fps limit
   const controls = useFrame(
-    (state, delta) => {
-      meshRef.current.rotation.x += delta * 0.2
-      meshRef.current.rotation.y += delta * 0.3
-      meshRef.current.rotation.z += delta * 0.075
+    () => {
+      meshRef.current.rotation.x += 0.025
+      meshRef.current.rotation.y += 0.04
+      meshRef.current.rotation.z += 0.01
     },
     { id: 'spinning-sphere', fps: 30 },
   )
 
-  // Report controls to parent on mount
-  useMemo(() => {
-    onControlsReady(controls)
-  }, [controls, onControlsReady])
+  useEffect(() => onControlsReady(controls), [controls, onControlsReady])
 
   return (
     <mesh ref={meshRef} castShadow>
@@ -175,17 +197,94 @@ function ControlledSphereWithCallback({ onControlsReady }: ControlledSphereWithC
 //* Main Export ==============================
 
 export default function useFrameControls() {
-  const [sphereControls, setSphereControls] = useState<any>(null)
+  const [sphereControls, setSphereControls] = useState<FrameNextControls | null>(null)
+  const [spotlightPaused, setSpotlightPaused] = useState(false)
+  const [loopRunning, setLoopRunning] = useState(true)
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas renderer camera={{ position: [0, 0, 8], fov: 50 }}>
-        <DemoScene onControlsReady={(controls) => setSphereControls(controls)} />
+        <DemoScene onControlsReady={setSphereControls} />
         <CameraControls />
       </Canvas>
+      {sphereControls && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            display: 'flex',
+            gap: 6,
+            padding: 5,
+            borderRadius: 8,
+            background: 'rgba(0,0,0,0.6)',
+          }}>
+          <fieldset style={groupStyle}>
+            <legend style={labelStyle}>Sphere</legend>
+            <button
+              title="Pause / resume sphere"
+              aria-label="Pause / resume sphere"
+              onClick={sphereControls.isPaused ? sphereControls.resume : sphereControls.pause}
+              style={buttonStyle}>
+              {sphereControls.isPaused ? '▶️' : '⏸️'}
+            </button>
+            <button
+              title={loopRunning ? 'Step sphere' : 'Start all jobs before stepping the sphere'}
+              aria-label="Step sphere"
+              disabled={!sphereControls.isPaused || !loopRunning}
+              onClick={() => sphereControls.step()}
+              style={{
+                ...buttonStyle,
+                cursor: sphereControls.isPaused && loopRunning ? 'pointer' : 'default',
+                opacity: sphereControls.isPaused && loopRunning ? 1 : 0.3,
+              }}>
+              ⏭️
+            </button>
+          </fieldset>
 
-      {/* UI outside Canvas to avoid WebGPU HTML flipping issues */}
-      <ControlPanel sphereControls={sphereControls} />
+          <fieldset style={{ ...groupStyle, justifyContent: 'center' }}>
+            <legend style={labelStyle}>Spotlight</legend>
+            <button
+              title="Pause / resume spotlight"
+              aria-label="Pause / resume spotlight"
+              onClick={() => {
+                if (spotlightPaused) sphereControls.scheduler.resumeJob(SPOTLIGHT)
+                else sphereControls.scheduler.pauseJob(SPOTLIGHT)
+                setSpotlightPaused(!spotlightPaused)
+              }}
+              style={buttonStyle}>
+              {spotlightPaused ? '▶️' : '⏸️'}
+            </button>
+          </fieldset>
+
+          <fieldset style={groupStyle}>
+            <legend style={labelStyle}>All jobs</legend>
+            <button
+              title="Stop / start all jobs"
+              aria-label="Stop / start all jobs"
+              onClick={() => {
+                if (loopRunning) sphereControls.scheduler.stop()
+                else sphereControls.scheduler.start()
+                setLoopRunning(!loopRunning)
+              }}
+              style={buttonStyle}>
+              {loopRunning ? '⏹️' : '▶️'}
+            </button>
+            <button
+              title="Step all jobs"
+              aria-label="Step all jobs"
+              disabled={loopRunning}
+              onClick={() => sphereControls.stepAll()}
+              style={{
+                ...buttonStyle,
+                cursor: loopRunning ? 'default' : 'pointer',
+                opacity: loopRunning ? 0.3 : 1,
+              }}>
+              ⏭️
+            </button>
+          </fieldset>
+        </div>
+      )}
     </div>
   )
 }
