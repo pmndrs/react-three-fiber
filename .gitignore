@@ -17,6 +17,7 @@ package-lock.json
 coverage/
 .idea
 yarn-error.log
+.pnpm-store/
 .size-snapshot.json
 __tests__/__image_snapshots__/__diff_output__
 
