@@ -41,6 +41,24 @@ describe('createRoot', () => {
     expect(() => store.getState()).not.toThrow()
   })
 
+  it('does not invoke an async gl factory twice when configure re-enters during init', async () => {
+    let calls = 0
+    const gl = async (props: any) => {
+      calls++
+      // Simulate async renderer init (e.g. WebGPURenderer.init)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      return new THREE.WebGLRenderer(props)
+    }
+
+    // A re-render of the Canvas owner while the factory is pending re-enters
+    // configure before the first call has resolved.
+    await act(async () => {
+      await Promise.all([root.configure({ gl }), root.configure({ gl })])
+    })
+
+    expect(calls).toBe(1)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     const store = await act(async () =>
       (await root.configure({ orthographic: true, camera: { position: [0, 0, 5] } })).render(<group />),

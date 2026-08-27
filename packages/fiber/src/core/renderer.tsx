@@ -185,9 +185,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   let configured = false
   let pending: Promise<void> | null = null
+  let configuring: Promise<void> | null = null
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+      // configure runs from the Canvas layout effect on every commit. When an
+      // async gl factory is still initializing, a re-render would re-enter this
+      // body past the `if (!state.gl)` guard and create a second renderer on
+      // the same canvas. Wait for any in-flight configure to settle so
+      // re-entrant calls run against settled state.
+      while (configuring) await configuring
+      let finishConfiguring!: () => void
+      configuring = new Promise<void>((_finish) => (finishConfiguring = _finish))
+
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
@@ -399,6 +409,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set locals
       onCreated = onCreatedCallback
       configured = true
+      configuring = null
+      finishConfiguring()
       resolve()
       return this
     },
