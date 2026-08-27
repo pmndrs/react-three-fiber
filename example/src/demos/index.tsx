@@ -52,7 +52,6 @@ const WebGPUMotionBlur = { Component: lazy(() => import('./webgpu/WebGPUMotionBl
 const UseFrameNextFPS = { Component: lazy(() => import('./webgpu/UseFrameNextFPS')) }
 const UseFrameNextPhases = { Component: lazy(() => import('./webgpu/UseFrameNextPhases')) }
 const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNextControls')) }
-const VerekiaFpsDrop = { Component: lazy(() => import('./webgpu/verekiaFpsDrop')) }
 export {
   // Default
   Activity,
@@ -99,5 +98,4 @@ export {
   UseFrameNextFPS,
   UseFrameNextPhases,
   UseFrameNextControls,
-  VerekiaFpsDrop,
 }
