@@ -1,5 +1,5 @@
 import { Canvas, useUniforms, useNodes, type ThreeElements } from '@react-three/fiber/webgpu'
-import { useControls } from 'leva'
+import { Leva, useControls } from 'leva'
 import { getLevaSeaConfig, makeSeaNodes, TerrainGeometry } from './seaNodes'
 import { CameraControls, Environment } from '@react-three/drei'
 
@@ -46,8 +46,11 @@ function SeaSurface(props: ThreeElements['mesh']) {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }} background={'#271442'}>
-      <Experience />
-    </Canvas>
+    <>
+      <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }} background={'#271442'}>
+        <Experience />
+      </Canvas>
+      <Leva collapsed />
+    </>
   )
 }
