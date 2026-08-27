@@ -23,7 +23,6 @@ const Selection = { Component: lazy(() => import('./default/Selection')) }
 const StopPropagation = { Component: lazy(() => import('./default/StopPropagation')) }
 const SuspenseAndErrors = { Component: lazy(() => import('./default/SuspenseAndErrors')) }
 const SuspenseMaterial = { Component: lazy(() => import('./default/SuspenseMaterial')) }
-const Test = { Component: lazy(() => import('./default/Test')) }
 const Viewcube = { Component: lazy(() => import('./default/Viewcube')) }
 const ViewTracking = { Component: lazy(() => import('./default/ViewTracking')) }
 const VisibilityEvents = { Component: lazy(() => import('./webgpu/VisibilityEvents')) }
@@ -74,7 +73,6 @@ export {
   StopPropagation,
   SuspenseAndErrors,
   SuspenseMaterial,
-  Test,
   Viewcube,
   ViewTracking,
   VisibilityEvents,

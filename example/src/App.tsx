@@ -27,7 +27,6 @@ const defaultExamples = [
   'StopPropagation',
   'SuspenseAndErrors',
   'SuspenseMaterial',
-  'Test',
   'Viewcube',
   'ViewTracking',
 ]
