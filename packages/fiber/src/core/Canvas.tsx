@@ -61,13 +61,12 @@ function CanvasImpl({
   const backgroundProps = React.useMemo(() => parseBackground(background), [background])
 
   //* Dynamic Debounce for Fast Initial Render ==============================
-  // Track if we've gotten initial size measurement
-  const hasInitialSizeRef = React.useRef(false)
+  const [hasInitialSize, setHasInitialSize] = React.useState(false)
 
   // Create measure config with immediate initial measurement (0ms debounce)
   // After first size, we'll use user-provided debounce for subsequent updates
   const measureConfig = React.useMemo(() => {
-    if (!hasInitialSizeRef.current) {
+    if (!hasInitialSize) {
       // First measurement: use 0ms debounce for immediate rendering
       return {
         ...resize,
@@ -81,7 +80,7 @@ function CanvasImpl({
       debounce: { scroll: 50, resize: 0 },
       ...resize,
     }
-  }, [resize, hasInitialSizeRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasInitialSize, resize])
 
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
@@ -101,10 +100,10 @@ function CanvasImpl({
     }
   }, [width, height, containerRect, forceEven])
 
-  // Mark that we have initial size (for next render cycle)
-  if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
-    hasInitialSizeRef.current = true
-  }
+  // Restart this render with the steady-state config as soon as the immediate
+  // measurement succeeds. This happens before effects commit, so Canvas setup
+  // still runs only once for this size change.
+  if (!hasInitialSize && effectiveSize.width > 0 && effectiveSize.height > 0) setHasInitialSize(true)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
