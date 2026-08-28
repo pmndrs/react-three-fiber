@@ -125,7 +125,8 @@ canvas {
   }
 
   & > span {
-    position: absolute;
+    z-index: 1000;
+    position: fixed;
     bottom: 60px;
     right: 60px;
   }

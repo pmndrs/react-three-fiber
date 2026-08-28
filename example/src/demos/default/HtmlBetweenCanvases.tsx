@@ -1,19 +1,16 @@
 /**
- * Demo: Layered Reality
+ * Demo: HTML Between Canvases
  * Features: Multi-Canvas, Scheduler, HTML Integration
  *
- * 3D website where HTML content sits BETWEEN two 3D layers.
- * Front layer has floating UI elements, back layer has the scene.
- * True depth perception impossible with single canvas.
+ * A shared 3D scene is split across two canvases so an HTML element can sit
+ * between its near and far geometry.
  */
 
 import { Canvas, useFrame } from '@react-three/fiber/webgpu'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import * as THREE from 'three/webgpu'
 
-type RenderMode = 'top' | 'bottom' | 'both'
-
-function StandardScene({ renderMode = 'top' }: { renderMode: RenderMode }) {
+function StandardScene() {
   const pinkRef = useRef<THREE.Mesh>(null)
   const tealRef = useRef<THREE.Mesh>(null)
   const ringGroupRef = useRef<THREE.Group>(null)
@@ -37,15 +34,8 @@ function StandardScene({ renderMode = 'top' }: { renderMode: RenderMode }) {
     teal.rotation.z += delta * 0.3
   })
 
-  // take over render loop to be able to split/stop rendering
-  useFrame(
-    ({ renderer, camera, scene }) => {
-      if (['bottom', 'both'].includes(renderMode)) {
-        renderer.render(scene, camera)
-      }
-    },
-    { phase: 'render' },
-  )
+  // Render the far half of the scene behind the HTML layer.
+  useFrame(({ renderer, camera, scene }) => renderer.render(scene, camera), { phase: 'render' })
 
   return (
     <>
@@ -69,22 +59,13 @@ function StandardScene({ renderMode = 'top' }: { renderMode: RenderMode }) {
   )
 }
 
-export default function LayeredReality() {
-  const [renderMode, setRenderMode] = useState<'top' | 'bottom' | 'both'>('both')
-
+export default function HtmlBetweenCanvases() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {/* mode controls */}
-      <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 10000 }}>
-        <button onClick={() => setRenderMode('top')}>Top</button>
-        <button onClick={() => setRenderMode('bottom')}>Bottom</button>
-        <button onClick={() => setRenderMode('both')}>Both</button>
-      </div>
-
       {/* Background 3D Layer */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
         <Canvas id="background" renderer camera={{ near: 5, far: 1000 }}>
-          <StandardScene renderMode={renderMode} />
+          <StandardScene />
         </Canvas>
       </div>
 
@@ -101,33 +82,29 @@ export default function LayeredReality() {
         }}>
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.8)',
-            padding: '48px 64px',
-            borderRadius: '16px',
-            textAlign: 'center',
+            width: 'min(36vw, 280px)',
+            aspectRatio: '4 / 3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#f3dce5',
+            borderRadius: '12px',
             color: 'white',
-            pointerEvents: 'auto',
+            fontFamily: 'Arial, sans-serif',
+            fontSize: 'clamp(18px, 3vw, 32px)',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
           }}>
-          <h1 style={{ fontSize: '48px', marginBottom: '16px' }}>Layered Reality</h1>
-          <p
-            style={{
-              fontSize: '18px',
-              opacity: 0.8,
-              maxWidth: '400px',
-            }}>
-            HTML content sits between two 3D canvas layers.
-            <br />
-            Notice the ring and wireframe shapes in front of this text.
-          </p>
+          HTML
         </div>
       </div>
       {/* Top Canvas - renders in front of HTML */}
-      <TopCanvas renderMode={renderMode} />
+      <TopCanvas />
     </div>
   )
 }
 
-const TopScene = ({ renderMode = 'top' }: { renderMode: 'top' | 'bottom' | 'both' }) => {
+const TopScene = () => {
   // Render the main scene into this canvas.
   useFrame(
     ({ primaryStore, renderer, camera }) => {
@@ -135,9 +112,7 @@ const TopScene = ({ renderMode = 'top' }: { renderMode: 'top' | 'bottom' | 'both
       const primaryCamera = primaryState.camera
       camera.position.copy(primaryCamera.position)
       camera.quaternion.copy(primaryCamera.quaternion)
-      if (['top', 'both'].includes(renderMode)) {
-        renderer.render(primaryState.scene, camera)
-      }
+      renderer.render(primaryState.scene, camera)
     },
     { phase: 'render', after: 'main' },
   )
@@ -145,14 +120,14 @@ const TopScene = ({ renderMode = 'top' }: { renderMode: 'top' | 'bottom' | 'both
   return null
 }
 
-const TopCanvas = ({ renderMode = 'top' }: { renderMode: 'top' | 'bottom' | 'both' }) => {
+const TopCanvas = () => {
   // Sync the main canvas with this top canvas.
   return (
     <Canvas
       renderer={{ primaryCanvas: 'background' }}
       camera={{ near: 0.1, far: 5 }}
-      style={{ background: 'transparent', position: 'absolute', inset: 0, zIndex: 200, pointerEvents: 'none' }}>
-      <TopScene renderMode={renderMode} />
+      style={{ background: 'transparent', position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
+      <TopScene />
     </Canvas>
   )
 }

@@ -8,7 +8,7 @@ import {
   useFrame,
   useThree,
 } from '@react-three/fiber'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import useRefs from 'react-use-refs'
 import * as THREE from 'three'
 
@@ -55,13 +55,13 @@ function Flash(props: ThreeElements['group']) {
 
 function Apple(props: ThreeElements['group']) {
   const { scene } = useGLTF('/models/apple.gltf')
-  useFrame((state, delta) => (scene.rotation.x = scene.rotation.y += delta))
-  return <primitive object={scene} {...props} />
+  const clone = useMemo(() => scene.clone(), [scene])
+  useFrame((state, delta) => (clone.rotation.x = clone.rotation.y += delta))
+  return <primitive object={clone} {...props} />
 }
 
 const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
-const col = new THREE.Color()
 
 function Container({
   scene,
@@ -89,9 +89,10 @@ function Container({
 
     const { left = 0, right = 0, top = 0, bottom = 0, width = 0, height = 0 } = rect.current || {}
     const isOffscreen = bottom < 0 || top > state.size.height || right < 0 || left > state.size.width
+    if (isOffscreen) return
 
-    const positiveYUpBottom = state.size.height - bottom
     const aspect = width / height
+    const renderer = state.renderer
 
     if (isOrthographicCamera(camera)) {
       camera.left = width / -2
@@ -103,25 +104,18 @@ function Container({
     }
 
     camera.updateProjectionMatrix()
-    state.gl.setViewport(left, positiveYUpBottom, width, height)
-    state.gl.setScissor(left, positiveYUpBottom, width, height)
-    state.gl.setScissorTest(true)
+    renderer.setViewport(left, top, width, height)
+    renderer.setScissor(left, top, width, height)
+    renderer.setScissorTest(true)
 
-    if (isOffscreen) {
-      state.gl.getClearColor(col)
-      state.gl.setClearColor(col, state.gl.getClearAlpha())
-      state.gl.clear(true, true)
-      return
-    }
-
-    state.gl.render(scene, camera)
+    renderer.render(scene, camera)
   }, index)
 
   const get = useThree((state) => state.get)
   const setEvents = useThree((state) => state.setEvents)
   const [ready, toggle] = useReducer(() => true, false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const old = get().events.connected
     setEvents({ connected: track.current })
     toggle()

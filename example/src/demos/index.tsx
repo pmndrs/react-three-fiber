@@ -13,7 +13,7 @@ const Gestures = { Component: lazy(() => import('./default/Gestures')) }
 const Gltf = { Component: lazy(() => import('./default/Gltf')) }
 const Inject = { Component: lazy(() => import('./default/Inject')) }
 const Layers = { Component: lazy(() => import('./default/Layers')) }
-const LayeredReality = { Component: lazy(() => import('./default/Layered')) }
+const HtmlBetweenCanvases = { Component: lazy(() => import('./default/HtmlBetweenCanvases')) }
 const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
 const NestedCamera = { Component: lazy(() => import('./default/NestedCamera')) }
@@ -23,7 +23,6 @@ const Selection = { Component: lazy(() => import('./default/Selection')) }
 const StopPropagation = { Component: lazy(() => import('./default/StopPropagation')) }
 const SuspenseAndErrors = { Component: lazy(() => import('./default/SuspenseAndErrors')) }
 const SuspenseMaterial = { Component: lazy(() => import('./default/SuspenseMaterial')) }
-const Test = { Component: lazy(() => import('./default/Test')) }
 const Viewcube = { Component: lazy(() => import('./default/Viewcube')) }
 const ViewTracking = { Component: lazy(() => import('./default/ViewTracking')) }
 const VisibilityEvents = { Component: lazy(() => import('./webgpu/VisibilityEvents')) }
@@ -41,17 +40,16 @@ const SVGRenderer = { Component: lazy(() => import('./legacy/SVGRenderer')) }
 //* WebGPU Examples ==============================
 // Examples showcasing WebGPU renderer with TSL
 const WebGPU = { Component: lazy(() => import('./webgpu/WebGPU')) }
-const WebGPUIndirect = { Component: lazy(() => import('./webgpu/WebGPUIndirect')) }
 const WebGPUMultiCanvas = { Component: lazy(() => import('./webgpu/WebGPUMultiCanvas')) }
 const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUSharedUniforms')) }
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
 const WebGPUMotionBlur = { Component: lazy(() => import('./webgpu/WebGPUMotionBlur')) }
 
-//* useFrameNext Examples ==============================
-// Showcasing the new useFrameNext hook features
-const UseFrameNextFPS = { Component: lazy(() => import('./webgpu/UseFrameNextFPS')) }
-const UseFrameNextPhases = { Component: lazy(() => import('./webgpu/UseFrameNextPhases')) }
-const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNextControls')) }
+//* useFrame Examples ==============================
+// Showcasing the new useFrame hook features
+const UseFrameFPS = { Component: lazy(() => import('./webgpu/UseFrameFPS')) }
+const UseFramePhases = { Component: lazy(() => import('./webgpu/UseFramePhases')) }
+const UseFrameControls = { Component: lazy(() => import('./webgpu/UseFrameControls')) }
 export {
   // Default
   Activity,
@@ -65,7 +63,7 @@ export {
   Gltf,
   Inject,
   Layers,
-  LayeredReality,
+  HtmlBetweenCanvases,
   MultiMaterial,
   MultiRender,
   NestedCamera,
@@ -74,7 +72,6 @@ export {
   StopPropagation,
   SuspenseAndErrors,
   SuspenseMaterial,
-  Test,
   Viewcube,
   ViewTracking,
   VisibilityEvents,
@@ -93,9 +90,8 @@ export {
   WebGPUSharedUniforms,
   WebGPURagingSea,
   WebGPUMotionBlur,
-  WebGPUIndirect,
-  // useFrameNext
-  UseFrameNextFPS,
-  UseFrameNextPhases,
-  UseFrameNextControls,
+  // useFrame
+  UseFrameFPS,
+  UseFramePhases,
+  UseFrameControls,
 }
