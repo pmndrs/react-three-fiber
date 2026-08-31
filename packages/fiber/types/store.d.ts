@@ -31,6 +31,7 @@ export type BufferLike =
   | Uint16Array
   | Int16Array
   | THREE.BufferAttribute // Base class for all buffer attributes
+  | THREE.InterleavedBufferAttribute
   | Node // TSL buffer nodes (instancedArray, storage)
 
 /** Flat record of buffer-like values (no nested scopes) */

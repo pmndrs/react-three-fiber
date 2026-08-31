@@ -4,9 +4,10 @@ import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { isStorageLike } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
-import type { StorageLike, StorageRecord } from '#types'
+import type { StorageLike, StorageRecord, StorageStore } from '#types'
 
 //* Types ==============================
 
@@ -34,30 +35,11 @@ export type RebuildStorageFn = (scope?: string) => void
 export type DisposeStorageFn = (names: string | string[], scope?: string) => void
 
 /** Return type with utils included */
-export type StorageWithUtils<T extends Record<string, StorageLike> = Record<string, StorageLike>> = T & {
+export type StorageWithUtils<T extends StorageRecordType | StorageStore = StorageRecordType> = T & {
   removeStorage: RemoveStorageFn
   clearStorage: ClearStorageFn
   rebuildStorage: RebuildStorageFn
   disposeStorage: DisposeStorageFn
-}
-
-/**
- * Type guard to check if a value is a StorageLike vs a scope object.
- * Checks for StorageTexture, Data3DTexture, and TSL nodes.
- */
-const isStorageLike = (value: unknown): value is StorageLike => {
-  if (value === null || typeof value !== 'object') return false
-
-  // Three.js storage textures (have isTexture and isStorageTexture properties)
-  if ('isTexture' in value) return true
-
-  // Three.js Data3DTexture (has isData3DTexture property)
-  if ('isData3DTexture' in value) return true
-
-  // TSL nodes (have uuid or nodeType)
-  if ('uuid' in value || 'nodeType' in value) return true
-
-  return false
 }
 
 /**
@@ -76,9 +58,7 @@ const disposeStorage = (storage: StorageLike): void => {
 //* Hook Overloads ==============================
 
 // Get all storage (returns full structure with root storage and scopes + utils)
-export function useGPUStorage(): StorageWithUtils<
-  Record<string, StorageLike> & Record<string, Record<string, StorageLike>>
->
+export function useGPUStorage(): StorageWithUtils<StorageStore>
 
 // Get storage from a specific scope (+ utils)
 export function useGPUStorage(scope: string): StorageWithUtils<Record<string, StorageLike>>
@@ -131,10 +111,7 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
 export function useGPUStorage<T extends Record<string, StorageLike>>(
   creatorOrScope?: StorageCreator<T> | string,
   scope?: string,
-):
-  | StorageWithUtils<T>
-  | StorageWithUtils<Record<string, StorageLike>>
-  | StorageWithUtils<Record<string, StorageLike> & Record<string, Record<string, StorageLike>>> {
+): StorageWithUtils<T> | StorageWithUtils<StorageRecordType> | StorageWithUtils<StorageStore> {
   const store = usePrimaryStore()
 
   //* Utils ==============================
@@ -208,9 +185,8 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
     prepare: (name, storage) => {
       const label = scopedNodeName(scope, name)
       // Apply label for debugging if it's a TSL node
-      if ('setName' in storage && typeof storage.setName === 'function') {
-        storage.setName(label)
-      }
+      const setName = Reflect.get(storage, 'setName')
+      if (typeof setName === 'function') setName.call(storage, label)
       // Apply name to textures if they have a name property
       if ('name' in storage && typeof storage.name === 'string') {
         ;(storage as any).name = label
@@ -223,9 +199,9 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
   // Case 2: String argument - that scope's storage (guard against a storage
   //         item stored under the same name), reactive via storeStorage
   // Case 3: Creator function - the entries registered above
-  let gpuStorage: StorageRecordType | (StorageRecordType & Record<string, StorageRecordType>) = created
+  let gpuStorage: StorageRecordType | StorageStore = created
   if (creatorOrScope === undefined) {
-    gpuStorage = storeStorage as StorageRecordType & Record<string, StorageRecordType>
+    gpuStorage = storeStorage
   } else if (typeof creatorOrScope === 'string') {
     const scopeData = storeStorage[creatorOrScope]
     gpuStorage = scopeData && !isStorageLike(scopeData) ? (scopeData as StorageRecordType) : {}

@@ -4,6 +4,7 @@ import { Color as ThreeColor, Node } from '#three'
 import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
 import { useStore } from '../../core/hooks'
 import { ROOT_SCOPE, peekStaged } from '../../core/utils/resourceRegistry'
+import { isTSLNode, isUniformNode } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 
 /**
@@ -16,11 +17,10 @@ import { useScopedResource } from './useScopedResource'
  * normalised before they reach here — so a generic `T` can never be proven to select one of those
  * overloads, and a union argument cannot select among them either.
  *
- * Rather than scatter `as any` over each argument, the mismatch is isolated to this one named
- * seam. The return type stays three's real `UniformNode`, so everything downstream is still
- * checked against the installed three.
+ * The mismatch is isolated to this one named seam while preserving the shader and value types
+ * inferred from each input against the installed three declarations.
  */
-const uniformOf = uniform as (value: unknown, type?: string) => UniformNode<unknown>
+const uniformOf = uniform as <T extends UniformValue>(value: T, type?: string) => UniformNodeFor<T>
 
 //* Types ==============================
 
@@ -44,30 +44,13 @@ export type UniformValue =
   | Node // TSL nodes like color(), vec3(), float() for type casting
   | UniformNode // Allow passing existing uniform nodes
 
-/**
- * Widen literal types to their base types:
- * - 0 → number
- * - true → boolean
- * - '#ff0000' → Color (string colors are converted to Color objects)
- * - Node → Node (TSL nodes passed through for uniform type casting)
- */
-type Widen<T> = T extends number ? number : T extends boolean ? boolean : T extends string ? Color : T
-
-/** Type guard to check if a value is a UniformNode */
-const isUniformNode = (value: unknown): value is UniformNode =>
-  value !== null && typeof value === 'object' && 'value' in value && 'uuid' in value
-
-/** Type guard to check if a value is a TSL Node (but not a UniformNode) */
-const isTSLNode = (value: unknown): value is Node =>
-  value !== null && typeof value === 'object' && 'uuid' in value && 'nodeType' in value
-
 //* Hook Overloads ==============================
 
 // Get existing uniform (throws if not found)
-export function useUniform<T extends UniformValue>(name: string): UniformNode<T>
+export function useUniform<T extends UniformValue = UniformValue>(name: string): UniformNodeFor<T>
 
-// Create uniform if not exists, or update value if exists - widens literal types
-export function useUniform<T extends UniformValue>(name: string, value: T): UniformNode<Widen<T>>
+// Create uniform if not exists, or update value if exists
+export function useUniform<T extends UniformValue>(name: string, value: T): UniformNodeFor<T>
 
 //* Hook Implementation ==============================
 
@@ -104,7 +87,7 @@ export function useUniform<T extends UniformValue>(name: string, value: T): Unif
  * material.positionNode = positionLocal.add(normal.mul(uHeight))
  * ```
  */
-export function useUniform<T extends UniformValue>(name: string, value?: T): UniformNode<Widen<T>> {
+export function useUniform<T extends UniformValue = UniformValue>(name: string, value?: T): UniformNodeFor<T> {
   const store = useStore()
 
   // Create mode: register through the shared staged mechanism (render-phase
@@ -127,12 +110,12 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
       }
     },
   })
-  if (registered[name]) return registered[name] as UniformNode<Widen<T>>
+  if (registered[name]) return registered[name] as UniformNodeFor<T>
 
   // Get-only mode: return the uniform another hook registered — committed, or
   // staged earlier in this same render pass (not yet flushed).
   const existing = peekStaged(store, 'uniforms', ROOT_SCOPE)?.[name] ?? store.getState().uniforms[name]
-  if (existing && isUniformNode(existing)) return existing as UniformNode<Widen<T>>
+  if (existing && isUniformNode(existing)) return existing as UniformNodeFor<T>
 
   throw new Error(
     `[useUniform] Uniform "${name}" not found. ` + `Create it first with: useUniform('${name}', initialValue)`,

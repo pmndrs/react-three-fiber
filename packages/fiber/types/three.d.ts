@@ -77,10 +77,11 @@ type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
 
 /**
  * For node material properties (colorNode, positionNode, etc.), accept broader types
- * since @types/three has broken inheritance for TSL node subclasses.
+ * since @types/three has broken inheritance for TSL node subclasses. NodeClass requires
+ * `nodeType`, so this structural key test remains neutral to the selected Three entry.
  */
 export type NodeProps<P> = {
-  [K in keyof P as P[K] extends THREE.Node | null ? K : never]?: TSLNodeInput
+  [K in keyof P as NonNullable<P[K]> extends { nodeType: string | null } ? K : never]?: TSLNodeInput
 }
 
 export interface ReactProps<P> {

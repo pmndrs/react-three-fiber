@@ -1,89 +1,81 @@
-/**
- * TSL (Three.js Shading Language) Type Augmentations
- *
- * Fixes incomplete/incorrect typings in @types/three for TSL's Fn function.
- * The upstream types expect NodeBuilder as first param, but runtime passes node arrays.
- *
- * Can be removed once @types/three properly types the Fn overloads.
- */
-
-import type { Node, ShaderNodeObject } from 'three/webgpu'
-
-//* Global Types ==============================
+//* Global TSL Types ==============================
 
 declare global {
   /**
-   * Uniform node type.
-   *
-   * This is three's own `UniformNode`, not a re-declaration of it. It previously was a
-   * hand-rolled `interface UniformNode<T> extends Node { value: T }`, which shadowed the real
-   * exported type globally — so R3F's ~58 references resolved to an approximation that was
-   * missing members three actually ships (`setName` among them) and had drifted to the wrong
-   * arity when three made `UniformNode` two-parameter.
-   *
-   * three's signature is `UniformNode<TNodeType, TValue>`. R3F only ever varies the value type,
-   * so the node type is fixed to `unknown` and the single parameter is kept for call-site
-   * ergonomics. The result is three's structural type, so members stay in sync with the
-   * installed three instead of needing to be mirrored by hand.
+   * Broad callable-node fallback for dynamic store readers.
+   * Creator hooks preserve the exact function signatures inferred from Three's `Fn`.
    */
-  type UniformNode<T = unknown> = import('three/webgpu').UniformNode<unknown, T>
+  type CallableTSLNode = ((...params: never[]) => unknown) & {
+    readonly shaderNode: unknown
+    readonly id: number
+  }
+
+  /** Legacy structural node accepted when at least one historical marker exists. */
+  type LegacyTSLNodeLike = {
+    label?: ((label: string) => unknown) | string
+    setName?: (name: string) => unknown
+  } & ({ uuid: string | undefined; nodeType?: string | null } | { uuid?: string; nodeType: string | null | undefined })
+
+  /** Node type accepted by broad dynamic node-store readers. */
+  type TSLNodeType = import('three/webgpu').Node | CallableTSLNode
 
   /**
-   * ShaderCallable - the return type of Fn()
-   * A callable shader function node that can be invoked with parameters.
-   * The function returns a ShaderNodeObject when called.
-   *
-   * @example
-   * ```tsx
-   * // Define a shader function
-   * const blendColorFn = Fn(([color1, color2, factor]) => {
-   *   return mix(color1, color2, factor)
-   * })
-   *
-   * // Type when retrieving from nodes store
-   * const { blendColorFn } = nodes as { blendColorFn: ShaderCallable }
-   *
-   * // Or with specific return type
-   * const { myFn } = nodes as { myFn: ShaderCallable<THREE.Node> }
-   * ```
+   * Derive Three's shader node type from an existing node or a supported raw input.
+   * Existing InputNode generics take precedence over structural value normalization.
+   * Both generics must be inferred because Three's UniformNode intersects an unknown-typed
+   * InputNode base with its concrete InputNode specialization.
    */
-  type ShaderCallable<R extends Node = Node> = ((...params: unknown[]) => ShaderNodeObject<R>) & Node
+  type UniformNodeType<T> = T extends import('three/webgpu').UniformNode<infer TNodeType, infer _TValue>
+    ? TNodeType
+    : T extends import('three/webgpu').InputNode<infer TNodeType, infer _TValue>
+      ? TNodeType
+      : T extends number
+        ? 'float'
+        : T extends boolean
+          ? 'bool'
+          : T extends string | import('three/webgpu').Color | { r: number; g: number; b: number }
+            ? 'color'
+            : T extends import('three/webgpu').Vector4 | { x: number; y: number; z: number; w: number }
+              ? 'vec4'
+              : T extends import('three/webgpu').Vector3 | { x: number; y: number; z: number }
+                ? 'vec3'
+                : T extends import('three/webgpu').Vector2 | { x: number; y: number }
+                  ? 'vec2'
+                  : T extends import('three/webgpu').Matrix4
+                    ? 'mat4'
+                    : T extends import('three/webgpu').Matrix3
+                      ? 'mat3'
+                      : unknown
 
-  /**
-   * ShaderNodeRef - a ShaderNodeObject wrapper around a Node
-   * This is the common return type for TSL operations (add, mul, sin, etc.)
-   *
-   * @example
-   * ```tsx
-   * const { wobble } = nodes as { wobble: ShaderNodeRef }
-   * ```
-   */
-  type ShaderNodeRef<T extends Node = Node> = ShaderNodeObject<T>
+  /** Derive the normalized JavaScript value stored by a uniform node. */
+  type UniformNodeValue<T> = T extends import('three/webgpu').UniformNode<infer _TNodeType, infer TValue>
+    ? TValue
+    : T extends import('three/webgpu').InputNode<infer _TNodeType, infer TValue>
+      ? TValue
+      : T extends string | { r: number; g: number; b: number }
+        ? import('three/webgpu').Color
+        : T extends { x: number; y: number; z: number; w: number }
+          ? import('three/webgpu').Vector4
+          : T extends { x: number; y: number; z: number }
+            ? import('three/webgpu').Vector3
+            : T extends { x: number; y: number }
+              ? import('three/webgpu').Vector2
+              : T extends number
+                ? number
+                : T extends boolean
+                  ? boolean
+                  : T
 
-  /**
-   * TSLNodeType - Union of all common TSL node types
-   * Used by ScopedStore to properly type node access from the store.
-   *
-   * Includes:
-   * - Node: base Three.js node type
-   * - ShaderCallable: function nodes created with Fn()
-   * - ShaderNodeObject: wrapped nodes from TSL operations (sin, mul, mix, etc.)
-   *
-   * @example
-   * ```tsx
-   * // In useLocalNodes, nodes are typed as TSLNodeType
-   * const { positionNode, blendColorFn } = useLocalNodes(({ nodes }) => ({
-   *   positionNode: nodes.myPosition,      // Works - Node is in union
-   *   blendColorFn: nodes.myFn,            // Works - ShaderCallable is in union
-   * }))
-   *
-   * // Can narrow with type guard or assertion when needed
-   * if (typeof blendColorFn === 'function') {
-   *   blendColorFn(someColor, 0.5)
-   * }
-   * ```
-   */
-  type TSLNodeType = Node | ShaderCallable<Node> | ShaderNodeObject<Node>
+  /** Three's exact UniformNode with shader and value generics derived from an input. */
+  type UniformNodeFor<T> = import('three/webgpu').UniformNode<UniformNodeType<T>, UniformNodeValue<T>>
+
+  /** Preserve every input key while mapping values to exact Three uniform nodes. */
+  type UniformNodesFor<T extends UniformInputRecord> = {
+    [K in keyof T]: UniformNodeFor<T[K]>
+  }
+
+  /** Backward-compatible single-parameter uniform alias. */
+  type UniformNode<T = unknown> = UniformNodeFor<T>
 
   /** Flat record of uniform nodes (no nested scopes) */
   type UniformRecord<T extends UniformNode = UniformNode> = Record<string, T>
@@ -108,7 +100,7 @@ declare global {
    * Acceptable input values for useUniforms - raw values that get converted to UniformNodes
    * Supports:
    * - Primitives: number, string (color), boolean
-   * - Three.js types: Color, Vector2/3/4, Matrix3/4, Euler, Quaternion
+   * - Three.js types: Color, Vector2/3/4, Matrix3/4
    * - Plain objects: { x, y, z, w } converted to vectors
    * - TSL nodes: color(), vec3(), float() for type casting
    * - UniformNode: existing uniforms (reused as-is)
@@ -123,50 +115,15 @@ declare global {
     | import('three/webgpu').Vector4
     | import('three/webgpu').Matrix3
     | import('three/webgpu').Matrix4
-    | import('three/webgpu').Euler
-    | import('three/webgpu').Quaternion
-    | { x: number; y?: number; z?: number; w?: number } // Plain objects converted to vectors
+    | { x: number; y: number }
+    | { x: number; y: number; z: number }
+    | { x: number; y: number; z: number; w: number }
     | { r: number; g: number; b: number; a?: number } // Plain objects converted to Color
-    | Node // TSL nodes like color(), vec3(), float() for type casting
+    | import('three/webgpu').Node // TSL nodes like color(), vec3(), float() for type casting
     | UniformNode
 
   /** Input record for useUniforms - accepts raw values or UniformNodes */
   type UniformInputRecord = Record<string, UniformValue>
 }
 
-//* Module Augmentation ==============================
-
-declare module 'three/tsl' {
-  /**
-   * Fn with array parameter destructuring
-   * @example Fn(([uv, skew]) => { ... })
-   */
-  export function Fn<R extends Node = Node>(
-    jsFunc: (inputs: ShaderNodeObject<Node>[]) => ShaderNodeObject<R>,
-  ): ShaderCallable<R>
-
-  /**
-   * Fn with object parameter destructuring
-   * @example Fn(({ color, intensity }) => { ... })
-   */
-  export function Fn<T extends Record<string, unknown>, R extends Node = Node>(
-    jsFunc: (inputs: T) => ShaderNodeObject<R>,
-  ): ShaderCallable<R>
-
-  /**
-   * Fn with array params + layout
-   * @example Fn(([a, b]) => { ... }, { layout: [...] })
-   */
-  export function Fn<R extends Node = Node>(
-    jsFunc: (inputs: ShaderNodeObject<Node>[]) => ShaderNodeObject<R>,
-    layout: { layout?: unknown },
-  ): ShaderCallable<R>
-
-  /**
-   * Fn with object params + layout
-   */
-  export function Fn<T extends Record<string, unknown>, R extends Node = Node>(
-    jsFunc: (inputs: T) => ShaderNodeObject<R>,
-    layout: { layout?: unknown },
-  ): ShaderCallable<R>
-}
+export {}
