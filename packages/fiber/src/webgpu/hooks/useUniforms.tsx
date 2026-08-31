@@ -8,6 +8,7 @@ import { useCompareMemoize } from './useCompareMemoize'
 import { is } from '../../core/utils'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { isUniformNode } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 
 //* Types ==============================
@@ -25,43 +26,39 @@ export type ClearUniformsFn = (scope?: string) => void
 export type RebuildUniformsFn = (scope?: string) => void
 
 /** Return type with utils included */
-export type UniformsWithUtils<T extends UniformRecord = UniformRecord> = T & {
+export type UniformsWithUtils<T extends UniformRecord | UniformStore = UniformRecord> = T & {
   removeUniforms: RemoveUniformsFn
   clearUniforms: ClearUniformsFn
   rebuildUniforms: RebuildUniformsFn
 }
 
-/** Type guard to check if a value is a UniformNode vs a scope object */
-const isUniformNode = (value: unknown): value is UniformNode =>
-  value !== null && typeof value === 'object' && 'value' in value && 'uuid' in value
-
 //* Hook Overloads ==============================
-
-// Get all uniforms (returns full structure with root uniforms and scopes + utils)
-export function useUniforms(): UniformsWithUtils<UniformRecord & Record<string, UniformRecord>>
-
-// Get uniforms from a specific scope (+ utils)
-export function useUniforms(scope: string): UniformsWithUtils
 
 // Create/get uniforms at root level (no scope) - function (+ utils)
 export function useUniforms<T extends UniformInputRecord>(
   creator: UniformCreator<T>,
-): UniformsWithUtils<UniformRecord<UniformNode>>
+): UniformsWithUtils<UniformNodesFor<T>>
 
 // Create/get uniforms within a scope - function (+ utils)
 export function useUniforms<T extends UniformInputRecord>(
   creator: UniformCreator<T>,
   scope: string,
-): UniformsWithUtils<UniformRecord<UniformNode>>
+): UniformsWithUtils<UniformNodesFor<T>>
 
 // Create/get uniforms at root level (no scope) - object (+ utils)
-export function useUniforms<T extends UniformInputRecord>(uniforms: T): UniformsWithUtils<UniformRecord<UniformNode>>
+export function useUniforms<T extends UniformInputRecord>(uniforms: T): UniformsWithUtils<UniformNodesFor<T>>
 
 // Create/get uniforms within a scope - object (+ utils)
 export function useUniforms<T extends UniformInputRecord>(
   uniforms: T,
   scope: string,
-): UniformsWithUtils<UniformRecord<UniformNode>>
+): UniformsWithUtils<UniformNodesFor<T>>
+
+// Get all uniforms (returns full structure with root uniforms and scopes + utils)
+export function useUniforms(): UniformsWithUtils<UniformStore>
+
+// Get uniforms from a specific scope (+ utils)
+export function useUniforms(scope: string): UniformsWithUtils
 
 //* Hook Implementation ==============================
 
@@ -138,7 +135,7 @@ export function useUniforms<T extends UniformInputRecord>(
 export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   creatorOrScope?: UniformCreator<T> | T | string,
   scope?: string,
-): UniformsWithUtils<UniformRecord> | UniformsWithUtils<UniformRecord & Record<string, UniformRecord>> {
+): UniformsWithUtils<UniformRecord> | UniformsWithUtils<UniformStore> {
   const store = usePrimaryStore()
 
   //* Utils ==============================
@@ -173,7 +170,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // dequal compares Colors/Vectors/numbers instead of nodes with different uuids.
   // Without this, useUniforms({ uColor: color('red') }) would see different nodes
   // on each render (different uuid) and trigger unnecessary updates.
-  const inputForMemoization = useMemo(() => {
+  const processedInput = useMemo(() => {
     let raw = creatorOrScope
 
     // If a function, execute it and get what it returns
@@ -193,16 +190,16 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
       for (const [key, value] of Object.entries(raw)) {
         normalized[key] = vectorize(value)
       }
-      return normalized
+      return { candidates: raw, normalized }
     }
 
-    return raw
+    return { candidates: raw, normalized: raw }
   }, [creatorOrScope, store])
 
   // Deep-compare to detect actual value changes (not just reference changes)
   // Now compares extracted values (Colors, Vectors, numbers) not TSL nodes
   // dequal handles THREE.Color comparison via r/g/b properties
-  const memoizedInput = useCompareMemoize(inputForMemoization, true)
+  const memoizedInput = useCompareMemoize(processedInput.normalized, true)
 
   // Determine if we're in reader mode (no creator function/object)
   const isReader = memoizedInput === undefined || typeof memoizedInput === 'string'
@@ -213,11 +210,12 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
   //* Main Logic ==============================
 
-  // Creator mode: register the (normalized, deep-compared) definitions through
-  // the shared staged-registration mechanism — new uniforms are created
-  // render-phase but only land on the store in the commit-phase flush. Value
-  // changes on reused uniforms are reconciled in place (GPU-only, no store
-  // write). In reader mode this stages nothing and returns {}.
+  // Creator mode: use normalized definitions only as the deep-comparison trigger,
+  // while registering and reconciling the original candidates. This preserves
+  // existing UniformNode identity and shader metadata without sacrificing stable
+  // comparison for newly constructed TSL nodes. New uniforms are staged during
+  // render and land on the store in the commit-phase flush; reused uniforms are
+  // reconciled in place (GPU-only, no store write).
   const created = useScopedResource<unknown, UniformNode>({
     store,
     kind: 'uniforms',
@@ -226,8 +224,9 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     input: memoizedInput,
     create: () => {
       if (isReader) return {}
-      if (typeof memoizedInput !== 'object' || memoizedInput === null) throw new Error('Invalid uniform input')
-      return memoizedInput as Record<string, unknown>
+      if (typeof processedInput.candidates !== 'object' || processedInput.candidates === null)
+        throw new Error('Invalid uniform input')
+      return processedInput.candidates as Record<string, unknown>
     },
     prepare: (name, candidate) => createUniform(name, candidate, scope),
     reconcile: (existing, candidate) => {
@@ -253,9 +252,9 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // Read-only: all uniforms / a specific scope (guard against a uniform stored
   // under the requested name), reactive via storeUniforms. Creator mode returns
   // the entries registered above.
-  let uniforms: UniformRecord | (UniformRecord & Record<string, UniformRecord>) = created
+  let uniforms: UniformRecord | UniformStore = created
   if (memoizedInput === undefined) {
-    uniforms = storeUniforms as UniformRecord & Record<string, UniformRecord>
+    uniforms = storeUniforms
   } else if (typeof memoizedInput === 'string') {
     const scopeData = storeUniforms[memoizedInput]
     uniforms = scopeData && !isUniformNode(scopeData) ? (scopeData as UniformRecord) : {}

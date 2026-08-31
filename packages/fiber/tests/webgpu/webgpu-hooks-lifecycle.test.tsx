@@ -44,6 +44,8 @@ import {
 } from '../../src/webgpu'
 import type { RootStore } from '../../src'
 
+type UniformUtils = Pick<ReturnType<typeof useUniforms>, 'removeUniforms' | 'clearUniforms' | 'rebuildUniforms'>
+
 const noop = () => {}
 const makeStore = () => createStore(noop, noop)
 
@@ -89,6 +91,28 @@ describe('useUniforms — lifecycle against the store', () => {
     expect((uniforms.uColor as any).value).toBeInstanceOf(THREE.Color)
   })
 
+  it('create: normalizes supported color and vector inputs', async () => {
+    const store = makeStore()
+    const directColor = new THREE.Color(0.25, 0.5, 0.75)
+
+    function Comp() {
+      useUniforms({
+        uDirectColor: directColor,
+        uRGB: { r: 255, g: 128, b: 0 },
+        uVector4: { x: 1, y: 2, z: 3, w: 4 },
+      })
+      return null
+    }
+
+    await act(async () => withStore(store, <Comp />))
+
+    const { uniforms } = store.getState()
+    expect((uniforms.uDirectColor as UniformNode).value).toBe(directColor)
+    expect((uniforms.uRGB as UniformNode).value).toBeInstanceOf(THREE.Color)
+    expect((uniforms.uRGB as UniformNode<THREE.Color>).value).toEqual(new THREE.Color(1, 128 / 255, 0))
+    expect((uniforms.uVector4 as UniformNode).value).toEqual(new THREE.Vector4(1, 2, 3, 4))
+  })
+
   it('create (scoped): stores under state.uniforms[scope] without leaking to root', async () => {
     const store = makeStore()
     function Comp() {
@@ -100,6 +124,30 @@ describe('useUniforms — lifecycle against the store', () => {
     const { uniforms } = store.getState()
     expect((uniforms.player as any).uHealth.value).toBe(100)
     expect(uniforms.uHealth).toBeUndefined()
+  })
+
+  it.each([
+    ['root', undefined],
+    ['scoped', 'player'],
+  ] as const)('create (%s): preserves an existing explicitly typed UniformNode', async (_, scope) => {
+    const store = makeStore()
+    const explicitUniform = uniform(1, 'int')
+
+    function Comp() {
+      if (scope) useUniforms({ uCounter: explicitUniform }, scope)
+      else useUniforms({ uCounter: explicitUniform })
+      return null
+    }
+
+    await act(async () => withStore(store, <Comp />))
+
+    const registered = scope
+      ? (store.getState().uniforms[scope] as UniformRecord).uCounter
+      : store.getState().uniforms.uCounter
+
+    expect(registered).toBe(explicitUniform)
+    expect(registered.nodeType).toBe('int')
+    expect(registered.value).toBe(1)
   })
 
   it('update: re-rendering a changed value mutates the SAME node in place (no churn)', async () => {
@@ -127,9 +175,36 @@ describe('useUniforms — lifecycle against the store', () => {
     expect(node1.value).toBe(5)
   })
 
+  it('update: re-vectorizes changed plain values on the existing node', async () => {
+    const store = makeStore()
+
+    function Comp({ position }: { position: { x: number; y: number; z: number } }) {
+      useUniforms({ uPosition: position })
+      return null
+    }
+
+    let r!: ReturnType<typeof withStore>
+    await act(async () => {
+      r = withStore(store, <Comp position={{ x: 1, y: 2, z: 3 }} />)
+    })
+    const initial = store.getState().uniforms.uPosition as UniformNode<THREE.Vector3>
+
+    await act(async () => {
+      r.rerender(
+        <context.Provider value={store}>
+          <Comp position={{ x: 4, y: 5, z: 6 }} />
+        </context.Provider>,
+      )
+    })
+
+    const updated = store.getState().uniforms.uPosition as UniformNode<THREE.Vector3>
+    expect(updated).toBe(initial)
+    expect(updated.value).toEqual(new THREE.Vector3(4, 5, 6))
+  })
+
   it('remove/clear utils: drop keys from the store', async () => {
     const store = makeStore()
-    let api!: ReturnType<typeof useUniforms>
+    let api!: UniformUtils
     function Comp() {
       api = useUniforms({ uA: 1, uB: 2 })
       return null
@@ -147,7 +222,7 @@ describe('useUniforms — lifecycle against the store', () => {
 
   it('rebuild: rebuildUniforms() clears the cache, bumps _hmrVersion, and re-creates', async () => {
     const store = makeStore()
-    let api!: ReturnType<typeof useUniforms>
+    let api!: UniformUtils
     function Comp() {
       api = useUniforms({ uTime: 0 })
       return null

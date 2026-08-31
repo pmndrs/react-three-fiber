@@ -573,6 +573,32 @@ describe('useNodes', () => {
       // TSL nodes have uuid or nodeType
       expect(nodes.colorNode.uuid || nodes.colorNode.nodeType).toBeDefined()
     })
+
+    it('should preserve legacy structural nodes through create, read, rebuild, and clear', async () => {
+      const legacyNode = { uuid: 'legacy-node', nodeType: 'float' }
+      let nodes: any = null
+      let mistakenScope: any = null
+      let store: any = null
+
+      function Test() {
+        nodes = useNodes(() => ({ legacyNode }))
+        mistakenScope = useNodes('legacyNode')
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+
+      expect(nodes.legacyNode).toBe(legacyNode)
+      expect(store.nodes.legacyNode).toBe(legacyNode)
+      expect(mistakenScope.legacyNode).toBeUndefined()
+
+      await act(async () => nodes.rebuildNodes('root'))
+      expect(store.nodes.legacyNode).toBe(legacyNode)
+
+      await act(async () => nodes.clearNodes('root'))
+      expect(store.nodes.legacyNode).toBeUndefined()
+    })
   })
 
   // Scopes ---------------------------------

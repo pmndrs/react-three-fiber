@@ -11,7 +11,7 @@
 import type { ThreeToJSXElements, ThreeElement } from '@react-three/fiber'
 import type * as THREE from 'three/webgpu'
 
-type ThreeJSXElements = ThreeToJSXElements<typeof THREE>
+type ThreeJSXElements = Omit<ThreeToJSXElements<typeof THREE>, 'audio' | 'source' | 'line' | 'path'>
 
 declare module 'react' {
   namespace JSX {

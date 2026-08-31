@@ -4,9 +4,10 @@ import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { isBufferLike } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
-import type { BufferLike, BufferRecord } from '#types'
+import type { BufferLike, BufferRecord, BufferStore } from '#types'
 
 //* Types ==============================
 
@@ -34,30 +35,11 @@ export type RebuildBuffersFn = (scope?: string) => void
 export type DisposeBuffersFn = (names: string | string[], scope?: string) => void
 
 /** Return type with utils included */
-export type BuffersWithUtils<T extends Record<string, BufferLike> = Record<string, BufferLike>> = T & {
+export type BuffersWithUtils<T extends BufferRecordType | BufferStore = BufferRecordType> = T & {
   removeBuffers: RemoveBuffersFn
   clearBuffers: ClearBuffersFn
   rebuildBuffers: RebuildBuffersFn
   disposeBuffers: DisposeBuffersFn
-}
-
-/**
- * Type guard to check if a value is a BufferLike vs a scope object.
- * Checks for TypedArrays, BufferAttributes, and TSL nodes.
- */
-const isBufferLike = (value: unknown): value is BufferLike => {
-  if (value === null || typeof value !== 'object') return false
-
-  // TypedArrays
-  if (ArrayBuffer.isView(value)) return true
-
-  // Three.js BufferAttribute (has isBufferAttribute property)
-  if ('isBufferAttribute' in value) return true
-
-  // TSL nodes (have uuid or nodeType)
-  if ('uuid' in value || 'nodeType' in value) return true
-
-  return false
 }
 
 /**
@@ -76,7 +58,7 @@ const disposeBuffer = (buffer: BufferLike): void => {
 //* Hook Overloads ==============================
 
 // Get all buffers (returns full structure with root buffers and scopes + utils)
-export function useBuffers(): BuffersWithUtils<Record<string, BufferLike> & Record<string, Record<string, BufferLike>>>
+export function useBuffers(): BuffersWithUtils<BufferStore>
 
 // Get buffers from a specific scope (+ utils)
 export function useBuffers(scope: string): BuffersWithUtils<Record<string, BufferLike>>
@@ -129,10 +111,7 @@ export function useBuffers<T extends Record<string, BufferLike>>(
 export function useBuffers<T extends Record<string, BufferLike>>(
   creatorOrScope?: BufferCreator<T> | string,
   scope?: string,
-):
-  | BuffersWithUtils<T>
-  | BuffersWithUtils<Record<string, BufferLike>>
-  | BuffersWithUtils<Record<string, BufferLike> & Record<string, Record<string, BufferLike>>> {
+): BuffersWithUtils<T> | BuffersWithUtils<BufferRecordType> | BuffersWithUtils<BufferStore> {
   const store = usePrimaryStore()
 
   //* Utils ==============================
@@ -205,9 +184,8 @@ export function useBuffers<T extends Record<string, BufferLike>>(
     },
     prepare: (name, buffer) => {
       // Apply label for debugging if it's a TSL node
-      if ('setName' in buffer && typeof buffer.setName === 'function') {
-        buffer.setName(scopedNodeName(scope, name))
-      }
+      const setName = Reflect.get(buffer, 'setName')
+      if (typeof setName === 'function') setName.call(buffer, scopedNodeName(scope, name))
       return buffer
     },
   })
@@ -216,9 +194,9 @@ export function useBuffers<T extends Record<string, BufferLike>>(
   // Case 2: String argument - that scope's buffers (guard against a buffer
   //         stored under the same name), reactive via storeBuffers
   // Case 3: Creator function - the entries registered above
-  let buffers: BufferRecordType | (BufferRecordType & Record<string, BufferRecordType>) = created
+  let buffers: BufferRecordType | BufferStore = created
   if (creatorOrScope === undefined) {
-    buffers = storeBuffers as BufferRecordType & Record<string, BufferRecordType>
+    buffers = storeBuffers
   } else if (typeof creatorOrScope === 'string') {
     const scopeData = storeBuffers[creatorOrScope]
     buffers = scopeData && !isBufferLike(scopeData) ? (scopeData as BufferRecordType) : {}

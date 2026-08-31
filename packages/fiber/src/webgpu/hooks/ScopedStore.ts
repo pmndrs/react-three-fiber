@@ -20,42 +20,47 @@
 
 import { withStagedOverlay } from '../../core/utils/resourceRegistry'
 import type { RootState, RootStore, BufferLike, StorageLike } from '#types'
+import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
+const INTERNAL_IS_LEAF = Symbol('ScopedStore.isLeaf')
 
 //* Public Types ==============================
-
-/** Keys reserved for methods (excluded from index signature) */
-type MethodKeys = 'scope' | 'has' | 'keys'
 
 /**
  * Type-safe wrapper interface for accessing nested store data.
  * Property access returns `T` (assumes leaf node).
  * Use `.scope(key)` for nested object access.
  *
- * Uses mapped type with key filtering to exclude method names from index signature,
- * allowing methods to have their correct return types.
  */
-export type ScopedStoreType<T> = {
-  /** Direct property access returns the leaf type T (method keys excluded) */
-  readonly [K in string as K extends MethodKeys ? never : K]: T
-} & {
+type ScopedStoreMethods<TLeaf> = {
   /** Access a nested scope by key. Returns empty wrapper if scope doesn't exist. */
-  scope(key: string): ScopedStoreType<T>
+  scope<TScope extends Record<string, TLeaf> = Record<string, TLeaf>>(key: string): ScopedStoreType<TLeaf, TScope>
   /** Check if a key exists in the store */
   has(key: string): boolean
   /** Get all keys in the store */
   keys(): string[]
 }
 
+export type ScopedStoreType<
+  TLeaf,
+  TEntries extends Record<string, TLeaf> = Record<string, TLeaf>,
+> = Readonly<TEntries> & ScopedStoreMethods<TLeaf>
+
+interface ScopedStoreData<TLeaf> {
+  [key: string]: TLeaf | ScopedStoreData<TLeaf>
+}
+
 //* ScopedStore Class ==============================
 
-class ScopedStore<T> {
-  private [INTERNAL_DATA]: Record<string, T | Record<string, T>>
+class ScopedStore<TLeaf> {
+  private [INTERNAL_DATA]: ScopedStoreData<TLeaf>
+  private [INTERNAL_IS_LEAF]: ResourceLeafGuard<TLeaf>
 
-  constructor(data: Record<string, T | Record<string, T>>) {
+  constructor(data: ScopedStoreData<TLeaf>, isLeaf: ResourceLeafGuard<TLeaf>) {
     this[INTERNAL_DATA] = data
+    this[INTERNAL_IS_LEAF] = isLeaf
 
     return new Proxy(this, {
       get(target, prop, receiver) {
@@ -100,12 +105,12 @@ class ScopedStore<T> {
    * Access a nested scope by key.
    * If the key doesn't exist or isn't a scope object, returns an empty ScopedStore.
    */
-  scope(key: string): ScopedStoreType<T> {
-    const data = this[INTERNAL_DATA][key]
-    // If it's an object (scope), wrap it; otherwise return empty wrapper
-    return new ScopedStore(
-      data && typeof data === 'object' ? (data as Record<string, T>) : {},
-    ) as unknown as ScopedStoreType<T>
+  scope<TScope extends Record<string, TLeaf> = Record<string, TLeaf>>(key: string): ScopedStoreType<TLeaf, TScope> {
+    const value = this[INTERNAL_DATA][key]
+    const isLeaf = this[INTERNAL_IS_LEAF]
+    const scope = value && typeof value === 'object' && !isLeaf(value) ? value : {}
+
+    return new ScopedStore(scope as ScopedStoreData<TLeaf>, isLeaf) as unknown as ScopedStoreType<TLeaf, TScope>
   }
 
   /**
@@ -130,8 +135,11 @@ class ScopedStore<T> {
  * @param data - The raw store data (uniforms or nodes from RootState)
  * @returns A ScopedStoreType wrapper with type-safe access
  */
-export function createScopedStore<T>(data: Record<string, any>): ScopedStoreType<T> {
-  return new ScopedStore(data) as unknown as ScopedStoreType<T>
+export function createScopedStore<TLeaf>(
+  data: ScopedStoreData<TLeaf>,
+  isLeaf: ResourceLeafGuard<TLeaf>,
+): ScopedStoreType<TLeaf> {
+  return new ScopedStore(data, isLeaf) as unknown as ScopedStoreType<TLeaf>
 }
 
 //* Creator State Type ==============================
@@ -143,8 +151,8 @@ export function createScopedStore<T>(data: Record<string, any>): ScopedStoreType
 export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
   /** Type-safe uniform access - property access returns UniformNode */
   uniforms: ScopedStoreType<UniformNode>
-  /** Type-safe node access - property access returns TSLNodeType (Node | ShaderCallable | ShaderNodeObject) */
-  nodes: ScopedStoreType<TSLNodeType>
+  /** Type-safe node access for real, callable, and legacy structural nodes */
+  nodes: ScopedStoreType<TSLNodeType | LegacyTSLNodeLike>
   /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */
   buffers: ScopedStoreType<BufferLike>
   /** Type-safe GPU storage access - property access returns StorageLike (StorageTexture, TSL nodes) */
@@ -179,7 +187,7 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
  */
 export function createLazyCreatorState(state: RootState, store?: RootStore): CreatorState {
   let _uniforms: ScopedStoreType<UniformNode> | null = null
-  let _nodes: ScopedStoreType<TSLNodeType> | null = null
+  let _nodes: ScopedStoreType<TSLNodeType | LegacyTSLNodeLike> | null = null
   let _buffers: ScopedStoreType<BufferLike> | null = null
   let _gpuStorage: ScopedStoreType<StorageLike> | null = null
 
@@ -189,22 +197,22 @@ export function createLazyCreatorState(state: RootState, store?: RootStore): Cre
   return Object.create(state, {
     uniforms: {
       get() {
-        return (_uniforms ??= createScopedStore<UniformNode>(view('uniforms')))
+        return (_uniforms ??= createScopedStore<UniformNode>(view('uniforms'), isUniformNode))
       },
     },
     nodes: {
       get() {
-        return (_nodes ??= createScopedStore<TSLNodeType>(view('nodes')))
+        return (_nodes ??= createScopedStore<TSLNodeType | LegacyTSLNodeLike>(view('nodes'), isTSLNode))
       },
     },
     buffers: {
       get() {
-        return (_buffers ??= createScopedStore<BufferLike>(view('buffers')))
+        return (_buffers ??= createScopedStore<BufferLike>(view('buffers'), isBufferLike))
       },
     },
     gpuStorage: {
       get() {
-        return (_gpuStorage ??= createScopedStore<StorageLike>(view('gpuStorage')))
+        return (_gpuStorage ??= createScopedStore<StorageLike>(view('gpuStorage'), isStorageLike))
       },
     },
   }) as CreatorState
