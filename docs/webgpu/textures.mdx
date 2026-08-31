@@ -1,0 +1,186 @@
+---
+title: Textures
+description: Load textures with useTexture and manage them with the reactive useTextures registry - enrollment, refcounted disposal, and when the registry re-renders.
+nav: 17
+---
+
+`useTexture` loads textures through three.js's `TextureLoader` with Suspense support. `useTextures` is a reactive registry that lets you reach those textures from anywhere in the tree and manage their GPU lifetime.
+
+`useTexture` does the **loading**; `useTextures` does the **access and lifecycle**. They're separate jobs on purpose.
+
+Both are exported from `@react-three/fiber` and work under either renderer, so the `@react-three/drei` `useTexture` is no longer required.
+
+> **Experimental (A5).** The `useTextures` API may change before it's stabilized.
+
+## useTexture
+
+```tsx
+import { useTexture } from '@react-three/fiber'
+
+// Single
+const diffuse = useTexture('/diffuse.png')
+
+// Array
+const [diffuse, normal] = useTexture(['/diffuse.png', '/normal.png'])
+
+// Record - the most convenient form, since it spreads into a material
+const props = useTexture({ map: '/diffuse.png', normalMap: '/normal.png' })
+return <meshStandardMaterial {...props} />
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `input` | `string \| string[] \| Record<string, string>` | URL, list of URLs, or a name to URL map. The return value mirrors the input shape. |
+| `options.onLoad` | `(texture) => void` | Called once when the texture(s) finish loading. Not called on a registry hit. |
+| `options.cache` | `boolean` | Enroll the result in the registry. Defaults to `true`. |
+
+Passing a bare function instead of `options` still works and is treated as `onLoad`:
+
+```tsx
+const floor = useTexture('/floor.jpg', (t) => {
+  t.wrapS = t.wrapT = THREE.RepeatWrapping
+})
+```
+
+### Registry enrollment
+
+`cache` defaults to `true`, so loading enrolls into the registry automatically. The same URL then returns the **same** `Texture` object everywhere, and that object outlives its last consumer.
+
+```tsx
+const diffuse = useTexture('/diffuse.png')
+diffuse.colorSpace = THREE.SRGBColorSpace
+
+// Elsewhere: the same object, with colorSpace already set
+const same = useTexture('/diffuse.png')
+```
+
+Pass `{ cache: false }` to skip registry enrollment for a texture:
+
+```tsx
+const scratch = useTexture('/scratch.png', { cache: false })
+```
+
+Registry reads in `useTexture` happen **once at mount**. A mounted `useTexture` does not re-render when the registry changes, so loading texture A never re-renders a component using texture B. To react to registry changes, use the selector form of `useTextures`.
+
+## useTextures
+
+`useTextures` returns a handle onto the registry, a `Map` of plain `Texture` objects keyed by URL (or by any key you choose for textures you register yourself).
+
+Calling `useTextures()` with no selector subscribes to the whole registry, so the component re-renders whenever a key is added or disposed. Pass a selector to narrow that to a single key. Reading with `get()` inside `useFrame` is live either way and needs no subscription.
+
+### Return value
+
+| Member | Type | Description |
+| --- | --- | --- |
+| `all` | `Map<string, Texture>` | The live registry. Treat as read-only. |
+| `get(input)` | `Texture \| undefined` (mirrors input shape) | Read one key, an array of keys, or a name to key map. |
+| `has(key)` | `boolean` | Whether a key exists. |
+| `add(key, texture)` | `void` | Register a texture that has no URL. Also accepts a record. |
+| `dispose(key, options?)` | `boolean` | Free GPU resources and remove the key. Refcount-aware. |
+| `disposeAll()` | `void` | Dispose everything and clear the registry. |
+
+### Reading textures
+
+```tsx
+import { useTexture, useTextures } from '@react-three/fiber'
+
+function Floor() {
+  // Load once, anywhere in the tree — registered by default
+  useTexture({
+    map: '/PavingStones092_1K_Color.jpg',
+    normalMap: '/PavingStones092_1K_Normal.jpg',
+  })
+  return null
+}
+
+function Wall() {
+  // Reach the same textures from a different component — the record form
+  // mirrors its input, so it drops straight into a material
+  const { map, normalMap } = useTextures().get({
+    map: '/PavingStones092_1K_Color.jpg',
+    normalMap: '/PavingStones092_1K_Normal.jpg',
+  })
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshStandardMaterial map={map} normalMap={normalMap} />
+    </mesh>
+  )
+}
+```
+
+### Registering textures without a URL
+
+Render targets and procedural textures have no URL to key off, so register them yourself:
+
+```tsx
+const textures = useTextures()
+textures.add('rt-main', renderTarget.texture)
+```
+
+## Lifecycle and disposal
+
+Each mounted `useTexture` consumer holds a reference on the keys it uses, and releases it on unmount.
+
+`dispose(key)` is refcount-aware. If the key is still referenced by a mounted consumer, it **warns to the console, skips the disposal, and returns `false`**:
+
+```tsx
+const textures = useTextures()
+
+textures.dispose('/diffuse.png') // false if still in use, and nothing is freed
+textures.dispose('/diffuse.png', { force: true }) // disposes regardless
+textures.disposeAll() // scene teardown
+```
+
+> **A reference count of zero does not free anything.** Unmounting the last consumer only releases the reference. The texture stays in the registry and keeps its GPU memory until `dispose` or `disposeAll` is called. That is deliberate: leaving a scene and coming back should not re-upload its textures. It does mean a long-lived app has to dispose the keys it is finished with.
+
+## When is the registry reactive? (and the flip-flop pattern)
+
+There are three distinct situations, and only one of them wants React reactivity:
+
+| Use case | Tool | Reactive? |
+| --- | --- | --- |
+| Load an asset by URL | `useTexture(url)` | No — the object never changes |
+| **Swap** which texture lives under a key (occasionally) | `useTextures(s => s.get(key))` | Yes — scoped to that one key |
+| Swap a texture **every frame** (ping-pong) | `registry.get(key)` inside `useFrame` | No — read it imperatively |
+
+Loading a URL never needs reactivity (the texture instance is stable), and a render target being drawn into updates *inside* three.js (`needsUpdate`) without changing the JS object — so neither involves React.
+
+The one case that does is a **flip-flop / ping-pong**: you keep two textures and swap which one a material reads. For an *occasional* swap (e.g. toggling an output on some event), subscribe to just that key with the selector form — only this component re-renders, and only when the slot actually changes:
+
+```tsx
+function Output() {
+  // Re-renders only when the texture under 'finalOutput' is swapped
+  const tex = useTextures((s) => s.get('finalOutput'))
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshBasicMaterial map={tex} />
+    </mesh>
+  )
+}
+
+// Elsewhere, from an event handler or effect (never during render,
+// since add() sets store state) — the Output component picks up texB
+useTextures().add('finalOutput', texB)
+```
+
+For a **per-frame** ping-pong, don't make React re-render every frame — read the current texture imperatively in the loop instead:
+
+```tsx
+function PingPong({ material }) {
+  const textures = useTextures()
+  useFrame((state) => {
+    const even = Math.floor(state.elapsed * 60) % 2 === 0
+    material.map = textures.get(even ? 'a' : 'b')
+  })
+  return null
+}
+```
+
+## Related
+
+- [Loading Textures](/tutorials/loading-textures) - tutorial introduction to texture loading
+- [Render Targets](/scene/render-targets) - creating the render targets you can register here
