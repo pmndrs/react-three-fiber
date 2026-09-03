@@ -55,7 +55,7 @@ export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
 >
 
 export type ThreeToJSXElements<T extends Record<string, any>> = {
-  [K in keyof T & string as Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
+  [K in keyof T & string as T[K] extends ConstructorRepresentation ? Uncapitalize<K> : never]: ThreeElement<T[K]>
 }
 
 type ThreeExports = typeof THREE
