@@ -48,11 +48,21 @@ declare global {
     passes: PassRecord & { scenePass: ScenePassNode }
   }
 
+  /**
+   * What a callback may return to register entries into `state.passes`.
+   *
+   * `scenePass` is reserved. The hook owns that entry and its lifecycle: it caches the pass it
+   * created, and `rebuild()` / `reset()` dispose that cached pass. A callback overwriting the
+   * store entry would leave the store pointing at a node the hook never disposes, and the hook
+   * disposing a pass nothing references. So returning it is a type error.
+   */
+  type RegisteredPasses = Record<string, import('three/webgpu').Node> & { scenePass?: never }
+
   /** Setup callback - runs first to configure MRT, create additional passes */
-  type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => PassRecord | void
+  type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
 
   /** Main callback - runs second to configure outputNode, create effect passes */
-  type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => PassRecord | void
+  type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
 
   /** Return type for useRenderPipeline hook */
   interface UseRenderPipelineReturn {

@@ -45,11 +45,12 @@ const { renderPipeline, passes } = useRenderPipeline()
 | `mainCB`  | `RenderPipelineMainCallback`  | Configure `outputNode` and create effect passes |
 | `setupCB` | `RenderPipelineSetupCallback` | Optional. Configure MRT on the scene pass     |
 
-Both callbacks receive the full RootState (uniforms, nodes, scene, camera, etc.). Returning an object from either callback registers those passes into `state.passes`.
+Both callbacks receive the full RootState (uniforms, nodes, scene, camera, etc.). Returning an object from either callback registers those passes into `state.passes`. The `scenePass` key is reserved for the hook's own pass and cannot be returned.
 
 ```typescript
-type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => PassRecord | void
-type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => PassRecord | void
+type RegisteredPasses = Record<string, Node> & { scenePass?: never }
+type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
+type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
 ```
 
 ### Return Value

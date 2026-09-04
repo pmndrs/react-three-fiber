@@ -6,6 +6,7 @@ import { pass } from '#three/tsl'
 // Types are declared globally in types/renderPipeline.d.ts:
 // - ScenePassNode
 // - PassRecord
+// - RegisteredPasses
 // - RenderPipelineCallbackState
 // - RenderPipelineSetupCallback
 // - RenderPipelineMainCallback

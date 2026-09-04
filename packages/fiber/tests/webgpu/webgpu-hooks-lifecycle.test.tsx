@@ -747,6 +747,14 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     expect(disposeSpy).not.toHaveBeenCalled()
   })
 
+  it('type: a callback cannot return scenePass, the hook owns that entry', () => {
+    // Compile-time only. If this line stops erroring, the reserved-key guard on
+    // RegisteredPasses has regressed and a callback could swap out the pass the hook disposes.
+    // @ts-expect-error scenePass is reserved
+    const cb: RenderPipelineMainCallback = ({ passes }) => ({ scenePass: passes.scenePass })
+    expect(cb).toBeTypeOf('function')
+  })
+
   it('reset(): disposes the scenePass it drops', async () => {
     const { store, api } = await mountPipeline()
     const scenePass = store.getState().passes.scenePass!
