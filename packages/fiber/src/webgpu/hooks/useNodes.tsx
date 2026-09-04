@@ -5,22 +5,16 @@ import { clearResourceEntries, rebuildResource, removeResourceEntries } from '..
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
+import type { NodeLike } from '../../../types/store'
 
 //* Types ==============================
 
 /**
- * Minimal interface for TSL nodes.
- * Used instead of Three.js's Node type because the @types/three definitions
- * have inconsistencies where OperatorNode, ConstNode, etc. don't properly
- * extend Node with all required properties.
+ * Minimal interface for TSL nodes. The definition lives with the store types as `NodeLike`, so
+ * the shape creators may return and the shape `state.nodes` holds are the same type by
+ * construction. See `NodeLike` for why this is structural rather than three's `Node`.
  */
-export interface TSLNodeLike {
-  uuid?: string
-  nodeType?: string | null
-  /** label method for chaining - sets the node's label and returns self */
-  label?: ((label: string) => TSLNodeLike) | string
-  setName?: (name: string) => this
-}
+export type TSLNodeLike = NodeLike
 
 /** TSL node type - alias for compatibility */
 export type TSLNode = TSLNodeLike

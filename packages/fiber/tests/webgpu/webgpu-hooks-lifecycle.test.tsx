@@ -552,9 +552,10 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
   function seedRenderer(store: RootStore) {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera()
-    // A bare object is enough: the render pipeline only stores the renderer reference;
-    // it does not touch the GPU until .render() (Tier 2).
-    const renderer = {} as any
+    // A near-bare object is enough: the render pipeline only stores the renderer reference;
+    // it does not touch the GPU until .render() (Tier 2). The brand is what the hook narrows
+    // the renderer union on, so the fake must carry it like a real WebGPURenderer does.
+    const renderer = { isWebGPURenderer: true } as any
     store.setState({ scene, camera, renderer, isLegacy: false } as any)
     return { scene, camera, renderer }
   }
@@ -575,6 +576,11 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     expect(typeof (state.renderPipeline as any).render).toBe('function')
     expect(state.passes.scenePass).toBeDefined()
     expect(api.isReady).toBe(true)
+    // Type-level: isReady discriminates the return, narrowing renderPipeline to non-null.
+    if (api.isReady) {
+      const pipeline: THREE.RenderPipeline = api.renderPipeline
+      expect(pipeline).toBe(state.renderPipeline)
+    }
   })
 
   it('setupCB + mainCB run and their returned passes land on the store', async () => {
@@ -695,12 +701,12 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
 
   it('rebuild(): disposes the replaced scenePass instead of stranding its render target', async () => {
     const { store, api } = await mountPipeline()
-    const firstPass = store.getState().passes.scenePass as any
+    const firstPass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(firstPass, 'dispose')
 
     await act(async () => api().rebuild())
 
-    const secondPass = store.getState().passes.scenePass as any
+    const secondPass = store.getState().passes.scenePass!
     expect(secondPass).not.toBe(firstPass)
     expect(disposeSpy).toHaveBeenCalledTimes(1)
   })
@@ -711,12 +717,12 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     // render target -- worse than the leak being fixed.
     const { store, api } = await mountPipeline()
     const pipeline = store.getState().renderPipeline as any
-    const firstPass = store.getState().passes.scenePass as any
+    const firstPass = store.getState().passes.scenePass!
     expect(pipeline.outputNode).toBe(firstPass)
 
     await act(async () => api().rebuild())
 
-    const secondPass = store.getState().passes.scenePass as any
+    const secondPass = store.getState().passes.scenePass!
     expect(pipeline.outputNode).toBe(secondPass)
     expect(pipeline.outputNode).not.toBe(firstPass)
   })
@@ -732,7 +738,7 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     await act(async () => {
       ;({ rerender } = withStore(store, <Comp />))
     })
-    const scenePass = store.getState().passes.scenePass as any
+    const scenePass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(scenePass, 'dispose')
 
     await act(async () =>
@@ -747,9 +753,17 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     expect(disposeSpy).not.toHaveBeenCalled()
   })
 
+  it('type: a callback cannot return scenePass, the hook owns that entry', () => {
+    // Compile-time only. If this line stops erroring, the reserved-key guard on
+    // RegisteredPasses has regressed and a callback could swap out the pass the hook disposes.
+    // @ts-expect-error scenePass is reserved
+    const cb: RenderPipelineMainCallback = ({ passes }) => ({ scenePass: passes.scenePass })
+    expect(cb).toBeTypeOf('function')
+  })
+
   it('reset(): disposes the scenePass it drops', async () => {
     const { store, api } = await mountPipeline()
-    const scenePass = store.getState().passes.scenePass as any
+    const scenePass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(scenePass, 'dispose')
 
     await act(async () => api().reset())
