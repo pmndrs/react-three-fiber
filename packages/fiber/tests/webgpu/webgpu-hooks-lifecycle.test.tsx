@@ -552,9 +552,10 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
   function seedRenderer(store: RootStore) {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera()
-    // A bare object is enough: the render pipeline only stores the renderer reference;
-    // it does not touch the GPU until .render() (Tier 2).
-    const renderer = {} as any
+    // A near-bare object is enough: the render pipeline only stores the renderer reference;
+    // it does not touch the GPU until .render() (Tier 2). The brand is what the hook narrows
+    // the renderer union on, so the fake must carry it like a real WebGPURenderer does.
+    const renderer = { isWebGPURenderer: true } as any
     store.setState({ scene, camera, renderer, isLegacy: false } as any)
     return { scene, camera, renderer }
   }

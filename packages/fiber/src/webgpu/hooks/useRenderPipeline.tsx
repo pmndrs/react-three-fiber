@@ -137,6 +137,12 @@ export function useRenderPipeline(
 
     if (!renderer || !scene || !camera) return
 
+    // Narrow the renderer union to WebGPURenderer. `isLegacy` above is the user-facing check;
+    // this one is what lets the type system follow. Only reachable if the two disagree.
+    if (!('isWebGPURenderer' in renderer)) {
+      throw new Error('useRenderPipeline: renderer is not a WebGPURenderer but isLegacy is false.')
+    }
+
     const state = store.getState()
     const set = store.setState
 
@@ -147,7 +153,7 @@ export function useRenderPipeline(
       //* Create RenderPipeline if needed ==============================
       let justCreatedPipeline = false
       if (!pipeline) {
-        pipeline = new THREE.RenderPipeline(renderer as THREE.WebGPURenderer)
+        pipeline = new THREE.RenderPipeline(renderer)
         justCreatedPipeline = true
       }
 
@@ -206,6 +212,8 @@ export function useRenderPipeline(
           const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
             renderPipeline: pipeline,
             passes: { ...currentPasses, scenePass },
+            renderer,
+            isLegacy: false as const,
           })
           const setupResult = setupCBRef.current(freshState)
 
@@ -220,6 +228,8 @@ export function useRenderPipeline(
           const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
             renderPipeline: pipeline,
             passes: { ...currentPasses, scenePass },
+            renderer,
+            isLegacy: false as const,
           })
           const mainResult = mainCBRef.current(freshState)
 

@@ -42,10 +42,15 @@ declare global {
    *
    * `passes.scenePass` is required here: the hook installs the default scene pass before either
    * callback runs, so callbacks can use it without a guard or a cast.
+   *
+   * `renderer` is narrowed to `WebGPURenderer` and `isLegacy` to `false`: the hook throws under
+   * the legacy renderer before either callback can run, so a callback never sees WebGL.
    */
   type RenderPipelineCallbackState = RootState & {
     renderPipeline: ThreeRenderPipeline
     passes: PassRecord & { scenePass: ScenePassNode }
+    renderer: import('three/webgpu').WebGPURenderer
+    isLegacy: false
   }
 
   /**
