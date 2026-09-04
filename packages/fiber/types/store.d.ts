@@ -42,6 +42,33 @@ export type BufferRecord = Record<string, BufferLike>
  */
 export type BufferStore = Record<string, BufferLike | BufferRecord>
 
+//* Node Types (useNodes) ========================================
+
+/**
+ * Structural shape of a TSL node as stored on `state.nodes`.
+ *
+ * Deliberately minimal rather than three's nominal `Node`: in @types/three several node classes
+ * TSL hands back (OperatorNode, ConstNode, ...) do not extend `Node` cleanly, so a `Node` bound
+ * would reject values `useNodes` creators legitimately return. This is the same shape
+ * `useNodes` already constrains creators to (`TSLNodeLike`).
+ */
+export interface NodeLike {
+  uuid?: string
+  nodeType?: string | null
+  /** label method for chaining - sets the node's label and returns self */
+  label?: ((label: string) => NodeLike) | string
+  setName?: (name: string) => this
+}
+
+/** Flat record of TSL nodes (no nested scopes) */
+export type NodeRecord = Record<string, NodeLike>
+
+/**
+ * Node store that can contain both root-level nodes and scoped node objects.
+ * Structure: { wobble: OperatorNode, fx: { blur: ShaderCallable } }
+ */
+export type NodeStore = Record<string, NodeLike | NodeRecord>
+
 //* Storage Types (useGPUStorage) ========================================
 
 /**
@@ -301,7 +328,7 @@ export interface RootState {
   /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
   uniforms: UniformStore
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
-  nodes: Record<string, any>
+  nodes: NodeStore
   /** Global TSL buffer nodes - root-level buffers + scoped sub-objects. Use useBuffers() hook */
   buffers: BufferStore
   /** Global GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() hook */
