@@ -10,6 +10,7 @@ import { pass } from '#three/tsl'
 // - RenderPipelineCallbackState
 // - RenderPipelineSetupCallback
 // - RenderPipelineMainCallback
+// - UseRenderPipelineActions
 // - UseRenderPipelineReturn
 
 //* Hook Implementation ==============================
@@ -274,15 +275,12 @@ export function useRenderPipeline(
   const passes = useThree((s) => s.passes)
   const renderPipeline = useThree((s) => s.renderPipeline)
 
-  return {
-    passes,
-    renderPipeline,
-    clearPasses,
-    reset,
-    rebuild,
-    // isReady indicates if RenderPipeline is configured and ready for rendering
-    isReady: renderPipeline !== null,
-  }
+  const actions: UseRenderPipelineActions = { passes, clearPasses, reset, rebuild }
+
+  // Two explicit literals rather than `isReady: renderPipeline !== null`, so the discriminated
+  // union in UseRenderPipelineReturn is built from a narrowed value instead of asserted.
+  if (renderPipeline) return { ...actions, isReady: true, renderPipeline }
+  return { ...actions, isReady: false, renderPipeline: null }
 }
 
 export default useRenderPipeline

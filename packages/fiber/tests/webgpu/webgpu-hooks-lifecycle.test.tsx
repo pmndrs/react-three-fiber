@@ -576,6 +576,11 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     expect(typeof (state.renderPipeline as any).render).toBe('function')
     expect(state.passes.scenePass).toBeDefined()
     expect(api.isReady).toBe(true)
+    // Type-level: isReady discriminates the return, narrowing renderPipeline to non-null.
+    if (api.isReady) {
+      const pipeline: THREE.RenderPipeline = api.renderPipeline
+      expect(pipeline).toBe(state.renderPipeline)
+    }
   })
 
   it('setupCB + mainCB run and their returned passes land on the store', async () => {

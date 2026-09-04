@@ -56,14 +56,19 @@ type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => Regis
 ### Return Value
 
 ```typescript
-interface UseRenderPipelineReturn {
+type UseRenderPipelineReturn = {
   passes: PassRecord // All registered passes
-  renderPipeline: RenderPipeline | null
   clearPasses: () => void // Clear all passes
   reset: () => void // Reset the RenderPipeline instance
   rebuild: () => void // Force callbacks to re-run
-  isReady: boolean // True once RenderPipeline is configured
-}
+} & ({ isReady: true; renderPipeline: RenderPipeline } | { isReady: false; renderPipeline: null })
+```
+
+The return is discriminated on `isReady`, so checking it narrows `renderPipeline` to non-null:
+
+```tsx
+const { isReady, renderPipeline } = useRenderPipeline()
+if (isReady) renderPipeline.needsUpdate = true // RenderPipeline, not RenderPipeline | null
 ```
 
 ## You must set outputNode

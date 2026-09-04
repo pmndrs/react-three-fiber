@@ -69,19 +69,38 @@ declare global {
   /** Main callback - runs second to configure outputNode, create effect passes */
   type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
 
-  /** Return type for useRenderPipeline hook */
-  interface UseRenderPipelineReturn {
+  /** The imperative half of useRenderPipeline's return value, present in every state */
+  interface UseRenderPipelineActions {
     /** Current passes from state */
     passes: PassRecord
-    /** RenderPipeline instance (null if not initialized) */
-    renderPipeline: ThreeRenderPipeline | null
     /** Clear all passes from state */
     clearPasses: () => void
     /** Reset RenderPipeline entirely (clears PP + passes) */
     reset: () => void
     /** Re-run setup/main callbacks with current closure values */
     rebuild: () => void
-    /** True when RenderPipeline is configured and ready */
-    isReady: boolean
   }
+
+  /**
+   * Return type for useRenderPipeline hook, discriminated on `isReady`.
+   *
+   * `if (isReady)` narrows `renderPipeline` to non-null, which is what the docs already tell
+   * callers to check. `passes.scenePass` deliberately stays optional in the ready branch:
+   * `clearPasses()` empties the record while leaving the pipeline in place.
+   */
+  type UseRenderPipelineReturn = UseRenderPipelineActions &
+    (
+      | {
+          /** True when RenderPipeline is configured and ready */
+          isReady: true
+          /** RenderPipeline instance */
+          renderPipeline: ThreeRenderPipeline
+        }
+      | {
+          /** False until the pipeline has been created */
+          isReady: false
+          /** Not initialized yet, or torn down by reset() */
+          renderPipeline: null
+        }
+    )
 }
