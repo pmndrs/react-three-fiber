@@ -26,7 +26,33 @@ declare global {
    * ergonomics. The result is three's structural type, so members stay in sync with the
    * installed three instead of needing to be mirrored by hand.
    */
-  type UniformNode<T = unknown> = import('three/webgpu').UniformNode<unknown, T>
+  type UniformNode<T = unknown> = import('three/webgpu').UniformNode<UniformNodeTypeFor<T>, T>
+
+  /**
+   * three's node type name for a uniform value type, mirroring the `uniform()` overloads.
+   * A `UniformNode<number>` is a `Node<'float'>`, so TSL math (`.mul`, `.add`, ...) accepts it.
+   * Unknown or unlisted value types resolve to `unknown`, which TSL math rejects: narrow with
+   * `as UniformNode<number>` (or the matching value type) at the call site.
+   */
+  type UniformNodeTypeFor<T> = T extends number
+    ? 'float'
+    : T extends boolean
+      ? 'bool'
+      : T extends import('three/webgpu').Color
+        ? 'color'
+        : T extends import('three/webgpu').Vector2
+          ? 'vec2'
+          : T extends import('three/webgpu').Vector3
+            ? 'vec3'
+            : T extends import('three/webgpu').Vector4
+              ? 'vec4'
+              : T extends import('three/webgpu').Matrix2
+                ? 'mat2'
+                : T extends import('three/webgpu').Matrix3
+                  ? 'mat3'
+                  : T extends import('three/webgpu').Matrix4
+                    ? 'mat4'
+                    : unknown
 
   /**
    * ShaderCallable - the return type of Fn()
