@@ -212,8 +212,15 @@ Passes live in `state.passes`:
 ```typescript
 interface PassRecord {
   scenePass?: PassNode // three's PassNode, created automatically by the hook
-  [key: string]: any // Custom passes you register
+  [key: string]: Node // Anything you register: texture reads, effect nodes, extra passes
 }
+```
+
+Registered entries are typed as three's `Node`. Narrow them at the call site when you need a specific member:
+
+```tsx
+const { passes } = useThree()
+const velocity = passes.velocity as TextureNode
 ```
 
 Inside `mainCB` and `setupCB`, `passes.scenePass` is typed as required: the hook installs it before either callback runs, so no guard or cast is needed:

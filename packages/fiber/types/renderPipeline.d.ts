@@ -25,11 +25,16 @@ declare global {
    * `scenePass` is the only key the library owns. It is optional here because this is also the
    * shape of `state.passes`, which is `{}` before the pipeline exists and again after `reset()`
    * or `clearPasses()`. Inside the callbacks it is always present; see
-   * {@link RenderPipelineCallbackState}. Every other key is user-registered and stays open.
+   * {@link RenderPipelineCallbackState}.
+   *
+   * Every other key is user-registered, via a callback's return value. Those are TSL nodes of
+   * any kind, not only passes: texture reads of an MRT attachment, effect nodes, extra
+   * `pass()` instances. `Node` is the common base, so that is the bound. Narrow at the call
+   * site when you need a member, e.g. `passes.velocity as TextureNode`.
    */
   interface PassRecord {
     scenePass?: ScenePassNode
-    [key: string]: any
+    [key: string]: import('three/webgpu').Node
   }
 
   /**
