@@ -4,6 +4,7 @@ import * as THREE from '#three'
 import { pass } from '#three/tsl'
 
 // Types are declared globally in types/renderPipeline.d.ts:
+// - ScenePassNode
 // - PassRecord
 // - RenderPipelineCallbackState
 // - RenderPipelineSetupCallback
@@ -66,7 +67,7 @@ export function useRenderPipeline(
 
   // Track the scene/camera used for the current scenePass to avoid unnecessary recreation
   // Recreating scenePass triggers TSL node graph rebuild which can corrupt SkinningNode refs
-  const scenePassCacheRef = useRef<{ sceneUuid: string; cameraUuid: string; scenePass: any } | null>(null)
+  const scenePassCacheRef = useRef<{ sceneUuid: string; cameraUuid: string; scenePass: ScenePassNode } | null>(null)
 
   // Force scenePass recreation on the next effect run, without dropping the reference to the
   // outgoing pass. Clearing scenePassCacheRef directly would strand it: three does not free
@@ -107,7 +108,7 @@ export function useRenderPipeline(
     })
     // Safe to dispose synchronously here: the pipeline is torn down in the same tick, so nothing
     // is left referencing the pass. This is explicit user-requested cleanup.
-    scenePassCacheRef.current?.scenePass?.dispose?.()
+    scenePassCacheRef.current?.scenePass.dispose()
     callbacksRanRef.current = false
     scenePassCacheRef.current = null
     forceScenePassRebuildRef.current = false
@@ -140,7 +141,7 @@ export function useRenderPipeline(
 
     try {
       let pipeline = state.renderPipeline
-      let currentPasses = { ...state.passes } as PassRecord
+      let currentPasses: PassRecord = { ...state.passes }
 
       //* Create RenderPipeline if needed ==============================
       let justCreatedPipeline = false
@@ -160,9 +161,9 @@ export function useRenderPipeline(
 
       // The pass being replaced, if any. Disposed at the end of this effect, once the new graph
       // is installed -- never before, or the pipeline would render against a freed target.
-      let outgoingScenePass: any = null
+      let outgoingScenePass: ScenePassNode | null = null
 
-      let scenePass
+      let scenePass: ScenePassNode
       if (cacheValid) {
         scenePass = scenePassCacheRef.current!.scenePass
       } else {
@@ -203,7 +204,7 @@ export function useRenderPipeline(
         if (setupCBRef.current) {
           const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
             renderPipeline: pipeline,
-            passes: currentPasses,
+            passes: { ...currentPasses, scenePass },
           })
           const setupResult = setupCBRef.current(freshState)
 
@@ -217,7 +218,7 @@ export function useRenderPipeline(
         if (mainCBRef.current) {
           const freshState: RenderPipelineCallbackState = Object.assign({}, store.getState(), {
             renderPipeline: pipeline,
-            passes: currentPasses,
+            passes: { ...currentPasses, scenePass },
           })
           const mainResult = mainCBRef.current(freshState)
 
@@ -245,7 +246,7 @@ export function useRenderPipeline(
       // Now that the new graph is installed and compiled, the replaced pass is unreachable.
       // three does not free render-target GPU memory on GC, so without this every rebuild()
       // stranded a full-screen target per MRT attachment. See #3854.
-      if (outgoingScenePass && outgoingScenePass !== scenePass) outgoingScenePass.dispose?.()
+      if (outgoingScenePass && outgoingScenePass !== scenePass) outgoingScenePass.dispose()
     } catch (error) {
       // Surfaced rather than rethrown: throwing here would take down the whole tree for what is
       // usually a recoverable pass-configuration mistake. Logged loudly so a failed pipeline

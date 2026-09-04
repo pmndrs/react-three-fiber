@@ -48,8 +48,8 @@ const { renderPipeline, passes } = useRenderPipeline()
 Both callbacks receive the full RootState (uniforms, nodes, scene, camera, etc.). Returning an object from either callback registers those passes into `state.passes`.
 
 ```typescript
-type RenderPipelineMainCallback = (state: RootState) => PassRecord | void
-type RenderPipelineSetupCallback = (state: RootState) => PassRecord | void
+type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => PassRecord | void
+type RenderPipelineSetupCallback = (state: RenderPipelineCallbackState) => PassRecord | void
 ```
 
 ### Return Value
@@ -211,16 +211,25 @@ Passes live in `state.passes`:
 
 ```typescript
 interface PassRecord {
-  scenePass: PassNode // Always created automatically
+  scenePass?: PassNode // three's PassNode, created automatically by the hook
   [key: string]: any // Custom passes you register
 }
 ```
 
-Access them from a callback, from `useThree()`, or from `useRenderPipeline()`:
+Inside `mainCB` and `setupCB`, `passes.scenePass` is typed as required: the hook installs it before either callback runs, so no guard or cast is needed:
+
+```tsx
+useRenderPipeline(({ renderPipeline, passes }) => {
+  const beauty = passes.scenePass.getTextureNode() // PassNode, no cast
+  renderPipeline.outputNode = bloom(beauty)
+})
+```
+
+From `useThree()` or `useRenderPipeline()` it is optional, since `state.passes` is empty before the pipeline exists and after `reset()` or `clearPasses()`:
 
 ```tsx
 const { passes } = useThree()
-console.log(passes.scenePass)
+passes.scenePass?.getTextureNode()
 ```
 
 ## Manual Control

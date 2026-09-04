@@ -313,7 +313,7 @@ export interface RootState {
   /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
   renderPipeline: ThreeRenderPipeline | null
   /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
-  passes: Record<string, any>
+  passes: PassRecord
   /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
   _hmrVersion: number
   /** Internal: whether setSize() has taken ownership of canvas dimensions */

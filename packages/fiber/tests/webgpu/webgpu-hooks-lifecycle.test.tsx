@@ -695,12 +695,12 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
 
   it('rebuild(): disposes the replaced scenePass instead of stranding its render target', async () => {
     const { store, api } = await mountPipeline()
-    const firstPass = store.getState().passes.scenePass as any
+    const firstPass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(firstPass, 'dispose')
 
     await act(async () => api().rebuild())
 
-    const secondPass = store.getState().passes.scenePass as any
+    const secondPass = store.getState().passes.scenePass!
     expect(secondPass).not.toBe(firstPass)
     expect(disposeSpy).toHaveBeenCalledTimes(1)
   })
@@ -711,12 +711,12 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     // render target -- worse than the leak being fixed.
     const { store, api } = await mountPipeline()
     const pipeline = store.getState().renderPipeline as any
-    const firstPass = store.getState().passes.scenePass as any
+    const firstPass = store.getState().passes.scenePass!
     expect(pipeline.outputNode).toBe(firstPass)
 
     await act(async () => api().rebuild())
 
-    const secondPass = store.getState().passes.scenePass as any
+    const secondPass = store.getState().passes.scenePass!
     expect(pipeline.outputNode).toBe(secondPass)
     expect(pipeline.outputNode).not.toBe(firstPass)
   })
@@ -732,7 +732,7 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     await act(async () => {
       ;({ rerender } = withStore(store, <Comp />))
     })
-    const scenePass = store.getState().passes.scenePass as any
+    const scenePass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(scenePass, 'dispose')
 
     await act(async () =>
@@ -749,7 +749,7 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
 
   it('reset(): disposes the scenePass it drops', async () => {
     const { store, api } = await mountPipeline()
-    const scenePass = store.getState().passes.scenePass as any
+    const scenePass = store.getState().passes.scenePass!
     const disposeSpy = vi.spyOn(scenePass, 'dispose')
 
     await act(async () => api().reset())
