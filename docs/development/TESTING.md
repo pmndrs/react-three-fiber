@@ -159,11 +159,11 @@ The local full gate and the CI workflow **must run the same checks in the same w
 
 ## Coverage
 
-Coverage uses the v8 provider; reporters are `text`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
+Coverage uses the v8 provider; reporters are `text`, `text-summary`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
 
-### Current policy: report, don't block (yet)
+### Current policy: report and ratchet
 
-We **surface** coverage but do **not** fail builds on it during alpha/beta. A hard floor lands at stable (so new surfaces can't regress silently) — see the roadmap. Until then, treat the targets below as expectations, not gates.
+Coverage is reported and enforced at the repository-wide floors in [`vitest.config.ts`](../../vitest.config.ts). `pnpm test` fails if any overall metric drops below its ratchet. Raise those floors as coverage improves; never lower one to make a build pass. The per-area targets below remain directional rather than separate gates.
 
 ### Soft targets by area
 
@@ -236,12 +236,12 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 ### Parity & CI
 
 - [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
-- [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
+- [x] **Surface and enforce coverage in CI** — the `text-summary` reporter prints totals in the run log, the `coverage/` report is uploaded as a build artifact, and repository-wide thresholds fail the build when coverage drops below the configured floors.
 
-### Coverage (soft now → hard at stable)
+### Coverage (overall ratchet + per-area targets)
 
-- [x] Add the highest-value tests listed above — landed: render-phase takeover, fps throttling, Canvas size control, multi-canvas pure-JS, `ScopedStore`, `interactivePriority`, XR pointers, frame-timed events, `textureColorSpace`, `gl` deprecation (+ hardened heuristic, task D1), `useRenderTarget`, and WebGPU hook lifecycle. Overall lines coverage ~78%.
-- [ ] **At stable:** add a coverage floor in `vitest.config.ts` (e.g. ~80% lines on `src/core`, lower on `src/webgpu`). _(task D4)_
+- [x] Add the highest-value tests listed above — landed: render-phase takeover, fps throttling, Canvas size control, multi-canvas pure-JS, `ScopedStore`, `interactivePriority`, XR pointers, frame-timed events, `textureColorSpace`, `gl` deprecation (+ hardened heuristic, task D1), `useRenderTarget`, and WebGPU hook lifecycle. Overall lines coverage ~81%.
+- [x] **Add an overall coverage floor in `vitest.config.ts`.** The current thresholds act as a v10 prerelease ratchet and should rise as the suite improves. _(task D4)_
 
 ### WebGPU tiers
 
