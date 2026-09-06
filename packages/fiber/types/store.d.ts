@@ -202,8 +202,13 @@ export interface InternalState {
   /** Container for child attachment (scene for root, original container for portals) */
   container?: THREE.Object3D
   /**
-   * CanvasTarget for multi-canvas WebGPU rendering.
-   * Created for all WebGPU canvases to support renderer sharing.
+   * The CanvasTarget this root sizes and renders through.
+   *
+   * A primary (`<Canvas id>`) owns the renderer's default target -- the one three itself built
+   * around the canvas element -- so sizing it is sizing the renderer. A secondary owns a target
+   * R3F created for its own element. Either way there is exactly one target per canvas element,
+   * and the canvas-target job makes it the renderer's active one before this root renders.
+   * Absent on WebGL and on an id-less WebGPU canvas, where the renderer is sized directly.
    * @see https://threejs.org/docs/#api/en/renderers/common/CanvasTarget
    */
   canvasTarget?: CanvasTarget
