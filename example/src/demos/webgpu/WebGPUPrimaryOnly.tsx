@@ -36,6 +36,10 @@ function SizeReadout({ onChange }: { onChange: (text: string) => void }) {
   const last = useRef('')
   const buffer = useRef(new THREE.Vector2())
   useFrame(({ renderer, size, viewport }) => {
+    if (!('getCanvasTarget' in renderer)) {
+      if (last.current !== 'not a WebGPU renderer') onChange((last.current = 'not a WebGPU renderer'))
+      return
+    }
     renderer.getCanvasTarget().getDrawingBufferSize(buffer.current)
     const expected = `${Math.floor(size.width * viewport.dpr)}x${Math.floor(size.height * viewport.dpr)}`
     const actual = `${buffer.current.x}x${buffer.current.y}`
@@ -49,8 +53,10 @@ export default function WebGPUPrimaryOnly() {
   const [readout, setReadout] = useState('…')
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* The id is the trigger: it registers this canvas as a primary and gives it a canvas target. */}
-      <Canvas id="primary-only" dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
+      {/* The id is the trigger: it registers this canvas as a primary and gives it a canvas target.
+          `renderer` selects WebGPU: the examples app compiles the /webgpu entry with both build
+          flags on, where an absent renderer prop still means WebGL. */}
+      <Canvas id="primary-only" renderer dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 4, 5]} intensity={2} />
         <SpinningBox />
