@@ -129,15 +129,15 @@ useFrame((state, delta) => {
 
 ### Render Phase Takes Over Rendering
 
-**This is a significant behavior change.** In v9, setting a non-zero `priority` on `useFrame` would disable R3F's default rendering, requiring you to call `renderer.render()` manually.
+In v9, passing a numeric `priority > 0` to `useFrame` disables R3F's default rendering, requiring you to render manually. In v10, this behavior is preserved for backwards compatibility, but emits a deprecation warning.
 
-In v10, **registering ANY callback to the `render` phase** takes over the render loop. If you were using priority values and also calling `renderer.render()` yourself, you'll get double-rendering or other unexpected results.
+The recommended v10 mechanism is **registering a callback with `{ phase: 'render' }`**. This also disables R3F's default rendering, so your callback is responsible for rendering the scene. Existing numeric-priority callbacks that render manually still work; migrate them to the render phase to avoid the warning.
 
 ```tsx
-// v9: Priority disabled default rendering
+// v9: Numeric priority > 0 takes over rendering (still supported in v10, but deprecated)
 useFrame(({ gl, scene, camera }) => {
   gl.render(scene, camera)
-}, 1) // priority > 0 meant "I'll handle rendering"
+}, 1)
 
 // v10: Use the render phase explicitly
 useFrame(
@@ -148,13 +148,13 @@ useFrame(
 ) // Render phase takes over
 ```
 
-If you were using priority for ordering purposes (not rendering), switch to the new phase system or `before`/`after` constraints:
+For ordering without taking over rendering, use phases or `before`/`after` constraints. In the legacy numeric form, only priorities of `0` or less leave the default render enabled; a positive priority takes over rendering even if the callback does not render anything.
 
 ```tsx
-// v9: Priority for ordering
-useFrame(() => physicsStep(), -1)
-useFrame(() => updateGame(), 0)
-useFrame(() => updateAI(), 1)
+// v9: Order callbacks without disabling the default render
+useFrame(() => physicsStep(), -2)
+useFrame(() => updateGame(), -1)
+useFrame(() => updateAI(), 0)
 
 // v10: Phase-based ordering (recommended)
 useFrame(() => physicsStep(), { phase: 'physics' })
