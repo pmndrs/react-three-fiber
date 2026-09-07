@@ -392,7 +392,7 @@ export const createStore = (
       if (viewport.dpr > 0) resizeTarget.setPixelRatio(viewport.dpr)
       resizeTarget.setSize(size.width, size.height, false)
 
-      // Invalidate this root's cached render pass descriptor on the next frame.
+      // Invalidate this root's cached render pass descriptor on the next frame, if three didn't.
       //
       // WebGPUBackend caches the depth-stencil attachment view per canvas and only rebuilds it
       // when the sample count changes, while the colour attachment is pulled fresh from the swap
@@ -405,7 +405,12 @@ export const createStore = (
       // one, so it cannot be called safely from here. The flush happens in the canvas-target job
       // (see renderer.tsx), which runs in the `start` phase where our own target is guaranteed
       // active. See #3847.
-      internal.canvasTargetSizeDirty = true
+      //
+      // When our target *is* the active one (a lone primary owns the renderer's default target,
+      // so this is the whole single-canvas path) the listener already ran inside setSize and a
+      // second flush would only reconfigure the swap chain again for nothing.
+      const activeTarget = (actualRenderer as Partial<{ getCanvasTarget(): unknown }>).getCanvasTarget?.()
+      if (!canvasTarget || activeTarget !== canvasTarget) internal.canvasTargetSizeDirty = true
     }
 
     // Update viewport and frustum once the camera changes
