@@ -19,7 +19,7 @@
  */
 
 import { withStagedOverlay } from '../../core/utils/resourceRegistry'
-import type { RootState, RootStore, BufferLike, StorageLike } from '#types'
+import type { RootState, RootStore, BufferLike, NodeLike, StorageLike } from '#types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
 
 //* Symbol for internal data storage ==============================
@@ -152,7 +152,7 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
   /** Type-safe uniform access - property access returns UniformNode */
   uniforms: ScopedStoreType<UniformNode>
   /** Type-safe node access for real, callable, and legacy structural nodes */
-  nodes: ScopedStoreType<TSLNodeType | LegacyTSLNodeLike>
+  nodes: ScopedStoreType<NodeLike>
   /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */
   buffers: ScopedStoreType<BufferLike>
   /** Type-safe GPU storage access - property access returns StorageLike (StorageTexture, TSL nodes) */
@@ -187,32 +187,34 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
  */
 export function createLazyCreatorState(state: RootState, store?: RootStore): CreatorState {
   let _uniforms: ScopedStoreType<UniformNode> | null = null
-  let _nodes: ScopedStoreType<TSLNodeType | LegacyTSLNodeLike> | null = null
+  let _nodes: ScopedStoreType<NodeLike> | null = null
   let _buffers: ScopedStoreType<BufferLike> | null = null
   let _gpuStorage: ScopedStoreType<StorageLike> | null = null
 
-  const view = (kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage') =>
-    store ? withStagedOverlay(store, kind, state[kind]) : state[kind]
+  // The overlay is a plain `Record<string, unknown>`: which entries are leaves and which are
+  // nested scopes is decided at access time by the guard each wrapper is given, not by the type.
+  const view = <TLeaf>(kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'): ScopedStoreData<TLeaf> =>
+    (store ? withStagedOverlay(store, kind, state[kind]) : state[kind]) as ScopedStoreData<TLeaf>
 
   return Object.create(state, {
     uniforms: {
       get() {
-        return (_uniforms ??= createScopedStore<UniformNode>(view('uniforms'), isUniformNode))
+        return (_uniforms ??= createScopedStore<UniformNode>(view<UniformNode>('uniforms'), isUniformNode))
       },
     },
     nodes: {
       get() {
-        return (_nodes ??= createScopedStore<TSLNodeType | LegacyTSLNodeLike>(view('nodes'), isTSLNode))
+        return (_nodes ??= createScopedStore<NodeLike>(view<NodeLike>('nodes'), isTSLNode))
       },
     },
     buffers: {
       get() {
-        return (_buffers ??= createScopedStore<BufferLike>(view('buffers'), isBufferLike))
+        return (_buffers ??= createScopedStore<BufferLike>(view<BufferLike>('buffers'), isBufferLike))
       },
     },
     gpuStorage: {
       get() {
-        return (_gpuStorage ??= createScopedStore<StorageLike>(view('gpuStorage'), isStorageLike))
+        return (_gpuStorage ??= createScopedStore<StorageLike>(view<StorageLike>('gpuStorage'), isStorageLike))
       },
     },
   }) as CreatorState

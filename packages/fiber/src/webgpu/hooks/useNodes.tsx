@@ -6,22 +6,23 @@ import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { isTSLNode } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
+import type { NodeLike, NodeRecord, NodeStore } from '../../../types/store'
 
 //* Types ==============================
 
-/** Public compatibility alias for real, callable, and legacy structural TSL nodes. */
-export type TSLNodeLike = TSLNodeType | LegacyTSLNodeLike
+/**
+ * Every node representation a creator may return. The definition lives with the store types as
+ * `NodeLike`, so the shape creators return and the shape `state.nodes` holds are one type by
+ * construction: three's real `Node`, the callable proxy `Fn()` returns, or the legacy structural
+ * `{ uuid, nodeType }` shape.
+ */
+export type TSLNodeLike = NodeLike
+
+// `NodeRecord` and `NodeStore` are the store's own types, re-exported for hook consumers.
+export type { NodeRecord, NodeStore }
 
 /** Backward-compatible alias covering every accepted node representation. */
 export type TSLNode = TSLNodeLike
-
-/**
- * A record of real, callable, or legacy structural TSL nodes.
- */
-export type NodeRecord<T extends TSLNodeLike = TSLNodeLike> = Record<string, T>
-
-/** Root node entries can be individual nodes or explicitly selected nested scopes. */
-type NodeStore = Record<string, TSLNodeLike | NodeRecord>
 
 /**
  * Creator function that returns a record of nodes.

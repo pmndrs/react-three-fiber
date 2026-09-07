@@ -39,7 +39,7 @@ function RenderPipelineManager() {
       const vel = passes.scenePass.getTextureNode('velocity')
 
       // Use blurAmount from uniforms (or from outer scope via closure)
-      const blurNode = uniforms.blurAmount ?? blurAmount
+      const blurNode = (uniforms.blurAmount ?? blurAmount) as UniformNode<number>
       const mBlur = motionBlur(beauty, vel.mul(blurNode))
 
       // Add vignette effect for polish

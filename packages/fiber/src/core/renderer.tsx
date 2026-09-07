@@ -313,14 +313,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Allows users to pass pre-initialized external renderers
               // @see https://github.com/pmndrs/react-three-fiber/issues/3651
               if (!renderer.hasInitialized?.()) {
-                // Set canvas dimensions before init to ensure depth buffer is created at correct size
-                // WebGPU creates GPU resources during init() based on canvas.width/height
-                // Without this, depth buffer uses default 300x150 causing size mismatch errors
+                // Size the renderer before init so its GPU resources are created at the right
+                // size. three sizes the depth/stencil and MSAA colour buffers from its *own*
+                // CanvasTarget (`renderer._canvasTarget`, `_width * _pixelRatio`), which reads the
+                // canvas element's width/height once at construction and never again. Writing
+                // canvas.width/height directly, as this used to, therefore only moved the swap
+                // chain: the target stayed at 300x150 and so did the depth buffer, and the first
+                // frame raised a GPUValidationError about mismatched attachment sizes.
+                // setSize goes through the target, so both stay in step. Before init the resize
+                // listener is a no-op, so this is safe to call here.
                 const size = computeInitialSize(canvas, propsSize)
                 if (size.width > 0 && size.height > 0) {
-                  const pixelRatio = calculateDpr(dpr)
-                  ;(canvas as HTMLCanvasElement).width = size.width * pixelRatio
-                  ;(canvas as HTMLCanvasElement).height = size.height * pixelRatio
+                  renderer.setPixelRatio(calculateDpr(dpr))
+                  renderer.setSize(size.width, size.height, false)
                 }
                 await renderer.init()
               }
@@ -337,10 +342,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
 
               //* Register as Primary Canvas ==============================
-              // If this canvas has an id, register it so other canvases can target it
-              // Also create a CanvasTarget for when multi-canvas mode is enabled
+              // If this canvas has an id, register it so other canvases can target it.
+              //
+              // The primary's canvas target is the renderer's *own* default target, not a second
+              // CanvasTarget wrapped around the same element. The renderer only ever sizes,
+              // listens to, and builds GPU attachments for `renderer._canvasTarget`; a separate
+              // wrapper shares the element but none of that, so sizing it moved the swap chain
+              // while the renderer's depth buffer stayed at its construction size (300x150).
+              // Without a secondary to flip `isMultiCanvas`, nothing ever called setCanvasTarget
+              // on the wrapper, so a lone `<Canvas id>` rendered with mismatched attachments on
+              // every frame. One element, one target: whichever canvas is active, the target it
+              // sizes is the one the renderer draws with.
               if (canvasId && !state.internal.isSecondary) {
-                const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+                // Optional-call: a mock or foreign renderer without canvas targets simply has
+                // none, and the store then sizes the renderer directly.
+                const canvasTarget = (renderer as WebGPURenderer).getCanvasTarget?.()
                 const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
                 state.set((prev) => ({
                   internal: {
@@ -647,14 +663,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           order: schedulerConfig?.order,
         })
 
-        // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
+        // Register canvas target job - makes this root's canvas target the renderer's active one
         // Runs in 'start' phase so it's set before any other jobs (including user render jobs)
         const unregisterCanvasTarget = scheduler.register(
           () => {
             const state = store.getState()
-            if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
+            const canvasTarget = state.internal.canvasTarget
+            if (canvasTarget) {
               const renderer = state.internal.actualRenderer as WebGPURenderer
-              renderer.setCanvasTarget(state.internal.canvasTarget)
+              // A lone primary owns the renderer's default target, which is already active; only
+              // swap when some other canvas (a secondary, or the primary after one) left it
+              // pointed elsewhere. setCanvasTarget also moves the resize listener, so skipping
+              // the no-op swap keeps that listener untouched on the common single-canvas path.
+              if (renderer.getCanvasTarget() !== canvasTarget) renderer.setCanvasTarget(canvasTarget)
 
               // Flush a pending resize for THIS root, now that its target is the active one.
               //
@@ -894,9 +915,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             const unregisterPrimary = state.internal.unregisterPrimary
             if (unregisterPrimary) unregisterPrimary()
 
-            // Dispose CanvasTarget for secondary canvases
+            // Dispose the CanvasTarget we created. A primary's target is the renderer's own
+            // default target, which the renderer owns and which may outlive this root (an
+            // external renderer reused across mounts), so only secondaries dispose theirs.
             const canvasTarget = state.internal.canvasTarget
-            if (canvasTarget?.dispose) canvasTarget.dispose()
+            if (state.internal.isSecondary && canvasTarget?.dispose) canvasTarget.dispose()
 
             state.events.disconnect?.()
             // Clean up occlusion system and helper group

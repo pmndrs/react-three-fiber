@@ -1,4 +1,4 @@
-import type { BufferLike, StorageLike } from '#types'
+import type { BufferLike, NodeLike, StorageLike } from '#types'
 
 //* Resource Leaf Guards ==============================
 
@@ -25,9 +25,7 @@ const hasValidLegacyNodeMarkers = (value: object | ((...args: never[]) => unknow
 export const isUniformNode: ResourceLeafGuard<UniformNode> = (value): value is UniformNode =>
   isObjectLike(value) && 'isUniformNode' in value && value.isUniformNode === true
 
-export const isTSLNode: ResourceLeafGuard<TSLNodeType | LegacyTSLNodeLike> = (
-  value,
-): value is TSLNodeType | LegacyTSLNodeLike =>
+export const isTSLNode: ResourceLeafGuard<NodeLike> = (value): value is NodeLike =>
   isObjectLike(value) &&
   (Reflect.get(value, 'isNode') === true ||
     (Reflect.get(value, 'shaderNode') !== undefined && typeof Reflect.get(value, 'id') === 'number') ||

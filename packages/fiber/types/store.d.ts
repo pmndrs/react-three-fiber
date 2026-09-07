@@ -43,6 +43,25 @@ export type BufferRecord = Record<string, BufferLike>
  */
 export type BufferStore = Record<string, BufferLike | BufferRecord>
 
+//* Node Types (useNodes) ========================================
+
+/**
+ * Every node representation `useNodes` accepts and `state.nodes` holds: three's real `Node`,
+ * the callable proxy `Fn()` returns, and the legacy structural shape (`uuid`/`nodeType`) older
+ * code passes through. Creators are constrained to this same type, so the shape a creator returns
+ * and the shape the store holds are one type by construction.
+ */
+export type NodeLike = TSLNodeType | LegacyTSLNodeLike
+
+/** Flat record of TSL nodes (no nested scopes) */
+export type NodeRecord<T extends NodeLike = NodeLike> = Record<string, T>
+
+/**
+ * Node store that can contain both root-level nodes and scoped node objects.
+ * Structure: { wobble: OperatorNode, fx: { blur: ShaderCallable } }
+ */
+export type NodeStore = Record<string, NodeLike | NodeRecord>
+
 //* Storage Types (useGPUStorage) ========================================
 
 /**
@@ -176,8 +195,13 @@ export interface InternalState {
   /** Container for child attachment (scene for root, original container for portals) */
   container?: THREE.Object3D
   /**
-   * CanvasTarget for multi-canvas WebGPU rendering.
-   * Created for all WebGPU canvases to support renderer sharing.
+   * The CanvasTarget this root sizes and renders through.
+   *
+   * A primary (`<Canvas id>`) owns the renderer's default target -- the one three itself built
+   * around the canvas element -- so sizing it is sizing the renderer. A secondary owns a target
+   * R3F created for its own element. Either way there is exactly one target per canvas element,
+   * and the canvas-target job makes it the renderer's active one before this root renders.
+   * Absent on WebGL and on an id-less WebGPU canvas, where the renderer is sized directly.
    * @see https://threejs.org/docs/#api/en/renderers/common/CanvasTarget
    */
   canvasTarget?: CanvasTarget
@@ -302,7 +326,7 @@ export interface RootState {
   /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
   uniforms: UniformStore
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
-  nodes: Record<string, any>
+  nodes: NodeStore
   /** Global TSL buffer nodes - root-level buffers + scoped sub-objects. Use useBuffers() hook */
   buffers: BufferStore
   /** Global GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() hook */
@@ -314,7 +338,7 @@ export interface RootState {
   /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
   renderPipeline: ThreeRenderPipeline | null
   /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
-  passes: Record<string, any>
+  passes: PassRecord
   /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
   _hmrVersion: number
   /** Internal: whether setSize() has taken ownership of canvas dimensions */
