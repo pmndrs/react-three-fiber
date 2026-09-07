@@ -29,7 +29,7 @@ import * as React from 'react'
 import { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three/webgpu'
-import { color, vec3, float, instancedArray, uniform } from 'three/tsl'
+import { color, vec3, float, instancedArray, uniform, pass } from 'three/tsl'
 
 import { createStore, context } from '../../src/core/store'
 import {
@@ -586,26 +586,26 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
   it('setupCB + mainCB run and their returned passes land on the store', async () => {
     const store = makeStore()
     const { scene, camera } = seedRenderer(store)
+    const setupPass = pass(scene, camera)
+    const extraPass = pass(scene, camera)
     let mainRan = false
     function Comp() {
       useRenderPipeline(
         () => {
           mainRan = true
-          return { extraPass: (globalThis as any).__x ?? { marker: true } }
+          return { extraPass }
         },
-        () => ({ setupPass: { marker: true } }),
+        () => ({ setupPass }),
       )
       return null
     }
     await act(async () => withStore(store, <Comp />))
 
     expect(mainRan).toBe(true)
-    expect(store.getState().passes.setupPass).toBeDefined()
-    expect(store.getState().passes.extraPass).toBeDefined()
+    expect(store.getState().passes.setupPass).toBe(setupPass)
+    expect(store.getState().passes.extraPass).toBe(extraPass)
     // scenePass still keyed off the seeded scene/camera
     expect(store.getState().passes.scenePass).toBeDefined()
-    void scene
-    void camera
   })
 
   it('reset(): tears the pipeline + passes back down to null/empty', async () => {
