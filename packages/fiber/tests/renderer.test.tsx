@@ -56,6 +56,42 @@ describe('renderer', () => {
   })
   afterEach(async () => act(async () => root.unmount()))
 
+  it('should copy a stable position on each committed rerender', async () => {
+    const position = new THREE.Vector3(1, 2, 3)
+    const ref = React.createRef<THREE.Group>()
+    const Component = () => <group ref={ref} position={position} />
+
+    await act(async () => root.render(<Component />))
+    const object = ref.current!
+    const target = object.position
+    expect(target).not.toBe(position)
+    expect(target.toArray()).toEqual([1, 2, 3])
+
+    position.set(4, 5, 6)
+    await act(async () => root.render(<Component />))
+    expect(ref.current).toBe(object)
+    expect(object.position).toBe(target)
+    expect(target.toArray()).toEqual([4, 5, 6])
+
+    target.set(7, 8, 9)
+    await act(async () => root.render(<Component />))
+    expect(target.toArray()).toEqual([4, 5, 6])
+    expect(position.toArray()).toEqual([4, 5, 6])
+  })
+
+  it('should preserve pierced overrides when copying a stable position again', async () => {
+    const position = new THREE.Vector3(1, 2, 3)
+    const ref = React.createRef<THREE.Group>()
+    const Component = () => <group ref={ref} position={position} position-x={10} />
+
+    await act(async () => root.render(<Component />))
+    expect(ref.current!.position.toArray()).toEqual([10, 2, 3])
+
+    position.set(4, 5, 6)
+    await act(async () => root.render(<Component />))
+    expect(ref.current!.position.toArray()).toEqual([10, 5, 6])
+  })
+
   it('should render empty JSX', async () => {
     const store = await act(async () => root.render(null))
     const { scene } = store.getState()

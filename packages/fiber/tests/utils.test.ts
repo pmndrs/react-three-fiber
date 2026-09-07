@@ -314,6 +314,29 @@ describe('attach / detach', () => {
 })
 
 describe('diffProps', () => {
+  it.each([
+    new THREE.Vector2(),
+    new THREE.Vector3(),
+    new THREE.Vector4(),
+    new THREE.Euler(),
+    new THREE.Quaternion(),
+    new THREE.Matrix3(),
+    new THREE.Matrix4(),
+    new THREE.Color(),
+  ])('should reapply stable copied math objects (%s)', (value) => {
+    const props = { value }
+    const instance = prepare({ value: value.clone() }, store, '', props)
+
+    expect(diffProps(instance, props)).toStrictEqual(props)
+  })
+
+  it('should still skip stable objects that are assigned directly', () => {
+    const props = { material: new THREE.MeshBasicMaterial(), userData: { value: 1 } }
+    const instance = prepare(new THREE.Mesh(), store, '', props)
+
+    expect(diffProps(instance, props)).toStrictEqual({})
+  })
+
   it('should filter changed props', () => {
     const instance = prepare({}, store, '', { foo: true })
     const newProps = { foo: true, bar: false }
