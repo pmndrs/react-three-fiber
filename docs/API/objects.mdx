@@ -50,7 +50,7 @@ All properties whose underlying object has a `.set()` method can directly receiv
 ```
 
 > [!NOTE]
-> If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). These values are copied again on each committed update, even when their reference is unchanged. If you link up an existing material or geometry on the other hand, it will overwrite, because these objects do not have a .set() method.
+> If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the other hand, it will overwrite, because these objects do not have a .set() method.
 
 ### SetScalar
 

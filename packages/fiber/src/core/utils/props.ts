@@ -189,13 +189,8 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
   for (const prop in newProps) {
     // Skip reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
-    // Reapply math objects even when their reference is unchanged.
-    if (is.equ(newProps[prop], instance.props[prop])) {
-      const value = newProps[prop]
-      if (!isCopyable(value)) continue
-      const { target } = resolve(instance.object, prop)
-      if (!isCopyable(target) || target.constructor !== value.constructor) continue
-    }
+    // Skip if props match
+    if (is.equ(newProps[prop], instance.props[prop])) continue
 
     // Props changed, add them
     changedProps[prop] = newProps[prop]
