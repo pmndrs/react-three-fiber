@@ -61,7 +61,7 @@ export interface NodeLike {
 }
 
 /** Flat record of TSL nodes (no nested scopes) */
-export type NodeRecord = Record<string, NodeLike>
+export type NodeRecord<T extends NodeLike = NodeLike> = Record<string, T>
 
 /**
  * Node store that can contain both root-level nodes and scoped node objects.
