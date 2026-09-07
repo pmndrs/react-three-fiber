@@ -78,7 +78,7 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
   const group = useRef<THREE.Group>(null!)
   const [model, setModel] = useState<THREE.Group | null>(cachedModel?.scene ?? null)
   const mixerRef = useRef<THREE.AnimationMixer | null>(cachedModel?.mixer ?? null)
-  const renderer = useThree((s) => s.gl) as unknown as THREE.WebGPURenderer
+  const renderer = useThree((state) => state.renderer)
 
   // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility)
   useEffect(() => {
