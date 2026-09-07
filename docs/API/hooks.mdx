@@ -155,7 +155,7 @@ useFrame(() => {}, { phase: 'update', after: 'a' }) // runs after job 'a'
 ```
 
 > [!NOTE]
-> A bare numeric second argument (`useFrame(fn, 1)`) is still accepted for ordering, but the explicit options object is preferred in v10. See [Frame Loop & Scheduler → Render takeover](../frame-loop#render-takeover) for details.
+> A positive bare numeric second argument (`useFrame(fn, 1)`) still disables default rendering for backwards compatibility and emits a deprecation warning. Use `{ phase: 'render' }` for render takeover, or `{ priority: 1 }` for ordering without taking over rendering. See [Frame Loop & Scheduler → Render takeover](../frame-loop#render-takeover) for details.
 
 ## `useLoader`
 
@@ -253,6 +253,24 @@ You can pre-load assets in global space so that models can be loaded in anticipa
 ```jsx
 useLoader.preload(GLTFLoader, '/model.glb' /* extensions */)
 ```
+
+## `useTexture`
+
+In v10, `useTexture` is exported from `@react-three/fiber`. It loads textures through `TextureLoader` with Suspense support, without requiring you to import the loader. Pass a URL, an array of URLs, or a record of names to URLs; the returned textures mirror that input shape.
+
+```jsx
+import { useTexture } from '@react-three/fiber'
+
+function Material() {
+  const props = useTexture({
+    map: '/color.jpg',
+    normalMap: '/normal.jpg',
+  })
+  return <meshStandardMaterial {...props} />
+}
+```
+
+The optional second argument accepts `{ onLoad, cache }` or an `onLoad` callback. `cache` defaults to `true`, enrolling the textures in the registry for access through `useTextures`; pass `{ cache: false }` to skip enrollment. See [Loading Textures](../tutorials/loading-textures) for examples and registry lifetime details.
 
 ## `useGraph`
 
