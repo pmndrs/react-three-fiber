@@ -1,7 +1,7 @@
 import { uniform } from '#three/tsl'
 import { Color as ThreeColor, Node } from '#three'
 
-import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
+import type { Vector2, Vector3, Vector4, Color, Matrix2, Matrix3, Matrix4 } from '#three'
 import { useStore } from '../../core/hooks'
 import { ROOT_SCOPE, peekStaged } from '../../core/utils/resourceRegistry'
 import { isTSLNode, isUniformNode } from './resourceGuards'
@@ -26,7 +26,7 @@ const uniformOf = uniform as <T extends UniformValue>(value: T, type?: string) =
 
 /**
  * Supported uniform value types:
- * - Raw values: number, boolean, Vector2, Vector3, Vector4, Color, Matrix3, Matrix4
+ * - Raw values: number, boolean, Vector2, Vector3, Vector4, Color, Matrix2, Matrix3, Matrix4
  * - String colors: '#ff0000', 'red', 'rgb(255,0,0)' (auto-converted to Color)
  * - TSL nodes: color(), vec3(), float(), etc. (for type casting)
  * - UniformNode: existing uniforms (reused as-is)
@@ -39,6 +39,7 @@ export type UniformValue =
   | Vector3
   | Vector4
   | Color
+  | Matrix2
   | Matrix3
   | Matrix4
   | Node // TSL nodes like color(), vec3(), float() for type casting

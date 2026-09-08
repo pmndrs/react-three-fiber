@@ -63,6 +63,9 @@ export function useBuffers(): BuffersWithUtils<BufferStore>
 // Get buffers from a specific scope (+ utils)
 export function useBuffers(scope: string): BuffersWithUtils<Record<string, BufferLike>>
 
+// Read existing buffers against an explicit schema, at root (no scope) or within a scope.
+export function useBuffers<T extends Record<string, BufferLike>>(scope?: string): BuffersWithUtils<T>
+
 // Create/get buffers at root level (no scope) (+ utils)
 export function useBuffers<T extends Record<string, BufferLike>>(creator: BufferCreator<T>): BuffersWithUtils<T>
 

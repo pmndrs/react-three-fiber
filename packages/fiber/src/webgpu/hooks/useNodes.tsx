@@ -54,6 +54,10 @@ export function useNodes(): NodesWithUtils<NodeStore>
 // Get nodes from a specific scope (+ utils)
 export function useNodes(scope: string): NodesWithUtils<NodeRecord>
 
+// Read existing nodes against an explicit schema, at root (no scope) or within a scope.
+// A reader cannot infer types from a runtime string; supply the shape the creator returned.
+export function useNodes<T extends NodeRecord>(scope?: string): NodesWithUtils<T>
+
 // Create/get nodes at root level (no scope) (+ utils)
 export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
 

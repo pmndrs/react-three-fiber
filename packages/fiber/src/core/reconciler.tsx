@@ -98,15 +98,21 @@ const isConstructor = (object: unknown): object is ConstructorRepresentation => 
 
 export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
 export function extend<T extends Catalogue>(objects: T): void
-export function extend<T extends Catalogue | ConstructorRepresentation>(
-  objects: T,
+// A whole module namespace (`extend(THREE)`) carries functions and constants alongside the
+// classes, so it is not a `Catalogue`. Accept it as-is: only constructors are registered.
+export function extend(objects: Record<string, unknown>): void
+export function extend(
+  objects: Record<string, unknown> | ConstructorRepresentation,
 ): React.ExoticComponent<ThreeElement<any>> | void {
   if (isConstructor(objects)) {
     const Component = `${i++}`
     catalogue[Component] = objects
     return Component as any
   } else {
-    Object.assign(catalogue, objects)
+    for (const name in objects) {
+      const object = objects[name]
+      if (isConstructor(object)) catalogue[name] = object
+    }
   }
 }
 
@@ -626,7 +632,10 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     newProps: HostConfig['props'],
     fiber: Fiber,
   ) {
-    validateInstance(type, newProps)
+    // `type` is the raw JSX tag. createInstance may have stripped a `three` prefix from it
+    // (`<threeLine>` → `Line`) and stored the resolved name on the instance; validating the raw
+    // tag here would throw "ThreeLine is not part of the THREE namespace" on the first update.
+    validateInstance(instance.type, newProps)
 
     let reconstruct = false
 
@@ -668,8 +677,8 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     for (const prop in instance.props) {
       const value = instance.props[prop]
       if (isFromRef(value)) {
-        const ref = value[FROM_REF]
-        if (ref.current != null) resolved[prop] = ref.current
+        const { [FROM_REF]: ref, transform } = value
+        if (ref.current != null) resolved[prop] = transform ? transform(ref.current) : ref.current
       }
     }
     if (Object.keys(resolved).length) applyProps(instance.object, resolved)

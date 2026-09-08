@@ -63,6 +63,9 @@ export function useGPUStorage(): StorageWithUtils<StorageStore>
 // Get storage from a specific scope (+ utils)
 export function useGPUStorage(scope: string): StorageWithUtils<Record<string, StorageLike>>
 
+// Read existing storage against an explicit schema, at root (no scope) or within a scope.
+export function useGPUStorage<T extends Record<string, StorageLike>>(scope?: string): StorageWithUtils<T>
+
 // Create/get storage at root level (no scope) (+ utils)
 export function useGPUStorage<T extends Record<string, StorageLike>>(creator: StorageCreator<T>): StorageWithUtils<T>
 

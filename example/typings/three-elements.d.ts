@@ -8,7 +8,7 @@
  * This is only needed for development - the built package has correct types.
  */
 
-import type { ThreeToJSXElements, ThreeElement } from '@react-three/fiber'
+import type { ThreeToJSXElements, ThreeElements } from '@react-three/fiber'
 import type * as THREE from 'three/webgpu'
 
 type ThreeJSXElements = Omit<ThreeToJSXElements<typeof THREE>, 'audio' | 'source' | 'line' | 'path'>
@@ -16,7 +16,7 @@ type ThreeJSXElements = Omit<ThreeToJSXElements<typeof THREE>, 'audio' | 'source
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+      primitive: ThreeElements['primitive']
     }
   }
 }
@@ -24,7 +24,7 @@ declare module 'react' {
 declare module 'react/jsx-runtime' {
   namespace JSX {
     interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+      primitive: ThreeElements['primitive']
     }
   }
 }
@@ -32,7 +32,7 @@ declare module 'react/jsx-runtime' {
 declare module 'react/jsx-dev-runtime' {
   namespace JSX {
     interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+      primitive: ThreeElements['primitive']
     }
   }
 }

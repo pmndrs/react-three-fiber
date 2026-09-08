@@ -208,17 +208,15 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
     const { root, key } = resolve(instance.object, prop)
 
     // https://github.com/mrdoob/three.js/issues/21209
-    // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-    // has no means to do this. Hence we curate a small collection of value-classes
-    // with their respective constructor/set arguments
-    // For removed props, try to set default values, if possible
-    if (root.constructor && root.constructor.length === 0) {
-      // create a blank slate of the instance and copy the particular parameter.
+    // HMR/fast-refresh relies on the ability to cancel out props, but threejs has no means to
+    // do this. So a removed prop is reset to whatever a freshly constructed instance of the
+    // same class carries. This is attempted for every class: gating it on a zero-length
+    // constructor excluded every material, geometry and camera (all take a parameters object)
+    // and wrote a literal `0` instead, which turned a removed `color` black and a removed `map`
+    // into a broken texture slot. When no default instance can be built, the prop is left alone.
+    if (typeof root?.constructor === 'function') {
       const ctor = getMemoizedPrototype(root)
       if (!is.und(ctor)) changedProps[prop] = ctor[key]
-    } else {
-      // instance does not have constructor, just set it to 0
-      changedProps[prop] = 0
     }
   }
 

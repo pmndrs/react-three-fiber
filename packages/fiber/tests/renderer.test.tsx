@@ -15,7 +15,7 @@ import {
 import type { RootState, RootStore } from '../src/index'
 import { suspend } from 'suspend-react'
 
-extend(THREE as any)
+extend(THREE)
 
 class Mock extends THREE.Group {
   static instances: string[]
@@ -72,6 +72,22 @@ describe('renderer', () => {
     expect(scene.children.length).toBe(2)
     expect(scene.children[1]).toBeInstanceOf(THREE.Group)
     expect(scene.children[1].name).toBe('native')
+  })
+
+  it('registers only the constructors of an extended namespace', async () => {
+    // extend(THREE) hands over a whole module namespace: functions and constants ride along
+    // with the classes. Only constructors become elements; nothing else is registered.
+    class NamespaceGroup extends THREE.Group {}
+    extend({ NamespaceGroup, NAMESPACE_CONSTANT: 1, namespaceHelper: () => null })
+
+    const store = await act(async () => root.render(<namespaceGroup />))
+    expect(store.getState().scene.children[1]).toBeInstanceOf(NamespaceGroup)
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(act(async () => root.render(<nAMESPACE_CONSTANT />))).rejects.toThrow(
+      /not part of the THREE namespace/,
+    )
+    errSpy.mockRestore()
   })
 
   it('should render extended elements', async () => {
@@ -828,6 +844,23 @@ describe('renderer', () => {
 
     await act(async () => root.render(<threeRandom />))
     expect(store.getState().scene.children[1]).toBeInstanceOf(THREE.Group)
+  })
+
+  it('updates a prefixed element after mount', async () => {
+    // <threeLine> mounts as Line once the prefix is stripped. The first prop update used to
+    // re-validate the raw "threeLine" tag and throw "ThreeLine is not part of the THREE namespace",
+    // unmounting the root on any ancestor re-render.
+    function Test({ visible }: { visible: boolean }) {
+      return <threeLine visible={visible} />
+    }
+
+    const store = await act(async () => root.render(<Test visible={true} />))
+    const line = store.getState().scene.children[1] as THREE.Line
+    expect(line).toBeInstanceOf(THREE.Line)
+
+    await act(async () => root.render(<Test visible={false} />))
+    expect(store.getState().scene.children[1]).toBe(line)
+    expect(line.visible).toBe(false)
   })
 
   // https://github.com/pmndrs/react-three-fiber/pull/3490

@@ -60,6 +60,11 @@ export function useUniforms(): UniformsWithUtils<UniformStore>
 // Get uniforms from a specific scope (+ utils)
 export function useUniforms(scope: string): UniformsWithUtils
 
+// Read existing uniforms against an explicit schema, at root (no scope) or within a scope.
+// A reader cannot infer types from a runtime string; supply the values the creator registered:
+//   useUniforms<{ blurAmount: number }>() // blurAmount: UniformNode<'float', number>
+export function useUniforms<T extends UniformInputRecord>(scope?: string): UniformsWithUtils<UniformNodesFor<T>>
+
 //* Hook Implementation ==============================
 
 /**
@@ -398,6 +403,7 @@ function isSameThreeType(a: unknown, b: unknown): boolean {
 
   return (
     (obj_a.isColor && obj_b.isColor) ||
+    (obj_a.isMatrix2 && obj_b.isMatrix2) ||
     (obj_a.isMatrix3 && obj_b.isMatrix3) ||
     (obj_a.isMatrix4 && obj_b.isMatrix4) ||
     (obj_a.isEuler && obj_b.isEuler) ||

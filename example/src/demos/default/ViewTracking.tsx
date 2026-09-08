@@ -169,7 +169,8 @@ function Scene() {
 
 export default function App() {
   const ref = useRef<HTMLDivElement>(null!)
-  const [view1, view2, view3, view4, view5] = useRefs() as any
+  const [view1, view2, view3, view4, view5] =
+    useRefs<[HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement]>(null)
   return (
     <div ref={ref} className="container">
       <div className="text">

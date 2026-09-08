@@ -45,7 +45,9 @@ declare global {
                     ? 'mat4'
                     : T extends import('three/webgpu').Matrix3
                       ? 'mat3'
-                      : unknown
+                      : T extends import('three/webgpu').Matrix2
+                        ? 'mat2'
+                        : unknown
 
   /** Derive the normalized JavaScript value stored by a uniform node. */
   type UniformNodeValue<T> = T extends import('three/webgpu').UniformNode<infer _TNodeType, infer TValue>
@@ -100,7 +102,7 @@ declare global {
    * Acceptable input values for useUniforms - raw values that get converted to UniformNodes
    * Supports:
    * - Primitives: number, string (color), boolean
-   * - Three.js types: Color, Vector2/3/4, Matrix3/4
+   * - Three.js types: Color, Vector2/3/4, Matrix2/3/4
    * - Plain objects: { x, y, z, w } converted to vectors
    * - TSL nodes: color(), vec3(), float() for type casting
    * - UniformNode: existing uniforms (reused as-is)
@@ -113,6 +115,7 @@ declare global {
     | import('three/webgpu').Vector2
     | import('three/webgpu').Vector3
     | import('three/webgpu').Vector4
+    | import('three/webgpu').Matrix2
     | import('three/webgpu').Matrix3
     | import('three/webgpu').Matrix4
     | { x: number; y: number }

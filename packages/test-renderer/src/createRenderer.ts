@@ -52,7 +52,7 @@ export function createTestRenderer(deps: RendererDependencies) {
   const { THREE, createRoot, mockRoots, reconciler, act, extend, mode } = deps
 
   // Extend catalogue for render API in tests
-  extend(THREE as any)
+  extend(THREE)
 
   /**
    * Create a test renderer instance for testing R3F scenes

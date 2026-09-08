@@ -16,7 +16,7 @@ const Experience = () => {
     <>
       <Lights />
       <SeaSurface />
-      <CameraControls makeDefault target={[0, 0, 0]} />
+      <CameraControls makeDefault />
     </>
   )
 }

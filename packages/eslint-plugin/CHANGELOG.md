@@ -1,5 +1,13 @@
 # @react-three/eslint-plugin
 
+## Unreleased
+
+### Patch Changes
+
+- `no-clone-in-loop` only flags `.clone()` calls. Its selector matched any identifier named
+  `clone` inside a `useFrame` body, so a loop variable named `clone` used as `clone.position`
+  was reported with no clone() invocation anywhere.
+
 ## 1.0.0-alpha.4
 
 ### Patch Changes

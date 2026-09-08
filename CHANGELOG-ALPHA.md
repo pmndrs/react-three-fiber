@@ -4,6 +4,66 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+Type and reconciler cleanup ahead of the next alpha, driven by what strict-TypeScript consumers
+of the WebGPU entry hit in practice.
+
+### Types
+
+- `useUniform` and `useUniforms` keep three's exact `UniformNode<TNodeType, TValue>` generics and
+  the input's exact keys. A `number` uniform is a `Node<'float'>`, so TSL math, `mix()` and
+  `bloom()` accept it without a cast; `.value` is typed; an unknown key is an error
+  ([#3769](https://github.com/pmndrs/react-three-fiber/issues/3769),
+  [#3886](https://github.com/pmndrs/react-three-fiber/issues/3886),
+  [#3887](https://github.com/pmndrs/react-three-fiber/issues/3887)).
+- `ScopedStore` distinguishes nested scopes from object-valued and callable (`Fn()`) leaves at
+  runtime, and `.scope(key)` accepts an explicit schema generic for cross-call access.
+- The stale `ShaderNodeObject` and `three/tsl` `Fn` augmentations are gone. three's own `Fn`
+  overloads, including the `Fn(fn, 'void')` statement-call form compute kernels use, are reachable
+  again with R3F installed.
+- `Matrix2` is an accepted uniform value (`mat2`), matching three's `uniform()` overloads.
+- `StorageLike` includes `Storage3DTexture` and `StorageArrayTexture`, so `useGPUStorage` accepts
+  what `compute.mdx` documents.
+- `once()` is typed as the value the prop declares: `translate={once(0, 0, 5)}` and
+  `center={once()}` typecheck without a cast.
+- On the `/webgpu` entry, `Canvas`'s `onCreated` receives `WebGPURootState`, so WebGPU-only
+  renderer members no longer need an `instanceof` narrow.
+- `pnpm verify-types` compiles a strict consumer fixture against the built declarations with
+  `skipLibCheck: false`, for every entry.
+- Reader-mode `useUniforms`, `useNodes`, `useBuffers` and `useGPUStorage` accept an explicit
+  schema: `useUniforms<{ blurAmount: number }>()` returns typed nodes for values registered
+  elsewhere, instead of `UniformNode<unknown>`.
+- `extend(THREE)` accepts a whole module namespace without a cast; only its constructors are
+  registered.
+- `raycaster={{ params: { Points: { threshold: 0.2 } } }}` typechecks: `params` is a partial,
+  matching the runtime merge into the raycaster's defaults.
+- `eventSource` accepts any DOM `Element`, so an `SVGRenderer`'s `<svg>` no longer needs a cast.
+- `<primitive>` keeps typed pointer events (`onClick={(e) => ...}` infers `e`) and accepts
+  arbitrary props for the wrapped object.
+- The examples compile under strict TypeScript without a single `as unknown as` cast; the
+  remaining `as any` sites are third-party gaps (three's `Backend`, `@use-gesture`) and are
+  commented as such.
+
+### Bug Fixes
+
+- `useTexture`'s `onLoad` receives the keyed record for record inputs, matching its declared type.
+  It was handed `useLoader`'s positional array, so `textures.map.wrapT` threw at runtime.
+- Prefixed elements (`<threeLine>`) no longer throw "ThreeLine is not part of the THREE namespace"
+  on their first prop update.
+- A removed prop resets to the class default for every class. Any class whose constructor takes
+  arguments (every material, geometry and camera) previously had the prop set to `0`, turning a
+  removed `color` black.
+- `fromRef(ref, transform)` maps the resolved sibling before assignment, so props that need the
+  sibling wrapped are declarative: `lightsNode={fromRef(lightRef, (l) => lights([l]))}`.
+- Six-file `.hdr` cube sets load through `HDRCubeTextureLoader` in `useEnvironment`,
+  `<Environment>` and the Canvas `background` prop, with linear color space.
+
+### eslint-plugin
+
+- `no-clone-in-loop` only flags `.clone()` calls. A loop variable named `clone` used as
+  `clone.position` no longer trips it.
+
 ## 10.0.0-alpha.4
 
 Alpha 4 is a stabilization release for the new scheduler, WebGPU entry point, multi-canvas rendering,

@@ -1,6 +1,14 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
-import type { WebGPURenderer, CanvasTarget, Node, StorageTexture, Data3DTexture } from 'three/webgpu'
+import type {
+  WebGPURenderer,
+  CanvasTarget,
+  Node,
+  StorageTexture,
+  Storage3DTexture,
+  StorageArrayTexture,
+  Data3DTexture,
+} from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
@@ -76,7 +84,9 @@ export type NodeStore = Record<string, NodeLike | NodeRecord>
  * ```
  */
 export type StorageLike =
-  | StorageTexture // GPU storage texture
+  | StorageTexture // 2D GPU storage texture
+  | Storage3DTexture // 3D GPU storage texture (volumes, fluid grids)
+  | StorageArrayTexture // 2D-array GPU storage texture
   | Data3DTexture // 3D texture (can be used as storage)
   | Node // TSL storage texture nodes (storageTexture)
 

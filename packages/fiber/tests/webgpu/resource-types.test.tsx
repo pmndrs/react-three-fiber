@@ -1,11 +1,22 @@
-import { Color, InterleavedBuffer, InterleavedBufferAttribute, Vector2, type MeshBasicNodeMaterial } from 'three/webgpu'
-import { color, mix } from 'three/tsl'
+import {
+  Color,
+  InterleavedBuffer,
+  InterleavedBufferAttribute,
+  Matrix2,
+  Storage3DTexture,
+  StorageArrayTexture,
+  Vector2,
+  type MeshBasicNodeMaterial,
+} from 'three/webgpu'
+import { color, float, Fn, mix } from 'three/tsl'
 import {
   useBuffers,
+  useGPUStorage,
   useNodes,
   useUniform,
   useUniforms,
   type NodeProps,
+  type NodeRecord,
   type TSLNode,
   type TSLNodeLike,
 } from '../../src/webgpu'
@@ -60,6 +71,45 @@ function typeAssertions() {
   void legacyRootEntry
   // @ts-expect-error creator inference must reject unknown keys.
   nodes.missing
+
+  // The hook's NodeRecord is the store's own type, so a creator result is a valid store entry.
+  const record: NodeRecord = { legacyNode }
+  void record
+
+  // Matrix2 is part of three's uniform() overload table
+  const projection = useUniform('projection', new Matrix2())
+  const projectionValue: Matrix2 = projection.value
+  void projectionValue
+
+  // Every WebGPU storage texture class is a storage leaf
+  const storage = useGPUStorage(() => ({
+    volume: new Storage3DTexture(4, 4, 4),
+    layers: new StorageArrayTexture(4, 4, 2),
+  }))
+  storage.volume.wrapR
+  storage.layers.isStorageTexture
+
+  // Reader-mode calls accept an explicit schema, so a value registered elsewhere keeps its type
+  const readUniforms = useUniforms<{ blurAmount: number; tint: Color }>()
+  readUniforms.blurAmount.mul(2)
+  mix(color('black'), readUniforms.tint, readUniforms.blurAmount)
+  const scopedUniforms = useUniforms<{ density: number }>('fog')
+  scopedUniforms.density.mul(2)
+  const readNodes = useNodes<{ wobble: ReturnType<typeof float> }>('fx')
+  readNodes.wobble.mul(2)
+  const readBuffers = useBuffers<{ attribute: InterleavedBufferAttribute }>()
+  readBuffers.attribute.data
+  const readStorage = useGPUStorage<{ volume: Storage3DTexture }>('terrain')
+  readStorage.volume.wrapR
+  // @ts-expect-error a schema reader rejects keys outside the schema.
+  readUniforms.missing
+
+  // three's own Fn overloads are intact: nothing in R3F augments `three/tsl` any more, so the
+  // statement-call form compute kernels rely on still typechecks.
+  const kernel = Fn(() => {
+    float(1)
+  }, 'void')
+  void kernel
 }
 
 void typeAssertions
