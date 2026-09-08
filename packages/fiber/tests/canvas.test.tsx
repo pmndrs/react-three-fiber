@@ -4,7 +4,8 @@ import { render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import * as THREE from 'three'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
-import { Canvas, useFrame, useLoader, useThree } from '../src'
+import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
+import { Canvas, useEnvironment, useFrame, useLoader, useThree } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -329,6 +330,43 @@ describe('web Canvas', () => {
         // another test that loads the same key.
         useLoader.clear(HDRLoader, 'potsdamer_platz_1k.hdr')
         loadSpy.mockRestore()
+      }
+    })
+
+    it('loads a six-file .hdr cube set through HDRCubeTextureLoader', async () => {
+      // Six files used to short-circuit to the plain CubeTextureLoader before the extension was
+      // looked at, so Radiance .hdr cube faces (three's pisaHDR set) could not load declaratively.
+      const faces = ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr']
+      const cubeSpy = vi.spyOn(THREE.CubeTextureLoader.prototype, 'load')
+      let loaded: THREE.CubeTexture | undefined
+      const hdrCubeSpy = vi.spyOn(HDRCubeTextureLoader.prototype, 'load').mockImplementation(((
+        _urls: string[],
+        onLoad?: (texture: THREE.CubeTexture) => void,
+      ) => {
+        loaded = new THREE.CubeTexture()
+        onLoad?.(loaded)
+        return loaded
+      }) as any)
+
+      try {
+        await act(async () =>
+          render(
+            <Canvas background={{ files: faces }}>
+              <group />
+            </Canvas>,
+          ),
+        )
+
+        expect(hdrCubeSpy).toHaveBeenCalledTimes(1)
+        expect(hdrCubeSpy.mock.calls[0][0]).toEqual(faces)
+        expect(cubeSpy).not.toHaveBeenCalled()
+        // HDR faces carry linear radiance, unlike LDR cube faces which are sRGB images
+        expect(loaded!.mapping).toBe(THREE.CubeReflectionMapping)
+        expect(loaded!.colorSpace).toBe('srgb-linear')
+      } finally {
+        useEnvironment.clear({ files: faces })
+        hdrCubeSpy.mockRestore()
+        cubeSpy.mockRestore()
       }
     })
   })

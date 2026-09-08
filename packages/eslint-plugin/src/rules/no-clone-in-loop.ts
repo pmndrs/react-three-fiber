@@ -16,12 +16,15 @@ const rule: Rule.RuleModule = {
   },
   create(ctx) {
     return {
-      ['CallExpression[callee.name=useFrame] CallExpression MemberExpression Identifier[name=clone]'](
-        node: ESTree.NewExpression,
+      // Match a `.clone()` *call* — the identifier must be the property of the callee. A bare
+      // descendant match on `Identifier[name=clone]` also flagged a loop variable named `clone`
+      // used as `clone.position`, with no clone() invocation anywhere.
+      ['CallExpression[callee.name=useFrame] CallExpression[callee.type=MemberExpression][callee.property.name=clone]'](
+        node: ESTree.CallExpression,
       ) {
         ctx.report({
           messageId: 'noClone',
-          node: node,
+          node: (node.callee as ESTree.MemberExpression).property,
         })
       },
     }

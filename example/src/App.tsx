@@ -5,57 +5,22 @@ import { Redirect, Route, useLocation, useRoute } from 'wouter'
 import { DemoPanel, Dot, Error, Loading, Page } from './components'
 import './styles.css'
 
-import * as demos from './demos'
+import { demoGroups } from './demos'
 
 const DEFAULT_COMPONENT_NAME = 'ClickAndHover'
 
 //* Component Categories ==============================
-const defaultExamples = [
-  'Activity',
-  'AutoDispose',
-  'ChangeTexture',
-  'ClickAndHover',
-  'ContextMenuOverride',
-  'FileDragDrop',
-  'FlushSync',
-  'Gestures',
-  'Gltf',
-  'HtmlBetweenCanvases',
-  'Inject',
-  'Layers',
-  'MultiMaterial',
-  'MultiRender',
-  'NestedCamera',
-  'PortalTest',
-  'ResetProps',
-  'Selection',
-  'StopPropagation',
-  'SuspenseAndErrors',
-  'SuspenseMaterial',
-  'Viewcube',
-  'ViewTracking',
-]
-
-const legacyExamples = ['EventPriority', 'Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
-
-const webgpuExamples = [
-  'UseFrameControls',
-  'UseFrameFPS',
-  'UseFramePhases',
-  'VerekiaFpsDrop',
-  'VisibilityEvents',
-  'WebGPU',
-  'WebGPUMotionBlur',
-  'WebGPUMultiCanvas',
-  'WebGPURagingSea',
-  'WebGPUSharedUniforms',
-]
-
-const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
-const exampleGroups = [defaultExamples, legacyExamples, webgpuExamples]
-const exampleType = new Map(exampleGroups.flatMap((examples, type) => examples.map((name) => [name, type] as const)))
+// `demoGroups` (demos/index.tsx) is the one table of contents: every demo, in its group.
+const visibleComponents = Object.assign({}, ...demoGroups.map((group) => group.demos)) as Record<
+  string,
+  (typeof demoGroups)[number]['demos'][string]
+>
+const exampleType = new Map(
+  demoGroups.flatMap((group) => Object.keys(group.demos).map((name) => [name, group.name] as const)),
+)
+const groupOrder = demoGroups.map((group) => group.name)
 const visibleComponentEntries = Object.entries(visibleComponents).sort(([a], [b]) => {
-  const typeDifference = (exampleType.get(a) ?? 0) - (exampleType.get(b) ?? 0)
+  const typeDifference = groupOrder.indexOf(exampleType.get(a)!) - groupOrder.indexOf(exampleType.get(b)!)
   return typeDifference || a.localeCompare(b)
 })
 
@@ -123,8 +88,8 @@ function Dots({ entries, hidden = false }: { entries: typeof visibleComponentEnt
 
   const getBackground = (name: string) => {
     if (params.name === name) return 'salmon'
-    if (exampleType.get(name) === 1) return '#ffcc00' // Yellow for legacy
-    if (exampleType.get(name) === 2) return '#00ccff' // Cyan for WebGPU
+    if (exampleType.get(name) === 'legacy') return '#ffcc00' // Yellow for legacy
+    if (exampleType.get(name) === 'webgpu') return '#00ccff' // Cyan for WebGPU
     return '#fff' // White for default
   }
 

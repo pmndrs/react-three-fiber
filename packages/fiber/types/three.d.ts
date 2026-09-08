@@ -77,10 +77,11 @@ type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
 
 /**
  * For node material properties (colorNode, positionNode, etc.), accept broader types
- * since @types/three has broken inheritance for TSL node subclasses.
+ * since @types/three has broken inheritance for TSL node subclasses. NodeClass requires
+ * `nodeType`, so this structural key test remains neutral to the selected Three entry.
  */
 export type NodeProps<P> = {
-  [K in keyof P as P[K] extends THREE.Node | null ? K : never]?: TSLNodeInput
+  [K in keyof P as NonNullable<P[K]> extends { nodeType: string | null } ? K : never]?: TSLNodeInput
 }
 
 export interface ReactProps<P> {
@@ -101,11 +102,30 @@ export type ThreeToJSXElements<T extends Record<string, any>> = {
   [K in keyof T & string as Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
 }
 
+/** Method names of Object3D, excluded from the `primitive` element's typed props. */
+type Object3DMethod = NonNullable<
+  {
+    [K in keyof THREE.Object3D]-?: THREE.Object3D[K] extends (...args: any[]) => any ? K : never
+  }[keyof THREE.Object3D]
+>
+
 type ThreeExports = typeof THREE
 type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
 
 export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source' | 'line' | 'path'> {
-  primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+  /**
+   * `primitive` wraps a pre-existing object, so its props cannot be derived from one class.
+   * Events are typed from `EventHandlers` (`onClick={(e) => ...}` infers `e`), the ref is
+   * untyped, and any other prop is accepted and applied to the object by name. Object3D's own
+   * methods are left out of the typed surface: they return `this`, so a subclass element's
+   * props (`ThreeElements['group']`) could not be spread onto a primitive otherwise.
+   */
+  primitive: Omit<ThreeElement<typeof THREE.Object3D>, 'args' | 'object' | 'ref' | 'onUpdate' | Object3DMethod> & {
+    object: object
+    ref?: React.Ref<any>
+    onUpdate?: (self: any) => void
+    [prop: string]: unknown
+  }
   // Conflicts with DOM types can be accessed through a three* prefix
   threeAudio: ThreeElementsImpl['audio']
   threeSource: ThreeElementsImpl['source']

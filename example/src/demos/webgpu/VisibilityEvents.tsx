@@ -90,12 +90,10 @@ function OrbitingPanels() {
     groupRef.current.rotation.y = elapsed
   })
 
-  const { colorNode } = useLocalNodes(({ uniforms }) => {
-    const uIsOccluded = uniforms.isOccluded as UniformNode<number>
-    return {
-      colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
-    }
-  })
+  const uIsOccluded = useUniform<number>('isOccluded')
+  const { colorNode } = useLocalNodes(() => ({
+    colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
+  }))
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       <mesh position={[0, 0, 1.5]}>

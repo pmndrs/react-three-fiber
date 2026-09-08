@@ -7,16 +7,16 @@ import { CameraControls, Environment } from '@react-three/drei'
 const Experience = () => {
   //* Leva Controls ==============================
   const levaUniforms = useControls('Raging Sea', getLevaSeaConfig())
-  useUniforms(levaUniforms)
+  const uniforms = useUniforms(levaUniforms)
 
   //* Nodes Setup ==============================
-  useNodes(({ uniforms }) => makeSeaNodes(uniforms), 'sea')
+  useNodes(() => makeSeaNodes(uniforms), 'sea')
 
   return (
     <>
       <Lights />
       <SeaSurface />
-      <CameraControls makeDefault target={[0, 0, 0]} />
+      <CameraControls makeDefault />
     </>
   )
 }

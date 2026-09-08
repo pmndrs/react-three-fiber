@@ -11,7 +11,7 @@ import { act } from 'react'
 import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, extend, useThree } from '../src/index'
 
-extend(THREE as any)
+extend(THREE)
 
 //* Mock Renderer ==============================
 // Mock renderer that simulates WebGPU-style renderer with init/hasInitialized

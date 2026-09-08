@@ -162,6 +162,32 @@ export {}
   }
 }
 
+function runPublicConsumerTest() {
+  console.log('\nPublic Entry Consumer Type Test')
+  console.log('─'.repeat(60))
+
+  const projects = [
+    ['Default', 'scripts/type-tests/tsconfig.default.json'],
+    ['Legacy', 'scripts/type-tests/tsconfig.legacy.json'],
+    ['WebGPU', 'scripts/type-tests/tsconfig.json'],
+  ]
+
+  try {
+    for (const [name, project] of projects) {
+      execSync(`pnpm exec tsc --project ${project} --pretty false`, {
+        cwd: resolve(__dirname, '..'),
+        stdio: 'pipe',
+      })
+      console.log(`   ${name} consumer type test passed`)
+    }
+    return true
+  } catch (error) {
+    console.error('   Public entry consumer type test failed')
+    console.error(error.stdout?.toString() || error.message)
+    return false
+  }
+}
+
 /**
  * Main execution
  */
@@ -185,6 +211,10 @@ function main() {
 
   // Run type resolution test
   if (!runTypeResolutionTest()) {
+    allPassed = false
+  }
+
+  if (!runPublicConsumerTest()) {
     allPassed = false
   }
 

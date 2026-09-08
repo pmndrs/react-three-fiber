@@ -175,14 +175,33 @@ export function useTexture<Url extends string[] | string | Record<string, string
     IsObject(stableInput) ? Object.values(stableInput) : stableInput,
   ) as MappedTextureType<Url>
 
+  // Map textures to keys if object input was provided. Built before onLoad fires so the
+  // callback receives the same shape the hook returns: useLoader hands back a positional array
+  // for the record form, and handing that to a callback typed against the keyed record crashed
+  // at the first `textures.map.wrapT`.
+  const mappedTextures = useMemo(() => {
+    // If we have cached result, it's already in the right format
+    if (cachedResult) return cachedResult
+
+    if (IsObject(stableInput)) {
+      const keyed = {} as Record<string, _Texture>
+      const textureArray = loadedTextures as _Texture[]
+      let i = 0
+      for (const key in stableInput) keyed[key] = textureArray[i++]
+      return keyed as TextureRecord<Url>
+    } else {
+      return loadedTextures
+    }
+  }, [stableInput, loadedTextures, cachedResult]) as MappedTextureType<Url>
+
   // Call onLoad when textures are ready (only on initial load, not cache hits)
   // Keyed on inputKey (computed above) so repeat renders don't re-fire the callback
   useLayoutEffect(() => {
     if (cachedResult) return
     if (onLoadCalledForRef.current === inputKey) return
     onLoadCalledForRef.current = inputKey
-    onLoadRef.current?.(loadedTextures)
-  }, [cachedResult, loadedTextures, inputKey])
+    onLoadRef.current?.(mappedTextures)
+  }, [cachedResult, mappedTextures, inputKey])
 
   // https://github.com/mrdoob/three.js/issues/22696
   // Upload the texture to the GPU immediately instead of waiting for the first render
@@ -208,22 +227,6 @@ export function useTexture<Url extends string[] | string | Record<string, string
       })
     }
   }, [renderer, loadedTextures, cachedResult])
-
-  // Map textures to keys if object input was provided
-  const mappedTextures = useMemo(() => {
-    // If we have cached result, it's already in the right format
-    if (cachedResult) return cachedResult
-
-    if (IsObject(stableInput)) {
-      const keyed = {} as Record<string, _Texture>
-      const textureArray = loadedTextures as _Texture[]
-      let i = 0
-      for (const key in stableInput) keyed[key] = textureArray[i++]
-      return keyed as TextureRecord<Url>
-    } else {
-      return loadedTextures
-    }
-  }, [stableInput, loadedTextures, cachedResult])
 
   //* Register in the texture cache + refcount while mounted --
   // Adds missing textures and retains them so useTextures().dispose() is safe; releases on unmount.

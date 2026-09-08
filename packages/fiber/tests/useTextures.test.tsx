@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { createRoot, useTexture, useTextures, useThree, extend } from '../src'
 import type { UseTexturesReturn } from '../src'
 
-extend(THREE as any)
+extend(THREE)
 
 /** Make TextureLoader.load resolve synchronously to a given texture (jsdom has no real image loading). */
 function mockTextureLoad(tex: THREE.Texture) {
@@ -435,5 +435,46 @@ describe('useTextures (registry)', () => {
     })
 
     expect(seen).toBe(a)
+  })
+})
+
+describe('useTexture onLoad', () => {
+  let root: ReturnType<typeof createRoot> = null!
+
+  beforeEach(() => {
+    root = createRoot(document.createElement('canvas'))
+  })
+
+  afterEach(async () => {
+    await act(async () => root.unmount())
+  })
+
+  it('receives the keyed record for the record input form', async () => {
+    // The callback is declared against the same shape the hook returns. It used to be handed
+    // useLoader's positional array instead, so `textures.map.wrapT` threw at runtime.
+    const spy = mockTextureLoad(new THREE.Texture())
+    const onLoad = vi.fn()
+
+    function Probe() {
+      useTexture({ map: '/onload-map.png', normalMap: '/onload-normal.png' }, { onLoad, cache: false })
+      return null
+    }
+
+    await act(async () => {
+      root.render(
+        <React.Suspense fallback={null}>
+          <Probe />
+        </React.Suspense>,
+      )
+      await new Promise((r) => setTimeout(r, 20))
+    })
+
+    expect(onLoad).toHaveBeenCalledTimes(1)
+    const textures = onLoad.mock.calls[0][0]
+    expect(Array.isArray(textures)).toBe(false)
+    expect(Object.keys(textures)).toEqual(['map', 'normalMap'])
+    expect(textures.map).toBeInstanceOf(THREE.Texture)
+    expect(textures.normalMap).toBeInstanceOf(THREE.Texture)
+    spy.mockRestore()
   })
 })

@@ -2,8 +2,9 @@ import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, extend, once } from '../src/index'
+import { isOnce } from '../src/core/utils/once'
 
-extend(THREE as any)
+extend(THREE)
 
 describe('once', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
@@ -232,5 +233,37 @@ describe('once', () => {
     // So y should now be approximately [-0.5, 0.5] and z should be [-0.5, 0.5]
     expect(Math.abs(box.min.y + 0.5)).toBeLessThan(0.01)
     expect(Math.abs(box.max.y - 0.5)).toBeLessThan(0.01)
+  })
+
+  it('is typed as the value the prop declares', () => {
+    // The runtime value is always the marker; the declared type follows the prop, so a
+    // multi-argument call is a tuple and a bare call is `true` — no cast at the call site.
+    const single: number = once(Math.PI / 2)
+    const tuple: [x: number, y: number, z: number] = once(1, 2, 3)
+    const bare: true = once()
+    const matrix: THREE.Matrix4 = once(new THREE.Matrix4())
+    // @ts-expect-error a multi-argument call is the argument tuple, not its first element
+    const wrong: number = once(1, 2, 3)
+
+    for (const marker of [single, tuple, bare, matrix, wrong]) expect(isOnce(marker)).toBe(true)
+  })
+
+  it('typechecks against the geometry transform props', async () => {
+    const geometryRef = React.createRef<THREE.BoxGeometry>()
+
+    function Test() {
+      return (
+        <mesh>
+          <boxGeometry ref={geometryRef} args={[1, 1, 1]} translate={once(0, 5, 0)} center={once()} />
+        </mesh>
+      )
+    }
+
+    await act(async () => root.render(<Test />))
+
+    // translate then center: the box ends up centered again
+    const geometry = geometryRef.current!
+    geometry.computeBoundingBox()
+    expect(Math.abs(geometry.boundingBox!.min.y + 0.5)).toBeLessThan(0.01)
   })
 })

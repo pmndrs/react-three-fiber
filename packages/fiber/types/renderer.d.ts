@@ -164,14 +164,17 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   performance?: Partial<Omit<Performance, 'regress'>>
   /** Target pixel ratio. Can clamp between a range: `[min, max]` */
   dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
+  /**
+   * Props that go into the default raycaster. `params` is merged into the raycaster's defaults,
+   * so a single threshold can be set: `raycaster={{ params: { Points: { threshold: 0.2 } } }}`.
+   */
+  raycaster?: Partial<Omit<THREE.Raycaster, 'params'>> & { params?: Partial<THREE.RaycasterParameters> }
   /** A `THREE.Scene` instance or props that go into the default scene */
   scene?: THREE.Scene | Partial<THREE.Scene>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: CameraProps
   /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
+  events?: (store: RootStore) => EventManager<Element>
   /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */

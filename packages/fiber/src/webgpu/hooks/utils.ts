@@ -218,7 +218,7 @@ export function vectorize(inObject: unknown): unknown {
   if (obj.isVector2 || obj.isVector3 || obj.isVector4) return inObject
 
   // If it's a matrix, return as-is
-  if (obj.isMatrix3 || obj.isMatrix4) return inObject
+  if (obj.isMatrix2 || obj.isMatrix3 || obj.isMatrix4) return inObject
 
   // If it's a Color, Euler, Quaternion, or other Three.js types, return as-is
   if (obj.isColor || obj.isEuler || obj.isQuaternion || obj.isSpherical) return inObject

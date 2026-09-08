@@ -132,16 +132,11 @@ function setEnvProps(
   const oldbg = target.background
   const oldenv = target.environment
   const oldSceneProps = {
-    // @ts-ignore
     backgroundBlurriness: target.backgroundBlurriness,
-    // @ts-ignore
     backgroundIntensity: target.backgroundIntensity,
-    // @ts-ignore
-    backgroundRotation: target.backgroundRotation?.clone?.() ?? [0, 0, 0],
-    // @ts-ignore
+    backgroundRotation: target.backgroundRotation.clone(),
     environmentIntensity: target.environmentIntensity,
-    // @ts-ignore
-    environmentRotation: target.environmentRotation?.clone?.() ?? [0, 0, 0],
+    environmentRotation: target.environmentRotation.clone(),
   }
   if (background !== 'only') target.environment = texture
   if (background) target.background = texture
@@ -348,7 +343,6 @@ export function EnvironmentPortal({
       {createPortal(
         <>
           {children}
-          {/* @ts-ignore */}
           <cubeCamera ref={camera} args={[near, far, fbo]} />
           {files || preset ? (
             <EnvironmentCube background files={files} preset={preset} path={path} extensions={extensions} />

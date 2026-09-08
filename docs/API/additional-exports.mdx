@@ -48,6 +48,17 @@ function SpotlightWithTarget() {
 }
 ```
 
+When the prop needs the sibling _wrapped_ rather than assigned as-is, pass a transform as the second argument. It runs once the ref is populated and its result is what gets assigned:
+
+```tsx
+import { lights } from 'three/tsl'
+
+// A node material's lightsNode needs a LightsNode, not the light itself
+<meshPhongNodeMaterial lightsNode={fromRef(lightRef, (light) => lights([light]))} />
+```
+
+Only top-level props on a three element are resolved. A marker nested inside another value (an array, an options object) or passed to a React component is not seen.
+
 ### `once` — mount-only method calls
 
 `once` marks a method prop to be applied only on initial mount, which is useful for geometry transforms that shouldn't compound every render:
@@ -63,6 +74,11 @@ import { once } from '@react-three/fiber'
 
 // Apply a matrix on mount
 <bufferGeometry applyMatrix4={once(transformMatrix)} />
+
+// Multi-argument methods take the arguments directly
+<planeGeometry args={[10, 10]} translate={once(0, 0, 5)} />
 ```
+
+`once` is typed as the value the prop declares: a single argument is the argument itself, several arguments are the tuple, and a bare `once()` is `true`. Pass the arguments individually, not as an array: `once([0, 0, 5])` calls `translate([0, 0, 5])`.
 
 When `args` change (triggering element reconstruction), `once` methods run again on the new instance.

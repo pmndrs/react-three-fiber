@@ -32,7 +32,7 @@ export {
   clearNodeScope,
   clearRootNodes,
   type TSLNode,
-  type NodeRecord,
+  type TSLNodeLike,
   type NodeCreator,
   type LocalNodeCreator,
   type RemoveNodesFn,

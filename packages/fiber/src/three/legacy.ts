@@ -29,7 +29,7 @@ export async function loadInspector(): Promise<never> {
 }
 
 // WebGPURenderer stub - throws if someone tries to use it
-export const WebGPURenderer = class WebGPURenderer {
+export class WebGPURenderer {
   constructor() {
     throw new Error('WebGPURenderer is not available in legacy builds. Use @react-three/fiber/webgpu instead.')
   }
