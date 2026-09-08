@@ -83,11 +83,33 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<namespaceGroup />))
     expect(store.getState().scene.children[1]).toBeInstanceOf(NamespaceGroup)
 
+    // The constant was not registered, so the element is unknown. React reports a render-phase
+    // throw through the nearest error boundary; whether the render promise itself rejects
+    // depends on React's retry timing, so assert on the boundary, not the promise.
+    let caught: Error | null = null
+    class Boundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+      state = { hasError: false }
+      static getDerivedStateFromError() {
+        return { hasError: true }
+      }
+      componentDidCatch(error: Error) {
+        caught = error
+      }
+      render() {
+        return this.state.hasError ? null : this.props.children
+      }
+    }
+
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(act(async () => root.render(<nAMESPACE_CONSTANT />))).rejects.toThrow(
-      /not part of the THREE namespace/,
+    await act(async () =>
+      root.render(
+        <Boundary>
+          <nAMESPACE_CONSTANT />
+        </Boundary>,
+      ),
     )
     errSpy.mockRestore()
+    expect(caught!.message).toMatch(/not part of the THREE namespace/)
   })
 
   it('should render extended elements', async () => {
