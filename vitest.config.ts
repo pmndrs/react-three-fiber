@@ -39,10 +39,10 @@ export default defineConfig({
        * suite touches; `lines` is the meaningful figure for R3F's own code.
        */
       thresholds: {
-        lines: 78,
-        functions: 50,
-        statements: 41,
-        branches: 30,
+        lines: 81,
+        functions: 52,
+        statements: 42,
+        branches: 31,
       },
     },
     testTimeout: 30000,
