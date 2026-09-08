@@ -1,6 +1,6 @@
 # @react-three/eslint-plugin
 
-## Unreleased
+## 1.0.0-alpha.5
 
 ### Patch Changes
 

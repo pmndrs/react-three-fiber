@@ -1,8 +1,9 @@
 # @react-three/fiber
 
-## Unreleased
+## 10.0.0-alpha.5
 
-Full detail is in [`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#unreleased) at the repo root.
+Full detail is in
+[`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha5) at the repo root.
 
 ### Types
 
@@ -21,6 +22,9 @@ Full detail is in [`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#unreleased) at
   arguments.
 - `fromRef(ref, transform)` maps the resolved sibling before assignment.
 - Six-file `.hdr` cube sets load through `HDRCubeTextureLoader`.
+- A lone primary `<Canvas id>` owns the renderer's default canvas target (#3905).
+- Canvas honors the `resize.debounce` prop after the initial measurement (#3881).
+- `useRenderPipeline` callbacks get WebGPU-typed state and a return narrowed on `isReady` (#3901).
 
 ## 10.0.0-alpha.4
 
