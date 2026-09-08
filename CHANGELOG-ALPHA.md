@@ -4,10 +4,12 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
-## Unreleased
+## 10.0.0-alpha.5
 
-Type and reconciler cleanup ahead of the next alpha, driven by what strict-TypeScript consumers
-of the WebGPU entry hit in practice.
+Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the
+stale TSL augmentations are gone, and the built declarations are compiled by a strict consumer
+fixture on every build. Alongside it: the reconciler oddities that strict-TypeScript consumers
+surfaced while working around the old types, and the single-canvas depth-attachment fix.
 
 ### Types
 
@@ -58,6 +60,21 @@ of the WebGPU entry hit in practice.
   sibling wrapped are declarative: `lightsNode={fromRef(lightRef, (l) => lights([l]))}`.
 - Six-file `.hdr` cube sets load through `HDRCubeTextureLoader` in `useEnvironment`,
   `<Environment>` and the Canvas `background` prop, with linear color space.
+- A lone primary `<Canvas id>` owns the renderer's default canvas target, so its depth attachment
+  follows the layout instead of the element's construction size
+  ([#3905](https://github.com/pmndrs/react-three-fiber/pull/3905)).
+- Canvas honors the `resize.debounce` prop after the initial measurement
+  ([#3881](https://github.com/pmndrs/react-three-fiber/pull/3881)).
+- `useRenderPipeline` callbacks receive a `WebGPURenderer`-typed state, may not return the
+  hook-owned `scenePass`, and the hook's return narrows `renderPipeline` on `isReady`
+  ([#3901](https://github.com/pmndrs/react-three-fiber/pull/3901)).
+- The Pointcloud example's fragment shader handles point colors correctly.
+
+### Examples
+
+- The demo registry is the one table of contents; the app derives its groups from it. Adds
+  `WebGPUFog` and `WebGPUPrimaryOnly`, drops stale entries, and the examples cleanup from
+  [#3883](https://github.com/pmndrs/react-three-fiber/pull/3883).
 
 ### eslint-plugin
 
