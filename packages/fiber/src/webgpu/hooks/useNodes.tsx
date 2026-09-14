@@ -5,7 +5,9 @@ import { clearResourceEntries, rebuildResource, removeResourceEntries } from '..
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
-import type { NodeLike } from '../../../types/store'
+import type { NodeLike, NodeRecord } from '../../../types/store'
+
+export type { NodeRecord } from '../../../types/store'
 
 //* Types ==============================
 
@@ -18,12 +20,6 @@ export type TSLNodeLike = NodeLike
 
 /** TSL node type - alias for compatibility */
 export type TSLNode = TSLNodeLike
-
-/**
- * A record of TSL nodes - allows mixed node types (OperatorNode, ConstNode, etc.)
- * Uses TSLNodeLike for broader compatibility with Three.js's TSL type definitions.
- */
-export type NodeRecord<T extends TSLNodeLike = TSLNodeLike> = Record<string, T>
 
 /**
  * Creator function that returns a record of nodes.
