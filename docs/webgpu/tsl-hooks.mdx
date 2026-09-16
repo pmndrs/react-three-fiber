@@ -102,6 +102,10 @@ const uniforms = useUniforms((state) => ({
 // Read all uniforms / read a scope
 const all = useUniforms()
 const playerUniforms = useUniforms('player')
+
+// A reader cannot infer types from the store. Name what was registered and the
+// uniforms come back fully typed: uHealth is a UniformNode<'float', number>
+const { uHealth } = useUniforms<{ uHealth: number; uSpeed: number }>('player')
 ```
 
 ### Parameters
@@ -183,9 +187,11 @@ Scopes prevent naming conflicts across features. The same name lives independent
 useUniforms({ uHealth: 100, uSpeed: 1.0 }, 'player')
 useUniforms({ uHealth: 75, uSpeed: 0.8 }, 'enemy')
 
-// Read elsewhere
-const playerUniforms = useUniforms('player')
+// Read elsewhere, with the schema the creator registered
+const playerUniforms = useUniforms<{ uHealth: number; uSpeed: number }>('player')
 ```
+
+The same schema form exists on `useNodes`, `useBuffers` and `useGPUStorage`: `useNodes<{ wobble: Node }>('fx')`.
 
 ## useNodes
 
@@ -359,7 +365,7 @@ Creator functions for `useUniforms`, `useNodes`, `useLocalNodes`, `useBuffers`, 
 ```typescript
 type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
   uniforms: ScopedStoreType<UniformNode>
-  nodes: ScopedStoreType<TSLNodeType>
+  nodes: ScopedStoreType<NodeLike>
   buffers: ScopedStoreType<BufferLike>
   gpuStorage: ScopedStoreType<StorageLike>
 }

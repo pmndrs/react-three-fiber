@@ -58,7 +58,7 @@ export default function App() {
     <Canvas
       orthographic
       camera={{ zoom: 40, position: [0, 0, 100] }}
-      raycaster={{ params: { Points: { threshold: 0.2 } } as any }}>
+      raycaster={{ params: { Points: { threshold: 0.2 } } }}>
       <Particles pointCount={1000} />
     </Canvas>
   )

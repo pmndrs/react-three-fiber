@@ -2,12 +2,13 @@ import { Canvas, type ThreeElements, useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 import * as THREE from 'three'
 
-type BoxProps = ThreeElements['object3D'] & {
+// Spread props are typed for the element they land on: a mesh's props are not a group's.
+type BoxProps = {
   setActive: (active: boolean) => void
   active: boolean
 }
 
-function Box1(props: BoxProps) {
+function Box1({ setActive, active, ...props }: BoxProps & ThreeElements['mesh']) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   useFrame((state) => (mesh.current.position.y = Math.sin(state.elapsed)))
@@ -16,16 +17,16 @@ function Box1(props: BoxProps) {
     <mesh
       {...props}
       ref={mesh}
-      onClick={(e) => props.setActive(!props.active)}
-      onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}>
+      onClick={() => setActive(!active)}
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}>
       <boxGeometry />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
 }
 
-function Box2(props: BoxProps) {
+function Box2({ setActive, active, ...props }: BoxProps & ThreeElements['group']) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   useFrame((state) => (mesh.current.position.y = Math.sin(state.elapsed)))
@@ -33,11 +34,10 @@ function Box2(props: BoxProps) {
   return (
     <group {...props}>
       <mesh
-        {...props}
         ref={mesh}
-        onClick={(e) => props.setActive(!props.active)}
-        onPointerOver={(e) => setHover(true)}
-        onPointerOut={(e) => setHover(false)}>
+        onClick={() => setActive(!active)}
+        onPointerOver={() => setHover(true)}
+        onPointerOut={() => setHover(false)}>
         <boxGeometry />
         <meshStandardMaterial color={hovered ? 'green' : 'blue'} />
       </mesh>

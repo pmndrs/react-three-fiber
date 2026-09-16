@@ -25,7 +25,7 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from './three/legacy'
 // This makes all WebGL THREE constructors available declaratively
 // Note: No node materials in legacy - those require WebGPU entry
 import { extend } from './core/reconciler'
-extend(THREE as any)
+extend(THREE)
 
 //* Legacy-specific types ==============================
 // Re-export LegacyRootState as RootState so useThree() returns WebGLRenderer-typed state

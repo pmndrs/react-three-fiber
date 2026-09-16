@@ -12,6 +12,7 @@ import {
   ColorSpace,
 } from '#three'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
+import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js'
 import { GainMapLoader } from '@monogrid/gainmap-js'
@@ -97,7 +98,8 @@ export function useEnvironment({
 
   texture.mapping = isCubemap ? CubeReflectionMapping : EquirectangularReflectionMapping
 
-  texture.colorSpace = colorSpace ?? (isCubemap ? 'srgb' : 'srgb-linear')
+  // LDR cube faces are sRGB images; an HDR cube set carries linear radiance like an equirect .hdr
+  texture.colorSpace = colorSpace ?? (isCubemap && extension !== 'hdr-cube' ? 'srgb' : 'srgb-linear')
 
   return texture
 }
@@ -177,10 +179,14 @@ function getExtension(files: string | string[]) {
   const isCubemap = isArray(files) && files.length === 6
   const isGainmap = isArray(files) && files.length === 3 && files.some((file) => file.endsWith('json'))
   const firstEntry = isArray(files) ? files[0] : files
+  const firstExtension = firstEntry.split('.').pop()?.split('?')?.shift()?.toLowerCase()
 
-  // Everything else
+  // A six-file set is a cubemap, but its faces decide the loader: Radiance `.hdr` faces need
+  // HDRCubeTextureLoader, everything else goes through the plain CubeTextureLoader.
   const extension: string | false | undefined = isCubemap
-    ? 'cube'
+    ? firstExtension === 'hdr'
+      ? 'hdr-cube'
+      : 'cube'
     : isGainmap
       ? 'webp'
       : firstEntry.startsWith('data:application/exr')
@@ -189,7 +195,7 @@ function getExtension(files: string | string[]) {
           ? 'hdr'
           : firstEntry.startsWith('data:image/jpeg')
             ? 'jpg'
-            : firstEntry.split('.').pop()?.split('?')?.shift()?.toLowerCase()
+            : firstExtension
 
   return { extension, isCubemap, isGainmap }
 }
@@ -198,15 +204,17 @@ function getLoader(extension: string | undefined) {
   const loader =
     extension === 'cube'
       ? CubeTextureLoader
-      : extension === 'hdr'
-        ? HDRLoader
-        : extension === 'exr'
-          ? EXRLoader
-          : extension === 'jpg' || extension === 'jpeg'
-            ? UltraHDRLoader
-            : extension === 'webp'
-              ? GainMapLoader
-              : null
+      : extension === 'hdr-cube'
+        ? HDRCubeTextureLoader
+        : extension === 'hdr'
+          ? HDRLoader
+          : extension === 'exr'
+            ? EXRLoader
+            : extension === 'jpg' || extension === 'jpeg'
+              ? UltraHDRLoader
+              : extension === 'webp'
+                ? GainMapLoader
+                : null
 
   return loader
 }

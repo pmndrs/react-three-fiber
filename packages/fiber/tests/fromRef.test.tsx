@@ -3,7 +3,7 @@ import { act } from 'react'
 import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, extend, fromRef } from '../src/index'
 
-extend(THREE as any)
+extend(THREE)
 
 describe('fromRef', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
@@ -122,5 +122,42 @@ describe('fromRef', () => {
 
     // Target should have been set during initial mount
     expect(spotLightRef.current).toBeInstanceOf(THREE.SpotLight)
+  })
+
+  it('applies a transform to the resolved ref before assignment', async () => {
+    const targetRef = React.createRef<THREE.Group>()
+    const spotLightRef = React.createRef<THREE.SpotLight>()
+    const transform = vi.fn((group: THREE.Group) => group.children[0])
+
+    function Test() {
+      return (
+        <>
+          <group ref={targetRef}>
+            <mesh name="child" />
+          </group>
+          <spotLight ref={spotLightRef} target={fromRef(targetRef, transform)} />
+        </>
+      )
+    }
+
+    await act(async () => root.render(<Test />))
+
+    expect(transform).toHaveBeenCalledTimes(1)
+    expect(transform).toHaveBeenCalledWith(targetRef.current)
+    expect(spotLightRef.current!.target).toBe(targetRef.current!.children[0])
+    expect(spotLightRef.current!.target.name).toBe('child')
+  })
+
+  it('does not run the transform while the ref is empty', async () => {
+    const nullRef = React.createRef<THREE.Group>()
+    const transform = vi.fn((group: THREE.Group) => group)
+
+    function Test() {
+      return <spotLight target={fromRef(nullRef, transform)} />
+    }
+
+    await act(async () => root.render(<Test />))
+
+    expect(transform).not.toHaveBeenCalled()
   })
 })

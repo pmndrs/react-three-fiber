@@ -1,6 +1,14 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
-import type { WebGPURenderer, CanvasTarget, Node, StorageTexture, Data3DTexture } from 'three/webgpu'
+import type {
+  WebGPURenderer,
+  CanvasTarget,
+  Node,
+  StorageTexture,
+  Storage3DTexture,
+  StorageArrayTexture,
+  Data3DTexture,
+} from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
@@ -31,6 +39,7 @@ export type BufferLike =
   | Uint16Array
   | Int16Array
   | THREE.BufferAttribute // Base class for all buffer attributes
+  | THREE.InterleavedBufferAttribute
   | Node // TSL buffer nodes (instancedArray, storage)
 
 /** Flat record of buffer-like values (no nested scopes) */
@@ -45,23 +54,15 @@ export type BufferStore = Record<string, BufferLike | BufferRecord>
 //* Node Types (useNodes) ========================================
 
 /**
- * Structural shape of a TSL node as stored on `state.nodes`.
- *
- * Deliberately minimal rather than three's nominal `Node`: in @types/three several node classes
- * TSL hands back (OperatorNode, ConstNode, ...) do not extend `Node` cleanly, so a `Node` bound
- * would reject values `useNodes` creators legitimately return. This is the same shape
- * `useNodes` already constrains creators to (`TSLNodeLike`).
+ * Every node representation `useNodes` accepts and `state.nodes` holds: three's real `Node`,
+ * the callable proxy `Fn()` returns, and the legacy structural shape (`uuid`/`nodeType`) older
+ * code passes through. Creators are constrained to this same type, so the shape a creator returns
+ * and the shape the store holds are one type by construction.
  */
-export interface NodeLike {
-  uuid?: string
-  nodeType?: string | null
-  /** label method for chaining - sets the node's label and returns self */
-  label?: ((label: string) => NodeLike) | string
-  setName?: (name: string) => this
-}
+export type NodeLike = TSLNodeType | LegacyTSLNodeLike
 
 /** Flat record of TSL nodes (no nested scopes) */
-export type NodeRecord = Record<string, NodeLike>
+export type NodeRecord<T extends NodeLike = NodeLike> = Record<string, T>
 
 /**
  * Node store that can contain both root-level nodes and scoped node objects.
@@ -83,7 +84,9 @@ export type NodeStore = Record<string, NodeLike | NodeRecord>
  * ```
  */
 export type StorageLike =
-  | StorageTexture // GPU storage texture
+  | StorageTexture // 2D GPU storage texture
+  | Storage3DTexture // 3D GPU storage texture (volumes, fluid grids)
+  | StorageArrayTexture // 2D-array GPU storage texture
   | Data3DTexture // 3D texture (can be used as storage)
   | Node // TSL storage texture nodes (storageTexture)
 

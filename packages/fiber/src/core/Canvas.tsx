@@ -52,7 +52,7 @@ function CanvasImpl({
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
-  React.useMemo(() => extend(THREE as any), [])
+  React.useMemo(() => extend(THREE), [])
 
   const Bridge = useBridge()
 

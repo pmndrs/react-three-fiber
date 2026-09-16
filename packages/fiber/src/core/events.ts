@@ -752,7 +752,7 @@ const DOM_EVENTS = {
 } as const
 
 /** Default R3F event manager for web */
-export function createPointerEvents(store: RootStore): EventManager<HTMLElement> {
+export function createPointerEvents(store: RootStore): EventManager<Element> {
   const { handlePointer, flushDeferredPointers, processDeferredPointer } = createEvents(store)
 
   // Counter for XR pointer IDs
@@ -816,7 +816,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
       }
     },
 
-    connect: (target: HTMLElement) => {
+    connect: (target: Element) => {
       if (!target) return
       const { set, events } = store.getState()
       events.disconnect?.()

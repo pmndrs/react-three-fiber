@@ -14,7 +14,7 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, extend, useFrame } from '../src'
 
-extend(THREE as any)
+extend(THREE)
 
 //* Mock Renderer ==============================
 

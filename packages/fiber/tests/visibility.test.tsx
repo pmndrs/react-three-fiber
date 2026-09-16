@@ -10,7 +10,7 @@ import { __resetWarningFlag } from '../src/core/visibility'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
-extend(THREE as any)
+extend(THREE)
 
 // Reset warning flag before each test to ensure clean state
 beforeEach(() => {

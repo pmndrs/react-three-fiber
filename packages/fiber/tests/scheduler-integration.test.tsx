@@ -27,7 +27,7 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useFrame, useThree, extend } from '../src'
 
-extend(THREE as any)
+extend(THREE)
 
 //* Mock Renderer ==============================
 // Minimal WebGPU-style mock so the default render job has something to call.

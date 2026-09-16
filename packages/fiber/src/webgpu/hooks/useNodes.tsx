@@ -3,32 +3,30 @@ import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { isTSLNode } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
 import { scopedNodeName } from './utils'
-import type { NodeLike } from '../../../types/store'
+import type { NodeLike, NodeRecord, NodeStore } from '../../../types/store'
 
 //* Types ==============================
 
 /**
- * Minimal interface for TSL nodes. The definition lives with the store types as `NodeLike`, so
- * the shape creators may return and the shape `state.nodes` holds are the same type by
- * construction. See `NodeLike` for why this is structural rather than three's `Node`.
+ * Every node representation a creator may return. The definition lives with the store types as
+ * `NodeLike`, so the shape creators return and the shape `state.nodes` holds are one type by
+ * construction: three's real `Node`, the callable proxy `Fn()` returns, or the legacy structural
+ * `{ uuid, nodeType }` shape.
  */
 export type TSLNodeLike = NodeLike
 
-/** TSL node type - alias for compatibility */
+// `NodeRecord` and `NodeStore` are the store's own types, re-exported for hook consumers.
+export type { NodeRecord, NodeStore }
+
+/** Backward-compatible alias covering every accepted node representation. */
 export type TSLNode = TSLNodeLike
 
 /**
- * A record of TSL nodes - allows mixed node types (OperatorNode, ConstNode, etc.)
- * Uses TSLNodeLike for broader compatibility with Three.js's TSL type definitions.
- */
-export type NodeRecord<T extends TSLNodeLike = TSLNodeLike> = Record<string, T>
-
-/**
  * Creator function that returns a record of nodes.
- * Uses TSLNodeLike constraint to allow mixed node types
- * (e.g., { n: OperatorNode; color: ConstNode<Color> }) to pass type checking.
+ * Exact creator return inference is preserved within the compatible node constraint.
  */
 export type NodeCreator<T extends Record<string, TSLNodeLike>> = (state: CreatorState) => T
 
@@ -42,32 +40,36 @@ export type ClearNodesFn = (scope?: string) => void
 export type RebuildNodesFn = (scope?: string) => void
 
 /** Return type with utils included */
-export type NodesWithUtils<T extends Record<string, TSLNodeLike> = Record<string, TSLNodeLike>> = T & {
+export type NodesWithUtils<T extends Record<string, unknown> = NodeRecord> = T & {
   removeNodes: RemoveNodesFn
   clearNodes: ClearNodesFn
   rebuildNodes: RebuildNodesFn
 }
 
-/** Type guard to check if a value is a TSLNode vs a scope object */
-const isTSLNode = (value: unknown): value is TSLNodeLike =>
-  value !== null && typeof value === 'object' && ('uuid' in value || 'nodeType' in value)
-
 //* Hook Overloads ==============================
 
 // Get all nodes (returns full structure with root nodes and scopes + utils)
-export function useNodes(): NodesWithUtils<Record<string, TSLNodeLike> & Record<string, Record<string, TSLNodeLike>>>
+export function useNodes(): NodesWithUtils<NodeStore>
 
 // Get nodes from a specific scope (+ utils)
-export function useNodes(scope: string): NodesWithUtils<Record<string, TSLNodeLike>>
+export function useNodes(scope: string): NodesWithUtils<NodeRecord>
+
+// Read existing nodes against an explicit schema, at root (no scope) or within a scope.
+// A reader cannot infer types from a runtime string; supply the shape the creator returned.
+export function useNodes<T extends NodeRecord>(scope?: string): NodesWithUtils<T>
 
 // Create/get nodes at root level (no scope) (+ utils)
-export function useNodes<T extends Record<string, TSLNodeLike>>(creator: NodeCreator<T>): NodesWithUtils<T>
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
 
 // Create/get nodes within a scope (+ utils)
-export function useNodes<T extends Record<string, TSLNodeLike>>(
-  creator: NodeCreator<T>,
-  scope: string,
-): NodesWithUtils<T>
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
+
+// Broad implementation overload keeps utility-only consumers assignable while the
+// preceding call-site overloads preserve exact creator and reader inference.
+export function useNodes(
+  creatorOrScope?: NodeCreator<NodeRecord> | string,
+  scope?: string,
+): NodesWithUtils<Record<string, unknown>>
 
 //* Hook Implementation ==============================
 
@@ -76,7 +78,7 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
  *
  * Nodes at root level are stored directly on state.nodes.
  * Scoped nodes are stored under state.nodes[scope].
- * Can store any TSL node: attributes, varyings, operations, functions, etc.
+ * Accepts Three nodes, callable Fn nodes, and legacy uuid/nodeType structural nodes.
  *
  * @example
  * ```tsx
@@ -104,13 +106,10 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
  * material.positionNode = positionLocal.add(normal.mul(wobble))
  * ```
  */
-export function useNodes<T extends Record<string, TSLNodeLike>>(
+export function useNodes<T extends NodeRecord>(
   creatorOrScope?: NodeCreator<T> | string,
   scope?: string,
-):
-  | NodesWithUtils<T>
-  | NodesWithUtils<Record<string, TSLNodeLike>>
-  | NodesWithUtils<Record<string, TSLNodeLike> & Record<string, Record<string, TSLNodeLike>>> {
+): NodesWithUtils<T> | NodesWithUtils<NodeRecord> | NodesWithUtils<NodeStore> {
   const store = usePrimaryStore()
 
   //* Utils ==============================
@@ -160,7 +159,8 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
     },
     prepare: (name, node) => {
       // Apply label for debugging
-      node.setName?.(scopedNodeName(scope, name))
+      const setName = Reflect.get(node, 'setName')
+      if (typeof setName === 'function') setName.call(node, scopedNodeName(scope, name))
       return node
     },
   })
@@ -169,9 +169,9 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
   // Case 2: String argument - that scope's nodes (guard against a TSL node
   //         stored under the same name), reactive via storeNodes
   // Case 3: Creator function - the entries registered above
-  let nodes: NodeRecord | (NodeRecord & Record<string, NodeRecord>) = created
+  let nodes: NodeRecord | NodeStore = created
   if (creatorOrScope === undefined) {
-    nodes = storeNodes as NodeRecord & Record<string, NodeRecord>
+    nodes = storeNodes as NodeStore
   } else if (typeof creatorOrScope === 'string') {
     const scopeData = storeNodes[creatorOrScope]
     nodes = scopeData && !isTSLNode(scopeData) ? (scopeData as NodeRecord) : {}

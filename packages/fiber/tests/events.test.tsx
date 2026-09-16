@@ -6,7 +6,7 @@ import { Canvas, extend } from '../src'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
-extend(THREE as any)
+extend(THREE)
 
 const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
 

@@ -1,5 +1,31 @@
 # @react-three/fiber
 
+## 10.0.0-alpha.5
+
+Full detail is in
+[`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha5) at the repo root.
+
+### Types
+
+- WebGPU uniform hooks keep three's exact node generics and the input's exact keys; the stale
+  `ShaderNodeObject`/`Fn` augmentations are removed.
+- `Matrix2` uniforms, `Storage3DTexture`/`StorageArrayTexture` storage, a value-typed `once()`,
+  and a WebGPU-narrowed `Canvas.onCreated` on the `/webgpu` entry.
+- Reader-mode resource hooks accept an explicit schema; `extend(THREE)` needs no cast; partial
+  `raycaster.params`, any `Element` as `eventSource`, and typed `<primitive>` events.
+
+### Bug Fixes
+
+- `useTexture`'s `onLoad` receives the keyed record for record inputs.
+- `<threeLine>` and other prefixed elements survive their first prop update.
+- A removed prop resets to the class default instead of `0` for classes whose constructor takes
+  arguments.
+- `fromRef(ref, transform)` maps the resolved sibling before assignment.
+- Six-file `.hdr` cube sets load through `HDRCubeTextureLoader`.
+- A lone primary `<Canvas id>` owns the renderer's default canvas target (#3905).
+- Canvas honors the `resize.debounce` prop after the initial measurement (#3881).
+- `useRenderPipeline` callbacks get WebGPU-typed state and a return narrowed on `isReady` (#3901).
+
 ## 10.0.0-alpha.4
 
 Full detail is in

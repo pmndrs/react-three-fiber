@@ -4,7 +4,7 @@ import * as THREE from 'three'
 
 import { createRoot, useLoader, ObjectMap, extend } from '../src'
 
-extend(THREE as any)
+extend(THREE)
 
 describe('useLoader', () => {
   let root: ReturnType<typeof createRoot> = null!

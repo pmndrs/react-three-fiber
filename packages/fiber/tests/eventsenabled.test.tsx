@@ -6,7 +6,7 @@ import { Canvas, extend, useThree } from '../src/index'
 
 import { act } from './utils/act'
 
-extend(THREE as any)
+extend(THREE)
 
 const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
 

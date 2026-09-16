@@ -31,10 +31,15 @@ declare global {
    * any kind, not only passes: texture reads of an MRT attachment, effect nodes, extra
    * `pass()` instances. `Node` is the common base, so that is the bound. Narrow at the call
    * site when you need a member, e.g. `passes.velocity as TextureNode`.
+   *
+   * The index signature admits `undefined` because a key may simply not be registered, and
+   * because the optional `scenePass` must be assignable to it: under `skipLibCheck: false` an
+   * optional property whose type excludes `undefined` from the index signature is an error
+   * (TS2411) for every consumer compiling these declarations.
    */
   interface PassRecord {
     scenePass?: ScenePassNode
-    [key: string]: import('three/webgpu').Node
+    [key: string]: import('three/webgpu').Node | undefined
   }
 
   /**

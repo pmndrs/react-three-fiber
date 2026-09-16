@@ -4,6 +4,7 @@ import {
   ComputeFunction,
   createPortal,
   type ThreeElements,
+  type ThreeEvent,
   useFrame,
   useThree,
 } from '@react-three/fiber/legacy'
@@ -35,7 +36,7 @@ export function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
   const { meshes, materials } = useGLTF('/models/bottle.gltf')
   return (
-    <group {...(spread as any)} {...props} dispose={null}>
+    <group {...spread} {...props} dispose={null}>
       <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} />
       </mesh>
@@ -46,7 +47,11 @@ export function Soda(props: ThreeElements['group']) {
 
 function useHover() {
   const [hovered, hover] = useState(false)
-  return [hovered, { onPointerOver: (e: any) => (e.stopPropagation(), hover(true)), onPointerOut: () => hover(false) }]
+  const bind = {
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => (e.stopPropagation(), hover(true)),
+    onPointerOut: () => hover(false),
+  }
+  return [hovered, bind] as const
 }
 
 function Portal({

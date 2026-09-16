@@ -24,4 +24,4 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
 // This makes all THREE constructors (including node materials) available
 // declaratively without users needing to call extend() themselves
 import { extend } from './core/reconciler'
-extend(THREE as any)
+extend(THREE)

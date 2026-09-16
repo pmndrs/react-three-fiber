@@ -28,19 +28,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 // Uses useRenderPipeline hook - no manual useFrame needed!
 
 function RenderPipelineManager() {
-  // Get the blur amount uniform from shared state (registered in Experience)
-  const { blurAmount } = useUniforms()
+  // Read the blur amount uniform registered by Experience. A reader cannot infer the type from
+  // the store, so the schema names what was registered: blurAmount is a float uniform.
+  const { blurAmount } = useUniforms<{ blurAmount: number }>()
 
   useRenderPipeline(
     // mainCB - receives full RootState, set outputNode explicitly
-    ({ renderPipeline, passes, uniforms }) => {
+    ({ renderPipeline, passes }) => {
       // Get the rendered textures
       const beauty = passes.scenePass.getTextureNode()
       const vel = passes.scenePass.getTextureNode('velocity')
 
-      // Use blurAmount from uniforms (or from outer scope via closure)
-      const blurNode = (uniforms.blurAmount ?? blurAmount) as UniformNode<number>
-      const mBlur = motionBlur(beauty, vel.mul(blurNode))
+      const mBlur = motionBlur(beauty, vel.mul(blurAmount))
 
       // Add vignette effect for polish
       // Creates a darkening at the edges of the screen
@@ -78,7 +77,7 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
   const group = useRef<THREE.Group>(null!)
   const [model, setModel] = useState<THREE.Group | null>(cachedModel?.scene ?? null)
   const mixerRef = useRef<THREE.AnimationMixer | null>(cachedModel?.mixer ?? null)
-  const renderer = useThree((s) => s.gl) as unknown as THREE.WebGPURenderer
+  const renderer = useThree((s) => s.renderer)
 
   // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility)
   useEffect(() => {
@@ -130,7 +129,8 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
         cachedModel.scene.traverse((child) => {
           const mesh = child as THREE.SkinnedMesh
           if (mesh.isSkinnedMesh && mesh.skeleton) {
-            const skeleton = mesh.skeleton as any // WebGPU adds previousBoneMatrices
+            // previousBoneMatrices is added by WebGPU's SkinningNode and is not in three's Skeleton types
+            const skeleton = mesh.skeleton as any
             // Ensure previousBoneMatrices exists and is populated
             if (skeleton.boneMatrices) {
               if (!skeleton.previousBoneMatrices) {
@@ -144,7 +144,8 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
 
       // Clear renderer's node cache to force SkinningNode recreation
       try {
-        const backend = (renderer as any).backend
+        // three types `backend` as the abstract Backend, which does not declare the node cache
+        const backend = renderer.backend as any
         if (backend?.nodes?.cache) backend.nodes.cache.clear()
       } catch {
         // Ignore cache clear errors

@@ -25,7 +25,7 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '../three/webgpu'
 // This makes MeshBasicNodeMaterial, MeshStandardNodeMaterial, etc. available
 // declaratively without users needing to call extend() themselves
 import { extend } from '../core/reconciler'
-extend(THREE as any)
+extend(THREE)
 
 //* WebGPU-specific exports ==============================
 // These hooks are only meaningful with WebGPU/TSL
@@ -78,3 +78,22 @@ export type UseFrameWebGPU = (
 // this entry guarantees at runtime.
 export const useThree = useThreeCore as unknown as UseThreeWebGPU
 export const useFrame = useFrameCore as unknown as UseFrameWebGPU
+
+//* WebGPU-narrowed Canvas ==============================
+// Same reasoning for `onCreated`: it is the one callback that runs early enough to configure the
+// renderer before its first frame, and on this entry the renderer it receives is always a
+// WebGPURenderer. The base `CanvasProps` types it as the WebGL/WebGPU union, which forced an
+// `instanceof` narrow for any WebGPU-only member (`renderer.compute`, `renderer.lighting`, ...).
+import { Canvas as CanvasCore } from '../core/Canvas'
+import type { CanvasProps as CanvasPropsCore } from '../../types/canvas'
+import type { JSX } from 'react'
+
+/** Canvas props on the WebGPU entry: `onCreated` receives `WebGPURootState`. */
+export type WebGPUCanvasProps = Omit<CanvasPropsCore, 'onCreated'> & {
+  /** Callback after the canvas has rendered (but not yet committed); `state.renderer` is a `WebGPURenderer` */
+  onCreated?: (state: WebGPURootState) => void
+}
+export type { WebGPUCanvasProps as CanvasProps }
+
+/** `Canvas` narrowed to WebGPU state — the same component, `onCreated` typed against `WebGPURootState`. */
+export const Canvas = CanvasCore as unknown as (props: WebGPUCanvasProps) => JSX.Element
