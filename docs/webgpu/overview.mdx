@@ -256,10 +256,11 @@ This means no duplicate GPU allocations, shared state across the component tree,
 - [TSL Hooks](./tsl-hooks) - `useUniform`, `useUniforms`, `useNodes`, `useLocalNodes`, ScopedStore
 - [Render Pipeline](./render-pipeline) - `useRenderPipeline`, MRT, custom passes
 - [Compute (Buffers & Storage)](./compute) - `useBuffers`, `useGPUStorage`
+- [Textures](./textures) - `useTexture`, `useTextures`, the texture registry
 - [Multi-Canvas](./multi-canvas) - sharing a renderer across canvases
 - [TSL HMR](./hmr) - what rebuilds on hot reload
 
-> Building GPU pipelines often pairs with the **texture registry** (`useTexture`/`useTextures`). Those are core hooks that work with any renderer — see [Loading Textures → the texture registry](/tutorials/loading-textures#the-texture-registry-with-usetextures-experimental).
+> Building GPU pipelines often pairs with the **texture registry** (`useTexture`/`useTextures`). Those are core hooks that work with any renderer — see [Textures](./textures).
 
 ## External Resources
 
