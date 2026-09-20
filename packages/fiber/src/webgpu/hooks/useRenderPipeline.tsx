@@ -1,7 +1,7 @@
 import { useLayoutEffect, useEffect, useRef, useCallback, useState } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import * as THREE from '#three'
-import { pass } from '#three/tsl'
+import * as THREE from 'three/webgpu'
+import { pass } from 'three/tsl'
 
 // Types are declared globally in types/renderPipeline.d.ts:
 // - ScenePassNode

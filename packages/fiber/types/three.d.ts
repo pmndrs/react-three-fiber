@@ -1,4 +1,4 @@
-import type * as THREE from '#three'
+import type * as THREE from 'three'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
 import type { GroundedSkybox } from 'three/examples/jsm/objects/GroundedSkybox.js'
 

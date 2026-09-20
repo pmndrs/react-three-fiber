@@ -1,4 +1,4 @@
-import type { Scene } from '#three'
+import type { Scene } from 'three'
 import packageData from '../../package.json'
 
 import * as React from 'react'

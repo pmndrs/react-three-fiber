@@ -2,9 +2,9 @@
  * @fileoverview Tier-1 coverage for the core `useRenderTarget` hook.
  *
  * `useRenderTarget` is a CORE hook, but its whole reason to exist is the
- * per-entry WebGL-vs-WebGPU render-target distinction, so it lives here beside
- * the WebGPU suite. Under the test `#three` alias both build flags are true
- * (default build), so the hook takes its runtime branch:
+ * WebGL-vs-WebGPU render-target distinction, so it lives here beside the WebGPU
+ * suite. Both classes live in three's core, so the hook needs nothing from the
+ * entry and always branches at runtime on the renderer the root ended up with:
  *
  *     isLegacy ? new WebGLRenderTarget(...) : new RenderTarget(...)
  *

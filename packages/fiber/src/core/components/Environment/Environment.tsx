@@ -10,17 +10,10 @@ import { applyProps } from '../../utils'
 // not three's class. That is what the package-name import was resolving to, and narrowing it to
 // three's `Euler` would quietly break `backgroundRotation={[0, 0, 0]}` for every consumer.
 import type { Euler } from '../../../../types/three'
-import {
-  WebGLCubeRenderTarget,
-  CubeRenderTarget,
-  Texture,
-  Scene,
-  CubeCamera,
-  HalfFloatType,
-  CubeTexture,
-  Color,
-  ColorRepresentation,
-} from '#three'
+import { Texture, Scene, CubeCamera, HalfFloatType, CubeTexture, Color, ColorRepresentation } from 'three'
+// The cube render targets are renderer-specific: WebGLCubeRenderTarget is WebGL-only and
+// three/webgpu does not export it, so the pair still comes through the entry barrel.
+import { WebGLCubeRenderTarget, CubeRenderTarget } from '#three'
 import { GroundedSkybox as GroundProjectedEnvImpl } from 'three/examples/jsm/objects/GroundedSkybox.js'
 import { PresetsType } from './environment-assets'
 import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironment'

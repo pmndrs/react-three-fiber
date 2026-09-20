@@ -2,11 +2,11 @@
  * @fileoverview Legacy (WebGL) specific tests
  *
  * Tests WebGL-specific functionality via @react-three/fiber/legacy.
- * Imports THREE from #three to use the same instance as R3F core.
+ * Imports THREE from 'three', the module core itself uses.
  */
 import * as React from 'react'
 import { act } from 'react'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
 import { ReconcilerRoot, createRoot as createRootImpl, useFrame, useThree, RootState, extend } from '../../src/legacy'
 

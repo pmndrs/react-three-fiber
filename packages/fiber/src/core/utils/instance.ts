@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { RootStore, Instance, ObjectMap, Disposable } from '#types'
 import { getUuidPrefix } from './three'
 

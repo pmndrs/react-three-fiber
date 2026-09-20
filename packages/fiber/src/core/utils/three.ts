@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { Dpr, Size, ThreeCamera } from '#types'
 import { isOrthographicCamera } from './is'
 

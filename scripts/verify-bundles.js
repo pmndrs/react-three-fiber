@@ -7,7 +7,7 @@
  * Each entry point should be a standalone bundle with different THREE imports:
  * - Default: both 'three' and 'three/webgpu'
  * - Legacy: only 'three' (no webgpu)
- * - WebGPU: only 'three/webgpu' (no plain three)
+ * - WebGPU: 'three/webgpu' (a plain 'three' specifier is fine -- see the note on that check)
  */
 import fs from 'fs'
 import path from 'path'
@@ -40,13 +40,15 @@ const checks = [
   {
     name: 'WebGPU entry (@react-three/fiber/webgpu)',
     file: 'webgpu/index.mjs',
-    // WebGPU should have three/webgpu but NOT plain three
     shouldContain: ["from 'three/webgpu'"],
-    // This used to be empty while the note below claimed otherwise -- the invariant was documented
-    // and never enforced. Subpath imports (three/tsl, three/addons/*) are fine and are not matched
-    // by this, because the pattern includes the closing quote.
-    shouldNotContain: ["from 'three'"],
-    notes: 'WebGPU entry should only have WebGPU (no plain three imports)',
+    // A plain `three` specifier was banned here as a proxy for "does not ship a second copy of
+    // three". It is not one: three.module.js, three.webgpu.js and three.tsl.js all import the same
+    // ./three.core.js, so a bundler resolves one core no matter how many of those three specifiers
+    // appear. Core takes three's shared classes from `three`, which is reachable from this entry,
+    // so the proxy now fires on correct output. What actually matters -- one core, and no WebGL
+    // renderer on this entry -- is checked by counting cores in a real consumer bundle.
+    shouldNotContain: [],
+    notes: 'WebGPU entry carries the WebGPU renderer; three core is shared, not duplicated',
   },
 ]
 

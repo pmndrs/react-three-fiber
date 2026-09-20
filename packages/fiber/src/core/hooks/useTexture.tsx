@@ -1,5 +1,5 @@
 // Migrated from Drei
-import { Texture as _Texture, TextureLoader } from '#three'
+import { Texture as _Texture, TextureLoader } from 'three'
 import { useLoader, useThree, useStore } from './'
 import { useLayoutEffect, useEffect, useMemo, useRef, ReactNode } from 'react'
 

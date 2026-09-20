@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { getRootState } from './utils'
 import { unregisterVisibility } from './visibility'
 

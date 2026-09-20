@@ -7,7 +7,7 @@ import { useRef, useEffect } from 'react'
 import { render, act as rtlAct } from '@testing-library/react'
 import { Canvas, useThree, useFrame, extend } from '../src'
 import { __resetWarningFlag, enableOcclusion } from '../src/core/visibility'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { RootState } from '#types'
 
 extend(THREE)

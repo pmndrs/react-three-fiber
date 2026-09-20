@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { Instance, EventHandlers } from '#types'
 import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
 import { findInitialRoot, invalidateInstance } from './instance'

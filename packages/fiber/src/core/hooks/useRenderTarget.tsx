@@ -1,11 +1,5 @@
 import { useMemo } from 'react'
-import {
-  R3F_BUILD_LEGACY,
-  R3F_BUILD_WEBGPU,
-  RenderTarget,
-  WebGLRenderTarget,
-  RenderTargetCompat, // Alias used by single-renderer builds
-} from '#three'
+import { RenderTarget, WebGLRenderTarget } from 'three'
 import { useThree } from './index'
 
 import type { RenderTargetOptions } from '#types'
@@ -13,9 +7,8 @@ import type { RenderTargetOptions } from '#types'
 /**
  * Creates a render target compatible with the current renderer.
  *
- * - Legacy build: Returns WebGLRenderTarget
- * - WebGPU build: Returns RenderTarget
- * - Default build: Returns whichever matches the active renderer
+ * - WebGL: Returns WebGLRenderTarget
+ * - WebGPU: Returns RenderTarget
  *
  * @example
  * ```tsx
@@ -38,9 +31,9 @@ import type { RenderTargetOptions } from '#types'
  * const fbo = useRenderTarget(512, 256, { samples: 4 })
  * ```
  */
-export function useRenderTarget(options?: RenderTargetOptions): RenderTargetCompat
-export function useRenderTarget(size: number, options?: RenderTargetOptions): RenderTargetCompat
-export function useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTargetCompat
+export function useRenderTarget(options?: RenderTargetOptions): RenderTarget
+export function useRenderTarget(size: number, options?: RenderTargetOptions): RenderTarget
+export function useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTarget
 export function useRenderTarget(
   widthOrOptions?: number | RenderTargetOptions,
   heightOrOptions?: number | RenderTargetOptions,
@@ -76,14 +69,7 @@ export function useRenderTarget(
   return useMemo(() => {
     const w = width ?? size.width
     const h = height ?? size.height
-
-    // Default build: both renderers available, runtime decision
-    if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU) {
-      return isLegacy ? new WebGLRenderTarget(w, h, opts) : new RenderTarget(w, h, opts)
-    }
-
-    // Single-renderer builds: use the compat alias
-    // Build flags ensure dead code elimination - only one branch survives
-    return new RenderTargetCompat(w, h, opts)
+    // Both classes live in three's core, so the choice is the root's active renderer.
+    return isLegacy ? new WebGLRenderTarget(w, h, opts) : new RenderTarget(w, h, opts)
   }, [width, height, size.width, size.height, opts, isLegacy])
 }

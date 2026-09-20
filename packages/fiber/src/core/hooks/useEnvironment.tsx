@@ -11,7 +11,7 @@ import {
   CubeReflectionMapping,
   ColorSpace,
   AnyMapping,
-} from '#three'
+} from 'three'
 import { presetsObj, PresetsType } from '../components/Environment/environment-assets'
 import { useLayoutEffect } from 'react'
 import { suspend } from 'suspend-react'

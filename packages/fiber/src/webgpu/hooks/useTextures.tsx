@@ -4,7 +4,7 @@
  * This file maintains backwards compatibility for existing webgpu imports.
  */
 import { useTextures } from '../../core/hooks/useTextures'
-import type { Texture as _Texture } from '#three'
+import type { Texture as _Texture } from 'three/webgpu'
 
 export {
   useTextures,

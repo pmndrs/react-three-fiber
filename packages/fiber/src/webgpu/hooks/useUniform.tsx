@@ -1,7 +1,7 @@
-import { uniform } from '#three/tsl'
-import { Color as ThreeColor, Node } from '#three'
+import { uniform } from 'three/tsl'
+import { Color as ThreeColor, Node } from 'three/webgpu'
 
-import type { Vector2, Vector3, Vector4, Color, Matrix2, Matrix3, Matrix4 } from '#three'
+import type { Vector2, Vector3, Vector4, Color, Matrix2, Matrix3, Matrix4 } from 'three/webgpu'
 import { useStore } from '../../core/hooks'
 import { ROOT_SCOPE, peekStaged } from '../../core/utils/resourceRegistry'
 import { isTSLNode, isUniformNode } from './resourceGuards'

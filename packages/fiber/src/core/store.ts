@@ -1,7 +1,8 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frustum, SRGBColorSpace } from '#three'
-// Type-only: a value import would pull the Inspector into the eager module graph
-// and reintroduce the Turbopack import cycle. See src/three/webgpu.ts (#3846).
-import type { Inspector } from '#three'
+import { Scene, Raycaster, Vector2, Vector3, Frustum, SRGBColorSpace } from 'three'
+import type { WebGLRenderer } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
+// Keep the Inspector out of the runtime dependency graph.
+import type { Inspector } from 'three/addons/inspector/Inspector.js'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 import { getScheduler } from '@pmndrs/scheduler'

@@ -1,7 +1,7 @@
 import { useContext, useRef, useImperativeHandle, useMemo } from 'react'
 import { context } from '../store'
 import { buildGraph } from '../utils'
-import { Object3D } from '#three'
+import { Object3D } from 'three'
 
 //* Type Imports ==============================
 import type { RootState, RootStore, Instance, ObjectMap } from '#types'

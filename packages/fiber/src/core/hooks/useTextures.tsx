@@ -2,7 +2,7 @@
 import { useMemo } from 'react'
 import { useStore, useThree } from './'
 import type { RootState } from '#types'
-import { Texture as _Texture } from '#three'
+import { Texture as _Texture } from 'three'
 
 //* Types ==============================
 

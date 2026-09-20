@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand'
-import * as THREE from '#three'
+import * as THREE from 'three/webgpu'
 import { RootState } from '../../../types/store'
 
 //* Map Utilities for Textures ==============================

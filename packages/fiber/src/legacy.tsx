@@ -12,7 +12,8 @@
 // NOTE: Use explicit path for Jest compatibility (build overrides via alias)
 import * as THREE from './three/legacy'
 import type * as ReactThreeFiber from '../types/entries/legacy'
-import type { ThreeElementsOf } from '#types'
+import type { ThreeElementsOf, RenderTargetOptions } from '#types'
+import { useRenderTarget as useRenderTargetCore } from './core/hooks/useRenderTarget'
 export type { ReactThreeFiber }
 export type * from '../types/three'
 export * from './core'
@@ -38,6 +39,15 @@ export type {
   WebGLDefaultProps,
   WebGLShadowConfig,
 } from '../types/webgl'
+
+// `useRenderTarget` picks its class from the root's active renderer, so core types it as three's
+// `RenderTarget`. On this entry the renderer is always a WebGLRenderer, so re-declare the return
+// type callers actually get. Types only -- the implementation is core's, untouched.
+export const useRenderTarget = useRenderTargetCore as {
+  (options?: RenderTargetOptions): THREE.WebGLRenderTarget
+  (size: number, options?: RenderTargetOptions): THREE.WebGLRenderTarget
+  (width: number, height: number, options?: RenderTargetOptions): THREE.WebGLRenderTarget
+}
 
 //* Element types ==============================
 // Augment this entry's ThreeElements interface to add custom JSX elements.
