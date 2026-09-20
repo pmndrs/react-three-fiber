@@ -118,10 +118,10 @@ Time-boxed and exploratory — **do not block any release on it.** If the spike 
 
 The local full gate and the CI workflow **must run the same checks in the same way**, or they drift and "passes locally" stops meaning anything.
 
-- **Local full gate:** `pnpm run ci` → `build → verify-bundles → verify-types → typecheck → eslint → dev → test → format`.
+- **Local full gate:** `pnpm run ci` → `build → verify-types → verify-treeshake → typecheck → eslint → dev → test → format`.
 - **CI workflow:** [`.github/workflows/test.yml`](../../.github/workflows/test.yml) — runs on PRs and `master`, across a React version matrix (19.0.0 + latest).
 
-> **Known gap (tracked in the roadmap below):** CI currently does **not** run `verify-bundles` / `verify-types`, so `pnpm run ci` locally is stricter than CI. The fix is to have CI invoke the same script set (ideally `pnpm run ci` directly, or a shared composite step) so the two cannot diverge.
+Both gates run `verify-types` and `verify-treeshake` after the build.
 
 **Rule for new checks:** if you add a verification step, add it to _both_ the `ci` script and the workflow — or, better, add it to the shared script the workflow calls.
 
@@ -191,23 +191,19 @@ These are the v10-_changed_ surfaces with little or no dedicated coverage — th
 
 ## Bundle & type verification (built output)
 
-Separate from the test suite: these check the **built `dist`**, not source. They guarantee each entry point bundles the correct THREE.js imports and ships standalone.
+These checks use built `dist` entries. Type verification checks public declarations. Tree-shaking verification builds ESM consumers with Vite and checks their output.
 
 ```bash
-pnpm build && pnpm verify-bundles   # correct three / three/webgpu imports per entry, standalone
-pnpm verify-types                   # per-entry type declarations resolve
-pnpm analyze-fiber                  # dry-run @react-three/fiber package contents
-pnpm analyze-test                   # dry-run @react-three/test-renderer package contents
+pnpm build
+pnpm verify-types      # Public declarations resolve
+pnpm verify-treeshake  # Consumer bundles contain one core and the expected renderers
+pnpm analyze-fiber     # Dry-run @react-three/fiber package contents
+pnpm analyze-test      # Dry-run @react-three/test-renderer package contents
 ```
 
-What `verify-bundles` checks:
+`verify-treeshake` covers WebGPU and legacy apps with libraries importing shared APIs from the root entry, matching-entry baselines, and the default entry. It checks one core, the expected renderer implementations, and the size overhead from mixing entries. Dynamically loaded chunks are excluded.
 
-- Default bundle contains both `from 'three'` and `from 'three/webgpu'`.
-- Legacy bundle contains `from 'three'` but **not** `from 'three/webgpu'` or `from 'three/tsl'`.
-- WebGPU bundle contains `from 'three/webgpu'` but **not** plain `from 'three'`.
-- All bundles are standalone (no shared chunks).
-
-These belong in CI as well as locally — see the parity note above.
+Both verification scripts run locally and in CI.
 
 ---
 
@@ -223,7 +219,7 @@ These belong in CI as well as locally — see the parity note above.
 
 **"Cannot find module" errors?** Ensure `pnpm install` ran; if the error references `dist`, run `pnpm stub`.
 
-**`verify-bundles` fails?** You must `pnpm build` first. If a bundle contains a forbidden import, check `#three` alias resolution in `build.config.ts`.
+**`verify-treeshake` fails?** Run `pnpm build` first. An unexpected renderer can indicate a renderer-specific import in core or a side effect in an entry. Keep renderer dependencies on the provider, as described in [BUILD.md](./BUILD.md).
 
 **Package too small in `analyze-*` dry-run?** If it shows ~100–200 KB instead of the expected ~MB, `dist/` is being excluded — ensure the package's `files` field includes `dist`.
 
@@ -235,7 +231,7 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 
 ### Parity & CI
 
-- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
+- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-types` and `verify-treeshake` run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
 - [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
 
 ### Coverage (soft now → hard at stable)

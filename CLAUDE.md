@@ -19,7 +19,8 @@ pnpm test:watch       # Watch mode testing
 
 # Building & Verification
 pnpm build            # Build fiber + eslint-plugin packages
-pnpm verify-bundles   # Verify THREE.js imports are correct per entry point
+pnpm verify-types     # Verify public declarations
+pnpm verify-treeshake # Verify one core and the expected renderers in consumer bundles
 pnpm typecheck        # TypeScript type checking
 
 # Code Quality
@@ -29,7 +30,7 @@ pnpm format           # Check Prettier formatting
 pnpm format:fix       # Auto-fix formatting
 
 # Full CI Suite
-pnpm run ci           # build → typecheck → eslint → dev → test → format
+pnpm run ci           # build → verify-* → typecheck → eslint → dev → test → format
 
 # Single Test File
 vitest packages/fiber/tests/hooks.test.tsx
@@ -39,19 +40,15 @@ vitest packages/fiber/tests/hooks.test.tsx
 
 ### Entry Points
 
-R3F has three entry points with different THREE.js imports controlled via `#three` alias resolution:
+R3F has three entry points that differ only in which renderer they can construct:
 
-| Entry   | Import Path                 | THREE Imports  | Build Flags               |
+| Entry   | Import Path                 | Renderers      | Build Flags               |
 | ------- | --------------------------- | -------------- | ------------------------- |
 | Default | `@react-three/fiber`        | WebGL + WebGPU | Both true                 |
 | Legacy  | `@react-three/fiber/legacy` | WebGL only     | LEGACY=true, WEBGPU=false |
 | WebGPU  | `@react-three/fiber/webgpu` | WebGPU only    | LEGACY=false, WEBGPU=true |
 
-The `#three` alias resolves to different files per entry point during build (configured in `packages/fiber/build.config.ts`):
-
-- Default → `src/three/index.ts`
-- Legacy → `src/three/legacy.ts`
-- WebGPU → `src/three/webgpu.ts`
+All three are built in one rollup run and share one chunk (`dist/shared/fiber.*.mjs`) holding the reconciler, store, events and hooks. Core imports only three's shared core from `three`; the renderer classes reach it through a **provider** (`types/provider.d.ts`) that each entry passes to `createRoot`/`Canvas`. Entries have no top-level side effects, so a library that imports hooks from the root entry adds no renderer to an app on `/webgpu` or `/legacy`. `pnpm verify-treeshake` checks these outcomes in consumer bundles.
 
 ### Package Structure
 
@@ -63,7 +60,7 @@ packages/
 │   │   ├── legacy.tsx      # Legacy entry (WebGL only)
 │   │   ├── core/           # Shared reconciler, hooks, events, store
 │   │   ├── webgpu/         # WebGPU-specific code
-│   │   └── three/          # #three alias resolution files
+│   │   └── three/          # Per-entry THREE namespaces (what each entry extends)
 │   ├── types/              # TypeScript definitions
 │   └── tests/              # Vitest tests
 ├── eslint-plugin/          # @react-three/eslint-plugin
@@ -84,7 +81,7 @@ packages/
 
 **For WebGPU only**: Add to `src/webgpu/`, export from `src/webgpu/index.tsx`
 
-**New THREE.js imports**: Update the appropriate file in `src/three/` and import via `#three` in core code
+**New THREE.js imports**: In `src/core/`, import from `three` and only names `three/webgpu` also exports (three's core). In `src/webgpu/`, import from `three/webgpu` / `three/tsl`. A renderer-specific class goes on `WebGLSupport`/`WebGPUSupport` in `types/provider.d.ts` (filled in by the entries that carry that flavor), and core reads the chosen one from `state.internal.support`
 
 ### React Reconciler
 
@@ -96,7 +93,7 @@ The react-reconciler package is patched during postinstall (via Vite) and bundle
 - **Coverage**: v8 provider
 - **Setup**: `packages/fiber/tests/setupTests.ts` (mocks WebGL2, ResizeObserver, PointerEvent)
 
-Tests run against source files. Bundle verification (`pnpm verify-bundles`) checks built dist files for correct THREE.js imports.
+Tests run against source files. `pnpm verify-treeshake` bundles consumers from built entries and checks for one core and the expected renderers.
 
 ## Code Style
 
@@ -140,7 +137,7 @@ Prefer clean, minimal code patterns:
 
 ## Common Pitfalls
 
-1. **Always import from `#three`** in core code, never directly from `three` - the alias resolution handles per-entry imports
+1. **Never import a renderer in `src/core/`** - core imports `three` for three's shared core only; `WebGLRenderer`, `WebGPURenderer`, `CanvasTarget`, node materials and the like come from the entry's provider
 2. **Run `pnpm dev`** after `pnpm install` if stubs seem stale
 3. **Windows symlinks**: May need Developer Mode enabled for stub generation
 4. **"Multiple instances of Three.js" warning**: Safe to ignore in tests, suppressed in setupTests.ts

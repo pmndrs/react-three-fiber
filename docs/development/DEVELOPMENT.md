@@ -51,7 +51,7 @@ packages/fiber/
 ```
 
 - **Shared Logic** — Most changes happen in `src/core/`
-- **THREE.js Aliases** — We use `#three` to dynamically switch between THREE.js variants (see [BUILD](./BUILD.md))
+- **Three imports** — Core imports only three's shared core from `three`; each entry supplies its renderer classes through a provider (see [BUILD](./BUILD.md))
 
 ---
 
@@ -71,8 +71,9 @@ packages/fiber/
 
 //\* New THREE.js Imports --------------------------------
 
-1. Update the relevant variant in `src/three/` (`index.ts`, `legacy.ts`, or `webgpu.ts`)
-2. Import from `#three` in your core code
+1. In `src/core/`, import only shared core classes from `three`, which are also exported by `three/webgpu`
+2. In `src/webgpu/`, import from `three/webgpu` and `three/tsl` directly
+3. A renderer-specific class (something only `three` or only `three/webgpu` has) goes on `WebGLSupport` or `WebGPUSupport` in `types/provider.d.ts` and the entries that carry that flavor, and core reads it from `state.internal.support`
 
 ---
 
