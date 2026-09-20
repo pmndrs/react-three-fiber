@@ -1,7 +1,7 @@
 import type * as React from 'react'
 import type { Catalogue, RootStore } from '#types'
 
-// Cross-bundle state lives on globalThis under Symbol.for keys so every 
+// Cross-bundle state lives on globalThis under Symbol.for keys so every
 // copy of a module sees one value.
 export const CONTEXT = Symbol.for('@react-three/fiber.context')
 export const CATALOGUE = Symbol.for('@react-three/fiber.catalogue')

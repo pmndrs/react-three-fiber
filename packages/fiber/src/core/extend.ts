@@ -25,7 +25,7 @@ export function extend(objects: Record<string, unknown> | ConstructorRepresentat
     catalogue[id] = objects
     return `${id}`
   }
-  
+
   for (const name in objects) {
     const object = objects[name]
     if (isConstructor(object)) catalogue[name] = object
