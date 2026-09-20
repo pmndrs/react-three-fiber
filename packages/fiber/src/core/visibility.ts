@@ -76,8 +76,9 @@ function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node
 
 //* Occlusion Enable/Disable ==============================
 
-// Track if occlusion setup is in progress (to avoid duplicate async calls)
-let occlusionSetupPromise: Promise<void> | null = null
+// Track which roots have setup in flight. Keyed by store: a shared flag would let the first
+// canvas to start setup suppress every other canvas's, with no retry.
+const occlusionSetupPending = new WeakSet<RootStore>()
 
 /**
  * Enable the occlusion query system for this Canvas.
@@ -89,8 +90,8 @@ export function enableOcclusion(store: RootStore): void {
   const state = store.getState()
   const { internal, renderer } = state
 
-  // Already enabled or in progress
-  if (internal.occlusionEnabled || occlusionSetupPromise) return
+  // Already enabled or in progress for this root
+  if (internal.occlusionEnabled || occlusionSetupPending.has(store)) return
 
   // Check for WebGPU support
   const hasOcclusionSupport = typeof (renderer as any)?.isOccluded === 'function'
@@ -108,7 +109,8 @@ export function enableOcclusion(store: RootStore): void {
   }
 
   // Start async setup
-  occlusionSetupPromise = setupOcclusion(store)
+  occlusionSetupPending.add(store)
+  setupOcclusion(store)
 }
 
 /** Internal async setup for occlusion system */
@@ -120,7 +122,7 @@ async function setupOcclusion(store: RootStore): Promise<void> {
   const tsl = await loadTSL()
   if (!tsl) {
     console.warn('[R3F] Warning: TSL module not available. Occlusion queries disabled.')
-    occlusionSetupPromise = null
+    occlusionSetupPending.delete(store)
     return
   }
 
@@ -167,7 +169,7 @@ async function setupOcclusion(store: RootStore): Promise<void> {
     },
   }))
 
-  occlusionSetupPromise = null
+  occlusionSetupPending.delete(store)
 }
 
 /**

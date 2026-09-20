@@ -6,7 +6,7 @@ import * as React from 'react'
 import { useRef, useEffect } from 'react'
 import { render, act as rtlAct } from '@testing-library/react'
 import { Canvas, useThree, useFrame, extend } from '../src'
-import { __resetWarningFlag } from '../src/core/visibility'
+import { __resetWarningFlag, enableOcclusion } from '../src/core/visibility'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
@@ -568,6 +568,33 @@ describe('visibility events', () => {
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('WebGPU'))
 
       warnSpy.mockRestore()
+    })
+
+    it('sets up every root, not just the first one to start', async () => {
+      // Setup is async. A guard shared between roots lets the first canvas suppress the second,
+      // which then never retries and silently loses occlusion for the rest of its life.
+      const makeStore = () => {
+        const rootScene = new THREE.Scene()
+        const state: any = {
+          rootScene,
+          renderer: { isOccluded: () => false },
+          internal: { occlusionEnabled: false, helperGroup: null },
+          set: (fn: any) => Object.assign(state, fn(state)),
+        }
+        return { getState: () => state, __state: state }
+      }
+
+      const a = makeStore()
+      const b = makeStore()
+
+      enableOcclusion(a as any)
+      enableOcclusion(b as any)
+
+      // Let the dynamic TSL import inside setup resolve.
+      await act(async () => {})
+
+      expect(a.__state.internal.occlusionEnabled).toBe(true)
+      expect(b.__state.internal.occlusionEnabled).toBe(true)
     })
   })
 })
