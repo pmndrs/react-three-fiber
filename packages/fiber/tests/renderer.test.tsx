@@ -30,6 +30,8 @@ declare module '@react-three/fiber' {
   interface ThreeElements {
     mock: ThreeElement<typeof Mock>
     threeRandom: ThreeElement<typeof THREE.Group>
+    namespaceGroup: ThreeElement<typeof THREE.Group>
+    nAMESPACE_CONSTANT: Record<string, never>
   }
 }
 
