@@ -92,7 +92,13 @@ const PREFIX_REGEX = /^three(?=[A-Z])/
 
 const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
 
-let i = 0
+// Share generated element IDs across bundles to avoid catalogue collisions.
+const R3F_EXTEND_ID = Symbol.for('@react-three/fiber.extendId')
+function nextExtendId(): number {
+  const id: number = (globalThis as any)[R3F_EXTEND_ID] ?? 0
+  ;(globalThis as any)[R3F_EXTEND_ID] = id + 1
+  return id
+}
 
 const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
 
@@ -105,7 +111,7 @@ export function extend(
   objects: Record<string, unknown> | ConstructorRepresentation,
 ): React.ExoticComponent<ThreeElement<any>> | void {
   if (isConstructor(objects)) {
-    const Component = `${i++}`
+    const Component = `${nextExtendId()}`
     catalogue[Component] = objects
     return Component as any
   } else {
