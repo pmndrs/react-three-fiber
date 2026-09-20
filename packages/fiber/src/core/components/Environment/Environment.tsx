@@ -4,7 +4,7 @@ import * as React from 'react'
 // back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
 import { useThree, useFrame } from '../../hooks'
 import { createPortal } from '../../renderer'
-import { extend } from '../../reconciler'
+import { extend } from '../../extend'
 import { applyProps } from '../../utils'
 // `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),
 // not three's class. That is what the package-name import was resolving to, and narrowing it to

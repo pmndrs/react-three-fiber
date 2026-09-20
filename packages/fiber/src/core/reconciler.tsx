@@ -32,10 +32,10 @@ import {
   FROM_REF,
 } from './utils'
 import { removeInteractivity, swapInteractivity } from './events'
-import type { ThreeElement } from '../../types/three'
+import { catalogue, toPascalCase } from './extend'
 
 //* Type Imports ==============================
-import type { RootStore, ConstructorRepresentation, Catalogue, Instance, HostConfig } from '#types'
+import type { RootStore, Instance, HostConfig } from '#types'
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
@@ -82,45 +82,7 @@ function createReconciler<
 
 const NoEventPriority = 0
 
-//* Cross-Bundle Singleton ==============================
-// Use Symbol.for() to ensure catalogue is shared across bundle boundaries
-// This allows extend() from one entry point to work with JSX from another
-const R3F_CATALOGUE = Symbol.for('@react-three/fiber.catalogue')
-const catalogue: Catalogue = (globalThis as any)[R3F_CATALOGUE] ?? ((globalThis as any)[R3F_CATALOGUE] = {})
-
 const PREFIX_REGEX = /^three(?=[A-Z])/
-
-const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
-
-// Share generated element IDs across bundles to avoid catalogue collisions.
-const R3F_EXTEND_ID = Symbol.for('@react-three/fiber.extendId')
-function nextExtendId(): number {
-  const id: number = (globalThis as any)[R3F_EXTEND_ID] ?? 0
-  ;(globalThis as any)[R3F_EXTEND_ID] = id + 1
-  return id
-}
-
-const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
-
-export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
-export function extend<T extends Catalogue>(objects: T): void
-// A whole module namespace (`extend(THREE)`) carries functions and constants alongside the
-// classes, so it is not a `Catalogue`. Accept it as-is: only constructors are registered.
-export function extend(objects: Record<string, unknown>): void
-export function extend(
-  objects: Record<string, unknown> | ConstructorRepresentation,
-): React.ExoticComponent<ThreeElement<any>> | void {
-  if (isConstructor(objects)) {
-    const Component = `${nextExtendId()}`
-    catalogue[Component] = objects
-    return Component as any
-  } else {
-    for (const name in objects) {
-      const object = objects[name]
-      if (isConstructor(object)) catalogue[name] = object
-    }
-  }
-}
 
 function validateInstance(type: string, props: HostConfig['props']): void {
   // Get target from catalogue

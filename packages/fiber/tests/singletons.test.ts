@@ -58,7 +58,7 @@ describe('Cross-bundle singleton sharing', () => {
     it('catalogue should be shared across module reloads', async () => {
       // First "bundle" load - extend with a test component
       vi.resetModules()
-      const reconcilerA = await import('../src/core/reconciler')
+      const reconcilerA = await import('../src/core/extend')
 
       // Create a test class to extend
       class TestComponent {}
@@ -66,7 +66,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // Second "bundle" load - should see the extended component
       vi.resetModules()
-      const reconcilerB = await import('../src/core/reconciler')
+      const reconcilerB = await import('../src/core/extend')
 
       // Try extending with another component to verify catalogue is accessible
       class AnotherComponent {}
@@ -74,7 +74,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // Load a third time to verify both components are present
       vi.resetModules()
-      const reconcilerC = await import('../src/core/reconciler')
+      const reconcilerC = await import('../src/core/extend')
 
       // If catalogue is shared, extending from any bundle should work globally
       // We can't directly access catalogue (it's not exported), but we can verify
@@ -91,7 +91,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // First "bundle" load - extend with a test component
       vi.resetModules()
-      const reconcilerA = await import('../src/core/reconciler')
+      const reconcilerA = await import('../src/core/extend')
 
       class UniqueTestClass {}
       reconcilerA.extend({ UniqueTestClass })
@@ -111,12 +111,12 @@ describe('Cross-bundle singleton sharing', () => {
     it('factory extend() ids never collide across bundles', async () => {
       // Generated element IDs must remain unique across module instances.
       vi.resetModules()
-      const reconcilerA = await import('../src/core/reconciler')
+      const reconcilerA = await import('../src/core/extend')
       class FromBundleA {}
       const idA = reconcilerA.extend(FromBundleA) as unknown as string
 
       vi.resetModules()
-      const reconcilerB = await import('../src/core/reconciler')
+      const reconcilerB = await import('../src/core/extend')
       class FromBundleB {}
       const idB = reconcilerB.extend(FromBundleB) as unknown as string
 

@@ -24,7 +24,7 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from './three/legacy'
 //* Auto-extend THREE namespace ==============================
 // This makes all WebGL THREE constructors available declaratively
 // Note: No node materials in legacy - those require WebGPU entry
-import { extend } from './core/reconciler'
+import { extend } from './core/extend'
 extend(THREE)
 
 //* Legacy-specific types ==============================

@@ -23,5 +23,5 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
 //* Auto-extend THREE namespace ==============================
 // This makes all THREE constructors (including node materials) available
 // declaratively without users needing to call extend() themselves
-import { extend } from './core/reconciler'
+import { extend } from './core/extend'
 extend(THREE)

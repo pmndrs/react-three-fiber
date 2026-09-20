@@ -5,6 +5,7 @@ import type { Inspector } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 import { getScheduler } from '@pmndrs/scheduler'
+import { global, CONTEXT } from './utils/global'
 
 //* Type Imports ==============================
 import type {
@@ -28,13 +29,7 @@ import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from 
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
 
-//* Cross-Bundle Singleton ==============================
-// Use Symbol.for() to ensure context is shared across bundle boundaries
-// This prevents issues when mixing imports from @react-three/fiber and @react-three/fiber/webgpu
-const R3F_CONTEXT = Symbol.for('@react-three/fiber.context')
-
-export const context: React.Context<RootStore> =
-  (globalThis as any)[R3F_CONTEXT] ?? ((globalThis as any)[R3F_CONTEXT] = React.createContext<RootStore>(null!))
+export const context = (global[CONTEXT] ??= React.createContext<RootStore>(null!))
 
 export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,

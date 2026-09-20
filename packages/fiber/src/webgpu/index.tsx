@@ -24,7 +24,7 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '../three/webgpu'
 //* Auto-extend THREE with WebGPU node materials ==============================
 // This makes MeshBasicNodeMaterial, MeshStandardNodeMaterial, etc. available
 // declaratively without users needing to call extend() themselves
-import { extend } from '../core/reconciler'
+import { extend } from '../core/extend'
 extend(THREE)
 
 //* WebGPU-specific exports ==============================
