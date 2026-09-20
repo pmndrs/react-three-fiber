@@ -11,7 +11,8 @@
 
 // NOTE: Use explicit path for Jest compatibility (build overrides via alias)
 import * as THREE from './three/legacy'
-import type * as ReactThreeFiber from '../types/three'
+import type * as ReactThreeFiber from '../types/entries/legacy'
+import type { ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }
 export type * from '../types/three'
 export * from './core'
@@ -37,3 +38,18 @@ export type {
   WebGLDefaultProps,
   WebGLShadowConfig,
 } from '../types/webgl'
+
+//* Element types ==============================
+// Augment this entry's ThreeElements interface to add custom JSX elements.
+
+/** Three.js constructors available as JSX elements on this entry. */
+export type ThreeExports = typeof import('three')
+
+export interface ThreeElements extends ThreeElementsOf<ThreeExports> {}
+
+// Both JSX runtimes inherit React's intrinsic elements.
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}

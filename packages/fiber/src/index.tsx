@@ -10,7 +10,8 @@
  */
 
 import * as THREE from '#three'
-import type * as ReactThreeFiber from '../types/three'
+import type * as ReactThreeFiber from '../types/entries/default'
+import type { ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }
 export type * from '../types/three'
 export * from './core'
@@ -25,3 +26,18 @@ export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
 // declaratively without users needing to call extend() themselves
 import { extend } from './core/extend'
 extend(THREE)
+
+//* Element types ==============================
+// Augment this entry's ThreeElements interface to add custom JSX elements.
+
+/** Three.js constructors available as JSX elements on this entry. */
+export type ThreeExports = typeof import('three') & typeof import('three/webgpu')
+
+export interface ThreeElements extends ThreeElementsOf<ThreeExports> {}
+
+// Both JSX runtimes inherit React's intrinsic elements.
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}

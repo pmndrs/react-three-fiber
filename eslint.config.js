@@ -113,6 +113,8 @@ export default [
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
+      // Allow ambient namespaces for JSX element declarations.
+      '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
     },
   },
 

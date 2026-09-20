@@ -2,6 +2,10 @@ import { Canvas, useGPUStorage, useLocalNodes, useUniform, useUniforms } from '.
 import { createElement } from 'react'
 import { Color, Matrix2, Storage3DTexture, Vector2 } from 'three/webgpu'
 import { color, float, Fn, mix } from 'three/tsl'
+import type { ReactThreeFiber } from '../../packages/fiber/dist/webgpu/index'
+
+const mesh: ReactThreeFiber.ThreeElements['mesh'] = { position: [1, 2, 3] }
+void mesh
 
 function uniformTypeAssertions() {
   const speed = useUniform('speed', 1)

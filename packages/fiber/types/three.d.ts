@@ -1,5 +1,6 @@
 import type * as THREE from '#three'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
+import type { GroundedSkybox } from 'three/examples/jsm/objects/GroundedSkybox.js'
 
 type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
 
@@ -109,10 +110,11 @@ type Object3DMethod = NonNullable<
   }[keyof THREE.Object3D]
 >
 
-type ThreeExports = typeof THREE
-type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
-
-export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source' | 'line' | 'path'> {
+/** JSX element map derived from an entry's Three.js exports. */
+export type ThreeElementsOf<T extends Record<string, any>> = Omit<
+  ThreeToJSXElements<T>,
+  'audio' | 'source' | 'line' | 'path'
+> & {
   /**
    * `primitive` wraps a pre-existing object, so its props cannot be derived from one class.
    * Events are typed from `EventHandlers` (`onClick={(e) => ...}` infers `e`), the ref is
@@ -127,26 +129,13 @@ export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source
     [prop: string]: unknown
   }
   // Conflicts with DOM types can be accessed through a three* prefix
-  threeAudio: ThreeElementsImpl['audio']
-  threeSource: ThreeElementsImpl['source']
-  threeLine: ThreeElementsImpl['line']
-  threePath: ThreeElementsImpl['path']
+  threeAudio: ElementOf<ThreeToJSXElements<T>, 'audio'>
+  threeSource: ElementOf<ThreeToJSXElements<T>, 'source'>
+  threeLine: ElementOf<ThreeToJSXElements<T>, 'line'>
+  threePath: ElementOf<ThreeToJSXElements<T>, 'path'>
+  /** Registered by core on every entry, for `<Environment ground>`. */
+  groundProjectedEnvImpl: ThreeElement<typeof GroundedSkybox>
 }
 
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-dev-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
+/** Look up a key present in a generic element map. */
+type ElementOf<E, K extends string> = E[Extract<keyof E, K>]

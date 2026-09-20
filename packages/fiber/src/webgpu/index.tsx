@@ -11,7 +11,8 @@
 
 // NOTE: Use explicit path for Jest compatibility (build overrides via alias)
 import * as THREE from '../three/webgpu'
-import type * as ReactThreeFiber from '../../types/three'
+import type * as ReactThreeFiber from '../../types/entries/webgpu'
+import type { ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }
 export type * from '../../types/three'
 export * from '../core'
@@ -97,3 +98,18 @@ export type { WebGPUCanvasProps as CanvasProps }
 
 /** `Canvas` narrowed to WebGPU state — the same component, `onCreated` typed against `WebGPURootState`. */
 export const Canvas = CanvasCore as unknown as (props: WebGPUCanvasProps) => JSX.Element
+
+//* Element types ==============================
+// Augment this entry's ThreeElements interface to add custom JSX elements.
+
+/** Three.js constructors available as JSX elements on this entry. */
+export type ThreeExports = typeof import('three/webgpu')
+
+export interface ThreeElements extends ThreeElementsOf<ThreeExports> {}
+
+// Both JSX runtimes inherit React's intrinsic elements.
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}

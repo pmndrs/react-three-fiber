@@ -1,13 +1,9 @@
 /**
- * Type verification script for @react-three/fiber
- *
- * Verifies that ThreeExports is properly typed after build (not resolving to `any`).
- * Run after `pnpm build` to catch type regressions.
- *
- * Usage: node scripts/verify-types.js
+ * Verify entry-specific JSX types and portable declaration output.
+ * Run node scripts/verify-types.js after pnpm build.
  */
 
-import { readFileSync, writeFileSync, unlinkSync } from 'fs'
+import { readFileSync, writeFileSync, unlinkSync, readdirSync, statSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
@@ -60,7 +56,11 @@ function verifyDtsFile(filename, config) {
     return false
   }
 
-  const threeExportsLine = threeExportsMatch[0]
+  // Resolve namespace aliases to module specifiers before matching.
+  let threeExportsLine = threeExportsMatch[0]
+  for (const [, alias, specifier] of content.matchAll(/import \* as (\w+) from '([^']+)';/g)) {
+    threeExportsLine = threeExportsLine.replace(new RegExp(`typeof ${alias}\\b`, 'g'), `typeof import('${specifier}')`)
+  }
   console.log(`   📝 ${threeExportsLine}`)
 
   let passed = true
@@ -90,6 +90,40 @@ function verifyDtsFile(filename, config) {
     console.log(`   ✅ ThreeElements interface exists`)
   }
 
+  return passed
+}
+
+/** Reject runtime helpers, internal aliases and local paths in declarations. */
+function verifyDistHygiene() {
+  console.log('\n📦 Declaration hygiene')
+  console.log('─'.repeat(60))
+
+  const forbidden = [
+    // Runtime namespace helpers are invalid in declaration files.
+    [/_mergeNamespaces/, 'rollup namespace runtime'],
+    // Internal alias that only tsconfig paths and the build know about.
+    [/from '#types'/, "'#types' import"],
+    // A path from the machine that built it.
+    [/['"]\/Users\/|['"][A-Z]:\\/, 'absolute local path'],
+  ]
+
+  let passed = true
+  const walk = (dir) =>
+    readdirSync(dir).flatMap((name) => {
+      const full = resolve(dir, name)
+      return statSync(full).isDirectory() ? walk(full) : /\.d\.[cm]?ts$/.test(name) ? [full] : []
+    })
+
+  for (const file of walk(distDir)) {
+    const content = readFileSync(file, 'utf-8')
+    for (const [pattern, label] of forbidden) {
+      if (pattern.test(content)) {
+        console.error(`   ❌ ${file.slice(distDir.length + 1)} contains ${label}`)
+        passed = false
+      }
+    }
+  }
+  if (passed) console.log('   ✅ No namespace runtime, alias imports or local paths in any declaration')
   return passed
 }
 
@@ -207,6 +241,10 @@ function main() {
     if (!verifyDtsFile(filename, config)) {
       allPassed = false
     }
+  }
+
+  if (!verifyDistHygiene()) {
+    allPassed = false
   }
 
   // Run type resolution test

@@ -9,7 +9,7 @@ import { applyProps } from '../../utils'
 // `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),
 // not three's class. That is what the package-name import was resolving to, and narrowing it to
 // three's `Euler` would quietly break `backgroundRotation={[0, 0, 0]}` for every consumer.
-import type { Euler, ThreeElement } from '../../../../types/three'
+import type { Euler } from '../../../../types/three'
 import {
   WebGLCubeRenderTarget,
   CubeRenderTarget,
@@ -354,12 +354,6 @@ export function EnvironmentPortal({
       )}
     </>
   )
-}
-
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    groundProjectedEnvImpl: ThreeElement<typeof GroundProjectedEnvImpl>
-  }
 }
 
 /**
