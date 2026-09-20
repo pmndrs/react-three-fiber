@@ -32,7 +32,8 @@ import {
   FROM_REF,
 } from './utils'
 import { removeInteractivity, swapInteractivity } from './events'
-import { catalogue, toPascalCase } from './extend'
+import { resolveConstructor } from './catalogue'
+import { toPascalCase } from './extend'
 
 //* Type Imports ==============================
 import type { RootStore, Instance, HostConfig } from '#types'
@@ -84,10 +85,9 @@ const NoEventPriority = 0
 
 const PREFIX_REGEX = /^three(?=[A-Z])/
 
-function validateInstance(type: string, props: HostConfig['props']): void {
-  // Get target from catalogue
+function validateInstance(type: string, props: HostConfig['props'], root: RootStore): void {
   const name = toPascalCase(type)
-  const target = catalogue[name]
+  const target = resolveConstructor(name, root)
 
   // Validate element target
   if (type !== 'primitive' && !target) {
@@ -105,9 +105,9 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Remove three* prefix from elements if native element not present
-  type = toPascalCase(type) in catalogue ? type : type.replace(PREFIX_REGEX, '')
+  type = resolveConstructor(toPascalCase(type), root) ? type : type.replace(PREFIX_REGEX, '')
 
-  validateInstance(type, props)
+  validateInstance(type, props, root)
 
   // Regenerate the R3F instance for primitives to simulate a new object
   if (type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
@@ -151,8 +151,8 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
 
   // Create & link object on first run
   if (!child.object) {
-    // Get target from catalogue
-    const target = catalogue[toPascalCase(child.type)]
+    // The constructor was validated by createInstance.
+    const target = resolveConstructor(toPascalCase(child.type), child.root)!
 
     // Create object
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
@@ -374,8 +374,8 @@ function swapReconstructedInstances(): void {
 
     const parent = instance.parent
     if (parent) {
-      // Get target from catalogue
-      const target = catalogue[toPascalCase(instance.type)]
+      // The constructor was validated by createInstance.
+      const target = resolveConstructor(toPascalCase(instance.type), instance.root)!
 
       // Create object
       const prevObject = instance.object
@@ -603,7 +603,7 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     // `type` is the raw JSX tag. createInstance may have stripped a `three` prefix from it
     // (`<threeLine>` → `Line`) and stored the resolved name on the instance; validating the raw
     // tag here would throw "ThreeLine is not part of the THREE namespace" on the first update.
-    validateInstance(instance.type, newProps)
+    validateInstance(instance.type, newProps, instance.root)
 
     let reconstruct = false
 

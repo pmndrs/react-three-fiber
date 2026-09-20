@@ -1,32 +1,46 @@
-/**
- * @fileoverview WebGPU entry point - WebGPU only, no legacy WebGL
- *
- * This entry point is for apps that want to use ONLY WebGPURenderer.
- * Includes WebGPU-specific hooks (useUniforms, useNodes, useTextures).
- * Auto-extends THREE with WebGPU node materials (MeshBasicNodeMaterial, etc.)
- *
- * Usage:
- *   import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
- */
+/** WebGPU entry with shared core APIs and TSL hooks. */
 
-// NOTE: Use explicit path for Jest compatibility (build overrides via alias)
-import * as THREE from '../three/webgpu'
+import * as THREE from 'three/webgpu'
+import {
+  WebGPURenderer,
+  CanvasTarget,
+  CubeRenderTarget,
+  Node,
+  NodeUpdateType,
+  MeshBasicNodeMaterial,
+} from 'three/webgpu'
+import { uniform, nodeObject } from 'three/tsl'
+import { createRoot as createRootImpl } from '../core/renderer'
+import { Canvas as CanvasImpl } from '../core/Canvas'
 import type * as ReactThreeFiber from '../../types/entries/webgpu'
-import type { ThreeElementsOf } from '#types'
+import type { CanvasProps, ReconcilerRoot, RendererProvider, RootCanvas, ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }
 export type * from '../../types/three'
 export * from '../core'
-export * from '../core/Canvas'
 export { createPointerEvents as events } from '../core/events'
 
-// Re-export build flags for consumers to check
-export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '../three/webgpu'
+//* Build flags ==============================
+// Available renderers. Each root records its active renderer in state.isLegacy.
+export const R3F_BUILD_LEGACY = false
+export const R3F_BUILD_WEBGPU = true
 
-//* Auto-extend THREE with WebGPU node materials ==============================
-// This makes MeshBasicNodeMaterial, MeshStandardNodeMaterial, etc. available
-// declaratively without users needing to call extend() themselves
-import { extend } from '../core/extend'
-extend(THREE)
+//* Renderer provider ==============================
+// WebGPU dependencies are reachable through Canvas and createRoot.
+const provider: RendererProvider = {
+  namespace: THREE,
+  webgpu: {
+    kind: 'webgpu',
+    Renderer: WebGPURenderer,
+    CanvasTarget,
+    CubeRenderTarget,
+    occlusion: { Node, NodeUpdateType, MeshBasicNodeMaterial, uniform, nodeObject },
+  },
+}
+
+/** Create a root that always constructs a WebGPURenderer. */
+export function createRoot<TCanvas extends RootCanvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+  return createRootImpl(canvas, provider)
+}
 
 //* WebGPU-specific exports ==============================
 // These hooks are only meaningful with WebGPU/TSL
@@ -44,60 +58,47 @@ export type {
 } from '../../types/webgpu'
 
 //* WebGPU-narrowed state hooks ==============================
-// `export * from '../core'` above brings in useThree/useFrame declared against the *base*
-// RootState, whose `renderer` is the R3FRenderer union (WebGLRenderer included). On this entry
-// that union is already resolved — the caller has committed to WebGPU — so leaving it in place
-// forced a cast for anything WebGPU-only:
-//
-//   const renderer = useThree((s) => s.renderer)
-//   renderer.compute(node)   // Property 'compute' does not exist on type 'R3FRenderer'
-//
-// which is exactly the friction the split entry points exist to remove. These explicit exports
-// shadow the star re-exports (ESM and TS both give a local export precedence) and re-declare the
-// two hooks against WebGPURootState. Types only: the values are the core implementations
-// untouched, so there is no runtime cost and no second code path to keep in sync.
-// See https://github.com/pmndrs/react-three-fiber/issues/3851
+// Shared hooks with WebGPU state types.
 import { useThree as useThreeCore, useFrame as useFrameCore } from '../core'
 import type { FrameCallback, UseFrameNextOptions, FrameNextControls } from '@pmndrs/scheduler'
 import type { WebGPURootState } from '../../types/webgpu'
 
-/** `useThree` narrowed to WebGPU state — `state.renderer` is a `WebGPURenderer`. */
+/** Select state with a WebGPURenderer. */
 export type UseThreeWebGPU = <T = WebGPURootState>(
   selector?: (state: WebGPURootState) => T,
   equalityFn?: <U>(state: U, newState: U) => boolean,
 ) => T
 
-/** `useFrame` narrowed to WebGPU state — the callback's `state.renderer` is a `WebGPURenderer`. */
+/** Frame callback with WebGPU state. */
 export type UseFrameWebGPU = (
   callback?: FrameCallback<WebGPURootState>,
   priorityOrOptions?: number | UseFrameNextOptions,
 ) => FrameNextControls
 
-// The two signatures are structurally incompatible (the selector parameter makes them
-// contravariant), so the re-type has to go through `unknown`. It is sound: WebGPURootState is
-// the same object the base hook already returns, only with renderer/gl/internal narrowed to what
-// this entry guarantees at runtime.
+// The intermediate cast permits narrowing callback and selector parameters to WebGPU state.
 export const useThree = useThreeCore as unknown as UseThreeWebGPU
 export const useFrame = useFrameCore as unknown as UseFrameWebGPU
 
 //* WebGPU-narrowed Canvas ==============================
-// Same reasoning for `onCreated`: it is the one callback that runs early enough to configure the
-// renderer before its first frame, and on this entry the renderer it receives is always a
-// WebGPURenderer. The base `CanvasProps` types it as the WebGL/WebGPU union, which forced an
-// `instanceof` narrow for any WebGPU-only member (`renderer.compute`, `renderer.lighting`, ...).
-import { Canvas as CanvasCore } from '../core/Canvas'
-import type { CanvasProps as CanvasPropsCore } from '../../types/canvas'
+// Canvas callbacks receive WebGPU state.
 import type { JSX } from 'react'
 
 /** Canvas props on the WebGPU entry: `onCreated` receives `WebGPURootState`. */
-export type WebGPUCanvasProps = Omit<CanvasPropsCore, 'onCreated'> & {
-  /** Callback after the canvas has rendered (but not yet committed); `state.renderer` is a `WebGPURenderer` */
+export type WebGPUCanvasProps = Omit<CanvasProps, 'onCreated'> & {
+  /** Callback with WebGPU state during canvas initialization. */
   onCreated?: (state: WebGPURootState) => void
 }
 export type { WebGPUCanvasProps as CanvasProps }
 
-/** `Canvas` narrowed to WebGPU state — the same component, `onCreated` typed against `WebGPURootState`. */
-export const Canvas = CanvasCore as unknown as (props: WebGPUCanvasProps) => JSX.Element
+function CanvasEntry(props: CanvasProps) {
+  return <CanvasImpl {...props} provider={provider} />
+}
+
+/**
+ * A DOM canvas for Three.js elements rendered with WebGPU.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
+export const Canvas = CanvasEntry as unknown as (props: WebGPUCanvasProps) => JSX.Element
 
 //* Element types ==============================
 // Augment this entry's ThreeElements interface to add custom JSX elements.

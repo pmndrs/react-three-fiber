@@ -1,17 +1,6 @@
 /**
- * @fileoverview Tests to verify R3F entry points work correctly
- *
- * These tests verify that each R3F entry point:
- * 1. Exports the correct build flags
- * 2. Exports core functions
- * 3. Entry-point specific features work
- *
- * NOTE: Jest tests run against SOURCE files via babel, not built bundles.
- * The babel config resolves #three to the default three/index.ts for all entry points.
- *
- * For actual bundle import verification (checking that legacy doesn't import three/webgpu),
- * use the verify-bundles.js script which analyzes the built output files:
- *   yarn build && yarn verify-bundles
+ * Verify source entry exports and renderer flags.
+ * For built output, run pnpm build and pnpm verify-treeshake.
  */
 
 //* Default Entry Point Tests ==============================
@@ -44,11 +33,6 @@ describe('Entry Point: Default (@react-three/fiber)', () => {
 //* Legacy Entry Point Tests ==============================
 
 describe('Entry Point: Legacy (@react-three/fiber/legacy)', () => {
-  // NOTE: In Jest, babel resolves #three to the default (three/index.ts)
-  // So both flags are true. In the BUILT bundle, legacy.mjs will have:
-  // R3F_BUILD_LEGACY=true, R3F_BUILD_WEBGPU=false
-  // Verify with: yarn build && yarn verify-bundles
-
   it('should export R3F_BUILD_LEGACY as true', async () => {
     const legacy = await import('@react-three/fiber/legacy')
     expect(legacy.R3F_BUILD_LEGACY).toBe(true)
@@ -56,7 +40,6 @@ describe('Entry Point: Legacy (@react-three/fiber/legacy)', () => {
 
   it('should export R3F_BUILD_WEBGPU as false (no WebGPU in legacy)', async () => {
     const legacy = await import('@react-three/fiber/legacy')
-    // Legacy uses explicit path to three/legacy.ts which has WEBGPU=false
     expect(legacy.R3F_BUILD_WEBGPU).toBe(false)
   })
 
@@ -97,14 +80,8 @@ describe('Entry Point: WebGPU (@react-three/fiber/webgpu)', () => {
     expect(importError).toBeNull()
   })
 
-  // NOTE: In Jest, babel resolves #three to the default (three/index.ts)
-  // So both flags are true. In the BUILT bundle, webgpu/index.mjs will have:
-  // R3F_BUILD_LEGACY=false, R3F_BUILD_WEBGPU=true
-  // Verify with: yarn build && yarn verify-bundles
-
   it('should export R3F_BUILD_LEGACY as false (no legacy in webgpu)', () => {
     if (!webgpu) return
-    // WebGPU uses explicit path to three/webgpu.ts which has LEGACY=false
     expect(webgpu.R3F_BUILD_LEGACY).toBe(false)
   })
 

@@ -10,6 +10,9 @@ import type { Properties, ThreeCamera } from './utils'
 // Shim for OffscreenCanvas since it was removed from DOM types
 interface OffscreenCanvas extends EventTarget {}
 
+/** What a root renders into. */
+export type RootCanvas = HTMLCanvasElement | OffscreenCanvas
+
 export interface BaseRendererProps {
   canvas: HTMLCanvasElement | OffscreenCanvas
   powerPreference?: 'high-performance' | 'low-power' | 'default'

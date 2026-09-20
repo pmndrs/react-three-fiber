@@ -24,6 +24,7 @@ import type {
   ThreeCamera,
   VisibilityEntry,
   PointerState,
+  RendererSupport,
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
@@ -272,6 +273,10 @@ export const createStore = (
 
         // Renderer Storage (single source of truth)
         actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
+        // Renderer support selected by configure().
+        support: null as unknown as RendererSupport,
+        // Entry constructors used after explicit extend() registrations.
+        namespace: {},
 
         // Scheduler for useFrameNext (initialized in renderer.tsx)
         scheduler: null,

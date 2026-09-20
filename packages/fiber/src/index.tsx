@@ -1,31 +1,61 @@
-/**
- * @fileoverview Default entry point - WebGPU renderer with WebGL fallback
- *
- * This is the standard entry point for most users. It supports both WebGPU
- * and WebGL (legacy) renderers. THREE namespace is auto-extended with all
- * constructors including node materials.
- *
- * Usage:
- *   import { Canvas, useFrame } from '@react-three/fiber'
- */
+/** Default entry with WebGL and WebGPU support. */
 
-import * as THREE from '#three'
+import * as THREE from './three/index'
+import { WebGLRenderer, WebGLCubeRenderTarget } from 'three'
+import {
+  WebGPURenderer,
+  CanvasTarget,
+  CubeRenderTarget,
+  Node,
+  NodeUpdateType,
+  MeshBasicNodeMaterial,
+} from 'three/webgpu'
+import { uniform, nodeObject } from 'three/tsl'
+import { createRoot as createRootImpl } from './core/renderer'
+import { Canvas as CanvasImpl } from './core/Canvas'
 import type * as ReactThreeFiber from '../types/entries/default'
-import type { ThreeElementsOf } from '#types'
+import type { CanvasProps, ReconcilerRoot, RendererProvider, RootCanvas, ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }
 export type * from '../types/three'
 export * from './core'
-export * from './core/Canvas'
 export { createPointerEvents as events } from './core/events'
 
-// Re-export build flags for consumers to check
-export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
+//* Build flags ==============================
+// Available renderers. Each root records its active renderer in state.isLegacy.
+export const R3F_BUILD_LEGACY = true
+export const R3F_BUILD_WEBGPU = true
 
-//* Auto-extend THREE namespace ==============================
-// This makes all THREE constructors (including node materials) available
-// declaratively without users needing to call extend() themselves
-import { extend } from './core/extend'
-extend(THREE)
+//* Renderer provider ==============================
+// Renderer dependencies are reachable through Canvas and createRoot so hook imports can tree-shake them.
+const provider: RendererProvider = {
+  namespace: THREE,
+  webgl: {
+    kind: 'webgl',
+    Renderer: WebGLRenderer,
+    CubeRenderTarget: WebGLCubeRenderTarget,
+    loadGainMapLoader: async () => (await import('@monogrid/gainmap-js')).GainMapLoader,
+  },
+  webgpu: {
+    kind: 'webgpu',
+    Renderer: WebGPURenderer,
+    CanvasTarget,
+    CubeRenderTarget,
+    occlusion: { Node, NodeUpdateType, MeshBasicNodeMaterial, uniform, nodeObject },
+  },
+}
+
+/** Create a root using WebGL by default or WebGPU when the renderer prop is provided. */
+export function createRoot<TCanvas extends RootCanvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+  return createRootImpl(canvas, provider)
+}
+
+/**
+ * A DOM canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
+export function Canvas(props: CanvasProps) {
+  return <CanvasImpl {...props} provider={provider} />
+}
 
 //* Element types ==============================
 // Augment this entry's ThreeElements interface to add custom JSX elements.

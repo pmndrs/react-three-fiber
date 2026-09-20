@@ -3,11 +3,12 @@
 // Includes WebGPU occlusion query support via Node-based observer
 // Author: DennisSmolek
 
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { updateFrustum } from './utils'
 
 //* Type Imports ==============================
-import type { RootStore, RootState, VisibilityEntry, EventHandlers } from '#types'
+import type { Node } from 'three/webgpu'
+import type { RootStore, RootState, VisibilityEntry, EventHandlers, OcclusionSupport } from '#types'
 
 //* Module-level State ==============================
 // Shared frustum for all visibility checks - avoids allocation per portal/root
@@ -16,37 +17,18 @@ const tempFrustum = new THREE.Frustum()
 // Track if we've already warned about WebGL occlusion (once per session)
 let hasWarnedWebGL = false
 
-// Cached TSL imports (loaded dynamically for WebGPU only)
-let tslModule: { uniform: any; nodeObject: any } | null = null
-
 /** Reset WebGL warning flag (for testing only) */
 export function __resetWarningFlag() {
   hasWarnedWebGL = false
 }
 
-/** Load TSL module dynamically (WebGPU only) */
-async function loadTSL(): Promise<{ uniform: any; nodeObject: any } | null> {
-  if (tslModule) return tslModule
-  try {
-    const tsl = await import('three/tsl')
-    tslModule = { uniform: tsl.uniform, nodeObject: tsl.nodeObject }
-    return tslModule
-  } catch {
-    // TSL not available (WebGL build)
-    return null
-  }
-}
-
 //* OcclusionObserverNode ==============================
-// TSL Node that runs during render pass to cache isOccluded() results
-// This is necessary because renderer.isOccluded() only works during render
-// when _currentRenderContext is available.
+// Cache occlusion results during rendering, while the render context is available.
+// The entry provider supplies the node classes and TSL functions.
 
-// Factory function to create the OcclusionObserverNode class
-// (needs to be created after TSL is loaded)
-function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node {
-  const node = new THREE.Node('float')
-  node.updateType = THREE.NodeUpdateType.OBJECT
+function createOcclusionObserverNode(store: RootStore, { Node, NodeUpdateType, uniform }: OcclusionSupport): Node {
+  const node = new Node('float')
+  node.updateType = NodeUpdateType.OBJECT
 
   // Override update method
   ;(node as any).update = function (frame: any) {
@@ -76,10 +58,6 @@ function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node
 
 //* Occlusion Enable/Disable ==============================
 
-// Track which roots have setup in flight. Keyed by store: a shared flag would let the first
-// canvas to start setup suppress every other canvas's, with no retry.
-const occlusionSetupPending = new WeakSet<RootStore>()
-
 /**
  * Enable the occlusion query system for this Canvas.
  * Creates an invisible observer mesh that caches isOccluded() results during render.
@@ -90,8 +68,8 @@ export function enableOcclusion(store: RootStore): void {
   const state = store.getState()
   const { internal, renderer } = state
 
-  // Already enabled or in progress for this root
-  if (internal.occlusionEnabled || occlusionSetupPending.has(store)) return
+  // Already enabled
+  if (internal.occlusionEnabled) return
 
   // Check for WebGPU support
   const hasOcclusionSupport = typeof (renderer as any)?.isOccluded === 'function'
@@ -108,25 +86,20 @@ export function enableOcclusion(store: RootStore): void {
     return
   }
 
-  // Start async setup
-  occlusionSetupPending.add(store)
   setupOcclusion(store)
 }
 
-/** Internal async setup for occlusion system */
-async function setupOcclusion(store: RootStore): Promise<void> {
+/** Internal setup for occlusion system */
+function setupOcclusion(store: RootStore): void {
   const state = store.getState()
   const { internal, rootScene, set } = state
 
-  // Load TSL module
-  const tsl = await loadTSL()
-  if (!tsl) {
-    console.warn('[R3F] Warning: TSL module not available. Occlusion queries disabled.')
-    occlusionSetupPending.delete(store)
+  // Occlusion queries require WebGPU node support.
+  if (internal.support?.kind !== 'webgpu') {
+    console.warn('[R3F] Warning: this entry provides no WebGPU node classes. Occlusion queries disabled.')
     return
   }
-
-  const { uniform, nodeObject } = tsl
+  const { occlusion } = internal.support
 
   // Create internal helper group if it doesn't exist
   let helperGroup = internal.helperGroup
@@ -140,13 +113,13 @@ async function setupOcclusion(store: RootStore): Promise<void> {
 
   // Create the observer mesh with NodeMaterial
   const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const material = new THREE.MeshBasicNodeMaterial({
+  const material = new occlusion.MeshBasicNodeMaterial({
     transparent: true,
     opacity: 0,
   })
 
   // Create and attach the observer node
-  const observerNode = nodeObject(createOcclusionObserverNode(store, uniform))
+  const observerNode = occlusion.nodeObject(createOcclusionObserverNode(store, occlusion))
   ;(material as any).colorNode = observerNode
   material.needsUpdate = true
 
@@ -168,8 +141,6 @@ async function setupOcclusion(store: RootStore): Promise<void> {
       occlusionEnabled: true,
     },
   }))
-
-  occlusionSetupPending.delete(store)
 }
 
 /**

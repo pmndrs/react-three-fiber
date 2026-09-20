@@ -2,7 +2,7 @@
 // so it stays external and every entry ends up importing `@react-three/fiber` -- which resolves
 // back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
 import { useLoader, useThree } from './'
-import type { ConstructorRepresentation, LoaderLike } from '#types'
+import type { ConstructorRepresentation, LoaderLike, RendererSupport, WebGLSupport } from '#types'
 import {
   EquirectangularReflectionMapping,
   CubeTextureLoader,
@@ -30,7 +30,7 @@ type EnvironmentLoader = ConstructorRepresentation<EnvironmentLoaderInstance>
 
 interface EnvironmentFormat {
   /** Resolves the loader class on first use so bundlers split each decoder into its own chunk. */
-  load: () => Promise<EnvironmentLoader>
+  load?: () => Promise<EnvironmentLoader>
   mapping: AnyMapping
   /** Applied when the caller does not pass a color space. */
   colorSpace: ColorSpace
@@ -72,7 +72,6 @@ const FORMATS: Record<EnvironmentFormatName, EnvironmentFormat> = {
     gpu: true,
   },
   webp: {
-    load: () => import('@monogrid/gainmap-js').then((m) => m.GainMapLoader),
     mapping: EquirectangularReflectionMapping,
     colorSpace: 'srgb-linear',
     gpu: true,
@@ -87,10 +86,27 @@ const LOADER_KEY = '@react-three/fiber/useEnvironment'
 const pendingLoaders = new Map<EnvironmentFormatName, Promise<EnvironmentLoader>>()
 const loadedLoaders = new Map<EnvironmentFormatName, EnvironmentLoader>()
 
-function loadLoader(name: EnvironmentFormatName): Promise<EnvironmentLoader> {
+function requireWebGLSupport(support?: RendererSupport): WebGLSupport {
+  if (support?.kind !== 'webgl') {
+    throw new Error(
+      'useEnvironment: gain map (.webp) environments decode with a WebGLRenderer, which this entry does not provide. ' +
+        'Import from @react-three/fiber or @react-three/fiber/legacy.',
+    )
+  }
+  return support
+}
+
+function loadLoader(name: EnvironmentFormatName, support?: RendererSupport): Promise<EnvironmentLoader> {
+  let resolveLoader: () => Promise<EnvironmentLoader>
+  if (name === 'webp') {
+    resolveLoader = requireWebGLSupport(support).loadGainMapLoader
+  } else {
+    resolveLoader = FORMATS[name].load!
+  }
+
   let pending = pendingLoaders.get(name)
   if (!pending) {
-    pending = FORMATS[name].load().then((loader) => {
+    pending = resolveLoader().then((loader) => {
       loadedLoaders.set(name, loader)
       return loader
     })
@@ -100,8 +116,11 @@ function loadLoader(name: EnvironmentFormatName): Promise<EnvironmentLoader> {
 }
 
 /** Suspends until the format's loader is available. */
-const useEnvironmentLoader = (name: EnvironmentFormatName): EnvironmentLoader =>
-  suspend(() => loadLoader(name), [LOADER_KEY, name])
+const useEnvironmentLoader = (name: EnvironmentFormatName, support: RendererSupport): EnvironmentLoader => {
+  // Validate before suspend can return a loader cached by a different entry.
+  if (name === 'webp') requireWebGLSupport(support)
+  return suspend(() => loadLoader(name, support), [LOADER_KEY, name])
+}
 
 //* Source resolution ==============================
 // Props name a source in several ways (preset, single file, cube faces, gain map triplet). This is
@@ -196,7 +215,8 @@ export function useEnvironment({ colorSpace, extensions, ...props }: Partial<Env
   const source = resolveSource(props)
   const format = FORMATS[source.format]
   const renderer = useThree((state) => state.renderer)
-  const loader = useEnvironmentLoader(source.format)
+  const support = useThree((state) => state.internal.support)
+  const loader = useEnvironmentLoader(source.format, support)
 
   // A GPU decoder's result lives in a render target, which dies with the context.
   useLayoutEffect(() => {

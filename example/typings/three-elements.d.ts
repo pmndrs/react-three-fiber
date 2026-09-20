@@ -1,9 +1,8 @@
 /**
  * Three.js JSX Elements Type Augmentation
  *
- * During development (with stubs), the #three alias resolution doesn't
- * provide complete type information. This directly augments the JSX
- * IntrinsicElements with Three.js element types.
+ * During development (with stubs), declaration resolution is incomplete.
+ * This directly augments the JSX IntrinsicElements with Three.js element types.
  *
  * This is only needed for development - the built package has correct types.
  */

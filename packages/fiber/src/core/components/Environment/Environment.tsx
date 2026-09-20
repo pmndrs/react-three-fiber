@@ -1,19 +1,12 @@
 import * as React from 'react'
-// Relative, never the package name. A self-import leaves rollup unable to resolve the specifier,
-// so it stays external and every entry ends up importing `@react-three/fiber` -- which resolves
-// back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
+// Relative imports keep the default entry out of the shared core dependency graph.
 import { useThree, useFrame } from '../../hooks'
 import { createPortal } from '../../renderer'
 import { extend } from '../../extend'
 import { applyProps } from '../../utils'
-// `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),
-// not three's class. That is what the package-name import was resolving to, and narrowing it to
-// three's `Euler` would quietly break `backgroundRotation={[0, 0, 0]}` for every consumer.
+// R3F Euler props accept both Euler instances and rotation tuples.
 import type { Euler } from '../../../../types/three'
 import { Texture, Scene, CubeCamera, HalfFloatType, CubeTexture, Color, ColorRepresentation } from 'three'
-// The cube render targets are renderer-specific: WebGLCubeRenderTarget is WebGL-only and
-// three/webgpu does not export it, so the pair still comes through the entry barrel.
-import { WebGLCubeRenderTarget, CubeRenderTarget } from '#three'
 import { GroundedSkybox as GroundProjectedEnvImpl } from 'three/examples/jsm/objects/GroundedSkybox.js'
 import { PresetsType } from './environment-assets'
 import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironment'
@@ -269,19 +262,16 @@ export function EnvironmentPortal({
   extensions,
 }: EnvironmentProps) {
   const renderer = useThree((state) => state.renderer)
-  const isLegacy = useThree((state) => state.isLegacy)
+  const support = useThree((state) => state.internal.support)
   const defaultScene = useThree((state) => state.scene)
   const camera = React.useRef<CubeCamera>(null!)
   const [virtualScene] = React.useState(() => new Scene())
   const fbo = React.useMemo(() => {
-    // WebGLCubeRenderTarget is WebGL-only. Under WebGPURenderer the equivalent is three's
-    // CubeRenderTarget, which exists precisely because the WebGL one is not compatible —
-    // 'three/webgpu' stopped exporting WebGLCubeRenderTarget in r185 for that reason.
-    // Mirrors the selection useRenderTarget makes for regular render targets.
-    const fbo = isLegacy ? new WebGLCubeRenderTarget(resolution) : new CubeRenderTarget(resolution)
+    // Use the cube render target supplied for this root's renderer.
+    const fbo = new support.CubeRenderTarget(resolution)
     fbo.texture.type = HalfFloatType
     return fbo
-  }, [resolution, isLegacy])
+  }, [resolution, support])
 
   React.useEffect(() => {
     return () => {

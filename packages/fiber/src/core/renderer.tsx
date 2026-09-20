@@ -1,5 +1,6 @@
-import * as THREE from '#three'
-import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, type Object3D } from '#three'
+import * as THREE from 'three'
+import type { Object3D, WebGLRenderer } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 
 import { useCallback, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
@@ -36,6 +37,7 @@ import type {
   RenderProps,
   ReconcilerRoot,
   InjectState,
+  RendererProvider,
 } from '#types'
 
 export const isRenderer = (def: any) => !!def?.render
@@ -80,8 +82,10 @@ function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: 
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
+/** Create a canvas root with renderer support and JSX constructors from its entry provider. */
 export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
+  provider: RendererProvider,
 ): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = _roots.get(canvas)
@@ -119,6 +123,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     )
   // Map it
   if (!prevRoot) _roots.set(canvas, { fiber, store })
+
+  // Use the entry namespace as the fallback for explicit extend() registrations.
+  store.getState().internal.namespace = provider.namespace
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
@@ -173,6 +180,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         forceEven,
       } = props
 
+      const { webgl, webgpu } = provider
+
       // Extract textureColorSpace from gl or renderer config (not a real renderer property)
       const textureColorSpace: THREE.ColorSpace =
         (is.obj(glConfig) && !is.fun(glConfig) && !isRenderer(glConfig) && (glConfig as any).textureColorSpace) ||
@@ -198,37 +207,31 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         antialias: true,
       }
 
-      //* Build Flag Validation ==============================
-      // Check if the requested renderer is available in this build
-      if (glConfig && !R3F_BUILD_LEGACY) {
+      //* Entry Validation ==============================
+      // Check if the requested renderer is available on this entry
+      if (glConfig && !webgl) {
         throw new Error(
-          'WebGLRenderer (gl prop) is not available in this build. ' +
+          'WebGLRenderer (gl prop) is not available on this entry. ' +
             'Use @react-three/fiber or @react-three/fiber/legacy instead.',
         )
       }
-      if (rendererConfig && !R3F_BUILD_WEBGPU) {
+      if (rendererConfig && !webgpu) {
         throw new Error(
-          'WebGPURenderer (renderer prop) is not available in this build. ' +
+          'WebGPURenderer (renderer prop) is not available on this entry. ' +
             'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
         )
       }
 
       //* Determine which renderer to use ==============================
-      // Build-specific defaults:
-      // - WebGPU-only build (@react-three/fiber/webgpu): Always use WebGPU (R3F_BUILD_LEGACY=false)
-      // - Legacy-only build (@react-three/fiber/legacy): Always use WebGL (R3F_BUILD_WEBGPU=false)
-      // - Default build (@react-three/fiber): Use WebGL unless renderer prop is provided
-      //
-      // For WebGPU-only builds, wantsGL is always false because R3F_BUILD_LEGACY=false
-      // This means WebGPU is used automatically without needing the renderer prop
-      const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
+      // Prefer WebGL when available unless the renderer prop requests WebGPU.
+      const wantsGL = Boolean(webgl && (state.isLegacy || glConfig || !webgpu || !rendererConfig))
 
       if (glConfig && rendererConfig) {
         throw new Error('Cannot use both gl and renderer props at the same time')
       }
 
-      // Deprecation warning for WebGL usage (only in builds that support both)
-      if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU && !state.isLegacy && wantsGL) {
+      // Deprecation warning for WebGL usage (only on the entry that supports both)
+      if (webgl && webgpu && !state.isLegacy && wantsGL) {
         notifyDepreciated({
           heading: 'WebGlRenderer Usage',
           body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
@@ -240,7 +243,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       //* Multi-Canvas Target Validation ==============================
       // Validate primaryCanvas prop is only used with WebGPU
-      if (primaryCanvas && !R3F_BUILD_WEBGPU) {
+      if (primaryCanvas && !webgpu) {
         throw new Error(
           'The `primaryCanvas` prop for multi-canvas rendering is only available with WebGPU. ' +
             'Use @react-three/fiber/webgpu instead.',
@@ -263,14 +266,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.internal.actualRenderer) {
         if (!rendererSetup) {
           rendererSetup = (async () => {
-            if (R3F_BUILD_LEGACY && wantsGL) {
+            if (webgl && wantsGL) {
               //* WebGL path ---
-              renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+              renderer = (await resolveRenderer(glConfig, defaultGLProps, webgl.Renderer)) as WebGLRenderer
               state.internal.actualRenderer = renderer
+              state.internal.support = webgl
               // Set both gl and renderer to the WebGLRenderer for backwards compatibility
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
-            } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas) {
+            } else if (webgpu && !wantsGL && primaryCanvas) {
               //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
               // Wait for primary canvas to be registered (handles async init timing)
               const primary = await waitForPrimary(primaryCanvas)
@@ -278,9 +282,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Use the primary's renderer
               renderer = primary.renderer
               state.internal.actualRenderer = renderer
+              state.internal.support = webgpu
 
               // Create a CanvasTarget for this secondary canvas
-              const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+              const canvasTarget = new webgpu.CanvasTarget(canvas as HTMLCanvasElement)
 
               // Enable multi-canvas mode on the primary canvas
               primary.store.setState((prev) => ({
@@ -301,13 +306,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
                   targetId: primaryCanvas,
                 },
               }))
-            } else if (R3F_BUILD_WEBGPU && !wantsGL) {
+            } else if (webgpu && !wantsGL) {
               //* WebGPU path ---
-              // This path is taken when:
-              // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
-              // 2. Default build with explicit renderer prop
-              // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+              // Use WebGPU by default on /webgpu or when requested on the root entry.
+              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, webgpu.Renderer)) as WebGPURenderer
 
               // WebGPU-specific setup - only init if not already initialized
               // Allows users to pass pre-initialized external renderers
@@ -337,6 +339,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
               state.internal.actualRenderer = renderer
+              state.internal.support = webgpu
               // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })

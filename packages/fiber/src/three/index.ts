@@ -1,59 +1,6 @@
 /**
- * @fileoverview Internal Three.js re-exports - DEFAULT ENTRY
- *
- * This is the single source of truth for Three.js imports within R3F.
- * All internal code should import from '#three' (or '../three' relative).
- *
- * DEFAULT behavior (root import):
- * - Exports from three/webgpu (the new standard)
- * - Also exports WebGLRenderer for backwards compatibility (with deprecation)
- * - Both renderer types available, runtime decides which to use
- *
- * For explicit legacy or webgpu-only builds, use:
- * - #three/legacy - WebGL only, no WebGPU
- * - #three/webgpu - WebGPU only, no WebGL legacy
+ * Default entry constructors. Static re-exports keep the merged namespace tree-shakeable.
  */
 
-//* Build Flags ==============================
-// These flags indicate what's available in this build
-// Bundlers can tree-shake dead branches based on these constants
-export const R3F_BUILD_LEGACY = true
-export const R3F_BUILD_WEBGPU = true
-
-//* Core Three.js (from WebGPU path - superset of core) ==============================
 export * from 'three/webgpu'
-
-//* WebGL Legacy Support (deprecated) ==============================
-// These are re-exported for backwards compatibility
-// Usage triggers deprecation warnings at runtime via notices.ts
-export { WebGLRenderer } from 'three'
-// WebGLRendererParameters isn't exported from main 'three' entry in @types/three@0.181.0+
-// Import directly from internal path
-export type { WebGLRendererParameters } from 'three/src/renderers/WebGLRenderer.js'
-
-//* RenderTarget Support ==============================
-// Default build needs both for runtime selection based on isLegacy
-export { WebGLRenderTarget } from 'three'
-// Cube render targets: the default build carries both and selects on `isLegacy` at runtime,
-// mirroring the WebGLRenderTarget/RenderTarget pair above. 'three/webgpu' deliberately does not
-// export WebGLCubeRenderTarget — CubeRenderTarget is its WebGPURenderer-compatible counterpart —
-// so the WebGL one is taken from the WebGL entry and is only ever constructed on the legacy path.
-export { WebGLCubeRenderTarget } from 'three'
-export { CubeRenderTarget } from 'three/webgpu'
-export { CubeRenderTarget as CubeRenderTargetCompat } from 'three/webgpu'
-// RenderTarget already exported via 'three/webgpu'
-// RenderTargetCompat alias for single-renderer build code paths (dead code in default build)
-export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
-
-//* Addons ==============================
-// Type-only export plus a lazy loader — a static re-export creates an import
-// cycle (Inspector.js -> three/webgpu -> here) that throws under Turbopack.
-// See https://github.com/pmndrs/react-three-fiber/issues/3846 and the longer
-// note in ./webgpu.ts.
-export type { Inspector } from 'three/addons/inspector/Inspector.js'
-
-/** Lazily load the three Inspector. Keeps it out of the eager module graph — see note above. */
-export async function loadInspector() {
-  const { Inspector } = await import('three/addons/inspector/Inspector.js')
-  return Inspector
-}
+export { WebGLRenderer, WebGLCubeRenderTarget } from 'three'

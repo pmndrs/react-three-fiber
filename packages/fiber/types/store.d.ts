@@ -14,6 +14,7 @@ import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
+import type { RendererSupport } from './provider'
 
 //* Buffer Types (useBuffers) ========================================
 
@@ -196,6 +197,10 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: R3FRenderer
+  /** Renderer support selected by configure(). */
+  support: RendererSupport
+  /** Entry constructors used after explicit extend() registrations. */
+  namespace: Record<string, unknown>
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
   /** This root's unique ID in the global scheduler */

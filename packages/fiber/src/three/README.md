@@ -1,9 +1,11 @@
-# Internal Three.js Re-exports
+# Root entry namespace
 
-This directory is the single source of truth for Three.js imports within R3F. All internal code
-imports from `#three`, never from `three` directly — the build points that alias at `index.ts`,
-`legacy.ts` or `webgpu.ts` depending on which entry it is producing.
+`index.ts` is the THREE namespace the root entry registers as JSX elements: `three/webgpu` plus the
+WebGL classes it does not export. It exists only because that merged namespace needs `export *` to
+stay tree-shakeable. The legacy and WebGPU entries register `three` and `three/webgpu` directly.
 
-Adding a THREE.js import means adding it to the file for the entries that should have it.
+Core never imports from here. It takes three's shared core from `three` and receives the
+renderer-specific classes from the entry's provider (see `types/provider.d.ts`), so this namespace
+is reachable only through the root entry's `createRoot` and `Canvas`.
 
-📖 **Full documentation:** [`docs/development/BUILD.md`](../../../../docs/development/BUILD.md#per-entry-alias-resolution)
+📖 **Full documentation:** [`docs/development/BUILD.md`](../../../../docs/development/BUILD.md)
