@@ -943,64 +943,70 @@ describe('renderer', () => {
     host.remove()
   })
 
-  // ViewTransition commits synchronously since three.js has nothing to animate
-  it('should mount a ViewTransition subtree through a transition', async () => {
-    const effects: string[] = []
-    let setShown: React.Dispatch<React.SetStateAction<boolean>> = null!
+  // ViewTransition commits synchronously since three.js has nothing to animate.
+  // React 19.3 added it, so older React versions skip these tests
+  const { ViewTransition, addTransitionType } = React as any
+  const describeViewTransition = ViewTransition ? describe : describe.skip
 
-    function Test() {
-      const [shown, setter] = React.useState(false)
-      setShown = setter
-      React.useLayoutEffect(() => void effects.push(`layout:${shown}`), [shown])
-      React.useEffect(() => void effects.push(`passive:${shown}`), [shown])
-      return shown ? (
-        <React.ViewTransition enter="fade">
-          <group name="shown" />
-        </React.ViewTransition>
-      ) : null
-    }
+  describeViewTransition('ViewTransition', () => {
+    it('should mount a subtree through a transition', async () => {
+      const effects: string[] = []
+      let setShown: React.Dispatch<React.SetStateAction<boolean>> = null!
 
-    const store = await act(async () => root.render(<Test />))
-    const { scene } = store.getState()
+      function Test() {
+        const [shown, setter] = React.useState(false)
+        setShown = setter
+        React.useLayoutEffect(() => void effects.push(`layout:${shown}`), [shown])
+        React.useEffect(() => void effects.push(`passive:${shown}`), [shown])
+        return shown ? (
+          <ViewTransition enter="fade">
+            <group name="shown" />
+          </ViewTransition>
+        ) : null
+      }
 
-    await act(async () => React.startTransition(() => setShown(true)))
-    expect(scene.children.map((child) => child.name)).toEqual(['shown'])
-    expect(effects).toEqual(['layout:false', 'passive:false', 'layout:true', 'passive:true'])
+      const store = await act(async () => root.render(<Test />))
+      const { scene } = store.getState()
 
-    // Regular updates still commit afterwards
-    await act(async () => setShown(false))
-    expect(scene.children).toHaveLength(0)
-  })
+      await act(async () => React.startTransition(() => setShown(true)))
+      expect(scene.children.map((child) => child.name)).toEqual(['shown'])
+      expect(effects).toEqual(['layout:false', 'passive:false', 'layout:true', 'passive:true'])
 
-  it('should update and unmount a ViewTransition subtree through transitions', async () => {
-    let setStep: React.Dispatch<React.SetStateAction<number>> = null!
+      // Regular updates still commit afterwards
+      await act(async () => setShown(false))
+      expect(scene.children).toHaveLength(0)
+    })
 
-    function Test() {
-      const [step, setter] = React.useState(0)
-      setStep = setter
-      if (step > 1) return null
-      return (
-        <React.ViewTransition name="box" update="slide">
-          <mesh position-x={step} />
-        </React.ViewTransition>
+    it('should update and unmount a subtree through transitions', async () => {
+      let setStep: React.Dispatch<React.SetStateAction<number>> = null!
+
+      function Test() {
+        const [step, setter] = React.useState(0)
+        setStep = setter
+        if (step > 1) return null
+        return (
+          <ViewTransition name="box" update="slide">
+            <mesh position-x={step} />
+          </ViewTransition>
+        )
+      }
+
+      const store = await act(async () => root.render(<Test />))
+      const { scene } = store.getState()
+      const mesh = scene.children[0] as THREE.Mesh
+
+      await act(async () =>
+        React.startTransition(() => {
+          addTransitionType('slide')
+          setStep(1)
+        }),
       )
-    }
+      expect(scene.children[0]).toBe(mesh)
+      expect(mesh.position.x).toBe(1)
 
-    const store = await act(async () => root.render(<Test />))
-    const { scene } = store.getState()
-    const mesh = scene.children[0] as THREE.Mesh
-
-    await act(async () =>
-      React.startTransition(() => {
-        React.addTransitionType('slide')
-        setStep(1)
-      }),
-    )
-    expect(scene.children[0]).toBe(mesh)
-    expect(mesh.position.x).toBe(1)
-
-    await act(async () => React.startTransition(() => setStep(2)))
-    expect(scene.children).toHaveLength(0)
+      await act(async () => React.startTransition(() => setStep(2)))
+      expect(scene.children).toHaveLength(0)
+    })
   })
 
   it('should reset removed pierced props on the pierced target', async () => {
