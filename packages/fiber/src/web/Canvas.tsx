@@ -10,8 +10,9 @@ import {
   useMutableCallback,
   useIsomorphicLayoutEffect,
   useBridge,
+  useGate,
 } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, RootState } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
 
@@ -28,7 +29,7 @@ export interface CanvasProps
    */
   resize?: ResizeOptions
   /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventSource?: HTMLElement | React.RefObject<HTMLElement>
+  eventSource?: HTMLElement | React.RefObject<HTMLElement | null>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
@@ -81,13 +82,18 @@ function CanvasImpl({
 
   const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
+  // Waits for an async renderer without hiding the canvas
+  const [gate, waitFor] = useGate()
+  const rootState = React.useRef<RootState>(null)
+  const eventTarget = () => (eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
+
   useIsomorphicLayoutEffect(() => {
     const canvas = canvasRef.current
     if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
       if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
 
-      async function run() {
-        await root.current.configure({
+      root.current
+        .configure({
           gl,
           scene,
           events,
@@ -105,10 +111,9 @@ function CanvasImpl({
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onCreated: (state) => {
-            // Connect to event source
-            state.events.connect?.(
-              eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current,
-            )
+            rootState.current = state
+            // A ref to an ancestor is not attached yet. The effect below settles it
+            state.events.connect?.(eventTarget() ?? divRef.current)
             // Set up compute function
             if (eventPrefix) {
               state.setEvents({
@@ -124,6 +129,10 @@ function CanvasImpl({
             onCreated?.(state)
           },
         })
+        .catch(setError)
+
+      // Pending re-runs this effect once the renderer lands. Rejected is reported by the catch
+      if (root.current.ready.status === 'fulfilled') {
         root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
@@ -131,9 +140,17 @@ function CanvasImpl({
             </ErrorBoundary>
           </Bridge>,
         )
+      } else if (root.current.ready.status === 'pending') {
+        waitFor(root.current.ready)
       }
-      run()
     }
+  })
+
+  // Refs on ancestors attach after our layout effect
+  React.useEffect(() => {
+    const state = rootState.current?.get()
+    const target = eventTarget()
+    if (state && target && state.events.connected !== target) state.events.connect?.(target)
   })
 
   React.useEffect(() => {
@@ -162,6 +179,7 @@ function CanvasImpl({
           {fallback}
         </canvas>
       </div>
+      {gate}
     </div>
   )
 }

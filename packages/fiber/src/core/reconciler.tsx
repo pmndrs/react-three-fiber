@@ -17,6 +17,7 @@ import {
   unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
   unstable_scheduleCallback as scheduleCallback,
 } from 'scheduler'
+import type { TrackedPromise } from './promise'
 import {
   diffProps,
   applyProps,
@@ -82,6 +83,8 @@ export interface Root {
   fiber: Reconciler.FiberRoot
   store: RootStore
   unmountClaim: symbol | null
+  /** Pending only while an async renderer is being created */
+  ready: TrackedPromise<unknown>
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void

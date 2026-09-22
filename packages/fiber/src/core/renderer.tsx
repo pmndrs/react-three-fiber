@@ -28,11 +28,13 @@ import {
   dispose,
   EquConfig,
   is,
+  noop,
   prepare,
   updateCamera,
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
+import { fulfilled, isPromiseLike, rejected, tracked, TrackedPromise } from './promise'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -113,7 +115,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
 }
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
+  ready: TrackedPromise<unknown>
+  configure: (config?: RenderProps<TCanvas>) => TrackedPromise<ReconcilerRoot<TCanvas>>
   render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
@@ -177,24 +180,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  const root: Root = prevRoot || { fiber, store, unmountClaim: null }
+  const root: Root = prevRoot || { fiber, store, unmountClaim: null, ready: fulfilled(undefined) }
   if (!prevRoot) _roots.set(canvas, root)
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
   let lastCamera: RenderProps<TCanvas>['camera']
 
-  let configured = false
-  let pending: Promise<void> | null = null
+  let mounted = false
 
   return {
-    async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+    get ready() {
+      return root.ready
+    },
+    configure(props: RenderProps<TCanvas> = {}): TrackedPromise<ReconcilerRoot<TCanvas>> {
       root.unmountClaim = null
 
-      let resolve!: () => void
-      pending = new Promise<void>((_resolve) => (resolve = _resolve))
-
-      let {
+      const {
         gl: glConfig,
         size: propsSize,
         scene: sceneOptions,
@@ -213,213 +215,256 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onPointerMissed,
       } = props
 
-      let state = store.getState()
-
-      // Set up renderer (one time only!)
-      let gl = state.gl
-      if (!state.gl) {
-        const defaultProps: DefaultGLProps = {
-          canvas: canvas as HTMLCanvasElement,
-          powerPreference: 'high-performance',
-          antialias: true,
-          alpha: true,
-        }
-
-        const customRenderer = (
-          typeof glConfig === 'function' ? await glConfig(defaultProps) : glConfig
-        ) as THREE.WebGLRenderer
-
-        if (isRenderer(customRenderer)) {
-          gl = customRenderer
-        } else {
-          gl = new THREE.WebGLRenderer({
-            ...defaultProps,
-            ...glConfig,
-          })
-        }
-
-        state.set({ gl })
+      const defaultProps: DefaultGLProps = {
+        canvas: canvas as HTMLCanvasElement,
+        powerPreference: 'high-performance',
+        antialias: true,
+        alpha: true,
       }
 
-      // Set up raycaster (one time only!)
-      let raycaster = state.raycaster
-      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
+      // Synchronous, and needs the renderer to exist
+      const apply = (customRenderer?: unknown) => {
+        const state = store.getState()
 
-      // Set raycaster options
-      const { params, ...options } = raycastOptions || {}
-      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
-      if (!is.equ(params, raycaster.params, shallowLoose))
-        applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
+        // Set up renderer (one time only!)
+        const first = !state.gl
+        let gl = state.gl
+        if (first) {
+          gl = isRenderer(customRenderer)
+            ? (customRenderer as THREE.WebGLRenderer)
+            : new THREE.WebGLRenderer({ ...defaultProps, ...(glConfig as object) })
+          state.set({ gl })
+        }
 
-      // Create default camera, don't overwrite any user-set state
-      if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
-        lastCamera = cameraOptions
-        const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
-        const camera = isCamera
-          ? (cameraOptions as Camera)
-          : orthographic
-          ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-          : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-        if (!isCamera) {
-          camera.position.z = 5
-          if (cameraOptions) {
-            applyProps(camera, cameraOptions as any)
-            // Preserve user-defined frustum if possible
-            // https://github.com/pmndrs/react-three-fiber/issues/3160
-            if (!(camera as any).manual) {
-              if (
-                'aspect' in cameraOptions ||
-                'left' in cameraOptions ||
-                'right' in cameraOptions ||
-                'bottom' in cameraOptions ||
-                'top' in cameraOptions
-              ) {
-                ;(camera as any).manual = true
-                camera.updateProjectionMatrix()
+        // Set up raycaster (one time only!)
+        let raycaster = state.raycaster
+        if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
+
+        // Set raycaster options
+        const { params, ...options } = raycastOptions || {}
+        if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
+        if (!is.equ(params, raycaster.params, shallowLoose))
+          applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
+
+        // Create default camera, don't overwrite any user-set state
+        if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
+          lastCamera = cameraOptions
+          const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
+          const camera = isCamera
+            ? (cameraOptions as Camera)
+            : orthographic
+            ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+            : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+          if (!isCamera) {
+            camera.position.z = 5
+            if (cameraOptions) {
+              applyProps(camera, cameraOptions as any)
+              // Preserve user-defined frustum if possible
+              // https://github.com/pmndrs/react-three-fiber/issues/3160
+              if (!(camera as any).manual) {
+                if (
+                  'aspect' in cameraOptions ||
+                  'left' in cameraOptions ||
+                  'right' in cameraOptions ||
+                  'bottom' in cameraOptions ||
+                  'top' in cameraOptions
+                ) {
+                  ;(camera as any).manual = true
+                  camera.updateProjectionMatrix()
+                }
               }
             }
+            // Always look at center by default
+            if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
           }
-          // Always look at center by default
-          if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
-        }
-        state.set({ camera })
+          state.set({ camera })
 
-        // Configure raycaster
-        // https://github.com/pmndrs/react-xr/issues/300
-        raycaster.camera = camera
-      }
-
-      // Set up scene (one time only!)
-      if (!state.scene) {
-        let scene: THREE.Scene
-
-        if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
-          scene = sceneOptions as THREE.Scene
-          prepare(scene, store, '', {})
-        } else {
-          scene = new THREE.Scene()
-          prepare(scene, store, '', {})
-          if (sceneOptions) applyProps(scene as any, sceneOptions as any)
+          // Configure raycaster
+          // https://github.com/pmndrs/react-xr/issues/300
+          raycaster.camera = camera
         }
 
-        state.set({ scene })
-      }
+        // Set up scene (one time only!)
+        if (!state.scene) {
+          let scene: THREE.Scene
 
-      // Store events internally
-      if (events && !state.events.handlers) state.set({ events: events(store) })
-      // Check size, allow it to take on container bounds initially
-      const size = computeInitialSize(canvas, propsSize)
-      if (!is.equ(size, state.size, shallowLoose)) {
-        state.setSize(size.width, size.height, size.top, size.left)
-      }
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
-      // Check frameloop
-      if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
-      // Check pointer missed
-      if (!state.onPointerMissed) state.set({ onPointerMissed })
-      // Check performance
-      if (performance && !is.equ(performance, state.performance, shallowLoose))
-        state.set((state) => ({ performance: { ...state.performance, ...performance } }))
-
-      // Set up XR (one time only!)
-      if (!state.xr) {
-        // Handle frame behavior in WebXR
-        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
-          const state = store.getState()
-          if (state.frameloop === 'never') return
-          advance(timestamp, true, state, frame)
-        }
-
-        // Toggle render switching on session
-        const handleSessionChange = () => {
-          const state = store.getState()
-          state.gl.xr.enabled = state.gl.xr.isPresenting
-
-          state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
-          if (!state.gl.xr.isPresenting) invalidate(state)
-        }
-
-        // WebXR session manager
-        const xr = {
-          connect() {
-            const gl = store.getState().gl
-            gl.xr.addEventListener('sessionstart', handleSessionChange)
-            gl.xr.addEventListener('sessionend', handleSessionChange)
-          },
-          disconnect() {
-            const gl = store.getState().gl
-            gl.xr.removeEventListener('sessionstart', handleSessionChange)
-            gl.xr.removeEventListener('sessionend', handleSessionChange)
-          },
-        }
-
-        // Subscribe to WebXR session events
-        if (typeof gl.xr?.addEventListener === 'function') xr.connect()
-        state.set({ xr })
-      }
-
-      // Set shadowmap
-      if (gl.shadowMap) {
-        const oldEnabled = gl.shadowMap.enabled
-        const oldType = gl.shadowMap.type
-        gl.shadowMap.enabled = !!shadows
-
-        if (is.boo(shadows)) {
-          gl.shadowMap.type = THREE.PCFSoftShadowMap
-        } else if (is.str(shadows)) {
-          const types = {
-            basic: THREE.BasicShadowMap,
-            percentage: THREE.PCFShadowMap,
-            soft: THREE.PCFSoftShadowMap,
-            variance: THREE.VSMShadowMap,
+          if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
+            scene = sceneOptions as THREE.Scene
+            prepare(scene, store, '', {})
+          } else {
+            scene = new THREE.Scene()
+            prepare(scene, store, '', {})
+            if (sceneOptions) applyProps(scene as any, sceneOptions as any)
           }
-          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
-        } else if (is.obj(shadows)) {
-          Object.assign(gl.shadowMap, shadows)
+
+          state.set({ scene })
         }
 
-        if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
+        // Store events internally
+        if (events && !state.events.handlers) state.set({ events: events(store) })
+        // Check size, allow it to take on container bounds initially
+        const size = computeInitialSize(canvas, propsSize)
+        if (!is.equ(size, state.size, shallowLoose)) {
+          state.setSize(size.width, size.height, size.top, size.left)
+        }
+        // Check pixelratio
+        if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+        // Check frameloop
+        if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
+        // Check pointer missed
+        if (!state.onPointerMissed) state.set({ onPointerMissed })
+        // Check performance
+        if (performance && !is.equ(performance, state.performance, shallowLoose))
+          state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+
+        // Set up XR (one time only!)
+        if (!state.xr) {
+          // Handle frame behavior in WebXR
+          const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
+            const state = store.getState()
+            if (state.frameloop === 'never') return
+            advance(timestamp, true, state, frame)
+          }
+
+          // Toggle render switching on session
+          const handleSessionChange = () => {
+            const state = store.getState()
+            state.gl.xr.enabled = state.gl.xr.isPresenting
+
+            state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
+            if (!state.gl.xr.isPresenting) invalidate(state)
+          }
+
+          // WebXR session manager
+          const xr = {
+            connect() {
+              const gl = store.getState().gl
+              gl.xr.addEventListener('sessionstart', handleSessionChange)
+              gl.xr.addEventListener('sessionend', handleSessionChange)
+            },
+            disconnect() {
+              const gl = store.getState().gl
+              gl.xr.removeEventListener('sessionstart', handleSessionChange)
+              gl.xr.removeEventListener('sessionend', handleSessionChange)
+            },
+          }
+
+          // Subscribe to WebXR session events
+          if (typeof gl.xr?.addEventListener === 'function') xr.connect()
+          state.set({ xr })
+        }
+
+        // Set shadowmap
+        if (gl.shadowMap) {
+          const oldEnabled = gl.shadowMap.enabled
+          const oldType = gl.shadowMap.type
+          gl.shadowMap.enabled = !!shadows
+
+          if (is.boo(shadows)) {
+            gl.shadowMap.type = THREE.PCFSoftShadowMap
+          } else if (is.str(shadows)) {
+            const types = {
+              basic: THREE.BasicShadowMap,
+              percentage: THREE.PCFShadowMap,
+              soft: THREE.PCFSoftShadowMap,
+              variance: THREE.VSMShadowMap,
+            }
+            gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+          } else if (is.obj(shadows)) {
+            Object.assign(gl.shadowMap, shadows)
+          }
+
+          if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
+        }
+
+        THREE.ColorManagement.enabled = !legacy
+
+        // Set color space and tonemapping preferences
+        if (first) {
+          gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+          gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        }
+
+        // Update color management state
+        if (state.legacy !== legacy) state.set(() => ({ legacy }))
+        if (state.linear !== linear) state.set(() => ({ linear }))
+        if (state.flat !== flat) state.set(() => ({ flat }))
+
+        // Set gl props
+        if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
+          applyProps(gl, glConfig as any)
+
+        // Set locals
+        onCreated = onCreatedCallback
       }
 
-      THREE.ColorManagement.enabled = !legacy
-
-      // Set color space and tonemapping preferences
-      if (!configured) {
-        gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-        gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+      const fail = (error: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
+        const failure = rejected<ReconcilerRoot<TCanvas>>(error)
+        root.ready = failure
+        return failure
+      }
+      const run = (customRenderer?: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
+        try {
+          apply(customRenderer)
+          root.ready = fulfilled(undefined)
+          return fulfilled(this)
+        } catch (error) {
+          return fail(error)
+        }
       }
 
-      // Update color management state
-      if (state.legacy !== legacy) state.set(() => ({ legacy }))
-      if (state.linear !== linear) state.set(() => ({ linear }))
-      if (state.flat !== flat) state.set(() => ({ flat }))
+      // The renderer exists, so applying props is synchronous
+      if (store.getState().gl) return run()
 
-      // Set gl props
-      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-        applyProps(gl, glConfig as any)
+      // Another configure is creating it. Chaining keeps them in call order
+      if (root.ready.status === 'pending') return tracked(root.ready.then(() => run()))
 
-      // Set locals
-      onCreated = onCreatedCallback
-      configured = true
-      resolve()
-      return this
+      // Only an async factory makes configure asynchronous
+      let customRenderer: unknown
+      try {
+        customRenderer = typeof glConfig === 'function' ? glConfig(defaultProps) : glConfig
+      } catch (error) {
+        return fail(error)
+      }
+      if (!isPromiseLike(customRenderer)) return run(customRenderer)
+
+      const configuring = tracked(customRenderer.then(run, fail))
+      root.ready = configuring
+      return configuring
     },
     render(children: React.ReactNode): RootStore {
       if (_roots.get(canvas) !== root) return store
+      // Using the root cancels a teardown waiting on React
       root.unmountClaim = null
 
-      // The root has to be configured before it can be rendered
-      if (!configured && !pending) this.configure()
+      const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
+      const commit = () => {
+        // The root may have been unmounted or claimed while we waited
+        if (_roots.get(canvas) !== root || root.unmountClaim) return
+        if (mounted) {
+          reconciler.updateContainer(element, fiber, null, noop)
+          return
+        }
+        // Mount within the caller's commit, so the scene exists once render returns
+        mounted = true
+        // @ts-ignore - reconciler types are not maintained
+        reconciler.updateContainerSync(element, fiber, null, noop)
+        // @ts-ignore - reconciler types are not maintained
+        reconciler.flushSyncWork()
+      }
 
-      pending!.then(() => {
-        reconciler.updateContainer(
-          <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
-          fiber,
-          null,
-          () => undefined,
-        )
-      })
+      // The root has to be configured before it can be rendered
+      if (!store.getState().gl && root.ready.status === 'fulfilled') this.configure()
+
+      switch (root.ready.status) {
+        case 'pending':
+          root.ready.then(commit, logRecoverableError)
+          break
+        case 'rejected':
+          throw root.ready.reason
+        default:
+          commit()
+      }
 
       return store
     },
@@ -472,22 +517,30 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     // Effect cleanups flush before the next update
     reconciler.updateContainer(null, root.fiber, null, () => {
       if (root.unmountClaim !== claim) return
-      root.unmountClaim = null
 
-      const state = root.store.getState()
-      state.internal.active = false
-      try {
-        state.events.disconnect?.()
-        state.gl?.renderLists?.dispose?.()
-        state.gl?.forceContextLoss?.()
-        if (state.gl?.xr) state.xr.disconnect()
-        dispose(state.scene)
-      } catch (e) {
-        /* ... */
+      const teardown = () => {
+        if (root.unmountClaim !== claim) return
+        root.unmountClaim = null
+
+        const state = root.store.getState()
+        state.internal.active = false
+        try {
+          state.events.disconnect?.()
+          state.gl?.renderLists?.dispose?.()
+          state.gl?.forceContextLoss?.()
+          if (state.gl?.xr) state.xr.disconnect()
+          dispose(state.scene)
+        } catch (e) {
+          /* ... */
+        }
+
+        _roots.delete(canvas)
+        if (callback) callback(canvas)
       }
 
-      _roots.delete(canvas)
-      if (callback) callback(canvas)
+      // A renderer still being created has to exist before it can be disposed
+      if (root.ready.status === 'pending') root.ready.then(teardown, teardown)
+      else teardown()
     })
   })
 }

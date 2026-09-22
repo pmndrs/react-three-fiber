@@ -63,6 +63,33 @@ export function useMutableCallback<T>(fn: T): React.RefObject<T> {
   return ref
 }
 
+export const noop = () => {}
+
+function Gate({ promise, onSettled }: { promise: PromiseLike<unknown>; onSettled: () => void }): null {
+  React.use(promise)
+  useIsomorphicLayoutEffect(onSettled, [onSettled])
+  return null
+}
+
+/** Waits for a promise in a null subtree, re-rendering the caller once it settles either way. */
+export function useGate(): [gate: React.ReactNode, waitFor: (promise: PromiseLike<unknown>) => void] {
+  const [promise, setPromise] = React.useState<PromiseLike<unknown> | null>(null)
+  const onSettled = React.useCallback(() => setPromise(null), [])
+  // Keep the first promise, or a repeated call would loop
+  const waitFor = React.useCallback(
+    (next: PromiseLike<unknown>) => setPromise((current) => current ?? Promise.resolve(next).then(noop, noop)),
+    [],
+  )
+
+  const gate = promise ? (
+    <React.Suspense fallback={null}>
+      <Gate promise={promise} onSettled={onSettled} />
+    </React.Suspense>
+  ) : null
+
+  return [gate, waitFor]
+}
+
 export type Bridge = React.FC<{ children?: React.ReactNode }>
 
 /**
