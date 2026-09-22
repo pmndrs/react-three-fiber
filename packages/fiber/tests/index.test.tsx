@@ -223,6 +223,53 @@ describe('createRoot', () => {
     })
     expect(THREE.ColorManagement.enabled).toBe(true)
   })
+
+  it('should tear down the root on unmount', async () => {
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<group />))
+
+    const forceContextLoss = jest.spyOn(state.gl, 'forceContextLoss')
+    await act(async () => root.unmount())
+
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+  })
+
+  it('should tear down after the tree has cleaned up', async () => {
+    const order: string[] = []
+    function Test() {
+      const gl = useThree((state) => state.gl)
+      React.useEffect(() => () => void order.push(`cleanup:${gl.getContext() ? 'live' : 'lost'}`), [gl])
+      return null
+    }
+
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<Test />))
+
+    jest.spyOn(state.gl, 'forceContextLoss').mockImplementation(() => void order.push('teardown'))
+    await act(async () => root.unmount())
+
+    expect(order).toStrictEqual(['cleanup:live', 'teardown'])
+  })
+
+  it('should keep a root that is rendered again before its teardown', async () => {
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<group />))
+
+    const forceContextLoss = jest.spyOn(state.gl, 'forceContextLoss')
+    await act(async () => {
+      root.unmount()
+      root.render(<group />)
+    })
+
+    expect(forceContextLoss).not.toHaveBeenCalled()
+    expect(state.scene.children).toHaveLength(1)
+
+    await act(async () => root.unmount())
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('createPortal', () => {

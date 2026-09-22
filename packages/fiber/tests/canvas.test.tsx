@@ -1,6 +1,7 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
-import { Canvas } from '../src'
+import * as THREE from 'three'
+import { Canvas, RootState } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -61,6 +62,35 @@ describe('web Canvas', () => {
     )
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  it('should survive a StrictMode remount', async () => {
+    const forceContextLoss = jest.fn()
+    let state!: RootState
+
+    const renderer = await act(async () =>
+      render(
+        <React.StrictMode>
+          <Canvas
+            gl={(props) => {
+              const gl = new THREE.WebGLRenderer(props)
+              jest.spyOn(gl, 'forceContextLoss').mockImplementation(forceContextLoss)
+              return gl
+            }}
+            onCreated={(created) => (state = created)}>
+            <group />
+          </Canvas>
+        </React.StrictMode>,
+      ),
+    )
+
+    expect(forceContextLoss).not.toHaveBeenCalled()
+    expect(state.get().internal.active).toBe(true)
+    expect(state.scene.children).toHaveLength(1)
+
+    await act(async () => renderer.unmount())
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    expect(state.get().internal.active).toBe(false)
   })
 
   it('plays nice with react SSR', async () => {
