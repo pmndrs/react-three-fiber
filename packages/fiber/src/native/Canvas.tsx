@@ -13,7 +13,15 @@ import {
 } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { FiberProvider } from 'its-fine'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge, useIsomorphicLayoutEffect } from '../core/utils'
+import {
+  SetBlock,
+  Block,
+  ErrorBoundary,
+  useGate,
+  useMutableCallback,
+  useBridge,
+  useIsomorphicLayoutEffect,
+} from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createPointerEvents } from '../web/events'
 import { RootState, Size } from '../core/store'
@@ -171,10 +179,13 @@ function CanvasImpl({
     setBind(responder.panHandlers)
   }, [])
 
+  // Waits for an async renderer without hiding the view
+  const [gate, waitFor] = useGate()
+
   useIsomorphicLayoutEffect(() => {
     if (root.current && width > 0 && height > 0) {
-      async function run() {
-        await root.current.configure({
+      root.current
+        .configure({
           gl,
           events,
           shadows,
@@ -206,6 +217,10 @@ function CanvasImpl({
             return onCreated?.(state)
           },
         })
+        .catch(setError)
+
+      // Pending re-runs this effect once the renderer lands. Rejected is reported by the catch
+      if (root.current.ready.status === 'fulfilled') {
         root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
@@ -213,8 +228,9 @@ function CanvasImpl({
             </ErrorBoundary>
           </Bridge>,
         )
+      } else if (root.current.ready.status === 'pending') {
+        waitFor(root.current.ready)
       }
-      run()
     }
   })
 
@@ -230,6 +246,7 @@ function CanvasImpl({
         <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
       )}
       <_View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents} {...bind} />
+      {gate}
     </_View>
   )
 }

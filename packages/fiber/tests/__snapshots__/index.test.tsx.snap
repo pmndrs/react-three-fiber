@@ -59,6 +59,7 @@ Array [
   "ThreeElements",
   "ThreeEvent",
   "ThreeToJSXElements",
+  "TrackedPromise",
   "Vector2",
   "Vector3",
   "Vector4",

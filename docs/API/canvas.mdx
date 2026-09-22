@@ -152,7 +152,8 @@ const root = createRoot(document.querySelector('canvas'))
 
 async function app() {
   // Configure the root, inject events optionally, set camera, etc
-  // This *must* be called before render, and it must be awaited
+  // This *must* be called before render. It runs synchronously unless `gl` is an
+  // async factory (e.g. WebGPU), so awaiting it is only required in that case
   await root.configure({ events, camera: { position: [0, 0, 50] } })
 
   // createRoot by design is not responsive, you have to take care of resize yourself
@@ -163,7 +164,8 @@ async function app() {
   // Trigger resize
   window.dispatchEvent(new Event('resize'))
 
-  // Render entry point
+  // Render entry point. Once the root is configured the first render mounts synchronously,
+  // with the same caveats as `flushSync`. Before that it waits for `root.ready`
   root.render(<App />)
 
   // Unmount and dispose of memory
@@ -172,6 +174,8 @@ async function app() {
 
 app()
 ```
+
+`root.ready` is a promise that is pending only while an async renderer is being created. It carries a `status` field, so it can be passed to React's `use` to suspend until the renderer is available.
 
 ## Tree-shaking
 

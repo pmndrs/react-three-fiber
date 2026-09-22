@@ -46,6 +46,100 @@ describe('renderer', () => {
   })
   afterEach(async () => act(async () => root.unmount()))
 
+  describe('configure', () => {
+    it('mounts the scene synchronously', async () => {
+      await act(async () => {
+        root.configure()
+        expect(root.render(<group />).getState().scene.children).toHaveLength(1)
+      })
+    })
+
+    it('configures itself when rendered without one', async () => {
+      await act(async () => {
+        expect(root.render(<group />).getState().scene.children).toHaveLength(1)
+      })
+    })
+
+    it('waits for an async renderer before mounting', async () => {
+      let ready!: () => void
+      const gl = async (props: any) => {
+        await new Promise<void>((resolve) => (ready = resolve))
+        return new THREE.WebGLRenderer(props)
+      }
+
+      root.configure({ gl })
+      const store = root.render(<group />)
+      expect(store.getState().internal.active).toBe(false)
+
+      await act(async () => ready())
+      expect(store.getState().scene.children).toHaveLength(1)
+    })
+
+    it('applies props configured while an async renderer is pending', async () => {
+      let ready!: () => void
+      const gl = async (props: any) => {
+        await new Promise<void>((resolve) => (ready = resolve))
+        return new THREE.WebGLRenderer(props)
+      }
+
+      root.configure({ gl, frameloop: 'never' })
+      root.configure({ frameloop: 'demand' })
+
+      const store = await act(async () => {
+        ready()
+        return root.render(null)
+      })
+      expect(store.getState().frameloop).toBe('demand')
+    })
+
+    it('disposes an async renderer that lands after unmount', async () => {
+      const forceContextLoss = jest.fn()
+      let ready!: () => void
+      const gl = async (props: any) => {
+        await new Promise<void>((resolve) => (ready = resolve))
+        const gl = new THREE.WebGLRenderer(props)
+        jest.spyOn(gl, 'forceContextLoss').mockImplementation(forceContextLoss)
+        return gl
+      }
+
+      root.configure({ gl })
+      const store = root.render(<group />)
+      await act(async () => root.unmount())
+      await act(async () => ready())
+
+      expect(store.getState().internal.active).toBe(false)
+      expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    })
+
+    it('refuses to render when the renderer fails', async () => {
+      const error = new Error('no renderer')
+      await expect(
+        root.configure({
+          gl: () => {
+            throw error
+          },
+        }),
+      ).rejects.toBe(error)
+
+      expect(() => root.render(<group />)).toThrow(error)
+    })
+
+    it('recovers when a failed configure is retried', async () => {
+      await expect(
+        root.configure({
+          gl: () => {
+            throw new Error('no renderer')
+          },
+        }),
+      ).rejects.toThrow('no renderer')
+
+      await act(async () => {
+        root.configure()
+        expect(root.render(<group />).getState().scene.children).toHaveLength(1)
+      })
+    })
+  })
+
   it('should render empty JSX', async () => {
     const store = await act(async () => root.render(null))
     const { scene } = store.getState()
