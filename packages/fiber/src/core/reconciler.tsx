@@ -81,6 +81,7 @@ const NoEventPriority = 0
 export interface Root {
   fiber: Reconciler.FiberRoot
   store: RootStore
+  unmountClaim: symbol | null
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void

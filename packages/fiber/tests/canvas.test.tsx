@@ -1,5 +1,6 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
+import * as THREE from 'three'
 import { Canvas, RootState } from '../src'
 
 describe('web Canvas', () => {
@@ -64,30 +65,32 @@ describe('web Canvas', () => {
   })
 
   it('should survive a StrictMode remount', async () => {
-    jest.useFakeTimers()
+    const forceContextLoss = jest.fn()
+    let state!: RootState
 
-    try {
-      let state!: RootState
-      await act(async () =>
-        render(
-          <React.StrictMode>
-            <Canvas onCreated={(created) => (state = created)}>
-              <group />
-            </Canvas>
-          </React.StrictMode>,
-        ),
-      )
+    const renderer = await act(async () =>
+      render(
+        <React.StrictMode>
+          <Canvas
+            gl={(props) => {
+              const gl = new THREE.WebGLRenderer(props)
+              jest.spyOn(gl, 'forceContextLoss').mockImplementation(forceContextLoss)
+              return gl
+            }}
+            onCreated={(created) => (state = created)}>
+            <group />
+          </Canvas>
+        </React.StrictMode>,
+      ),
+    )
 
-      // StrictMode already remounted the Canvas into the same root; the
-      // teardown deferred by the simulated unmount must not fire on it.
-      const forceContextLoss = jest.spyOn(state.gl, 'forceContextLoss')
-      await act(async () => void jest.advanceTimersByTime(1000))
+    expect(forceContextLoss).not.toHaveBeenCalled()
+    expect(state.get().internal.active).toBe(true)
+    expect(state.scene.children).toHaveLength(1)
 
-      expect(forceContextLoss).not.toHaveBeenCalled()
-      expect(state.get().internal.active).toBe(true)
-    } finally {
-      jest.useRealTimers()
-    }
+    await act(async () => renderer.unmount())
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    expect(state.get().internal.active).toBe(false)
   })
 
   it('plays nice with react SSR', async () => {

@@ -177,7 +177,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  if (!prevRoot) _roots.set(canvas, { fiber, store })
+  const root: Root = prevRoot || { fiber, store, unmountClaim: null }
+  if (!prevRoot) _roots.set(canvas, root)
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
@@ -188,6 +189,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+      root.unmountClaim = null
+
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
@@ -403,6 +406,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return this
     },
     render(children: React.ReactNode): RootStore {
+      if (_roots.get(canvas) !== root) return store
+      root.unmountClaim = null
+
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
@@ -455,35 +461,35 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   callback?: (canvas: TCanvas) => void,
 ): void {
   const root = _roots.get(canvas)
-  const fiber = root?.fiber
-  if (fiber) {
-    const state = root?.store.getState()
-    if (state) state.internal.active = false
-    reconciler.updateContainer(null, fiber, null, () => {
-      if (state) {
-        setTimeout(() => {
-          try {
-            // A remount within the grace period — <StrictMode> in development
-            // does exactly this — reuses this canvas' root, store, scene and
-            // GL context, so tearing them down here would destroy a live root.
-            // `internal` is swapped for a fresh object on remount, hence the
-            // re-read from the store rather than from the captured `state`.
-            if (_roots.get(canvas)?.store.getState().internal.active) return
+  if (!root) return
 
-            state.events.disconnect?.()
-            state.gl?.renderLists?.dispose?.()
-            state.gl?.forceContextLoss?.()
-            if (state.gl?.xr) state.xr.disconnect()
-            dispose(state.scene)
-            _roots.delete(canvas)
-            if (callback) callback(canvas)
-          } catch (e) {
-            /* ... */
-          }
-        }, 500)
+  // Cleared by configure and render, which cancels the teardown
+  const claim = (root.unmountClaim = Symbol('unmount'))
+
+  reconciler.updateContainer(null, root.fiber, null, () => {
+    if (root.unmountClaim !== claim) return
+
+    // Effect cleanups flush before the next update
+    reconciler.updateContainer(null, root.fiber, null, () => {
+      if (root.unmountClaim !== claim) return
+      root.unmountClaim = null
+
+      const state = root.store.getState()
+      state.internal.active = false
+      try {
+        state.events.disconnect?.()
+        state.gl?.renderLists?.dispose?.()
+        state.gl?.forceContextLoss?.()
+        if (state.gl?.xr) state.xr.disconnect()
+        dispose(state.scene)
+      } catch (e) {
+        /* ... */
       }
+
+      _roots.delete(canvas)
+      if (callback) callback(canvas)
     })
-  }
+  })
 }
 
 export type InjectState = Partial<
