@@ -59,6 +59,29 @@ describe('reconciler', () => {
 
       await act(async () => root.unmount())
       expect(ref.current).toBe(null)
+
+      // Production builds call startViewTransition with fewer arguments than development builds
+      const { ViewTransition } = React as any
+      if (ViewTransition) {
+        const effects: boolean[] = []
+        let setShown: React.Dispatch<React.SetStateAction<boolean>> = null!
+
+        function Shown() {
+          const [shown, setter] = React.useState(false)
+          setShown = setter
+          React.useEffect(() => void effects.push(shown), [shown])
+          return shown
+            ? React.createElement(ViewTransition, null, React.createElement('group', { name: 'shown' }))
+            : null
+        }
+        const transitionRoot = R3F.createRoot(createCanvas())
+        const store = await act(async () => transitionRoot.render(React.createElement(Shown)))
+        await act(async () => React.startTransition(() => setShown(true)))
+
+        expect(store.getState().scene.getObjectByName('shown')).toBeDefined()
+        expect(effects).toStrictEqual([false, true])
+        await act(async () => transitionRoot.unmount())
+      }
     })
   }
 

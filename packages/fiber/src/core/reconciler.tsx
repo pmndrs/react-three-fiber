@@ -768,13 +768,13 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     _passiveCallback: () => void,
     _errorCallback: (_error: unknown) => void,
     _blockedCallback: (_reason: string) => void,
-    finishedAnimation: () => void,
+    finishedAnimation: (() => void) | null,
   ): null {
     mutationCallback()
     layoutCallback()
     // afterMutationCallback only measures for animations and spawned work schedules the passive
-    // effects itself, so both are skipped
-    finishedAnimation()
+    // effects itself, so both are skipped. Production builds pass null for finishedAnimation
+    finishedAnimation?.()
     spawnedWorkCallback()
     return null
   },
@@ -788,11 +788,11 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     mutationCallback: () => void,
     animateCallback: () => void,
     _errorCallback: (_error: unknown) => void,
-    finishedAnimation: () => void,
+    finishedAnimation: (() => void) | null,
   ): null {
     mutationCallback()
     animateCallback()
-    finishedAnimation()
+    finishedAnimation?.()
     return null
   },
   stopViewTransition(_transition: null) {},
