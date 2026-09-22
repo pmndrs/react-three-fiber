@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
+import * as ReactDOMClient from 'react-dom/client'
 import { ReconcilerRoot, createRoot, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
 import { suspend } from 'suspend-react'
 
@@ -907,6 +908,105 @@ describe('renderer', () => {
 
     await act(async () => root.render(<TestComponent />))
     await act(async () => updateSynchronously(1))
+  })
+
+  // Transitions minted by the vendored reconciler must stay shape compatible with react-dom
+  it('should update DOM state from a transition started inside the canvas', async () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+
+    let setCount: React.Dispatch<React.SetStateAction<number>> = null!
+    function DomApp() {
+      const [count, setter] = React.useState(0)
+      setCount = setter
+      return <span>{count}</span>
+    }
+    const domRoot = ReactDOMClient.createRoot(host)
+    await act(async () => domRoot.render(<DomApp />))
+
+    let startFromCanvas: React.TransitionStartFunction = null!
+    function CanvasChild() {
+      const [, startTransition] = React.useTransition()
+      startFromCanvas = startTransition
+      return null
+    }
+    await act(async () => root.render(<CanvasChild />))
+
+    // react-dom only checks the shape while another transition is pending
+    await act(async () => {
+      React.startTransition(() => setCount((value) => value + 1))
+      startFromCanvas(() => setCount((value) => value + 1))
+    })
+    expect(host.textContent).toBe('2')
+
+    await act(async () => domRoot.unmount())
+    host.remove()
+  })
+
+  // ViewTransition commits synchronously since three.js has nothing to animate.
+  // React 19.3 added it, so older React versions skip these tests
+  const { ViewTransition, addTransitionType } = React as any
+  const describeViewTransition = ViewTransition ? describe : describe.skip
+
+  describeViewTransition('ViewTransition', () => {
+    it('should mount a subtree through a transition', async () => {
+      const effects: string[] = []
+      let setShown: React.Dispatch<React.SetStateAction<boolean>> = null!
+
+      function Test() {
+        const [shown, setter] = React.useState(false)
+        setShown = setter
+        React.useLayoutEffect(() => void effects.push(`layout:${shown}`), [shown])
+        React.useEffect(() => void effects.push(`passive:${shown}`), [shown])
+        return shown ? (
+          <ViewTransition enter="fade">
+            <group name="shown" />
+          </ViewTransition>
+        ) : null
+      }
+
+      const store = await act(async () => root.render(<Test />))
+      const { scene } = store.getState()
+
+      await act(async () => React.startTransition(() => setShown(true)))
+      expect(scene.children.map((child) => child.name)).toEqual(['shown'])
+      expect(effects).toEqual(['layout:false', 'passive:false', 'layout:true', 'passive:true'])
+
+      // Regular updates still commit afterwards
+      await act(async () => setShown(false))
+      expect(scene.children).toHaveLength(0)
+    })
+
+    it('should update and unmount a subtree through transitions', async () => {
+      let setStep: React.Dispatch<React.SetStateAction<number>> = null!
+
+      function Test() {
+        const [step, setter] = React.useState(0)
+        setStep = setter
+        if (step > 1) return null
+        return (
+          <ViewTransition name="box" update="slide">
+            <mesh position-x={step} />
+          </ViewTransition>
+        )
+      }
+
+      const store = await act(async () => root.render(<Test />))
+      const { scene } = store.getState()
+      const mesh = scene.children[0] as THREE.Mesh
+
+      await act(async () =>
+        React.startTransition(() => {
+          addTransitionType('slide')
+          setStep(1)
+        }),
+      )
+      expect(scene.children[0]).toBe(mesh)
+      expect(mesh.position.x).toBe(1)
+
+      await act(async () => React.startTransition(() => setStep(2)))
+      expect(scene.children).toHaveLength(0)
+    })
   })
 
   it('should reset removed pierced props on the pierced target', async () => {
