@@ -1,5 +1,32 @@
 # @react-three/fiber
 
+## 9.8.0
+
+### Minor Changes
+
+- 4ae2f816543f21e72b38d3e1328a21fc312428c1: Support React 19.3. Transitions that touch a `<ViewTransition>` subtree inside the canvas now commit synchronously, mirroring react-dom in browsers without view transitions, instead of leaving the reconciler stuck mid-commit.
+- bc240cc56dbb0162737b2df0e99077c889d7cf2e: feat: configure and render roots synchronously; suspend on async renderers.
+
+  `root.configure()` now runs synchronously unless `gl` is an async factory (WebGPU), and the first `root.render()` mounts synchronously once the root is configured; later renders are batched as before. The returned promises carry a `status` field that React's `use` reads, and every root exposes `ready`, which is pending only while an async renderer is being created.
+
+  `<Canvas>` uses this to commit its scene inside its own layout effect, so `onCreated` runs while the wrapper is mounted and the events are connected before the browser paints. With an async renderer the canvas suspends on `root.ready` internally, without showing a parent fallback, and mounts once it resolves. Unmounting meanwhile never renders the scene. A renderer factory that fails now reaches the nearest error boundary instead of an unhandled rejection.
+
+  Configure calls made while another is in flight are applied after it, in order. The `flushSync` caveats apply to that first `root.render()` when it is called from inside another root's commit.
+
+### Patch Changes
+
+- f0f1cdf4336519a988faadae7f8607bc0cd8d7e2: fix: unmount roots deterministically instead of after a 500ms timer.
+
+  `unmountComponentAtNode` deferred disposal by 500ms. A `<StrictMode>` remount lands inside that window and reuses the same root, store, scene and GL context, so the deferred callback destroyed a live root. `forceContextLoss()` is permanent, which left the canvas blank for the rest of the session.
+
+  Unmounting now claims the root and runs the teardown through React once the unmounted tree's effect cleanups have flushed. Using the root again through `configure` or `render` before then cancels it. A root that is unmounted, remounted and unmounted again is torn down exactly once.
+
+- bc240cc56dbb0162737b2df0e99077c889d7cf2e: fix: don't resurrect a `<Canvas>` root that unmounts before its render settles.
+
+  `<Canvas>` configured its root asynchronously. When the canvas was unmounted between that effect and the microtasks it queued, for example by a spring reparenting it through a synchronous state update from a layout effect, the stale continuation still rendered into the torn-down root. Its Provider then mounted again and called `events.connect` with the unmounted wrapper `div`, throwing `Cannot read properties of null (reading 'addEventListener')`, and the resurrected root leaked a live WebGL context.
+
+  The scene now commits inside the canvas' own commit, a deferred render bails once the root is claimed for teardown, and `unmountComponentAtNode` waits for a configure still in flight so the renderer it creates is disposed rather than orphaned.
+
 ## 9.7.0
 
 ### Minor Changes
