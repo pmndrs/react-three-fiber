@@ -4,6 +4,41 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+The `/legacy` entry loads again, and the build gate now catches the class of break that took it
+out: a bundle whose module specifiers all pass but whose named imports do not exist.
+
+### Bug Fixes
+
+- `@react-three/fiber/legacy` no longer links WebGPU-only occlusion symbols. `dist/legacy.mjs`
+  statically imported `MeshBasicNodeMaterial`, `Node` and `NodeUpdateType` from plain `three`,
+  which does not export them, so the entry failed at ESM link time for every consumer ("does not
+  provide an export named 'MeshBasicNodeMaterial'"), and carried a dynamic `import('three/tsl')`
+  besides. The occlusion observer material now lives behind the `#three` barrel in
+  `src/three/occlusion.ts`, exported by the default and webgpu barrels and stubbed on legacy, so
+  core imports one name and never touches `three/webgpu` or `three/tsl` directly
+  ([#3921](https://github.com/pmndrs/react-three-fiber/issues/3921)).
+- The occlusion observer is built on three's own `uniform().onObjectUpdate` hook instead of a
+  hand-patched `Node` subclass, with no `any` casts. Occlusion setup is now synchronous rather than
+  awaiting a dynamic TSL import, and the default entry imports `uniform` from `three/tsl`
+  statically where it previously loaded it at runtime. `onFramed`/`onVisible` frustum behaviour on
+  legacy and occlusion on WebGPU are unchanged.
+
+### Maintenance
+
+- `pnpm verify-bundles` resolves every `import { … } from 'three' | 'three/webgpu' | 'three/tsl'`
+  in the built entries against the installed three package, so a name the module does not export
+  is reported instead of matched as a valid specifier, and rejects any `three/webgpu` or
+  `three/tsl` reference in the legacy bundle, dynamic imports included.
+- New `pnpm smoke-entries` check loads each built entry (`@react-three/fiber`, `/legacy`,
+  `/webgpu`) by bare specifier from a workspace consumer, through `package.json#exports`, under
+  both ESM `import` and CJS `require`, one node process each. It is the only check that runs a
+  built entry at all (vitest aliases `#three` to the default barrel for every entry) and is wired
+  into `pnpm run ci` and both workflows after `verify-bundles`.
+
+---
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the

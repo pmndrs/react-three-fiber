@@ -1,5 +1,23 @@
 # @react-three/fiber
 
+## Unreleased
+
+Full detail is in [`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#unreleased) at the repo root.
+
+### Bug Fixes
+
+- `@react-three/fiber/legacy` loads again: it no longer links WebGPU-only occlusion symbols
+  (`MeshBasicNodeMaterial`, `Node`, `NodeUpdateType`) from plain `three` and carries no
+  `three/tsl` import (#3921).
+- The occlusion observer uses three's `uniform().onObjectUpdate` hook instead of a hand-patched
+  `Node`; setup is synchronous.
+
+### Maintenance
+
+- `verify-bundles` resolves named three imports against the installed package and rejects
+  `three/webgpu`/`three/tsl` in the legacy bundle; new `smoke-entries` loads each built entry
+  through `package.json#exports` (ESM + CJS) and runs in CI.
+
 ## 10.0.0-alpha.5
 
 Full detail is in
