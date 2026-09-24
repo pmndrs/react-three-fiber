@@ -4,6 +4,18 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Bug Fixes
+
+- A renderer R3F created for a Canvas is disposed once the last canvas rendering through it has
+  unmounted, so a `WebGPURenderer` built for `<Canvas renderer />` no longer outlives its root
+  with its GPU device, backend caches and animation loop
+  ([#3926](https://github.com/pmndrs/react-three-fiber/issues/3926)). Ownership follows how the
+  renderer arrived: a props bag or a factory function asks R3F to build one, so R3F owns and
+  disposes it; an existing instance passed to `renderer` or `gl` stays the caller's and is never
+  disposed, whatever the mount order across a primary and its secondaries.
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the

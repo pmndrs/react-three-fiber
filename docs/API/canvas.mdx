@@ -206,7 +206,7 @@ export default () => (
 )
 ```
 
-`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. R3F owns and disposes a renderer it built from a config bag or a callback once the last Canvas using it unmounts; an instance you pass in is yours to dispose. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
 ## Custom Canvas
 
