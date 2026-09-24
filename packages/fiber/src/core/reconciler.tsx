@@ -198,7 +198,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Append instance
   if (child.props.attach) {
     attach(parent, child)
-    warnIfNodeMaterialOnLegacyRenderer(child)
+    warnIfNodeMaterialOnLegacyRenderer(child.root, child.object)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     const childIndex = parent.object.children.indexOf(beforeChild?.object)
     if (beforeChild && childIndex !== -1) {

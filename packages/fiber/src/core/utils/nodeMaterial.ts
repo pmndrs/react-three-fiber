@@ -9,7 +9,7 @@
  * @see https://github.com/pmndrs/react-three-fiber/issues/3889
  */
 import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
-import type { Instance, RootState, RootStore } from '#types'
+import type { RootState, RootStore } from '#types'
 
 // Structural rather than THREE.NodeMaterial: the legacy #three entry does not export it. Kept
 // private so it does not join the public `is*` guards.
@@ -33,15 +33,22 @@ const LEGACY_ENTRY_HINT =
  * Dev-only, and dead code on the WebGPU-only entry, which has no WebGLRenderer to run under.
  * A WebGPURenderer on its WebGL2 backend is fine: it compiles node materials itself.
  *
- * @param instance - The instance that was just attached
+ * Called for both ways a material reaches an object: a child element attached by the reconciler
+ * (`<meshStandardNodeMaterial />`, `<primitive object={m} attach="material" />`) and a `material`
+ * prop (`<mesh material={m} />`, including multi-material arrays).
+ *
+ * @param root - Store of the root the material is being attached under
+ * @param material - The attached object or `material` prop value (may be an array)
  */
-export function warnIfNodeMaterialOnLegacyRenderer(instance: Instance): void {
+export function warnIfNodeMaterialOnLegacyRenderer(root: RootStore, material: unknown): void {
   if (!R3F_BUILD_LEGACY) return
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return
-  if (!isNodeMaterial(instance.object)) return
-
-  const root = instance.root
-  if (checkedRoots.has(root)) return
+  // Bare `process.env.NODE_ENV`, like the bundled react-reconciler: consumer bundlers replace it
+  // statically, which makes this whole body dead code in production. A `typeof process` guard
+  // would survive that replacement and, since `process` is undefined in a browser, keep the
+  // check (and the message) alive in production builds.
+  if (process.env.NODE_ENV === 'production') return
+  if (!root || checkedRoots.has(root)) return
+  if (!(Array.isArray(material) ? material.some(isNodeMaterial) : isNodeMaterial(material))) return
   checkedRoots.add(root)
 
   const state = root.getState()

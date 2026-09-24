@@ -10,6 +10,7 @@ import {
 } from '../visibility'
 import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
+import { warnIfNodeMaterialOnLegacyRenderer } from './nodeMaterial'
 
 //* Property Resolution & Application ==============================
 // Functions for resolving, diffing, attaching, and applying props to instances
@@ -355,6 +356,10 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Else, just overwrite the value
     else {
       root[key] = value
+
+      // `<mesh material={nodeMaterial} />` never goes through the reconciler's attach, so the
+      // legacy-renderer hint (#3889) is checked here as well
+      if (instance && key === 'material') warnIfNodeMaterialOnLegacyRenderer(instance.root, value)
 
       // Trigger shader recompilation when node props change on materials
       if (key.endsWith('Node') && (root as any).isMaterial) {

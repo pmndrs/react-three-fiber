@@ -21,7 +21,7 @@ import type * as THREE from 'three'
 import { Canvas } from '../src'
 import { createStore } from '../src/core/store'
 import { warnIfNodeMaterialOnLegacyRenderer } from '../src/core/utils/nodeMaterial'
-import type { Instance, RootState } from '../types'
+import type { RootState } from '../types'
 
 const noop = () => {}
 
@@ -110,6 +110,71 @@ describe('node material under the legacy WebGLRenderer', () => {
     expect(nodeMaterialWarnings()).toHaveLength(0)
   })
 
+  it('warns for a node material passed as the `material` prop', async () => {
+    const material = makeNodeMaterial()
+    const mesh = React.createRef<THREE.Mesh>()
+
+    await act(async () =>
+      render(
+        <Canvas frameloop="never">
+          <mesh ref={mesh} material={material as unknown as THREE.Material}>
+            <boxGeometry />
+          </mesh>
+        </Canvas>,
+      ),
+    )
+
+    expect(mesh.current!.material).toBe(material)
+    expect(nodeMaterialWarnings()).toHaveLength(1)
+  })
+
+  it('warns for a node material inside a multi-material array prop', async () => {
+    const materials = [{ isMaterial: true, dispose: noop }, makeNodeMaterial()]
+
+    await act(async () =>
+      render(
+        <Canvas frameloop="never">
+          <mesh material={materials as unknown as THREE.Material[]}>
+            <boxGeometry />
+          </mesh>
+        </Canvas>,
+      ),
+    )
+
+    expect(nodeMaterialWarnings()).toHaveLength(1)
+  })
+
+  it('does not warn for an ordinary `material` prop', async () => {
+    await act(async () =>
+      render(
+        <Canvas frameloop="never">
+          <mesh material={{ isMaterial: true, dispose: noop } as unknown as THREE.Material}>
+            <boxGeometry />
+          </mesh>
+        </Canvas>,
+      ),
+    )
+
+    expect(nodeMaterialWarnings()).toHaveLength(0)
+  })
+
+  it('is silent when NODE_ENV is production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    try {
+      await act(async () =>
+        render(
+          <Canvas frameloop="never">
+            <NodeMesh material={makeNodeMaterial()} />
+          </Canvas>,
+        ),
+      )
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect(nodeMaterialWarnings()).toHaveLength(0)
+  })
+
   it('does not warn for ordinary materials', async () => {
     await act(async () =>
       render(
@@ -129,7 +194,7 @@ describe('node material under the legacy WebGLRenderer', () => {
     // Drive the helper against a bare store so the deferred path is covered without a root:
     // the verdict must wait for the store update that publishes the renderer.
     const attachTo = (root: ReturnType<typeof createStore>) =>
-      warnIfNodeMaterialOnLegacyRenderer({ root, object: makeNodeMaterial() } as Instance)
+      warnIfNodeMaterialOnLegacyRenderer(root, makeNodeMaterial())
 
     it('warns once the renderer lands and turns out to be legacy', () => {
       const root = createStore(noop, noop)
