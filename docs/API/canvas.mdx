@@ -27,7 +27,7 @@ const App = () => (
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | children        | three.js JSX elements or regular components                                                                                                       |                                                            |
 | fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                            |
-| gl              | Props that go into the default renderer. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`          | `{}`                                                       |
+| gl              | Renderer props, an instance, or a sync/async factory. See [Renderers](#renderers).                                                                  | `{}`                                                       |
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
 | shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                    |
@@ -99,20 +99,45 @@ function App() {
 > [!NOTE]
 > Ideally, and if possible, your fallback is a seamless, visual replacement for what the canvas would have otherwise rendered.
 
-## WebGPU
+## Renderers
 
-Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
+Canvas creates a `THREE.WebGLRenderer` by default. Use the `gl` prop to configure it or supply your own renderer. These options also apply to [createRoot](#createroot) through `root.configure({ gl })`.
+
+To configure the default renderer, pass an object with renderer constructor options or properties:
+
+```jsx
+<Canvas gl={{ antialias: false }} />
+```
+
+### Custom renderers
+
+Pass a factory function to create a custom renderer. R3F passes it the default constructor options, including the canvas:
+
+```jsx
+<Canvas gl={(defaults) => new WebGLRenderer({ ...defaults, antialias: false })} />
+```
+
+You can also pass an existing renderer instance directly:
+
+```jsx
+<Canvas gl={renderer} />
+```
+
+A factory can return a promise. R3F waits for that promise before rendering the scene. A renderer created with a factory function is owned by R3F and will automatically be disposed while an existing renderer instance is owned by the user and R3F will not control its lifecycle.
+
+### WebGPU
+
+To use `WebGPURenderer`, import it from `three/webgpu` and initialize it in an async `gl` factory:
 
 ```tsx
 import * as THREE from 'three/webgpu'
-import * as TSL from 'three/tsl'
-import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, extend, type ThreeToJSXElements } from '@react-three/fiber'
 
 declare module '@react-three/fiber' {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
-extend(THREE as any)
+extend(THREE)
 
 export default () => (
   <Canvas
@@ -128,6 +153,18 @@ export default () => (
   </Canvas>
 )
 ```
+
+### Ownership
+
+How you supply the renderer determines who is responsible for disposing it:
+
+| `gl` value               | Ownership                                                       |
+| ------------------------ | --------------------------------------------------------------- |
+| Omitted or a props object | R3F owns the renderer it creates and disposes it on unmount.      |
+| A sync or async factory   | R3F owns the returned renderer and disposes it on unmount.        |
+| A renderer instance      | You own the renderer and are responsible for calling `dispose()`. |
+
+Return a renderer dedicated to that root from a factory, including when using `WebGPURenderer`. Passing an instance directly keeps disposal under your control. In v9, unmounting still releases its WebGL context when supported, even though R3F does not call its `dispose()` method.
 
 ## Custom Canvas
 
