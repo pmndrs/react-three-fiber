@@ -18,7 +18,7 @@ import { WebGPURenderer } from 'three/webgpu'
 import { vi } from 'vitest'
 import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 
-import { _roots, advance, createRoot, extend, useFrame, type ReconcilerRoot } from '../src'
+import { _roots, advance, createRoot, extend, getPrimary, useFrame, type ReconcilerRoot } from '../src'
 
 extend(THREE)
 
@@ -339,5 +339,65 @@ describe('renderer disposal on unmount', () => {
     expect(renderer.dispose).toHaveBeenCalledTimes(1)
     expect(_roots.get(canvas)).toBeUndefined()
     expect(getScheduler().getRootIds()).not.toContain(rootId)
+  })
+
+  //* Unmount During Renderer Setup ==============================
+
+  it('releases a renderer whose setup finishes after its root was unmounted', async () => {
+    const { root } = newRoot()
+    const id = `${testPrefix}-slow`
+    let renderer!: MockWebGPURenderer
+    let finishSetup!: () => void
+    // An async factory stands in for a slow WebGPU init (adapter/device request).
+    const gate = new Promise<void>((resolve) => (finishSetup = resolve))
+    const configured = root.configure({
+      id,
+      renderer: async (props: any) => {
+        await gate
+        return (renderer = new MockWebGPURenderer(props))
+      },
+      size,
+      frameloop: 'always',
+    })
+    const rootIdsBefore = getScheduler().getRootIds()
+    const warn = vi.spyOn(console, 'warn')
+
+    // The Canvas goes away while its renderer is still being built; the teardown flushes first.
+    await unmount(root)
+
+    await act(async () => {
+      finishSetup()
+      await configured
+    })
+
+    // Nothing the late setup produced may outlive the root: not the renderer, not a scheduler
+    // root rendering into a dead canvas, not a registry entry secondaries could attach to.
+    expect(renderer.dispose).toHaveBeenCalledTimes(1)
+    expect(getScheduler().getRootIds()).toEqual(rootIdsBefore)
+    expect(getPrimary(id)).toBeUndefined()
+    // A root without a scene yet releases cleanly rather than failing halfway through.
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('Error while unmounting root'), expect.anything())
+  })
+
+  it('lets go of a primary when its secondary was unmounted while still waiting for it', async () => {
+    const mainId = `${testPrefix}-main`
+    const { root: secondaryRoot } = newRoot()
+    // The secondary mounts first and waits for its primary to register.
+    const secondaryConfigured = secondaryRoot.configure({
+      primaryCanvas: mainId,
+      renderer: { primaryCanvas: mainId } as any,
+      size,
+      frameloop: 'never',
+    })
+    await unmount(secondaryRoot)
+
+    const primary = await mountPrimary(mainId)
+    await act(async () => {
+      await secondaryConfigured
+    })
+
+    // The unmounted secondary must not hold the primary's renderer open.
+    await unmount(primary.root)
+    expect(primary.renderer.dispose).toHaveBeenCalledTimes(1)
   })
 })

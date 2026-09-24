@@ -20,7 +20,10 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   again before then cancels the teardown, so a root that is remounted on the same canvas keeps its
   renderer, scene and scheduler registration, and a root that is unmounted, remounted and unmounted
   again is torn down exactly once. Ported from master
-  ([#3869](https://github.com/pmndrs/react-three-fiber/pull/3869)).
+  ([#3869](https://github.com/pmndrs/react-three-fiber/pull/3869)). A root unmounted while its
+  renderer is still being set up (a slow WebGPU init, a secondary waiting for its primary) now
+  releases what that setup produces instead of leaving a live scheduler root and an undisposed
+  renderer behind.
 
 ## 10.0.0-alpha.5
 
