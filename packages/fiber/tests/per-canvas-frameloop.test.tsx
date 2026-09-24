@@ -8,7 +8,7 @@
  *   2. State invalidation and resize wake only the owning demand root.
  *   3. Stateless invalidation and advance retain their global fan-out contract.
  *   4. State-bound and XR advance step only the owning root.
- *   5. Unmount unregisters the scheduler root synchronously.
+ *   5. Unmount unregisters the scheduler root as part of the root's teardown.
  */
 import * as React from 'react'
 import { act } from 'react'
@@ -338,7 +338,7 @@ describe('per-canvas frameloop (#3852)', () => {
     expect(framesB).toHaveLength(0)
   })
 
-  it('unregisters the scheduler root immediately when a Canvas unmounts', async () => {
+  it('unregisters the scheduler root when a Canvas unmounts', async () => {
     const storeA = await act(async () =>
       (
         await rootA.configure({

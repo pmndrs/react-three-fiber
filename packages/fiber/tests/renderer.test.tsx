@@ -1,8 +1,10 @@
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
+import { vi } from 'vitest'
 import {
   ReconcilerRoot,
+  advance,
   createRoot,
   extend,
   ThreeElement,
@@ -1239,6 +1241,79 @@ describe('renderer', () => {
     expect(store.getState().frameloop).toBe('demand')
     // Size should have updated
     expect(store.getState().size.width).toBe(200)
+  })
+
+  //* Unmount ==============================
+  // Ported from master #3869: unmounting claims the root and tears it down through React once the
+  // unmounted tree's effect cleanups have flushed, and using the root again before then cancels it.
+
+  it('should tear down the root on unmount', async () => {
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<group />))
+
+    const dispose = vi.spyOn(state.renderer, 'dispose')
+    await act(async () => root.unmount())
+
+    expect(dispose).toHaveBeenCalledTimes(1)
+    expect(state.get().internal.active).toBe(false)
+  })
+
+  it('should tear down after the tree has cleaned up', async () => {
+    const order: string[] = []
+    let dispose!: ReturnType<typeof vi.spyOn>
+    function Test() {
+      const renderer = useThree((state) => state.renderer)
+      React.useEffect(
+        () => () => void order.push(`cleanup:${dispose.mock.calls.length ? 'disposed' : 'live'}`),
+        [renderer],
+      )
+      return null
+    }
+
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<Test />))
+
+    dispose = vi.spyOn(state.renderer, 'dispose').mockImplementation(() => void order.push('teardown'))
+    await act(async () => root.unmount())
+
+    expect(order).toStrictEqual(['cleanup:live', 'teardown'])
+  })
+
+  it('should keep a root that is rendered again before its teardown', async () => {
+    const frames: number[] = []
+    function Ticker() {
+      useFrame(() => void frames.push(1))
+      return null
+    }
+
+    let state!: RootState
+    await act(async () => root.configure({ frameloop: 'never', onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<group />))
+
+    const dispose = vi.spyOn(state.renderer, 'dispose')
+    await act(async () => {
+      root.unmount()
+      root.render(
+        <>
+          <group />
+          <Ticker />
+        </>,
+      )
+    })
+
+    expect(dispose).not.toHaveBeenCalled()
+    expect(state.get().internal.active).toBe(true)
+    // v10 parents the default camera into the scene, so count the groups
+    expect(state.scene.children.filter((child) => child instanceof THREE.Group)).toHaveLength(1)
+
+    // v10 schedules each root; a re-claimed root must still run its frame jobs.
+    await act(async () => advance(1000, true, state.get()))
+    expect(frames).toHaveLength(1)
+
+    await act(async () => root.unmount())
+    expect(dispose).toHaveBeenCalledTimes(1)
   })
 
   describe('createPortal', () => {

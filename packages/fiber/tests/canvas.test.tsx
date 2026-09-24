@@ -3,9 +3,11 @@ import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import * as THREE from 'three'
+import { WebGPURenderer } from 'three/webgpu'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
 import { Canvas, useEnvironment, useFrame, useLoader, useThree } from '../src'
+import type { DefaultRendererProps, RootState } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -66,6 +68,38 @@ describe('web Canvas', () => {
     )
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  // Ported from master #3869. A StrictMode mount re-runs the Canvas effects against the same
+  // root; that must never dispose the renderer, while a real unmount still tears down exactly once.
+  it('should survive a StrictMode remount', async () => {
+    let dispose!: ReturnType<typeof vi.spyOn>
+    let state!: RootState
+
+    const renderer = await act(async () =>
+      render(
+        <React.StrictMode>
+          <Canvas
+            renderer={(props: DefaultRendererProps) => {
+              const instance = new WebGPURenderer({ ...props, canvas: props.canvas as HTMLCanvasElement })
+              dispose = vi.spyOn(instance, 'dispose')
+              return instance
+            }}
+            onCreated={(created) => (state = created)}>
+            <group />
+          </Canvas>
+        </React.StrictMode>,
+      ),
+    )
+
+    expect(dispose).not.toHaveBeenCalled()
+    expect(state.get().internal.active).toBe(true)
+    // v10 parents the default camera into the scene, so count the groups
+    expect(state.scene.children.filter((child) => child instanceof THREE.Group)).toHaveLength(1)
+
+    await act(async () => renderer.unmount())
+    expect(dispose).toHaveBeenCalledTimes(1)
+    expect(state.get().internal.active).toBe(false)
   })
 
   // Regression for #3757: the `fallback` prop lives inside <canvas>, which browsers never

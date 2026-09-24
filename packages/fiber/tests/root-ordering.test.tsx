@@ -193,10 +193,12 @@ describe('Canvas root ordering (#3877)', () => {
     getScheduler().step(1000)
     expect(renderOrder).toEqual(['secondary'])
 
+    // The unmount has flushed, so the replacement registers the id cleanly rather than
+    // overwriting a registry entry lingering from the old root (#3869).
     const replacement = createTestRoot(() => renderOrder.push('main'))
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     await configureRoot(replacement.root, mainId, replacement.renderer)
-    expect(warn).toHaveBeenCalledWith(`Canvas with id="${mainId}" already registered. Overwriting.`)
+    expect(warn).not.toHaveBeenCalledWith(`Canvas with id="${mainId}" already registered. Overwriting.`)
     renderOrder.length = 0
 
     getScheduler().step(1016)

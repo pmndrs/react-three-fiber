@@ -13,6 +13,11 @@ type FiberRoot = any
 export interface Root {
   fiber: FiberRoot
   store: RootStore
+  /**
+   * Set by `unmountComponentAtNode` while a teardown is pending, and cleared by `configure` and
+   * `render`, which cancels it: a root used again before its unmount has flushed stays live.
+   */
+  unmountClaim: symbol | null
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
