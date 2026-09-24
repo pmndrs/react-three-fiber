@@ -233,6 +233,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           gl = isRenderer(customRenderer)
             ? (customRenderer as THREE.WebGLRenderer)
             : new THREE.WebGLRenderer({ ...defaultProps, ...(glConfig as object) })
+          // R3F owns what it builds, a factory's result included, since it calls the factory
+          // once per root. A renderer instance belongs to the caller
+          state.internal.ownsRenderer = !isRenderer(glConfig)
           state.set({ gl })
         }
 
@@ -501,6 +504,23 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
+/**
+ * Frees a renderer R3F built. WebGLRenderer.dispose() releases programs and caches but keeps its
+ * context until garbage collection, and browsers cap live WebGL contexts, so the context is lost
+ * after it. A WebGPURenderer (from a factory) releases its device and context inside dispose().
+ */
+function disposeRenderer(gl: THREE.WebGLRenderer): void {
+  // three's WebGPURenderer.dispose() starts init when init never ran, and rejects unhandled when
+  // it failed. Either way there is nothing to free yet
+  if ((gl as { hasInitialized?: () => boolean }).hasInitialized?.() === false) return
+  const disposed: unknown = gl.dispose()
+  // WebGPURenderer.dispose() is async from three r186
+  if (isPromiseLike(disposed)) {
+    disposed.then(undefined, (error) => console.warn('[R3F] Error disposing renderer', error))
+  }
+  gl.forceContextLoss?.()
+}
+
 export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
   callback?: (canvas: TCanvas) => void,
@@ -521,20 +541,36 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
       const teardown = () => {
         if (root.unmountClaim !== claim) return
         root.unmountClaim = null
+        // Nothing can render or configure this root from here on
+        _roots.delete(canvas)
 
         const state = root.store.getState()
         state.internal.active = false
-        try {
-          state.events.disconnect?.()
-          state.gl?.renderLists?.dispose?.()
-          state.gl?.forceContextLoss?.()
-          if (state.gl?.xr) state.xr.disconnect()
-          dispose(state.scene)
-        } catch (e) {
-          /* ... */
+
+        // Teardown is best-effort, but one failing step must not skip the rest, least of all the
+        // renderer at the end. Failures are reported rather than swallowed
+        const attempt = (step: () => void) => {
+          try {
+            step()
+          } catch (error) {
+            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
+          }
         }
 
-        _roots.delete(canvas)
+        // Release what uses the renderer before the renderer itself
+        attempt(() => state.events.disconnect?.())
+        if (state.gl?.xr) attempt(() => state.xr.disconnect())
+        if (state.scene) attempt(() => dispose(state.scene))
+
+        const gl = state.gl
+        if (gl && state.internal.ownsRenderer) {
+          attempt(() => disposeRenderer(gl))
+        } else if (gl) {
+          // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
+          attempt(() => gl.renderLists?.dispose?.())
+          attempt(() => gl.forceContextLoss?.())
+        }
+
         if (callback) callback(canvas)
       }
 
