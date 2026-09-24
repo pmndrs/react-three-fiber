@@ -431,6 +431,86 @@ describe('useLocalNodes — StrictMode, unmount/remount', () => {
   })
 })
 
+describe('useLocalNodes — discarded concurrent renders', () => {
+  // The dependency record is a ref written during render, so a render React throws away still
+  // leaves its list behind. These pin that the committed result always matches the committed deps:
+  // a discarded render may cost one extra evaluation, never a stale value.
+  function setup() {
+    const store = makeStore()
+    const runs: string[] = []
+    const built = new Map<unknown, string>()
+    const committed: Array<{ tag: string; node: unknown }> = []
+    const pending = { promise: null as Promise<void> | null, resolve: noop }
+    let setValue: (value: string) => void = noop
+
+    function Suspender({ value }: { value: string }) {
+      if (value === 'b' && pending.promise) React.use(pending.promise)
+      return null
+    }
+
+    function Child({ value }: { value: string }) {
+      const result = useLocalNodes(() => {
+        runs.push(value)
+        const node = float(value.charCodeAt(0))
+        built.set(node, value)
+        return { tag: value, node }
+      }, [value])
+      React.useLayoutEffect(() => void committed.push(result))
+      return null
+    }
+
+    function Parent() {
+      const [value, set] = React.useState('a')
+      setValue = set
+      return (
+        <React.Suspense fallback={null}>
+          <Child value={value} />
+          <Suspender value={value} />
+        </React.Suspense>
+      )
+    }
+
+    pending.promise = new Promise<void>((resolve) => (pending.resolve = resolve))
+    return { store, runs, built, committed, pending, Parent, set: (value: string) => setValue(value) }
+  }
+
+  it('a transition to [b] that suspends and is then superseded by [a] commits the a result', async () => {
+    const { store, runs, built, committed, Parent, set } = setup()
+    withStore(store, <Parent />)
+    await act(async () => {})
+    const first = lastResult(committed)
+    expect(first.tag).toBe('a')
+
+    // Rendered with [b], suspended, and never committed: the ref now holds [b]
+    await act(async () => React.startTransition(() => set('b')))
+    expect(runs).toContain('b')
+    expect(lastResult(committed)).toBe(first)
+
+    // Back to [a] before b ever commits
+    await act(async () => set('a'))
+    const final = lastResult(committed)
+    expect(final.tag).toBe('a')
+    expect(built.get(final.node)).toBe('a')
+  })
+
+  it('a transition to [b] that suspends and later resolves commits the b result', async () => {
+    const { store, built, committed, pending, Parent, set } = setup()
+    withStore(store, <Parent />)
+    await act(async () => {})
+
+    await act(async () => React.startTransition(() => set('b')))
+    expect(lastResult(committed).tag).toBe('a')
+
+    await act(async () => {
+      pending.promise = null
+      pending.resolve()
+    })
+    const final = lastResult(committed)
+    expect(final.tag).toBe('b')
+    expect(built.get(final.node)).toBe('b')
+  })
+})
+
 //* Development diagnostics ==============================
 
 describe('useLocalNodes — dependency list diagnostics', () => {
@@ -534,4 +614,6 @@ function typeAssertions() {
   // A mutable array and no array are both accepted
   useLocalNodes(() => ({ n: float(1) }), [1, 2])
   useLocalNodes(() => ({ n: float(1) }))
+  // An explicit undefined is the no-array call
+  useLocalNodes(() => ({ n: float(1) }), undefined)
 }

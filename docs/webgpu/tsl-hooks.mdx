@@ -349,7 +349,14 @@ useFrame(() => {
 
 #### Stale-closure caveat
 
-An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model. Declare everything the creator reads; the `react-hooks/exhaustive-deps` rule does not check this value-returning API by default.
+An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model. Declare everything the creator reads. The `react-hooks/exhaustive-deps` rule does not check `useLocalNodes` by default, but it does once the hook is listed in `additionalHooks`; the creator's `state` parameter (`uniforms`, `nodes`, ...) is never reported as a dependency:
+
+```js
+// eslint.config.js
+rules: {
+  'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '(useLocalNodes)' }],
+}
+```
 
 #### Behavior change for stable callbacks
 
