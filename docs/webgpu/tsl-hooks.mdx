@@ -268,9 +268,7 @@ function GlobalNodes() {
 }
 
 function WobblyMesh() {
-  const { colorNode } = useLocalNodes(({ nodes }) => ({
-    colorNode: nodes.wobbleFn.mul(0.5).add(0.5),
-  }))
+  const { colorNode } = useLocalNodes(({ nodes }) => ({ colorNode: nodes.wobbleFn.mul(0.5).add(0.5) }), [])
 
   return (
     <mesh>
@@ -283,42 +281,100 @@ function WobblyMesh() {
 
 ## useLocalNodes
 
-Creates component-local TSL nodes that rebuild when the store's `uniforms`, `nodes`, or `textures` change. Unlike `useNodes`, this does **not** register to the global store - the result is local to the component.
+Creates component-local values from the rendering context and the shared TSL resources. Unlike `useNodes`, this does **not** register to the global store - the result is local to the component, and nothing is published during render or commit.
 
 ```tsx
-const localNodes = useLocalNodes(({ uniforms, nodes }) => ({
-  colorNode: nodes.noiseFn.mul(uniforms.intensity),
-  positionNode: positionLocal.add(vec3(0, uniforms.height, 0)),
-}))
+const localNodes = useLocalNodes(
+  ({ uniforms, nodes }) => ({
+    colorNode: nodes.noiseFn.mul(uniforms.intensity),
+    positionNode: positionLocal.add(vec3(0, uniforms.height, 0)),
+  }),
+  [],
+)
 ```
 
-### Creator Type
+### Signature
 
 ```typescript
+function useLocalNodes<T extends Record<string, unknown>>(creator: LocalNodeCreator<T>, deps?: React.DependencyList): T
+
 type LocalNodeCreator<T> = (state: CreatorState) => T
 ```
 
-The creator receives a [`CreatorState`](#scopedstore) - **not** a raw `RootState`. `uniforms`, `nodes`, `buffers`, and `gpuStorage` are wrapped in a ScopedStore (property access returns the leaf node; use `.scope(name)` for nested scopes). All other RootState properties (`size`, `viewport`, `camera`, etc.) pass through unchanged. Returns any object, not limited to TSL nodes.
+The creator receives a [`CreatorState`](#scopedstore) - **not** a raw `RootState`. `uniforms`, `nodes`, `buffers`, and `gpuStorage` are wrapped in a ScopedStore (property access returns the leaf node; use `.scope(name)` for nested scopes). All other RootState properties (`size`, `viewport`, `camera`, etc.) pass through unchanged. Returns any object, not limited to TSL nodes; the exact keys and types of the creator's return are preserved. `deps` accepts a readonly list.
+
+### Dependency Array
+
+The second argument works like `useMemo`'s: it declares the **JavaScript construction inputs** the creator reads while building the graph. Whether the array is present selects the mode; its length is up to you.
+
+| Call                             | Ordinary component renders                                             |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `useLocalNodes(creator)`         | Re-evaluate on every render, even when the creator is a `useCallback`  |
+| `useLocalNodes(creator, [])`     | Reuse the result - the creator has no JavaScript construction inputs   |
+| `useLocalNodes(creator, [a, b])` | Reuse until a declared dependency changes by `Object.is`               |
+
+Whichever form you use, three triggers rebuild independently of `deps` (see [Rebuild Triggers](#rebuild-triggers)), and every rebuild runs the creator **from the current render** - so `[]` means "no JS inputs", not "never rebuild". Creator identity is never a trigger once an array is supplied, which is what makes the inline form cheap:
+
+```tsx
+// Resource-driven composition: everything comes from the shared resources.
+const local = useLocalNodes(({ uniforms }) => ({ result: uniforms.strength.mul(2) }), [])
+
+// `strength` is a JavaScript value captured from this render: declare it.
+const local = useLocalNodes(({ nodes }) => ({ result: nodes.noise.mul(strength) }), [strength])
+```
+
+#### Live TSL values vs JS construction inputs
+
+The array is about what the **graph is built from**, not about what it reads at run-time:
+
+- A `UniformNode`, a `texture()`, `time`, `cameraPosition` - these are **live TSL values**. The graph references the node; updating `uTime.value` in `useFrame` reaches the GPU without a rebuild and must not be a dependency.
+- A prop, a piece of state, a number you multiply by, a string you branch on in JavaScript - these are **construction inputs**. Reading them while building the graph bakes them in, so a change needs a rebuild: declare them.
+
+```tsx
+const { uStrength } = useUniforms({ uStrength: 1 })
+
+const { colorNode } = useLocalNodes(
+  ({ uniforms }) => ({
+    // uniforms.uStrength is live: read on the GPU every frame
+    // `octaves` is baked in by the JavaScript loop: declared below
+    colorNode: fbm(positionWorld, octaves).mul(uniforms.uStrength),
+  }),
+  [octaves],
+)
+
+useFrame(() => {
+  uStrength.value = 5 // value-only change -> no rebuild, no dependency
+})
+```
+
+#### Stale-closure caveat
+
+An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model. Declare everything the creator reads; the `react-hooks/exhaustive-deps` rule does not check this value-returning API by default.
+
+#### Behavior change for stable callbacks
+
+Before this contract existed, `useLocalNodes` memoized against creator identity, so a `useCallback` creator was reused across renders while an inline creator reran every render. Now the **absence of the array** means "re-evaluate every render" regardless of how stable the function is. Callers who passed a `useCallback` creator for that effect should pass `[]` (or their inputs) instead - the `useCallback` is no longer needed.
 
 ### Rebuild Triggers
 
-`useLocalNodes` re-runs its creator when:
+Independently of `deps`, the creator re-runs when:
 
-- A uniform is added or removed (`state.uniforms`)
-- A node is added or removed (`state.nodes`)
-- A texture is added or removed (`state.textures`)
-- The HMR version is bumped (see [TSL HMR](./hmr))
+- A registered resource is replaced - a uniform, node, or texture is added or removed (`state.uniforms`, `state.nodes`, `state.textures`). Until [#3919](https://github.com/pmndrs/react-three-fiber/issues/3919) lands this is the whole map: registering an unrelated uniform anywhere still counts.
+- The owning store changes (multi-canvas `primaryStore` resolution).
+- The HMR version is bumped, by a hot update or a manual `rebuild*` call (see [TSL HMR](./hmr)).
 
 Value changes do **not** trigger a rebuild - TSL nodes reference uniforms, they do not capture values:
 
 ```tsx
 const { uTime } = useUniforms({ uTime: 0 })
-const { colorNode } = useLocalNodes(({ uniforms }) => ({ colorNode: sin(uniforms.uTime) }))
+const { colorNode } = useLocalNodes(({ uniforms }) => ({ colorNode: sin(uniforms.uTime) }), [])
 
 useFrame(() => {
   uTime.value = performance.now() // value-only change -> no rebuild
 })
 ```
+
+Neither this hook nor React guarantees exactly one creator invocation: StrictMode, an initial suspension, or a discarded render can run it again. Keep creators pure apart from node construction.
 
 ### Use For
 
@@ -341,22 +397,25 @@ const { colorNode } = useLocalNodes(({ uniforms, nodes }) => {
     .ElseIf(uniforms.uVariant.equal(1), () => result.assign(nodes.stripesPattern))
     .Else(() => result.assign(nodes.dotsPattern))
   return { colorNode: result }
-})
+}, [])
 
 // Or select() for two-way branching
-const { colorNode } = useLocalNodes(({ uniforms, nodes }) => ({
-  colorNode: select(uniforms.uUseNoise.equal(1), nodes.noisePattern, nodes.stripesPattern),
-}))
+const { colorNode } = useLocalNodes(
+  ({ uniforms, nodes }) => ({
+    colorNode: select(uniforms.uUseNoise.equal(1), nodes.noisePattern, nodes.stripesPattern),
+  }),
+  [],
+)
 ```
 
 ### useNodes vs useLocalNodes
 
-| Feature         | useNodes                  | useLocalNodes                       |
-| --------------- | ------------------------- | ----------------------------------- |
-| Storage         | Global store              | Component-local                     |
-| Sharing         | Shared across components  | Component-specific                  |
-| Best for        | Expensive, reusable nodes | Component compositions              |
-| Rebuild trigger | Never (cached)            | When uniforms/nodes/textures change |
+| Feature         | useNodes                  | useLocalNodes                                      |
+| --------------- | ------------------------- | -------------------------------------------------- |
+| Storage         | Global store              | Component-local                                    |
+| Sharing         | Shared across components  | Component-specific                                 |
+| Best for        | Expensive, reusable nodes | Component compositions                             |
+| Rebuild trigger | Never (cached)            | Declared deps, resource replacement, store, HMR    |
 
 ## ScopedStore
 
@@ -378,13 +437,16 @@ The runtime structure of these stores is `Record<string, Leaf | Record<string, L
 3. Iterate with `has(key)`, `keys()`, `Object.keys()`, spread, and `for...in`.
 
 ```tsx
-useLocalNodes(({ uniforms, nodes }) => ({
-  // Direct leaf access - no cast
-  wobble: sin(uniforms.uTime.mul(2)),
-  // Explicit nested scope access
-  playerHealth: uniforms.scope('player').uHealth,
-  glow: nodes.scope('effects').rimLightFn(),
-}))
+useLocalNodes(
+  ({ uniforms, nodes }) => ({
+    // Direct leaf access - no cast
+    wobble: sin(uniforms.uTime.mul(2)),
+    // Explicit nested scope access
+    playerHealth: uniforms.scope('player').uHealth,
+    glow: nodes.scope('effects').rimLightFn(),
+  }),
+  [],
+)
 ```
 
 The wrappers are created lazily - the underlying Proxy is only built when you actually access `uniforms`, `nodes`, `buffers`, or `gpuStorage`, so creators that don't touch them pay no cost.

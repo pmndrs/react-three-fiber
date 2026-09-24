@@ -65,6 +65,14 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `useThree`, `useFrame`, `context`, the two functions above and the types, imports nothing from
   three, and works under a `<Canvas>` from any entry, so an extension no longer drags a second copy
   of core into apps that use a different entry.
+- `@react-three/tsl`: `useLocalNodes` takes a `useMemo`-style dependency array as its second argument. No array
+  re-evaluates the creator on every component render (including a `useCallback` creator, which
+  previously opted out via identity memoization - pass `[]` instead); `[]` reuses the result across
+  ordinary renders; `[a, b]` rebuilds when a declared JavaScript construction input changes by
+  `Object.is`. Registered-resource replacement, a change of owning store and HMR / `rebuild*`
+  invalidation remain independent triggers in every mode, and always run the current render's
+  creator ([#3918](https://github.com/pmndrs/react-three-fiber/issues/3918), part 1 of
+  [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
 
 ### Changes
 

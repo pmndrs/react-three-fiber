@@ -176,9 +176,12 @@ function ParticleSystem() {
     'compute',
   )
 
-  const { positionNode } = useLocalNodes(({ buffers }) => ({
-    positionNode: buffers.particles.positions.element(instanceIndex),
-  }))
+  const { positionNode } = useLocalNodes(
+    ({ buffers }) => ({
+      positionNode: buffers.particles.positions.element(instanceIndex),
+    }),
+    [],
+  )
 
   return (
     <instancedMesh args={[undefined, undefined, PARTICLE_COUNT]}>
