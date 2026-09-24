@@ -4,6 +4,17 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Features
+
+- React 19.3 is supported; the peer range is now `>=19.0 <19.4`. The vendored reconciler is built
+  from `react-reconciler` 0.34.0, its transition `types` guard is relaxed while vendoring so React
+  19.0–19.2 hosts keep working, and a `<ViewTransition>` subtree inside the canvas now commits
+  synchronously (three has nothing to animate) instead of leaving the reconciler stuck mid-commit
+  ([#3915](https://github.com/pmndrs/react-three-fiber/issues/3915),
+  [#3917](https://github.com/pmndrs/react-three-fiber/pull/3917)).
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the

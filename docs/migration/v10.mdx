@@ -57,13 +57,14 @@ accepted.
 | Peer      | v9        | v10            |
 | --------- | --------- | -------------- |
 | `three`   | `>=0.156` | `>=0.185.0`    |
-| `react`   | `>=19.0`  | `>=19.0 <19.3` |
+| `react`   | `>=19.0`  | `>=19.0 <19.4` |
 
 The three floor moved because v10 uses three's own `RenderPipeline` (renamed from `PostProcessing`
 in r183), `CubeRenderTarget`, and the real `UniformNode` types, rather than shadowing them. **If you
 are on r181–r184 you cannot install v10** — upgrade three alongside R3F.
 
-The React ceiling states the versions we have tested, and moves when a newer one is verified.
+The React ceiling states the versions we have tested (19.0 through 19.3), and moves when a newer one
+is verified.
 
 ### React Native moved to its own package
 
