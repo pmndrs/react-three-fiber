@@ -248,6 +248,19 @@ export interface InternalState {
    * Only set when this canvas has an `id` prop.
    */
   unregisterPrimary?: () => void
+  /**
+   * Whether R3F created this root's renderer, and so disposes it on unmount. True when the
+   * renderer was built from a props bag or a factory; false when the caller passed an instance,
+   * which stays theirs to dispose. Only set on the root that created the renderer; a secondary
+   * reads it through `primaryStore`.
+   */
+  ownsRenderer?: boolean
+  /**
+   * The roots currently rendering through this root's renderer: itself and any mounted
+   * secondaries. Each removes itself on unmount, and the last one out disposes an R3F-owned
+   * renderer. Only set on the root that created the renderer.
+   */
+  rendererConsumers?: Set<RootStore>
   /** Whether canvas dimensions are forced to even numbers */
   forceEven?: boolean
 }

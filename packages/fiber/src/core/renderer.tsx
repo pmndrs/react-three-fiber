@@ -49,14 +49,16 @@ export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 // Helper to resolve renderer config (handles: function | instance | props)
+// `owned` records who disposes the result. A props bag or a factory is a request to build a
+// renderer for this root, so R3F owns it; an instance already existed, so it stays the caller's.
 async function resolveRenderer<T>(
   config: any,
   defaultProps: Record<string, any>,
   RendererClass: new (props: any) => T,
-): Promise<T> {
-  if (typeof config === 'function') return await config(defaultProps)
-  if (isRenderer(config)) return config as T
-  return new RendererClass({ ...defaultProps, ...config })
+): Promise<{ renderer: T; owned: boolean }> {
+  if (typeof config === 'function') return { renderer: await config(defaultProps), owned: true }
+  if (isRenderer(config)) return { renderer: config as T, owned: false }
+  return { renderer: new RendererClass({ ...defaultProps, ...config }), owned: true }
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -265,11 +267,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           rendererSetup = (async () => {
             if (R3F_BUILD_LEGACY && wantsGL) {
               //* WebGL path ---
-              renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+              const resolved = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
+              renderer = resolved.renderer as WebGLRenderer
               state.internal.actualRenderer = renderer
               // Set both gl and renderer to the WebGLRenderer for backwards compatibility
               // Self-reference primaryStore - this canvas is its own primary
-              state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
+              state.set((prev) => ({
+                isLegacy: true,
+                gl: renderer as WebGLRenderer,
+                renderer: renderer,
+                primaryStore: store,
+                internal: { ...prev.internal, ownsRenderer: resolved.owned, rendererConsumers: new Set([store]) },
+              }))
             } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas) {
               //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
               // Wait for primary canvas to be registered (handles async init timing)
@@ -282,7 +291,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Create a CanvasTarget for this secondary canvas
               const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
 
-              // Enable multi-canvas mode on the primary canvas
+              // Enable multi-canvas mode on the primary canvas, and join the set of roots that
+              // hold its renderer open (the primary's teardown consults it before disposing).
+              primary.store.getState().internal.rendererConsumers?.add(store)
               primary.store.setState((prev) => ({
                 internal: { ...prev.internal, isMultiCanvas: true },
               }))
@@ -307,7 +318,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
               // 2. Default build with explicit renderer prop
               // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+              const resolved = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
+              renderer = resolved.renderer as WebGPURenderer
 
               // WebGPU-specific setup - only init if not already initialized
               // Allows users to pass pre-initialized external renderers
@@ -339,7 +351,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               state.internal.actualRenderer = renderer
               // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
               // Self-reference primaryStore - this canvas is its own primary
-              state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+              state.set((prev) => ({
+                webGPUSupported: isWebGPUBackend,
+                renderer: renderer,
+                primaryStore: store,
+                internal: { ...prev.internal, ownsRenderer: resolved.owned, rendererConsumers: new Set([store]) },
+              }))
 
               //* Register as Primary Canvas ==============================
               // If this canvas has an id, register it so other canvases can target it.
@@ -908,6 +925,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
         setTimeout(() => {
+          // A root configured and rendered again inside the grace period (an imperative
+          // createRoot on the same canvas, a StrictMode-style remount) is live again and must
+          // keep its renderer and scene. Provider replaces `internal` when it re-activates the
+          // root, so read it from the store rather than from the state captured above.
+          if (root.store.getState().internal.active) return
           try {
             const renderer = state.internal.actualRenderer
 
@@ -935,6 +957,15 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
               if (renderer?.xr) state.xr.disconnect()
             }
             dispose(state.scene)
+
+            // Release this root's hold on the renderer, and dispose it with the last one out if
+            // R3F built it (#3926). A primary and its secondaries all resolve to the primary's
+            // store, so whichever of them unmounts last does this; a caller-supplied instance is
+            // never disposed, whatever the mount order.
+            const owner = state.primaryStore?.getState().internal
+            owner?.rendererConsumers?.delete(root.store)
+            if (owner?.ownsRenderer && !owner.rendererConsumers?.size) renderer.dispose()
+
             _roots.delete(canvas)
             if (callback) callback(canvas)
           } catch (error) {
