@@ -51,7 +51,7 @@
     "@types/webxr": "*",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
-    "its-fine": "^2.0.0",
+    "its-fine": "^2.1.1",
     "react-use-measure": "^2.1.7",
     "scheduler": "^0.28.0",
     "suspend-react": "^0.1.3",

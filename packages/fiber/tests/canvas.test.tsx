@@ -1,8 +1,11 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three'
-import { Canvas, RootState, RootStore, useStore, useThree } from '../src'
+import { Canvas, RootState, RootStore, useStore, useThree, useFrame } from '../src'
 import * as measure from 'react-use-measure'
+
+// Use the Node renderer in JSDOM; React 19.0 types only declare the public server entry.
+const { renderToString }: typeof import('react-dom/server') = require('react-dom/server.node')
 
 // CI also covers React 19.0, which has neither Activity nor its types.
 const Activity = (
@@ -309,6 +312,128 @@ describe('web Canvas', () => {
       expect(forceContextLoss).toHaveBeenCalledTimes(1)
     })
 
+    it('disconnects scene effects and frame subscriptions while hidden without losing state', async () => {
+      let state!: RootState
+      const effects = new Set<string>()
+      const frame = jest.fn()
+      function Scene() {
+        const [object] = React.useState(() => new THREE.Group())
+        React.useLayoutEffect(() => {
+          effects.add('layout')
+          return () => void effects.delete('layout')
+        }, [])
+        React.useEffect(() => {
+          effects.add('passive')
+          return () => void effects.delete('passive')
+        }, [])
+        useFrame(frame)
+        return <primitive object={object} />
+      }
+      // Hiding must propagate even when Canvas and its children do not rerender.
+      const canvas = (
+        <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+          <Scene />
+        </Canvas>
+      )
+      const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+        <Wrapper>
+          <Activity mode={mode}>{canvas}</Activity>
+        </Wrapper>
+      )
+      const renderer = await act(async () => render(<App mode="visible" />))
+      const object = state.scene.children[0]
+      const dispose = jest.spyOn(state.gl, 'dispose')
+      expect(effects).toEqual(new Set(['layout', 'passive']))
+      state.advance(1)
+      expect(frame).toHaveBeenCalledTimes(1)
+
+      await act(async () => renderer.rerender(<App mode="hidden" />))
+      expect(effects.size).toBe(0)
+      expect(object.visible).toBe(false)
+      state.advance(2)
+      expect(frame).toHaveBeenCalledTimes(1)
+      expect(dispose).not.toHaveBeenCalled()
+
+      await act(async () => renderer.rerender(<App mode="visible" />))
+      expect(effects).toEqual(new Set(['layout', 'passive']))
+      expect(state.scene.children[0]).toBe(object)
+      expect(object.visible).toBe(true)
+      state.advance(3)
+      expect(frame).toHaveBeenCalledTimes(2)
+      expect(dispose).not.toHaveBeenCalled()
+      await act(async () => renderer.unmount())
+      expect(effects.size).toBe(0)
+      expect(dispose).toHaveBeenCalledTimes(1)
+    })
+
+    it('stays hidden while either ancestor Activity is hidden', async () => {
+      let state!: RootState
+      const canvas = (
+        <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+          <group />
+        </Canvas>
+      )
+      const App = ({ outer, inner }: { outer: 'visible' | 'hidden'; inner: 'visible' | 'hidden' }) => (
+        <Wrapper>
+          <Activity mode={outer}>
+            <Activity mode={inner}>{canvas}</Activity>
+          </Activity>
+        </Wrapper>
+      )
+      const renderer = await act(async () => render(<App outer="visible" inner="visible" />))
+      const object = state.scene.children[0]
+      for (const [outer, inner] of [
+        ['visible', 'hidden'],
+        ['hidden', 'hidden'],
+        ['hidden', 'visible'],
+      ] as const) {
+        await act(async () => renderer.rerender(<App outer={outer} inner={inner} />))
+        expect(object.visible).toBe(false)
+      }
+      await act(async () => renderer.rerender(<App outer="visible" inner="visible" />))
+      expect(object.visible).toBe(true)
+      expect(state.scene.children[0]).toBe(object)
+      await act(async () => renderer.unmount())
+    })
+
+    it('waits for an initially hidden Activity and forwards updated context on reveal', async () => {
+      const Value = React.createContext('initial')
+      const created = jest.fn()
+      const observed = jest.fn()
+      function Scene() {
+        const value = React.useContext(Value)
+        React.useLayoutEffect(() => observed(value), [value])
+        return <group name={value} />
+      }
+      const canvas = (
+        <Canvas frameloop="never" onCreated={created}>
+          <Scene />
+        </Canvas>
+      )
+      const App = ({ mode, value }: { mode: 'visible' | 'hidden'; value: string }) => (
+        <Wrapper>
+          <Value.Provider value={value}>
+            <Activity mode={mode}>{canvas}</Activity>
+          </Value.Provider>
+        </Wrapper>
+      )
+      const renderer = await act(async () => render(<App mode="hidden" value="initial" />))
+      expect(created).not.toHaveBeenCalled()
+      expect(observed).not.toHaveBeenCalled()
+      await act(async () => renderer.rerender(<App mode="visible" value="first" />))
+      const state: RootState = created.mock.calls[0][0]
+      const object = state.scene.children[0]
+      expect(observed).toHaveBeenLastCalledWith('first')
+      await act(async () => renderer.rerender(<App mode="hidden" value="updated" />))
+      observed.mockClear()
+      await act(async () => renderer.rerender(<App mode="visible" value="updated" />))
+      expect(observed).toHaveBeenLastCalledWith('updated')
+      expect(state.scene.children[0]).toBe(object)
+      expect(object.name).toBe('updated')
+      expect(created).toHaveBeenCalledTimes(1)
+      await act(async () => renderer.unmount())
+    })
+
     it('disposes the renderer when removed while hidden', async () => {
       let gl!: THREE.WebGLRenderer
       const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
@@ -391,6 +516,39 @@ describe('web Canvas', () => {
 
     await act(async () => renderer.unmount())
     expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps scene effects connected when only the source Suspense boundary is hidden', async () => {
+    const pending = new Promise<void>(() => {})
+    let state!: RootState
+    const cleanup = jest.fn()
+    function Scene() {
+      React.useEffect(() => cleanup, [])
+      return <group />
+    }
+    function Suspend({ suspended }: { suspended: boolean }) {
+      if (suspended) React.use(pending)
+      return null
+    }
+    const App = ({ suspended }: { suspended: boolean }) => (
+      <React.Suspense fallback={<div data-testid="loading" />}>
+        <Suspend suspended={suspended} />
+        <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+          <Scene />
+        </Canvas>
+      </React.Suspense>
+    )
+    const renderer = await act(async () => render(<App suspended={false} />))
+    const object = state.scene.children[0]
+    await act(async () => renderer.rerender(<App suspended />))
+    expect(renderer.queryByTestId('loading')).not.toBeNull()
+    expect(cleanup).not.toHaveBeenCalled()
+    expect(object.visible).toBe(true)
+    await act(async () => renderer.rerender(<App suspended={false} />))
+    expect(state.scene.children[0]).toBe(object)
+    expect(cleanup).not.toHaveBeenCalled()
+    await act(async () => renderer.unmount())
+    expect(cleanup).toHaveBeenCalledTimes(1)
   })
 
   it('releases the renderer when removed while its scene loads', async () => {
@@ -549,17 +707,17 @@ describe('web Canvas', () => {
     })
   })
 
-  it('plays nice with react SSR', async () => {
-    const useLayoutEffect = jest.spyOn(React, 'useLayoutEffect')
-
-    await act(async () =>
-      render(
-        <Canvas>
-          <group />
-        </Canvas>,
-      ),
+  it('renders the canvas on the server without creating a renderer', () => {
+    const gl = jest.fn((props) => new THREE.WebGLRenderer(props))
+    const onCreated = jest.fn()
+    const html = renderToString(
+      <Canvas gl={gl} onCreated={onCreated} fallback={<span>Canvas fallback</span>}>
+        <group />
+      </Canvas>,
     )
-
-    expect(useLayoutEffect).not.toHaveBeenCalled()
+    expect(html).toContain('<canvas')
+    expect(html).toContain('Canvas fallback')
+    expect(gl).not.toHaveBeenCalled()
+    expect(onCreated).not.toHaveBeenCalled()
   })
 })

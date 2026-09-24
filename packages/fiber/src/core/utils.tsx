@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
+import { useFiber, traverseFiber, useContextBridge, useActivityBridge as useFineActivityBridge } from 'its-fine'
 import { Instance } from './reconciler'
 import type { EventHandlers } from './events'
 import type { Dpr, Renderer, RootStore, Size } from './store'
@@ -90,14 +90,18 @@ export function useGate(): [gate: React.ReactNode, waitFor: (promise: PromiseLik
   return [gate, waitFor]
 }
 
+// Activity is optional on React 19.0/19.1. A computed key also supports strict ESM bundlers.
+const useActivityBridge = React[('Activity' + '') as keyof typeof React] ? useFineActivityBridge : () => React.Fragment
+
 export type Bridge = React.FC<{ children?: React.ReactNode }>
 
 /**
- * Bridges renderer Context and StrictMode from a primary renderer.
+ * Bridges Context, StrictMode, and Activity visibility from a primary renderer.
  */
 export function useBridge(): Bridge {
   const fiber = useFiber()
   const ContextBridge = useContextBridge()
+  const ActivityBridge = useActivityBridge()
 
   return React.useMemo(
     () =>
@@ -107,11 +111,13 @@ export function useBridge(): Bridge {
 
         return (
           <Root>
-            <ContextBridge>{children}</ContextBridge>
+            <ActivityBridge>
+              <ContextBridge>{children}</ContextBridge>
+            </ActivityBridge>
           </Root>
         )
       },
-    [fiber, ContextBridge],
+    [fiber, ContextBridge, ActivityBridge],
   )
 }
 
