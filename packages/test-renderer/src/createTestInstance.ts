@@ -18,6 +18,7 @@ const createVirtualInstance = (object: THREE.Object3D, parent: Instance<any>): I
     object,
     eventCount: 0,
     handlers: {},
+    previousVisible: undefined,
     isHidden: false,
   }
 

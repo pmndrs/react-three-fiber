@@ -17,6 +17,14 @@ import { suspend } from 'suspend-react'
 
 extend(THREE as any)
 
+// CI also covers React 19.0, which has neither Activity nor its types.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const testActivity = Activity ? it : it.skip
+
 class Mock extends THREE.Group {
   static instances: string[]
   constructor(name: string = '') {
@@ -1004,13 +1012,13 @@ describe('renderer', () => {
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
   })
 
-  it.each([true, false])('restores a primitive with visible=%s after Activity hide/show', async (visible) => {
+  testActivity.each([true, false])('restores a primitive with visible=%s after Activity hide/show', async (visible) => {
     const object = new THREE.Group()
     object.visible = visible
     const scene = (mode: 'visible' | 'hidden') => (
-      <React.Activity mode={mode}>
+      <Activity mode={mode}>
         <primitive object={object} />
-      </React.Activity>
+      </Activity>
     )
 
     await act(async () => root.render(scene('visible')))
@@ -1021,16 +1029,16 @@ describe('renderer', () => {
     expect(object.visible).toBe(visible)
   })
 
-  it.each([
+  testActivity.each([
     [false, true],
     [true, false],
     [false, undefined],
   ])('applies a visibility change from %s to %s when Activity is shown', async (initial, next) => {
     const object = new THREE.Group()
     const scene = (mode: 'visible' | 'hidden', visible: boolean | undefined) => (
-      <React.Activity mode={mode}>
+      <Activity mode={mode}>
         <primitive object={object} {...(visible === undefined ? {} : { visible })} />
-      </React.Activity>
+      </Activity>
     )
 
     await act(async () => root.render(scene('visible', initial)))
