@@ -17,6 +17,14 @@ import { suspend } from 'suspend-react'
 
 extend(THREE as any)
 
+// CI also covers React 19.0, which has neither Activity nor its types.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const testActivity = Activity ? it : it.skip
+
 class Mock extends THREE.Group {
   static instances: string[]
   constructor(name: string = '') {
@@ -1002,6 +1010,43 @@ describe('renderer', () => {
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
     expect(lastAttached).toBe(lastMounted)
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
+  })
+
+  testActivity.each([true, false])('restores a primitive with visible=%s after Activity hide/show', async (visible) => {
+    const object = new THREE.Group()
+    object.visible = visible
+    const scene = (mode: 'visible' | 'hidden') => (
+      <Activity mode={mode}>
+        <primitive object={object} />
+      </Activity>
+    )
+
+    await act(async () => root.render(scene('visible')))
+    expect(object.visible).toBe(visible)
+    await act(async () => root.render(scene('hidden')))
+    expect(object.visible).toBe(false)
+    await act(async () => root.render(scene('visible')))
+    expect(object.visible).toBe(visible)
+  })
+
+  testActivity.each([
+    [false, true],
+    [true, false],
+    [false, undefined],
+  ])('applies a visibility change from %s to %s when Activity is shown', async (initial, next) => {
+    const object = new THREE.Group()
+    const scene = (mode: 'visible' | 'hidden', visible: boolean | undefined) => (
+      <Activity mode={mode}>
+        <primitive object={object} {...(visible === undefined ? {} : { visible })} />
+      </Activity>
+    )
+
+    await act(async () => root.render(scene('visible', initial)))
+    await act(async () => root.render(scene('hidden', initial)))
+    await act(async () => root.render(scene('hidden', next)))
+    expect(object.visible).toBe(false)
+    await act(async () => root.render(scene('visible', next)))
+    expect(object.visible).toBe(next ?? true)
   })
 
   it('should toggle visibility during Suspense non-destructively', async () => {
