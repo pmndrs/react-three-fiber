@@ -1,7 +1,7 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three'
-import { Canvas, RootState } from '../src'
+import { Canvas, RootState, _roots } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -91,6 +91,34 @@ describe('web Canvas', () => {
     await act(async () => renderer.unmount())
     expect(forceContextLoss).toHaveBeenCalledTimes(1)
     expect(state.get().internal.active).toBe(false)
+  })
+
+  it('keeps its root while an Activity boundary hides it', async () => {
+    let state!: RootState
+    let gl!: THREE.WebGLRenderer
+    const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+      <React.Activity mode={mode}>
+        <Canvas gl={(props) => (gl = new THREE.WebGLRenderer(props))} onCreated={(created) => (state = created)}>
+          <group />
+        </Canvas>
+      </React.Activity>
+    )
+
+    const renderer = await act(async () => render(<App mode="visible" />))
+    const forceContextLoss = jest.spyOn(gl, 'forceContextLoss')
+
+    // Hiding destroys the Canvas' effects but keeps the canvas in the document
+    await act(async () => renderer.rerender(<App mode="hidden" />))
+    await act(async () => renderer.rerender(<App mode="visible" />))
+
+    expect(forceContextLoss).not.toHaveBeenCalled()
+    expect(_roots.has(state.gl.domElement)).toBe(true)
+    expect(state.get().internal.active).toBe(true)
+    expect(state.scene.children).toHaveLength(1)
+
+    await act(async () => renderer.unmount())
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    expect(_roots.has(state.gl.domElement)).toBe(false)
   })
 
   it('tears down a canvas that unmounts as it mounts', async () => {

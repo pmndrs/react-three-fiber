@@ -155,7 +155,16 @@ function CanvasImpl({
 
   React.useEffect(() => {
     const canvas = canvasRef.current
-    if (canvas) return () => unmountComponentAtNode(canvas)
+    if (!canvas) return
+    return () => {
+      // React also destroys effects when an <Activity> hides this tree, and when StrictMode
+      // replays them. The canvas stays in the document then and its root must survive; React
+      // detaches it before running these cleanups on a real unmount
+      if (canvas.isConnected) return
+      unmountComponentAtNode(canvas)
+      // A later setup, if this tree is shown again, builds a new root rather than using this one
+      root.current = null!
+    }
   }, [])
 
   // When the event source is not this div, we need to set pointer-events to none
