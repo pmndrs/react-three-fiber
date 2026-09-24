@@ -78,7 +78,7 @@ export const Fog = () => {
       fogNode,
       backgroundNode,
     }
-  })
+  }, [])
 
   //* Apply to Scene ==============================
   useEffect(() => {
