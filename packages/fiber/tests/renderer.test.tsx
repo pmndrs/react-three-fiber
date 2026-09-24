@@ -1004,6 +1004,43 @@ describe('renderer', () => {
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
   })
 
+  it.each([true, false])('restores a primitive with visible=%s after Activity hide/show', async (visible) => {
+    const object = new THREE.Group()
+    object.visible = visible
+    const scene = (mode: 'visible' | 'hidden') => (
+      <React.Activity mode={mode}>
+        <primitive object={object} />
+      </React.Activity>
+    )
+
+    await act(async () => root.render(scene('visible')))
+    expect(object.visible).toBe(visible)
+    await act(async () => root.render(scene('hidden')))
+    expect(object.visible).toBe(false)
+    await act(async () => root.render(scene('visible')))
+    expect(object.visible).toBe(visible)
+  })
+
+  it.each([
+    [false, true],
+    [true, false],
+    [false, undefined],
+  ])('applies a visibility change from %s to %s when Activity is shown', async (initial, next) => {
+    const object = new THREE.Group()
+    const scene = (mode: 'visible' | 'hidden', visible: boolean | undefined) => (
+      <React.Activity mode={mode}>
+        <primitive object={object} {...(visible === undefined ? {} : { visible })} />
+      </React.Activity>
+    )
+
+    await act(async () => root.render(scene('visible', initial)))
+    await act(async () => root.render(scene('hidden', initial)))
+    await act(async () => root.render(scene('hidden', next)))
+    expect(object.visible).toBe(false)
+    await act(async () => root.render(scene('visible', next)))
+    expect(object.visible).toBe(next ?? true)
+  })
+
   it('should toggle visibility during Suspense non-destructively', async () => {
     const a = Promise.resolve(new THREE.Object3D())
     const b = Promise.resolve(new THREE.Object3D())

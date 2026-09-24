@@ -129,6 +129,7 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
+  previousVisible: boolean | undefined
   isHidden: boolean
 }
 
@@ -208,6 +209,7 @@ function hideInstance(instance: HostConfig['instance']): void {
     if (instance.props.attach && instance.parent?.object) {
       detach(instance.parent, instance)
     } else if (isObject3D(instance.object)) {
+      instance.previousVisible = instance.object.visible
       instance.object.visible = false
     }
 
@@ -220,10 +222,11 @@ function unhideInstance(instance: HostConfig['instance']): void {
   if (instance.isHidden) {
     if (instance.props.attach && instance.parent?.object) {
       attach(instance.parent, instance)
-    } else if (isObject3D(instance.object) && instance.props.visible !== false) {
-      instance.object.visible = true
+    } else if (isObject3D(instance.object)) {
+      instance.object.visible = instance.previousVisible ?? true
     }
 
+    instance.previousVisible = undefined
     instance.isHidden = false
     invalidateInstance(instance)
   }

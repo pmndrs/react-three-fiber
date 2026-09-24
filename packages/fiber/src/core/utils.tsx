@@ -271,6 +271,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       object,
       eventCount: 0,
       handlers: {},
+      previousVisible: undefined,
       isHidden: false,
     }
 
@@ -447,6 +448,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Ignore setting undefined props
     // https://github.com/pmndrs/react-three-fiber/issues/274
     if (value === undefined) continue
+
+    // Update the visibility to restore without revealing a hidden instance.
+    if (prop === 'visible' && instance?.isHidden && instance.previousVisible !== undefined) {
+      instance.previousVisible = value as boolean
+      continue
+    }
 
     let { root, key, target } = resolve(object, prop)
 
