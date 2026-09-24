@@ -120,10 +120,9 @@ export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source
    * methods are left out of the typed surface: they return `this`, so a subclass element's
    * props (`ThreeElements['group']`) could not be spread onto a primitive otherwise.
    */
-  primitive: Omit<ThreeElement<typeof THREE.Object3D>, 'args' | 'object' | 'ref' | 'onUpdate' | Object3DMethod> & {
+  primitive: Omit<ThreeElement<typeof THREE.Object3D>, 'args' | 'object' | 'ref' | Object3DMethod> & {
     object: object
     ref?: React.Ref<any>
-    onUpdate?: (self: any) => void
     [prop: string]: unknown
   }
   // Conflicts with DOM types can be accessed through a three* prefix

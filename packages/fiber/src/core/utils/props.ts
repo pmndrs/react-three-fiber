@@ -10,6 +10,7 @@ import {
 } from '../visibility'
 import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
+import { notifyDepreciated } from './notices'
 
 //* Property Resolution & Application ==============================
 // Functions for resolving, diffing, attaching, and applying props to instances
@@ -26,7 +27,6 @@ export const RESERVED_PROPS = [
   'dispose',
   'attach',
   'object',
-  'onUpdate',
   // Behavior flags
   'dispose',
 ]
@@ -244,6 +244,20 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
+
+    // `onUpdate` was an R3F hook (called after every prop update) until v10 and is now an ordinary
+    // prop, assigned by name like any other. three.js has a real `Texture.onUpdate` (fired after a
+    // GPU upload), so the notice is limited to objects that carry no such property, where the
+    // assignment is inert and the author almost certainly expected the old hook.
+    if (prop === 'onUpdate' && !(prop in object)) {
+      notifyDepreciated({
+        heading: 'onUpdate is no longer an R3F prop',
+        body:
+          'v10 removed the onUpdate hook. The value is assigned to the object like any other prop and is not called on updates.\n\n' +
+          'Use an effect keyed on the props that change, read the object in useFrame, or use a ref callback.',
+        link: 'https://docs.pmnd.rs/react-three-fiber/migration/v10#onupdate-removed',
+      })
+    }
 
     // Deal with pointer events, including removing them if undefined
     if (instance && EVENT_REGEX.test(prop)) {

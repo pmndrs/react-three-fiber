@@ -4,6 +4,18 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Breaking Changes
+
+- The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
+  It hooked into reconciler internals and fired on unrelated updates. Use an effect keyed on the
+  props that change, read the object in `useFrame`, or use a ref callback; see the
+  [migration guide](./docs/migration/v10.mdx#onupdate-removed). `onUpdate` is no longer reserved, so
+  it is assigned to the object by name: `<texture onUpdate={fn} />` now sets three's own
+  `Texture.onUpdate` (fired after a GPU upload). On an object without such a property R3F logs a
+  one-time notice.
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the
