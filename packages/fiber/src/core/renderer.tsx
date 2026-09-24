@@ -25,6 +25,7 @@ import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
 import { fulfilled, tracked } from './promise'
+import { borrowRenderer, leaseRenderer } from './rendererLease'
 
 import type {
   RootState,
@@ -49,15 +50,17 @@ export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
-// Helper to resolve renderer config (handles: function | instance | props)
+// Helper to resolve renderer config (handles: function | instance | props). R3F owns what it
+// builds, a factory's result included, since R3F calls the factory once per root. An instance
+// belongs to the caller.
 async function resolveRenderer<T>(
   config: any,
   defaultProps: Record<string, any>,
   RendererClass: new (props: any) => T,
-): Promise<T> {
-  if (typeof config === 'function') return await config(defaultProps)
-  if (isRenderer(config)) return config as T
-  return new RendererClass({ ...defaultProps, ...config })
+): Promise<{ renderer: T; owned: boolean }> {
+  if (typeof config === 'function') return { renderer: await config(defaultProps), owned: true }
+  if (isRenderer(config)) return { renderer: config as T, owned: false }
+  return { renderer: new RendererClass({ ...defaultProps, ...config }), owned: true }
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -265,14 +268,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // factory multiple times (#3752). The first call owns creation; later overlapping calls
       // await the same promise, then re-read state below and apply their own (latest) size.
       // The promise lives on the root, where teardown waits for it: a renderer still being
-      // created has to be published before the root can be torn down.
+      // created has to be published, and leased, before it can be released.
+      //
+      // Each path leases the renderer in the same synchronous step that publishes it, after its
+      // last await, so no teardown can run between the two.
       if (!state.internal.actualRenderer) {
         if (root.ready.status !== 'pending') {
           const setup = (async () => {
             if (R3F_BUILD_LEGACY && wantsGL) {
               //* WebGL path ---
-              renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+              const resolved = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
+              renderer = resolved.renderer as WebGLRenderer
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
               // Set both gl and renderer to the WebGLRenderer for backwards compatibility
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
@@ -281,9 +289,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Wait for primary canvas to be registered (handles async init timing)
               const primary = await waitForPrimary(primaryCanvas)
 
-              // Use the primary's renderer
+              // Use the primary's renderer. The lease keeps it alive while this canvas draws with
+              // it, even if the primary unmounts first
               renderer = primary.renderer
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = borrowRenderer(renderer)
 
               // Create a CanvasTarget for this secondary canvas
               const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
@@ -313,7 +323,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
               // 2. Default build with explicit renderer prop
               // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+              const resolved = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
+              renderer = resolved.renderer as WebGPURenderer
 
               // WebGPU-specific setup - only init if not already initialized
               // Allows users to pass pre-initialized external renderers
@@ -343,6 +354,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
               // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
@@ -917,7 +929,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     reconciler.updateContainer(null, root.fiber, null, () => {
       if (root.unmountClaim !== claim) return
 
-      // A renderer still being created has to exist before the root can be torn down
+      // A renderer still being created has to exist, and be leased, before it can be released
       if (root.ready.status === 'pending') root.ready.then(teardown, teardown)
       else teardown()
     })
@@ -934,8 +946,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     const internal = state.internal
     internal.active = false
 
-    // Teardown is best-effort, but one failing step must not skip the rest. Failures are reported
-    // rather than swallowed.
+    // Teardown is best-effort, but one failing step must not skip the rest, least of all the
+    // renderer release at the end. Failures are reported rather than swallowed.
     const attempt = (step: () => void) => {
       try {
         step()
@@ -964,12 +976,10 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     const canvasTarget = internal.canvasTarget
     if (internal.isSecondary && canvasTarget?.dispose) attempt(() => canvasTarget.dispose())
 
-    // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
-    const renderer = internal.actualRenderer as THREE.WebGLRenderer | undefined
-    if (state.isLegacy && renderer) {
-      attempt(() => renderer.renderLists?.dispose?.())
-      attempt(() => renderer.forceContextLoss?.())
-    }
+    // Last: releasing the final lease disposes a renderer R3F created. A caller's renderer, or one
+    // a secondary still draws with, is left alone
+    attempt(() => internal.releaseRenderer?.())
+    internal.releaseRenderer = undefined
 
     if (callback) callback(canvas)
   }

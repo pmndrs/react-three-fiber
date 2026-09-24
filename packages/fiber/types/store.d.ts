@@ -196,6 +196,11 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: R3FRenderer
+  /**
+   * Releases this root's lease on its renderer. The last release disposes a renderer R3F created;
+   * a renderer passed in as an instance is never disposed by R3F.
+   */
+  releaseRenderer?: () => void
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
   /** This root's unique ID in the global scheduler */
