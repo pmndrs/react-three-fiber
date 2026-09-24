@@ -138,6 +138,30 @@ describe('renderer disposal on unmount', () => {
     expect(renderer.dispose).toHaveBeenCalledTimes(1)
   })
 
+  it('disposes once when a root is unmounted twice before its teardown runs', async () => {
+    const { root } = newRoot()
+    let renderer!: MockWebGPURenderer
+    await act(async () =>
+      (
+        await root.configure({
+          renderer: (props: any) => (renderer = new MockWebGPURenderer(props)),
+          size,
+          frameloop: 'never',
+        })
+      ).render(null),
+    )
+
+    // Both a Canvas cleanup and an explicit root.unmount() can land on the same root.
+    await act(async () => {
+      root.unmount()
+      root.unmount()
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(UNMOUNT_GRACE_MS)
+    })
+    expect(renderer.dispose).toHaveBeenCalledTimes(1)
+  })
+
   it('leaves a caller-supplied renderer instance alone', async () => {
     const { canvas, root } = newRoot()
     const renderer = new MockWebGPURenderer({ canvas })

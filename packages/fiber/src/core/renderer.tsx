@@ -930,6 +930,10 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
           // keep its renderer and scene. Provider replaces `internal` when it re-activates the
           // root, so read it from the store rather than from the state captured above.
           if (root.store.getState().internal.active) return
+          // Every unmount schedules its own teardown, so a root unmounted twice inside the grace
+          // period (or unmounted, remounted and unmounted again) has two pending. The first one
+          // releases the root; the rest must not dispose the scene or renderer a second time.
+          if (_roots.get(canvas) !== root) return
           try {
             const renderer = state.internal.actualRenderer
 
@@ -963,8 +967,10 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             // store, so whichever of them unmounts last does this; a caller-supplied instance is
             // never disposed, whatever the mount order.
             const owner = state.primaryStore?.getState().internal
-            owner?.rendererConsumers?.delete(root.store)
-            if (owner?.ownsRenderer && !owner.rendererConsumers?.size) renderer.dispose()
+            // Only the call that actually removes this root may dispose: a root releases its
+            // hold once, so the renderer is disposed once.
+            const released = owner?.rendererConsumers?.delete(root.store)
+            if (released && owner?.ownsRenderer && !owner.rendererConsumers?.size) renderer.dispose()
 
             _roots.delete(canvas)
             if (callback) callback(canvas)
