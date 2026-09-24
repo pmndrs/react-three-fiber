@@ -20,6 +20,7 @@ pnpm test:watch       # Watch mode testing
 # Building & Verification
 pnpm build            # Build fiber + eslint-plugin packages
 pnpm verify-bundles   # Verify THREE.js imports are correct per entry point
+pnpm smoke-entries    # Load each built entry through package.json#exports (ESM + CJS)
 pnpm typecheck        # TypeScript type checking
 
 # Code Quality
@@ -29,7 +30,7 @@ pnpm format           # Check Prettier formatting
 pnpm format:fix       # Auto-fix formatting
 
 # Full CI Suite
-pnpm run ci           # build → typecheck → eslint → dev → test → format
+pnpm run ci           # build → verify-bundles → smoke-entries → verify-types → typecheck → eslint → dev → test → format
 
 # Single Test File
 vitest packages/fiber/tests/hooks.test.tsx
@@ -96,7 +97,7 @@ The react-reconciler package is patched during postinstall (via Vite) and bundle
 - **Coverage**: v8 provider
 - **Setup**: `packages/fiber/tests/setupTests.ts` (mocks WebGL2, ResizeObserver, PointerEvent)
 
-Tests run against source files. Bundle verification (`pnpm verify-bundles`) checks built dist files for correct THREE.js imports.
+Tests run against source files, with `#three` aliased to the default barrel for every entry. Bundle verification (`pnpm verify-bundles`) checks built dist files for correct THREE.js imports and that every named import exists; `pnpm smoke-entries` loads each built entry through the package `exports` map, which is the only check that sees a per-entry ESM link error.
 
 ## Code Style
 

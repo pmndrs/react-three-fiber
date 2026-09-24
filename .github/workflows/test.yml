@@ -51,6 +51,11 @@ jobs:
       - name: Verify bundles
         run: pnpm run verify-bundles
 
+      # Loads each entry through package.json#exports under node (ESM + CJS). The only check that
+      # sees an ESM link error in a built entry -- tests alias #three to the default barrel. See #3921.
+      - name: Smoke-test entries
+        run: pnpm run smoke-entries
+
       - name: Verify types
         run: pnpm run verify-types
 

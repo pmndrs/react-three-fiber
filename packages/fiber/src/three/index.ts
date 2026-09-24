@@ -45,6 +45,11 @@ export { CubeRenderTarget as CubeRenderTargetCompat } from 'three/webgpu'
 // RenderTargetCompat alias for single-renderer build code paths (dead code in default build)
 export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
 
+//* Occlusion (WebGPU only) ==============================
+// The observer material behind onOccluded/onVisible. Implemented once in ./occlusion.ts for the
+// entries that ship WebGPURenderer; the legacy barrel stubs it. See #3921.
+export { createOcclusionObserverMaterial } from './occlusion'
+
 //* Addons ==============================
 // Type-only export plus a lazy loader — a static re-export creates an import
 // cycle (Inspector.js -> three/webgpu -> here) that throws under Turbopack.

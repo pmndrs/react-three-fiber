@@ -28,6 +28,15 @@ export async function loadInspector(): Promise<never> {
   throw new Error('Inspector is not available in legacy builds. Use @react-three/fiber/webgpu instead.')
 }
 
+// Occlusion queries need WebGPURenderer.isOccluded(). The observer material that reads it lives in
+// ./occlusion.ts, which imports three/webgpu and three/tsl, so it is wired into the default and
+// webgpu barrels only. Stubbing it here is what keeps this entry linking against plain 'three';
+// core/visibility.ts warns and returns before it could ever call this. See #3921.
+/** Not available on the legacy (WebGL-only) entry. */
+export function createOcclusionObserverMaterial(): never {
+  throw new Error('Occlusion queries are not available in legacy builds. Use @react-three/fiber/webgpu instead.')
+}
+
 // WebGPURenderer stub - throws if someone tries to use it
 export class WebGPURenderer {
   constructor() {

@@ -118,7 +118,7 @@ Time-boxed and exploratory — **do not block any release on it.** If the spike 
 
 The local full gate and the CI workflow **must run the same checks in the same way**, or they drift and "passes locally" stops meaning anything.
 
-- **Local full gate:** `pnpm run ci` → `build → verify-bundles → verify-types → typecheck → eslint → dev → test → format`.
+- **Local full gate:** `pnpm run ci` → `build → verify-bundles → smoke-entries → verify-types → typecheck → eslint → dev → test → format`.
 - **CI workflow:** [`.github/workflows/test.yml`](../../.github/workflows/test.yml) — runs on PRs and `master`, across a React version matrix (19.0.0 + latest).
 
 > **Known gap (tracked in the roadmap below):** CI currently does **not** run `verify-bundles` / `verify-types`, so `pnpm run ci` locally is stricter than CI. The fix is to have CI invoke the same script set (ideally `pnpm run ci` directly, or a shared composite step) so the two cannot diverge.
@@ -195,6 +195,7 @@ Separate from the test suite: these check the **built `dist`**, not source. They
 
 ```bash
 pnpm build && pnpm verify-bundles   # correct three / three/webgpu imports per entry, standalone
+pnpm smoke-entries                  # load each entry through package.json#exports (ESM + CJS)
 pnpm verify-types                   # per-entry type declarations resolve
 pnpm analyze-fiber                  # dry-run @react-three/fiber package contents
 pnpm analyze-test                   # dry-run @react-three/test-renderer package contents
@@ -205,7 +206,11 @@ What `verify-bundles` checks:
 - Default bundle contains both `from 'three'` and `from 'three/webgpu'`.
 - Legacy bundle contains `from 'three'` but **not** `from 'three/webgpu'` or `from 'three/tsl'`.
 - WebGPU bundle contains `from 'three/webgpu'` but **not** plain `from 'three'`.
+- The legacy bundle names neither `three/webgpu` nor `three/tsl` in any form — dynamic `import()` included.
+- Every `import { … } from 'three' | 'three/webgpu' | 'three/tsl'` names an export that module really has, checked against the installed three rather than a pattern. A miss here is an ESM link error for every consumer ([#3921](https://github.com/pmndrs/react-three-fiber/issues/3921)).
 - All bundles are standalone (no shared chunks).
+
+`smoke-entries` goes one step further and **loads** each entry: it imports `@react-three/fiber`, `/legacy` and `/webgpu` by bare specifier from a workspace consumer, so resolution runs through `package.json#exports` exactly as a published install would, under both `import` and `require`, each in its own node process. It is the only check that runs the built entry at all — the test suite aliases `#three` to the default barrel for every entry, so a legacy-only link failure is invisible to it.
 
 These belong in CI as well as locally — see the parity note above.
 
@@ -223,7 +228,9 @@ These belong in CI as well as locally — see the parity note above.
 
 **"Cannot find module" errors?** Ensure `pnpm install` ran; if the error references `dist`, run `pnpm stub`.
 
-**`verify-bundles` fails?** You must `pnpm build` first. If a bundle contains a forbidden import, check `#three` alias resolution in `build.config.ts`.
+**`verify-bundles` fails?** You must `pnpm build` first. If a bundle contains a forbidden import, check `#three` alias resolution in `build.config.ts`. If a _named_ import is reported missing, core reached an entry-specific symbol through `#three`; implement it in the barrels that have it and stub it in the ones that don't (see `packages/fiber/src/three/README.md`).
+
+**`smoke-entries` fails?** Same prerequisite (`pnpm build`); the error is the real node load error for that entry, with the resolved dist file, so start there.
 
 **Package too small in `analyze-*` dry-run?** If it shows ~100–200 KB instead of the expected ~MB, `dist/` is being excluded — ensure the package's `files` field includes `dist`.
 

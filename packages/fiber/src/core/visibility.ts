@@ -1,9 +1,10 @@
 //* Visibility System ==============================
 // Manages visibility events: onFramed, onOccluded, onVisible
-// Includes WebGPU occlusion query support via Node-based observer
+// Includes WebGPU occlusion query support via an observer mesh (see src/three/occlusion.ts)
 // Author: DennisSmolek
 
 import * as THREE from '#three'
+import { R3F_BUILD_WEBGPU, createOcclusionObserverMaterial } from '#three'
 import { updateFrustum } from './utils'
 
 //* Type Imports ==============================
@@ -16,72 +17,21 @@ const tempFrustum = new THREE.Frustum()
 // Track if we've already warned about WebGL occlusion (once per session)
 let hasWarnedWebGL = false
 
-// Cached TSL imports (loaded dynamically for WebGPU only)
-let tslModule: { uniform: any; nodeObject: any } | null = null
-
 /** Reset WebGL warning flag (for testing only) */
 export function __resetWarningFlag() {
   hasWarnedWebGL = false
 }
 
-/** Load TSL module dynamically (WebGPU only) */
-async function loadTSL(): Promise<{ uniform: any; nodeObject: any } | null> {
-  if (tslModule) return tslModule
-  try {
-    const tsl = await import('three/tsl')
-    tslModule = { uniform: tsl.uniform, nodeObject: tsl.nodeObject }
-    return tslModule
-  } catch {
-    // TSL not available (WebGL build)
-    return null
-  }
-}
-
-//* OcclusionObserverNode ==============================
-// TSL Node that runs during render pass to cache isOccluded() results
-// This is necessary because renderer.isOccluded() only works during render
-// when _currentRenderContext is available.
-
-// Factory function to create the OcclusionObserverNode class
-// (needs to be created after TSL is loaded)
-function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node {
-  const node = new THREE.Node('float')
-  node.updateType = THREE.NodeUpdateType.OBJECT
-
-  // Override update method
-  ;(node as any).update = function (frame: any) {
-    const { internal } = store.getState()
-    const registry = internal.visibilityRegistry
-    const cache = internal.occlusionCache
-
-    // During render, check ALL registered objects that need occlusion
-    for (const entry of registry.values()) {
-      const { object, handlers } = entry
-
-      // Only check objects with occlusion-related handlers
-      if (handlers.onOccluded || handlers.onVisible) {
-        const isOccluded = frame.renderer.isOccluded(object)
-        cache.set(object, isOccluded)
-      }
-    }
-  }
-
-  // Override setup method
-  ;(node as any).setup = function () {
-    return uniform(0)
-  }
-
-  return node
-}
-
 //* Occlusion Enable/Disable ==============================
-
-// Track if occlusion setup is in progress (to avoid duplicate async calls)
-let occlusionSetupPromise: Promise<void> | null = null
 
 /**
  * Enable the occlusion query system for this Canvas.
  * Creates an invisible observer mesh that caches isOccluded() results during render.
+ *
+ * Occlusion queries are a WebGPURenderer feature. The observer material comes from the `#three`
+ * barrel, so the legacy entry never links its WebGPU-only imports (src/three/occlusion.ts vs the
+ * stub in src/three/legacy.ts); the build flag lets bundlers drop this call site there as well, and
+ * the runtime check keeps a WebGLRenderer on the default entry from reaching it. See #3921.
  *
  * @param store - The root store
  */
@@ -89,11 +39,10 @@ export function enableOcclusion(store: RootStore): void {
   const state = store.getState()
   const { internal, renderer } = state
 
-  // Already enabled or in progress
-  if (internal.occlusionEnabled || occlusionSetupPromise) return
+  if (internal.occlusionEnabled) return
 
   // Check for WebGPU support
-  const hasOcclusionSupport = typeof (renderer as any)?.isOccluded === 'function'
+  const hasOcclusionSupport = R3F_BUILD_WEBGPU && typeof (renderer as any)?.isOccluded === 'function'
 
   if (!hasOcclusionSupport) {
     // Warn once about WebGL limitation
@@ -107,24 +56,12 @@ export function enableOcclusion(store: RootStore): void {
     return
   }
 
-  // Start async setup
-  occlusionSetupPromise = setupOcclusion(store)
+  setupOcclusion(store)
 }
 
-/** Internal async setup for occlusion system */
-async function setupOcclusion(store: RootStore): Promise<void> {
-  const state = store.getState()
-  const { internal, rootScene, set } = state
-
-  // Load TSL module
-  const tsl = await loadTSL()
-  if (!tsl) {
-    console.warn('[R3F] Warning: TSL module not available. Occlusion queries disabled.')
-    occlusionSetupPromise = null
-    return
-  }
-
-  const { uniform, nodeObject } = tsl
+/** Build the observer mesh and register it on the store */
+function setupOcclusion(store: RootStore): void {
+  const { internal, rootScene, set } = store.getState()
 
   // Create internal helper group if it doesn't exist
   let helperGroup = internal.helperGroup
@@ -136,22 +73,22 @@ async function setupOcclusion(store: RootStore): Promise<void> {
     rootScene.add(helperGroup)
   }
 
-  // Create the observer mesh with NodeMaterial
-  const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const material = new THREE.MeshBasicNodeMaterial({
-    transparent: true,
-    opacity: 0,
+  // The observer runs inside the render pass - the only time renderer.isOccluded() has a render
+  // context to answer from - and caches the result for every registered object that wants it.
+  // checkVisibility() reads that cache before the next frame's render.
+  const material = createOcclusionObserverMaterial((renderer) => {
+    const { visibilityRegistry, occlusionCache } = store.getState().internal
+    for (const { object, handlers } of visibilityRegistry.values()) {
+      if (handlers.onOccluded || handlers.onVisible) {
+        occlusionCache.set(object, renderer.isOccluded(object))
+      }
+    }
   })
 
-  // Create and attach the observer node
-  const observerNode = nodeObject(createOcclusionObserverNode(store, uniform))
-  ;(material as any).colorNode = observerNode
-  material.needsUpdate = true
-
-  const mesh = new THREE.Mesh(geometry, material)
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material)
   mesh.name = '__r3fOcclusionObserver'
   mesh.scale.setScalar(0.0001) // Tiny
-  mesh.frustumCulled = false // Always render so Node.update() runs
+  mesh.frustumCulled = false // Always render so the observer's update runs
   // @ts-ignore
   mesh.__r3fInternal = true
 
@@ -166,8 +103,6 @@ async function setupOcclusion(store: RootStore): Promise<void> {
       occlusionEnabled: true,
     },
   }))
-
-  occlusionSetupPromise = null
 }
 
 /**

@@ -8,6 +8,9 @@
  * - Default: both 'three' and 'three/webgpu'
  * - Legacy: only 'three' (no webgpu)
  * - WebGPU: only 'three/webgpu' (no plain three)
+ *
+ * Specifier checks are one hop short of "does it load": every named import is also resolved against
+ * the real three build it names (see #3921). `pnpm smoke-entries` then loads each entry for real.
  */
 import fs from 'fs'
 import path from 'path'
@@ -239,6 +242,65 @@ for (const file of EMITTED_JS) {
   if (staticInspector) {
     console.log(`   ❌ dist/${file} statically imports ${staticInspector[0]}`)
     console.log(`      This reintroduces the Turbopack REVISION cycle. Use loadInspector() instead.`)
+    crossCuttingPassed = false
+  } else {
+    console.log(`   ✅ dist/${file}`)
+  }
+}
+
+// The per-entry check forbids `from 'three/tsl'` in the legacy bundle, but a dynamic
+// `import('three/tsl')` sailed past it (core used one to defer TSL). A WebGL-only bundle has no
+// business naming a WebGPU-only module in any form -- static, dynamic or require().
+console.log('\n   WebGPU-only modules named by the legacy bundle (must be none -- see #3921):')
+for (const file of ['legacy.mjs', 'legacy.cjs']) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) continue
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const refs = [...new Set(content.match(/['"]three\/(?:webgpu|tsl)['"]/g) || [])]
+  if (refs.length > 0) {
+    console.log(`   ❌ dist/${file} references ${refs.join(', ')}`)
+    console.log(
+      `      Core reached WebGPU-only code through #three. Move it behind the barrel (see src/three/README.md).`,
+    )
+    crossCuttingPassed = false
+  } else {
+    console.log(`   ✅ dist/${file}`)
+  }
+}
+
+// A bundle can pass every specifier check above and still not link. dist/legacy.mjs once imported
+// { MeshBasicNodeMaterial, Node, NodeUpdateType } from 'three' -- a legal specifier, but plain
+// three exports none of them, and ESM rejects the whole module at link time ("does not provide an
+// export named ..."). Matching specifiers cannot see that, so every named import is resolved
+// against the installed three package the bundle will run with. Only the bare entries are loaded;
+// addons under three/examples are left alone (some want a DOM) and are not aliased per entry anyway.
+//
+// CJS output is late-bound (`three.MeshBasicNodeMaterial` is just undefined until called) and is
+// compiled from the same source as its ESM sibling, so the ESM check covers the names it uses.
+console.log('\n   Named imports resolve against the installed three (must all exist -- see #3921):')
+const NAMED_THREE_IMPORT = /import\s*\{([^}]*)\}\s*from\s*['"](three(?:\/webgpu|\/tsl)?)['"]/g
+const threeModules = new Map()
+for (const file of ['index.mjs', 'legacy.mjs', 'webgpu/index.mjs']) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) continue
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const missing = []
+  for (const [, names, specifier] of content.matchAll(NAMED_THREE_IMPORT)) {
+    if (!threeModules.has(specifier)) threeModules.set(specifier, await import(specifier))
+    const mod = threeModules.get(specifier)
+    for (const binding of names.split(',')) {
+      const name = binding.trim().split(/\s+as\s+/)[0]
+      if (name && !(name in mod)) missing.push(`${name} from '${specifier}'`)
+    }
+  }
+
+  if (missing.length > 0) {
+    console.log(`   ❌ dist/${file} imports names its module does not export:`)
+    for (const entry of missing) console.log(`        - ${entry}`)
+    console.log(`      ESM refuses to link this file. On the legacy entry it means core reached a`)
+    console.log(`      WebGPU-only symbol through #three; stub it in src/three/legacy.ts (see #3921).`)
     crossCuttingPassed = false
   } else {
     console.log(`   ✅ dist/${file}`)

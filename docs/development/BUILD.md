@@ -119,7 +119,7 @@ To add a specialized bundle (e.g., a new rendering backend):
 2. **Create THREE Variant** — `src/three/my-variant.ts` (define included THREE.js exports)
 3. **Configure Unbuild** — Add entry to `build.config.ts`
 4. **Update exports** — Add sub-path to `package.json` exports field
-5. **Audit** — Add to `scripts/verify-bundles.js` and `packages/fiber/tests/bundles.test.ts`
+5. **Audit** — Add to `scripts/verify-bundles.js`, `scripts/smoke-entries.js` and `packages/fiber/tests/bundles.test.ts`
 
 ---
 

@@ -41,6 +41,9 @@ jobs:
       - name: Verify bundles
         run: pnpm verify-bundles
 
+      - name: Smoke-test entries
+        run: pnpm smoke-entries
+
       - name: Verify types
         run: pnpm verify-types
 

@@ -16,6 +16,10 @@ export const R3F_BUILD_WEBGPU = true
 //* Core Three.js (WebGPU path) ==============================
 export * from 'three/webgpu'
 
+//* Occlusion ==============================
+// The observer material behind onOccluded/onVisible. Shared with the default barrel. See #3921.
+export { createOcclusionObserverMaterial } from './occlusion'
+
 //* Addons ==============================
 // Inspector is exported as a TYPE ONLY, plus a lazy loader.
 //
