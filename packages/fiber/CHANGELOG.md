@@ -1,5 +1,29 @@
 # @react-three/fiber
 
+## 9.8.1
+
+### Patch Changes
+
+- 2bcc153b52213535e2149d70f6c01d7dcaee58a2: fix: keep a Canvas root alive while `<Activity>` hides it.
+
+  React destroys a hidden `<Activity>` tree's effects but keeps its DOM. The Canvas unmounted its root in that effect cleanup, which lost the WebGL context and disposed the scene. When the tree was shown again, the Canvas still held the unmounted root and stayed blank.
+
+  Canvas now keeps its renderer and scene state while hidden. A Canvas removed while hidden still releases its renderer.
+
+- 138bfb0055a2534103686454c5e1f22bcdbf4537: Canvas and `root.configure()` now apply only the configuration props that changed. Runtime changes made through setters such as `setFrameloop`, or directly to `gl.shadowMap`, last through rerenders and resizes until their prop changes. The pixel ratio still follows `dpr` and the device pixel ratio on every render. Inline option objects compare by value. Changing `flat` or `linear` after creation now updates the renderer, unless `gl` sets `toneMapping` or `outputColorSpace` explicitly.
+
+  Configuration applies in call order, including calls made from a renderer factory or a store subscriber while another configuration is running.
+
+- e0e9c2dbb5b9f1567f43ffe97205d29a4094028a: Update its-fine to 2.1.1 and bridge ancestor Activity visibility into the Canvas scene on React 19.2 and later. Hiding an Activity disconnects scene effects and useFrame subscriptions; revealing it reconnects them without resetting scene state. Keep the existing context and StrictMode bridges, and fall back to their previous behavior on React 19.0 and 19.1.
+- 9ac75626b2191c65698d3bfb27c2e43d6e3c8891: fix: dispose the renderer R3F creates when its root unmounts.
+
+  Teardown only called `forceContextLoss()`, never `dispose()`. A `WebGPURenderer` built in a `gl` factory, which has no `forceContextLoss`, was never released at all: its GPU device and every allocation on it outlived the canvas. A `WebGLRenderer` lost its context while three's listener was still attached, which logged `THREE.WebGLRenderer: Context Lost.` on every unmount.
+
+  A renderer R3F builds, from its defaults, a props object or a factory, is now disposed, and then its context is lost. A renderer passed in as an instance keeps its previous teardown. Each teardown step now runs on its own, so one that throws no longer skips the rest.
+
+- 8965ba4f05eab91c605fe0dfaaa58453c1ede7c9: Preserve an object's visibility across Activity and Suspense hiding. Visibility prop changes made while hidden take effect when the object is shown.
+- 9ac75626b2191c65698d3bfb27c2e43d6e3c8891: Model root teardown with explicit open, closing, disposing, and disposed states. Allow pending unmounts to be cancelled, wait for React cleanups and queued configuration before disposing, and prevent disposed root handles from configuring or unmounting replacement roots. Complete teardown callbacks after asynchronous renderer disposal settles, and release the context even if renderer disposal fails.
+
 ## 9.8.0
 
 ### Minor Changes
