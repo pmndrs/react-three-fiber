@@ -195,7 +195,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return root.ready
     },
     configure(props: RenderProps<TCanvas> = {}): TrackedPromise<ReconcilerRoot<TCanvas>> {
-      if (_roots.get(canvas) !== root || !transitionRoot(root, { type: 'use' })) {
+      if (!transitionRoot(root, { type: 'use' })) {
         return rejected(new Error('R3F: Cannot configure a root after disposal has started.'))
       }
 
@@ -409,7 +409,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
       const run = (customRenderer?: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
         // Already accepted work can finish while closing so its renderer can be released.
-        if (root.state.status !== 'open' && root.state.status !== 'closing') {
+        if (root.state.status === 'disposed') {
           return fail(new Error('R3F: Cannot configure a root after disposal has started.'))
         }
         try {
@@ -443,11 +443,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return setReady(tracked(customRenderer.then(run, fail)))
     },
     render(children: React.ReactNode): RootStore {
-      if (_roots.get(canvas) !== root || !transitionRoot(root, { type: 'use' })) return store
+      if (!transitionRoot(root, { type: 'use' })) return store
 
       const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
       const commit = () => {
-        if (_roots.get(canvas) !== root || root.state.status !== 'open') return
+        if (root.state.status !== 'open') return
         // More configuration may have been queued since render started waiting.
         if (root.ready.status === 'pending') {
           root.ready.then(commit, logRecoverableError)
@@ -546,58 +546,47 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   callback?: (canvas: TCanvas) => void,
 ): void {
   const root = _roots.get(canvas)
-  if (!root) return
-
   const token = Symbol('unmount')
-  if (!transitionRoot(root, { type: 'unmount', token })) return
+  if (!root || !transitionRoot(root, { type: 'unmount', token })) return
 
-  const isClosing = () => _roots.get(canvas) === root && root.state.status === 'closing' && root.state.token === token
+  const teardown = () => {
+    // Configuration accepted before the unmount finishes first, so a renderer it creates is released too
+    if (root.ready.status === 'pending') {
+      root.ready.then(teardown, teardown)
+      return
+    }
+    // Refused when the root was used again since this unmount
+    if (!transitionRoot(root, { type: 'dispose', token })) return
+    // Close the gates before invoking user cleanup code.
+    _roots.delete(canvas)
+
+    const state = root.store.getState()
+    state.internal.active = false
+
+    // Release what uses the renderer before the renderer itself
+    attempt(() => state.events.disconnect?.())
+    if (state.gl?.xr) attempt(() => state.xr.disconnect())
+    if (state.scene) attempt(() => dispose(state.scene))
+
+    const gl = state.gl
+    let disposal: void | Promise<void> = undefined
+    if (gl && state.internal.ownsRenderer) {
+      disposal = attempt(() => disposeRenderer(gl))
+    } else if (gl) {
+      // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
+      attempt(() => gl.renderLists?.dispose?.())
+      attempt(() => gl.forceContextLoss?.())
+    }
+
+    if (isPromiseLike(disposal)) disposal.then(() => callback?.(canvas))
+    else callback?.(canvas)
+  }
 
   reconciler.updateContainer(null, root.fiber, null, () => {
-    if (!isClosing()) return
-
+    // A root used again since the unmount keeps its new children
+    if (root.state.status !== 'closing' || root.state.token !== token) return
     // Effect cleanups flush before the next update
-    reconciler.updateContainer(null, root.fiber, null, () => {
-      if (!isClosing() || !transitionRoot(root, { type: 'effects-flushed', token })) return
-
-      const teardown = () => {
-        if (!isClosing()) return
-        if (root.ready.status === 'pending') {
-          root.ready.then(teardown, teardown)
-          return
-        }
-        if (!transitionRoot(root, { type: 'dispose', token })) return
-        // Close the gates before invoking user cleanup code.
-        _roots.delete(canvas)
-
-        const state = root.store.getState()
-        state.internal.active = false
-
-        // Release what uses the renderer before the renderer itself
-        attempt(() => state.events.disconnect?.())
-        if (state.gl?.xr) attempt(() => state.xr.disconnect())
-        if (state.scene) attempt(() => dispose(state.scene))
-
-        const gl = state.gl
-        let disposal: void | Promise<void> = undefined
-        if (gl && state.internal.ownsRenderer) {
-          disposal = attempt(() => disposeRenderer(gl))
-        } else if (gl) {
-          // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
-          attempt(() => gl.renderLists?.dispose?.())
-          attempt(() => gl.forceContextLoss?.())
-        }
-
-        const finish = () => {
-          transitionRoot(root, { type: 'disposed' })
-          if (callback) callback(canvas)
-        }
-        if (isPromiseLike(disposal)) disposal.then(finish)
-        else finish()
-      }
-
-      teardown()
-    })
+    reconciler.updateContainer(null, root.fiber, null, teardown)
   })
 }
 
