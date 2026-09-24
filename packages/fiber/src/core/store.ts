@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
-import type { Configuration } from './configuration'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
 
@@ -58,8 +57,6 @@ export interface Renderer {
 export const isRenderer = (def: any) => !!def?.render
 
 export interface InternalState {
-  /** The last configuration applied in full, and the camera prop that set the current camera */
-  configuration: { previous?: Configuration; camera?: Configuration['camera'] }
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
@@ -71,8 +68,6 @@ export interface InternalState {
   priority: number
   frames: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
-  /** Whether R3F built `gl` (from defaults, props or a factory) and so disposes it on unmount */
-  ownsRenderer: boolean
 }
 
 export interface XRManager {
@@ -269,7 +264,6 @@ export const createStore = (
       },
       previousRoot: undefined,
       internal: {
-        configuration: {},
         // Events
         interaction: [],
         hovered: new Map<string, ThreeEvent<DomEvent>>(),
@@ -283,7 +277,6 @@ export const createStore = (
         active: false,
         frames: 0,
         priority: 0,
-        ownsRenderer: false,
         subscribe: (ref: React.RefObject<RenderCallback>, priority: number, store: RootStore) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands

@@ -1,12 +1,104 @@
 import * as THREE from 'three'
-import type { DefaultGLProps, GLProps, RenderProps } from './renderer'
+import type { ThreeElement } from '../three-types'
+import type { EventManager } from './events'
 import { advance, invalidate } from './loop'
-import { type Renderer, type RootStore, type Size, isRenderer } from './store'
-import { applyProps, type Camera, is, prepare } from './utils'
+import {
+  type Dpr,
+  type Frameloop,
+  type Performance,
+  type Renderer,
+  type RootState,
+  type RootStore,
+  type Size,
+  isRenderer,
+} from './store'
+import { applyProps, type Camera, is, prepare, type Properties } from './utils'
+
+// Shim for OffscreenCanvas since it was removed from DOM types
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
+interface OffscreenCanvas extends EventTarget {}
+
+export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
+  canvas: HTMLCanvasElement | OffscreenCanvas
+}
+
+export type GLProps =
+  | Renderer
+  | ((defaultProps: DefaultGLProps) => Renderer)
+  | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
+  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+
+export type CameraProps = (
+  | Camera
+  | Partial<
+      ThreeElement<typeof THREE.Camera> &
+        ThreeElement<typeof THREE.PerspectiveCamera> &
+        ThreeElement<typeof THREE.OrthographicCamera>
+    >
+) & {
+  /** Flags the camera as manual, putting projection into your own hands */
+  manual?: boolean
+}
+
+export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
+  /** A threejs renderer instance or props that go into the default renderer */
+  gl?: GLProps
+  /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
+  size?: Size
+  /**
+   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
+   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
+   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
+   */
+  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
+  /**
+   * Disables three r139 color management.
+   * @see https://threejs.org/manual/#en/color-management
+   */
+  legacy?: boolean
+  /** Switch off automatic sRGB encoding and gamma correction */
+  linear?: boolean
+  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
+  flat?: boolean
+  /** Creates an orthographic camera */
+  orthographic?: boolean
+  /**
+   * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
+   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
+   */
+  frameloop?: Frameloop
+  /**
+   * R3F performance options for adaptive performance.
+   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
+   */
+  performance?: Partial<Omit<Performance, 'regress'>>
+  /** Target pixel ratio. Can clamp between a range: `[min, max]` */
+  dpr?: Dpr
+  /** Props that go into the default raycaster */
+  raycaster?: Partial<THREE.Raycaster>
+  /** A `THREE.Scene` instance or props that go into the default scene */
+  scene?: THREE.Scene | Partial<THREE.Scene>
+  /** A `THREE.Camera` instance or props that go into the default camera */
+  camera?: CameraProps
+  /** An R3F event manager to manage elements' pointer events */
+  events?: (store: RootStore) => EventManager<HTMLElement>
+  /** Callback after the canvas has rendered (but not yet committed) */
+  onCreated?: (state: RootState) => void
+  /** Response for pointer clicks that have missed any target */
+  onPointerMissed?: (event: MouseEvent) => void
+}
 
 type Canvas = DefaultGLProps['canvas']
 
 export type Configuration = RenderProps<Canvas>
+
+/** What a root has applied, so its next configuration applies only what changed */
+export interface AppliedConfiguration {
+  /** The last configuration applied in full */
+  previous?: Configuration
+  /** The camera prop that set the current camera */
+  camera?: Configuration['camera']
+}
 
 const shallow = { objects: 'shallow' } as const
 
@@ -40,11 +132,15 @@ function computeInitialSize(canvas: Canvas, size?: Size): Size {
 }
 
 /**
- * Applies the inputs that changed since the last configuration applied in full. A runtime change,
- * such as setDpr or an edit to gl.shadowMap, lasts until its input changes. Objects and arrays
- * compare shallowly, so an equal inline value is unchanged.
+ * Applies the inputs that changed since the last configuration applied in full, to a root whose
+ * renderer is installed. A runtime change, such as setDpr or an edit to gl.shadowMap, lasts until
+ * its input changes. Objects and arrays compare shallowly, so an equal inline value is unchanged.
  */
-export function applyRootConfiguration(store: RootStore, canvas: Canvas, props: Configuration, renderer: Renderer) {
+export function applyRootConfiguration(
+  { store, configuration }: { store: RootStore; configuration: AppliedConfiguration },
+  canvas: Canvas,
+  props: Configuration,
+) {
   const {
     gl: glConfig,
     scene: sceneOptions,
@@ -62,20 +158,11 @@ export function applyRootConfiguration(store: RootStore, canvas: Canvas, props: 
   const next: Configuration = { ...props, shadows, linear, flat, legacy, frameloop, dpr, size }
 
   const state = store.getState()
-  const configuration = state.internal.configuration
+  const gl = state.gl
   const last = configuration.previous
   const changed = (key: keyof Configuration) => !last || !is.equ(next[key], last[key], shallow)
   // A failure can leave inputs partly applied, so the next configuration applies all of them
   configuration.previous = undefined
-
-  // Set up renderer (one time only!)
-  const gl = renderer as THREE.WebGLRenderer
-  if (!state.gl) {
-    // R3F owns what it builds, a factory's result included, since it calls the factory
-    // once per root. A renderer instance belongs to the caller
-    state.internal.ownsRenderer = !isRenderer(glConfig)
-    state.set({ gl })
-  }
 
   // Set up raycaster (one time only!)
   let raycaster = state.raycaster

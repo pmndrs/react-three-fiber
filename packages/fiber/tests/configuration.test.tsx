@@ -1,7 +1,7 @@
 import { act } from 'react'
 import * as THREE from 'three'
 import { createRoot, type ReconcilerRoot, type RenderProps } from '../src'
-import { _roots } from '../src/core/renderer'
+import { _roots } from '../src/core/root'
 
 let canvas: HTMLCanvasElement
 let root: ReconcilerRoot<HTMLCanvasElement>

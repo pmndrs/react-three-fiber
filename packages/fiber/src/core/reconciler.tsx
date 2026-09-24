@@ -17,8 +17,6 @@ import {
   unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
   unstable_scheduleCallback as scheduleCallback,
 } from 'scheduler'
-import type { TrackedPromise } from './promise'
-import type { RootStateMachine } from './machine'
 import {
   diffProps,
   applyProps,
@@ -79,13 +77,6 @@ function createReconciler<
 }
 
 const NoEventPriority = 0
-
-export interface Root {
-  fiber: Reconciler.FiberRoot
-  store: RootStore
-  state: RootStateMachine
-  ready: TrackedPromise<unknown>
-}
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
 export type AttachType<O = any> = string | AttachFnType<O>
@@ -851,3 +842,14 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   // https://github.com/facebook/react/pull/34522
   getSuspendedCommitReason: (_state: any, _rootContainer: any) => null,
 })
+
+/**
+ * Force React to flush any updates inside the provided callback synchronously and immediately.
+ * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
+ * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
+ * having to revert to a non-React solution. Note: this will only flush updates within the `Canvas` root.
+ */
+export function flushSync<R>(fn: () => R): R {
+  // @ts-ignore - reconciler types are not maintained
+  return reconciler.flushSyncFromReconciler(fn)
+}

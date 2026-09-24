@@ -1,101 +1,59 @@
 import * as React from 'react'
-import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import * as THREE from 'three'
-import { createWithEqualityFn } from 'zustand/traditional'
-
-import type { ThreeElement } from '../three-types'
-import { ComputeFunction, EventManager } from './events'
-import { useStore } from './hooks'
+import type Reconciler from '../../react-reconciler/index.js'
+import { ConcurrentRoot } from '../../react-reconciler/constants.js'
+import { type AppliedConfiguration, type RenderProps, applyRootConfiguration, createRenderer } from './configuration'
 import { advance, invalidate } from './loop'
-import { reconciler, Root } from './reconciler'
-import { context, createStore, Dpr, Frameloop, Performance, Renderer, RootState, RootStore, Size } from './store'
-import {
-  type Properties,
-  Camera,
-  dispose,
-  noop,
-  updateCamera,
-  useIsomorphicLayoutEffect,
-  useMutableCallback,
-} from './utils'
-import { deferred, fulfilled, isPromiseLike, rejected, TrackedPromise } from './promise'
-import { transitionRoot } from './machine'
-import { applyRootConfiguration, createRenderer } from './configuration'
+import { deferred, fulfilled, isPromiseLike, rejected, type TrackedPromise } from './promise'
+import { reconciler } from './reconciler'
+import { context, createStore, isRenderer, type Renderer, type RootState, type RootStore } from './store'
+import { dispose, noop, useIsomorphicLayoutEffect } from './utils'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
 interface OffscreenCanvas extends EventTarget {}
 
+export interface Root {
+  fiber: Reconciler.FiberRoot
+  store: RootStore
+  state: RootStateMachine
+  /** Settles once all accepted configuration has been applied */
+  ready: TrackedPromise<unknown>
+  configuration: AppliedConfiguration
+  /** Whether R3F built `gl` (from defaults, props or a factory) and so disposes it on unmount */
+  ownsRenderer: boolean
+}
+
 export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
-export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
-  canvas: HTMLCanvasElement | OffscreenCanvas
-}
+export type RootStateMachine = { status: 'open' } | { status: 'closing'; token: symbol } | { status: 'disposed' }
 
-export type GLProps =
-  | Renderer
-  | ((defaultProps: DefaultGLProps) => Renderer)
-  | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+type RootEvent = { type: 'use' } | { type: 'unmount'; token: symbol } | { type: 'dispose'; token: symbol }
 
-export type CameraProps = (
-  | Camera
-  | Partial<
-      ThreeElement<typeof THREE.Camera> &
-        ThreeElement<typeof THREE.PerspectiveCamera> &
-        ThreeElement<typeof THREE.OrthographicCamera>
-    >
-) & {
-  /** Flags the camera as manual, putting projection into your own hands */
-  manual?: boolean
-}
-
-export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  /** A threejs renderer instance or props that go into the default renderer */
-  gl?: GLProps
-  /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
-  size?: Size
-  /**
-   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
-   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
-   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
-   */
-  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
-  /**
-   * Disables three r139 color management.
-   * @see https://threejs.org/manual/#en/color-management
-   */
-  legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
-  linear?: boolean
-  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
-  flat?: boolean
-  /** Creates an orthographic camera */
-  orthographic?: boolean
-  /**
-   * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
-   */
-  frameloop?: Frameloop
-  /**
-   * R3F performance options for adaptive performance.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
-   */
-  performance?: Partial<Omit<Performance, 'regress'>>
-  /** Target pixel ratio. Can clamp between a range: `[min, max]` */
-  dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
-  /** A `THREE.Scene` instance or props that go into the default scene */
-  scene?: THREE.Scene | Partial<THREE.Scene>
-  /** A `THREE.Camera` instance or props that go into the default camera */
-  camera?: CameraProps
-  /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
-  /** Callback after the canvas has rendered (but not yet committed) */
-  onCreated?: (state: RootState) => void
-  /** Response for pointer clicks that have missed any target */
-  onPointerMissed?: (event: MouseEvent) => void
+/**
+ * open -> closing -> disposed
+ *          | use
+ *          v
+ *         open
+ *
+ * Only closing can be cancelled. Each unmount carries a token, so only the latest one can dispose.
+ */
+function transitionRoot(root: Root, event: RootEvent): boolean {
+  const state = root.state
+  switch (event.type) {
+    case 'use':
+      if (state.status === 'disposed') return false
+      root.state = { status: 'open' }
+      return true
+    case 'unmount':
+      if (state.status === 'disposed') return false
+      root.state = { status: 'closing', token: event.token }
+      return true
+    case 'dispose':
+      if (state.status !== 'closing' || state.token !== event.token) return false
+      root.state = { status: 'disposed' }
+      return true
+  }
 }
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
@@ -143,7 +101,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  const root: Root = prevRoot || { fiber, store, state: { status: 'open' }, ready: fulfilled(undefined) }
+  const root: Root = prevRoot || {
+    fiber,
+    store,
+    state: { status: 'open' },
+    ready: fulfilled(undefined),
+    configuration: {},
+    ownsRenderer: false,
+  }
   if (!prevRoot) _roots.set(canvas, root)
 
   let mounted = false
@@ -163,7 +128,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       root.ready = promise
 
       const apply = (gl: Renderer) => {
-        applyRootConfiguration(store, canvas, props, gl)
+        const state = store.getState()
+        // Set up renderer (one time only!)
+        if (!state.gl) {
+          // R3F owns what it builds, a factory's result included, since it calls the factory
+          // once per root. A renderer instance belongs to the caller
+          root.ownsRenderer = !isRenderer(props.gl)
+          state.set({ gl: gl as THREE.WebGLRenderer })
+        }
+        applyRootConfiguration(root, canvas, props)
         resolve(this)
       }
       const run = () => {
@@ -195,7 +168,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           root.ready.then(commit, logRecoverableError)
           return
         }
-        const onCreated = store.getState().internal.configuration.previous?.onCreated
+        const onCreated = root.configuration.previous?.onCreated
         const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
         if (mounted) {
           reconciler.updateContainer(element, fiber, null, noop)
@@ -301,7 +274,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
 
     const gl = state.gl
     let disposal: void | Promise<void> = undefined
-    if (gl && state.internal.ownsRenderer) {
+    if (gl && root.ownsRenderer) {
       disposal = attempt(() => disposeRenderer(gl))
     } else if (gl) {
       // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
@@ -319,107 +292,4 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     // Effect cleanups flush before the next update
     reconciler.updateContainer(null, root.fiber, null, teardown)
   })
-}
-
-export type InjectState = Partial<
-  Omit<RootState, 'events'> & {
-    events?: {
-      enabled?: boolean
-      priority?: number
-      compute?: ComputeFunction
-      connected?: any
-    }
-  }
->
-
-export function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  state?: InjectState,
-): React.JSX.Element {
-  return <Portal children={children} container={container} state={state} />
-}
-
-interface PortalProps {
-  children: React.ReactNode
-  state?: InjectState
-  container: THREE.Object3D
-}
-
-function Portal({ state = {}, children, container }: PortalProps): React.JSX.Element {
-  /** This has to be a component because it would not be able to call useThree/useStore otherwise since
-   *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
-   *  the "R3F hooks can only be used within the Canvas component!" warning:
-   *  <Canvas>
-   *    {createPortal(...)} */
-  const { events, size, ...rest } = state
-  const previousRoot = useStore()
-  const [raycaster] = React.useState(() => new THREE.Raycaster())
-  const [pointer] = React.useState(() => new THREE.Vector2())
-
-  const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
-    let viewport = undefined
-    if (injectState.camera && size) {
-      const camera = injectState.camera
-      // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
-      // Update the portal camera, if it differs from the previous layer
-      if (camera !== rootState.camera) updateCamera(camera, size)
-    }
-
-    return {
-      // The intersect consists of the previous root state
-      ...rootState,
-      ...injectState,
-      // Portals have their own scene, which forms the root, a raycaster and a pointer
-      scene: container as THREE.Scene,
-      raycaster,
-      pointer,
-      mouse: pointer,
-      // Their previous root is the layer before it
-      previousRoot,
-      // Events, size and viewport can be overridden by the inject layer
-      events: { ...rootState.events, ...injectState.events, ...events },
-      size: { ...rootState.size, ...size },
-      viewport: { ...rootState.viewport, ...viewport },
-      // Layers are allowed to override events
-      setEvents: (events: Partial<EventManager<any>>) =>
-        injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
-    } as RootState
-  })
-
-  const usePortalStore = React.useMemo(() => {
-    // Create a mirrored store, based on the previous root with a few overrides ...
-    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
-
-    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
-    const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
-    onMutate(previousRoot.getState())
-    previousRoot.subscribe(onMutate)
-
-    return store
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previousRoot, container])
-
-  return (
-    // @ts-ignore, reconciler types are not maintained
-    <>
-      {reconciler.createPortal(
-        <context.Provider value={usePortalStore}>{children}</context.Provider>,
-        usePortalStore,
-        null,
-      )}
-    </>
-  )
-}
-
-/**
- * Force React to flush any updates inside the provided callback synchronously and immediately.
- * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
- * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
- * having to revert to a non-React solution. Note: this will only flush updates within the `Canvas` root.
- */
-export function flushSync<R>(fn: () => R): R {
-  // @ts-ignore - reconciler types are not maintained
-  return reconciler.flushSyncFromReconciler(fn)
 }

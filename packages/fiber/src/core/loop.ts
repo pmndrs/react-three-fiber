@@ -1,4 +1,4 @@
-import { _roots } from './renderer'
+import { _roots } from './root'
 import type { RootState, Subscription } from './store'
 
 export type GlobalRenderCallback = (timestamp: number) => void
