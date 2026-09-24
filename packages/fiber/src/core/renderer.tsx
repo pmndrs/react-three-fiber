@@ -35,6 +35,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { fulfilled, isPromiseLike, rejected, tracked, TrackedPromise } from './promise'
+import { transitionRoot } from './machine'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -180,7 +181,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  const root: Root = prevRoot || { fiber, store, unmountClaim: null, ready: fulfilled(undefined) }
+  const root: Root = prevRoot || { fiber, store, state: { status: 'open' }, ready: fulfilled(undefined) }
   if (!prevRoot) _roots.set(canvas, root)
 
   // Locals
@@ -194,7 +195,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return root.ready
     },
     configure(props: RenderProps<TCanvas> = {}): TrackedPromise<ReconcilerRoot<TCanvas>> {
-      root.unmountClaim = null
+      if (_roots.get(canvas) !== root || !transitionRoot(root, { type: 'use' })) {
+        return rejected(new Error('R3F: Cannot configure a root after disposal has started.'))
+      }
 
       const {
         gl: glConfig,
@@ -402,48 +405,55 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       const fail = (error: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
-        const failure = rejected<ReconcilerRoot<TCanvas>>(error)
-        root.ready = failure
-        return failure
+        return rejected<ReconcilerRoot<TCanvas>>(error)
       }
       const run = (customRenderer?: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
+        // Already accepted work can finish while closing so its renderer can be released.
+        if (root.state.status !== 'open' && root.state.status !== 'closing') {
+          return fail(new Error('R3F: Cannot configure a root after disposal has started.'))
+        }
         try {
           apply(customRenderer)
-          root.ready = fulfilled(undefined)
           return fulfilled(this)
         } catch (error) {
           return fail(error)
         }
       }
+      const setReady = (work: TrackedPromise<ReconcilerRoot<TCanvas>>) => {
+        // Readiness covers all queued configuration, not just renderer acquisition.
+        root.ready = work
+        return work
+      }
 
       // The renderer exists, so applying props is synchronous
-      if (store.getState().gl) return run()
+      if (store.getState().gl && root.ready.status !== 'pending') return setReady(run())
 
       // Another configure is creating it. Chaining keeps them in call order
-      if (root.ready.status === 'pending') return tracked(root.ready.then(() => run()))
+      if (root.ready.status === 'pending') return setReady(tracked(root.ready.then(() => run())))
 
       // Only an async factory makes configure asynchronous
       let customRenderer: unknown
       try {
         customRenderer = typeof glConfig === 'function' ? glConfig(defaultProps) : glConfig
       } catch (error) {
-        return fail(error)
+        return setReady(fail(error))
       }
-      if (!isPromiseLike(customRenderer)) return run(customRenderer)
+      if (!isPromiseLike(customRenderer)) return setReady(run(customRenderer))
 
-      const configuring = tracked(customRenderer.then(run, fail))
-      root.ready = configuring
-      return configuring
+      return setReady(tracked(customRenderer.then(run, fail)))
     },
     render(children: React.ReactNode): RootStore {
-      if (_roots.get(canvas) !== root) return store
-      // Using the root cancels a teardown waiting on React
-      root.unmountClaim = null
+      if (_roots.get(canvas) !== root || !transitionRoot(root, { type: 'use' })) return store
 
       const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
       const commit = () => {
-        // The root may have been unmounted or claimed while we waited
-        if (_roots.get(canvas) !== root || root.unmountClaim) return
+        if (_roots.get(canvas) !== root || root.state.status !== 'open') return
+        // More configuration may have been queued since render started waiting.
+        if (root.ready.status === 'pending') {
+          root.ready.then(commit, logRecoverableError)
+          return
+        }
+        if (root.ready.status === 'rejected') return
         if (mounted) {
           reconciler.updateContainer(element, fiber, null, noop)
           return
@@ -472,7 +482,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return store
     },
     unmount(): void {
-      unmountComponentAtNode(canvas)
+      if (_roots.get(canvas) === root) unmountComponentAtNode(canvas)
     },
   }
 }
@@ -509,16 +519,26 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
  * context until garbage collection, and browsers cap live WebGL contexts, so the context is lost
  * after it. A WebGPURenderer (from a factory) releases its device and context inside dispose().
  */
-function disposeRenderer(gl: THREE.WebGLRenderer): void {
-  // three's WebGPURenderer.dispose() starts init when init never ran, and rejects unhandled when
-  // it failed. Either way there is nothing to free yet
+function disposeRenderer(gl: THREE.WebGLRenderer): void | Promise<void> {
+  // Avoid starting initialization through three's dispose(). A factory must await init()
+  // before returning its renderer so readiness includes initialization and teardown can wait.
   if ((gl as { hasInitialized?: () => boolean }).hasInitialized?.() === false) return
-  const disposed: unknown = gl.dispose()
+  const disposed: unknown = attempt(() => (gl.dispose ? gl.dispose() : gl.renderLists?.dispose?.()))
   // WebGPURenderer.dispose() is async from three r186
   if (isPromiseLike(disposed)) {
-    disposed.then(undefined, (error) => console.warn('[R3F] Error disposing renderer', error))
+    return Promise.resolve(disposed)
+      .catch((error) => console.warn('[R3F] Error disposing renderer', error))
+      .then(() => attempt(() => gl.forceContextLoss?.()))
   }
-  gl.forceContextLoss?.()
+  attempt(() => gl.forceContextLoss?.())
+}
+
+function attempt<T>(step: () => T): T | undefined {
+  try {
+    return step()
+  } catch (error) {
+    console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
+  }
 }
 
 export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
@@ -528,34 +548,30 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   const root = _roots.get(canvas)
   if (!root) return
 
-  // Cleared by configure and render, which cancels the teardown
-  const claim = (root.unmountClaim = Symbol('unmount'))
+  const token = Symbol('unmount')
+  if (!transitionRoot(root, { type: 'unmount', token })) return
+
+  const isClosing = () => _roots.get(canvas) === root && root.state.status === 'closing' && root.state.token === token
 
   reconciler.updateContainer(null, root.fiber, null, () => {
-    if (root.unmountClaim !== claim) return
+    if (!isClosing()) return
 
     // Effect cleanups flush before the next update
     reconciler.updateContainer(null, root.fiber, null, () => {
-      if (root.unmountClaim !== claim) return
+      if (!isClosing() || !transitionRoot(root, { type: 'effects-flushed', token })) return
 
       const teardown = () => {
-        if (root.unmountClaim !== claim) return
-        root.unmountClaim = null
-        // Nothing can render or configure this root from here on
+        if (!isClosing()) return
+        if (root.ready.status === 'pending') {
+          root.ready.then(teardown, teardown)
+          return
+        }
+        if (!transitionRoot(root, { type: 'dispose', token })) return
+        // Close the gates before invoking user cleanup code.
         _roots.delete(canvas)
 
         const state = root.store.getState()
         state.internal.active = false
-
-        // Teardown is best-effort, but one failing step must not skip the rest, least of all the
-        // renderer at the end. Failures are reported rather than swallowed
-        const attempt = (step: () => void) => {
-          try {
-            step()
-          } catch (error) {
-            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
-          }
-        }
 
         // Release what uses the renderer before the renderer itself
         attempt(() => state.events.disconnect?.())
@@ -563,20 +579,24 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
         if (state.scene) attempt(() => dispose(state.scene))
 
         const gl = state.gl
+        let disposal: void | Promise<void> = undefined
         if (gl && state.internal.ownsRenderer) {
-          attempt(() => disposeRenderer(gl))
+          disposal = attempt(() => disposeRenderer(gl))
         } else if (gl) {
           // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
           attempt(() => gl.renderLists?.dispose?.())
           attempt(() => gl.forceContextLoss?.())
         }
 
-        if (callback) callback(canvas)
+        const finish = () => {
+          transitionRoot(root, { type: 'disposed' })
+          if (callback) callback(canvas)
+        }
+        if (isPromiseLike(disposal)) disposal.then(finish)
+        else finish()
       }
 
-      // A renderer still being created has to exist before it can be disposed
-      if (root.ready.status === 'pending') root.ready.then(teardown, teardown)
-      else teardown()
+      teardown()
     })
   })
 }

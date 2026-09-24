@@ -18,6 +18,7 @@ import {
   unstable_scheduleCallback as scheduleCallback,
 } from 'scheduler'
 import type { TrackedPromise } from './promise'
+import type { RootStateMachine } from './machine'
 import {
   diffProps,
   applyProps,
@@ -82,8 +83,7 @@ const NoEventPriority = 0
 export interface Root {
   fiber: Reconciler.FiberRoot
   store: RootStore
-  unmountClaim: symbol | null
-  /** Pending only while an async renderer is being created */
+  state: RootStateMachine
   ready: TrackedPromise<unknown>
 }
 
