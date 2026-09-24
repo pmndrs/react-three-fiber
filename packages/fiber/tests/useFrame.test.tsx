@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
@@ -684,5 +685,84 @@ describe('system job ordering', () => {
     scheduler.step(1000)
 
     expect(calls).toEqual(['update', 'frustum', 'visibility', 'render'])
+  })
+})
+
+//* Legacy numeric priority notices ==============================
+
+describe('legacy numeric priority notices', () => {
+  // v9 ran lower numeric priorities first; v10 maps the number to { priority } and runs higher
+  // first. A negative number therefore runs in the reverse order from v9, which the hook flags
+  // once per session via notifyDepreciated (suppressed in tests unless opted in).
+  const original = process.env.R3F_SHOW_DEPRECATION_WARNINGS
+  let canvas: HTMLCanvasElement
+  let root: ReturnType<typeof createRoot>
+
+  beforeEach(() => {
+    process.env.R3F_SHOW_DEPRECATION_WARNINGS = 'true'
+    canvas = createCanvas()
+    root = createRoot(canvas)
+  })
+
+  afterEach(async () => {
+    await act(async () => root.unmount())
+    if (original === undefined) delete process.env.R3F_SHOW_DEPRECATION_WARNINGS
+    else process.env.R3F_SHOW_DEPRECATION_WARNINGS = original
+  })
+
+  const isReversalNotice = (msg: unknown) => typeof msg === 'string' && /ordering direction is reversed/.test(msg)
+
+  // Runs before the warning test: the notice is deduped per session, so silence can only be
+  // asserted before it has ever fired.
+  it('stays silent for a bare 0 and for an explicit { priority }', async () => {
+    const Zero = () => {
+      useFrame(() => {}, 0)
+      return null
+    }
+    const Explicit = () => {
+      useFrame(() => {}, { priority: -1 })
+      return null
+    }
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      await act(async () =>
+        (await root.configure({ frameloop: 'never' })).render(
+          <>
+            <Zero />
+            <Explicit />
+          </>,
+        ),
+      )
+      expect(warn.mock.calls.filter(([msg]) => isReversalNotice(msg))).toHaveLength(0)
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('warns once when negative numeric priorities are used for ordering', async () => {
+    const First = () => {
+      useFrame(() => {}, -2)
+      return null
+    }
+    const Second = () => {
+      useFrame(() => {}, -1)
+      return null
+    }
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      await act(async () =>
+        (await root.configure({ frameloop: 'never' })).render(
+          <>
+            <First />
+            <Second />
+          </>,
+        ),
+      )
+      expect(warn.mock.calls.filter(([msg]) => isReversalNotice(msg))).toHaveLength(1)
+    } finally {
+      warn.mockRestore()
+    }
   })
 })
