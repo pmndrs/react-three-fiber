@@ -12,7 +12,7 @@ import {
   useBridge,
   useGate,
 } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, RootState } from '../core'
+import { ReconcilerRoot, extend, createRoot, RenderProps, RootState } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
 
@@ -80,12 +80,22 @@ function CanvasImpl({
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
+  const root = React.useRef<ReconcilerRoot<HTMLCanvasElement> | null>(null)
 
   // Waits for an async renderer without hiding the canvas
   const [gate, waitFor] = useGate()
   const rootState = React.useRef<RootState>(null)
   const eventTarget = () => (eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
+
+  // Insertion effects survive Activity hiding and StrictMode effect replay. Only
+  // final removal releases the root, including removal while hidden from React 19.2
+  React.useInsertionEffect(() => {
+    return () => {
+      const current = root.current
+      root.current = null
+      current?.unmount()
+    }
+  }, [])
 
   useIsomorphicLayoutEffect(() => {
     const canvas = canvasRef.current
@@ -153,17 +163,12 @@ function CanvasImpl({
     if (state && target && state.events.connected !== target) state.events.connect?.(target)
   })
 
+  // Before 19.2, React skips insertion cleanups in a subtree Suspense has hidden but keeps its
+  // passive effects connected. A canvas that left the document was removed rather than hidden
   React.useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
     return () => {
-      // React also destroys effects when an <Activity> hides this tree, and when StrictMode
-      // replays them. The canvas stays in the document then and its root must survive; React
-      // detaches it before running these cleanups on a real unmount
-      if (canvas.isConnected) return
-      unmountComponentAtNode(canvas)
-      // A later setup, if this tree is shown again, builds a new root rather than using this one
-      root.current = null!
+      if (!canvas.isConnected) root.current?.unmount()
     }
   }, [])
 

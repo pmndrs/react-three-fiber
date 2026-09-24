@@ -1,7 +1,16 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three'
-import { Canvas, RootState, _roots } from '../src'
+import { Canvas, RootState } from '../src'
+
+// CI also covers React 19.0, which has neither Activity nor its types.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const describeActivity = Activity ? describe : describe.skip
+const testActivity = Activity ? it : it.skip
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -93,32 +102,72 @@ describe('web Canvas', () => {
     expect(state.get().internal.active).toBe(false)
   })
 
-  it('keeps its root while an Activity boundary hides it', async () => {
-    let state!: RootState
-    let gl!: THREE.WebGLRenderer
-    const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
-      <React.Activity mode={mode}>
-        <Canvas gl={(props) => (gl = new THREE.WebGLRenderer(props))} onCreated={(created) => (state = created)}>
-          <group />
-        </Canvas>
-      </React.Activity>
-    )
+  describeActivity.each([
+    ['default', React.Fragment],
+    ['StrictMode', React.StrictMode],
+  ] as const)('Activity (%s)', (_, Wrapper) => {
+    it('preserves the renderer and scene state across hide and show', async () => {
+      let state!: RootState
+      function Scene() {
+        const [object] = React.useState(() => new THREE.Group())
+        return <primitive object={object} />
+      }
+      const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+        <Wrapper>
+          <Activity mode={mode}>
+            <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+              <Scene />
+            </Canvas>
+          </Activity>
+        </Wrapper>
+      )
 
-    const renderer = await act(async () => render(<App mode="visible" />))
-    const forceContextLoss = jest.spyOn(gl, 'forceContextLoss')
+      const renderer = await act(async () => render(<App mode="visible" />))
+      const gl = state.gl
+      const object = state.scene.children[0]
+      const dispose = jest.spyOn(gl, 'dispose')
+      const forceContextLoss = jest.spyOn(gl, 'forceContextLoss')
 
-    // Hiding destroys the Canvas' effects but keeps the canvas in the document
-    await act(async () => renderer.rerender(<App mode="hidden" />))
-    await act(async () => renderer.rerender(<App mode="visible" />))
+      await act(async () => renderer.rerender(<App mode="hidden" />))
+      expect(dispose).not.toHaveBeenCalled()
+      expect(forceContextLoss).not.toHaveBeenCalled()
 
-    expect(forceContextLoss).not.toHaveBeenCalled()
-    expect(_roots.has(state.gl.domElement)).toBe(true)
-    expect(state.get().internal.active).toBe(true)
-    expect(state.scene.children).toHaveLength(1)
+      await act(async () => renderer.rerender(<App mode="visible" />))
+      expect(state.gl).toBe(gl)
+      expect(state.scene.children).toHaveLength(1)
+      expect(state.scene.children[0]).toBe(object)
+      expect(dispose).not.toHaveBeenCalled()
+      expect(forceContextLoss).not.toHaveBeenCalled()
 
-    await act(async () => renderer.unmount())
-    expect(forceContextLoss).toHaveBeenCalledTimes(1)
-    expect(_roots.has(state.gl.domElement)).toBe(false)
+      await act(async () => renderer.unmount())
+      expect(dispose).toHaveBeenCalledTimes(1)
+      expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    })
+
+    it('disposes the renderer when removed while hidden', async () => {
+      let gl!: THREE.WebGLRenderer
+      const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+        <Wrapper>
+          <Activity mode={mode}>
+            <Canvas frameloop="never" gl={(props) => (gl = new THREE.WebGLRenderer(props))}>
+              <group />
+            </Canvas>
+          </Activity>
+        </Wrapper>
+      )
+
+      const renderer = await act(async () => render(<App mode="visible" />))
+      const dispose = jest.spyOn(gl, 'dispose')
+      const forceContextLoss = jest.spyOn(gl, 'forceContextLoss')
+
+      await act(async () => renderer.rerender(<App mode="hidden" />))
+      expect(dispose).not.toHaveBeenCalled()
+      expect(forceContextLoss).not.toHaveBeenCalled()
+
+      await act(async () => renderer.unmount())
+      expect(dispose).toHaveBeenCalledTimes(1)
+      expect(forceContextLoss).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('tears down a canvas that unmounts as it mounts', async () => {
@@ -145,6 +194,60 @@ describe('web Canvas', () => {
     await act(async () => render(<Parent />))
 
     expect(connected).toBeInstanceOf(HTMLDivElement)
+    expect(forceContextLoss).toHaveBeenCalledTimes(1)
+  })
+
+  it('resumes a scene after its Suspense boundary resolves', async () => {
+    let resolve!: () => void
+    const ready = new Promise<void>((done) => (resolve = done))
+    let state!: RootState
+    function Scene() {
+      React.use(ready)
+      return <group />
+    }
+    const renderer = await act(async () =>
+      render(
+        <React.Suspense fallback={<div data-testid="loading" />}>
+          <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+            <Scene />
+          </Canvas>
+        </React.Suspense>,
+      ),
+    )
+    expect(renderer.queryByTestId('loading')).not.toBeNull()
+    const gl = state.gl
+    const dispose = jest.spyOn(gl, 'dispose')
+
+    await act(async () => resolve())
+    expect(renderer.queryByTestId('loading')).toBeNull()
+    expect(state.gl).toBe(gl)
+    expect(state.scene.children).toHaveLength(1)
+    expect(dispose).not.toHaveBeenCalled()
+
+    await act(async () => renderer.unmount())
+    expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('releases the renderer when removed while its scene loads', async () => {
+    let gl!: THREE.WebGLRenderer
+    const loading = new Promise<void>(() => {})
+    function Scene() {
+      React.use(loading)
+      return <group />
+    }
+    const renderer = await act(async () =>
+      render(
+        <React.Suspense fallback={<div data-testid="loading" />}>
+          <Canvas frameloop="never" gl={(props) => (gl = new THREE.WebGLRenderer(props))}>
+            <Scene />
+          </Canvas>
+        </React.Suspense>,
+      ),
+    )
+    expect(renderer.queryByTestId('loading')).not.toBeNull()
+    const forceContextLoss = jest.spyOn(gl, 'forceContextLoss')
+
+    await act(async () => renderer.unmount())
     expect(forceContextLoss).toHaveBeenCalledTimes(1)
   })
 
@@ -187,6 +290,38 @@ describe('web Canvas', () => {
       await act(async () => ready())
       expect(state.scene.children).toHaveLength(1)
       expect(state.get().events.connected).toBeInstanceOf(HTMLDivElement)
+    })
+
+    testActivity('retains a renderer that resolves while hidden and mounts the scene when shown', async () => {
+      let ready!: () => void
+      let gl!: THREE.WebGLRenderer
+      const onCreated = jest.fn()
+      const createRenderer = jest.fn(async (props) => {
+        await new Promise<void>((resolve) => (ready = resolve))
+        return (gl = new THREE.WebGLRenderer(props))
+      })
+      const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+        <Activity mode={mode}>
+          <Canvas gl={createRenderer} onCreated={onCreated} frameloop="never">
+            <group />
+          </Canvas>
+        </Activity>
+      )
+      const renderer = await act(async () => render(<App mode="visible" />))
+      await act(async () => renderer.rerender(<App mode="hidden" />))
+      await act(async () => ready())
+      expect(onCreated).not.toHaveBeenCalled()
+
+      const dispose = jest.spyOn(gl, 'dispose')
+      await act(async () => renderer.rerender(<App mode="visible" />))
+      expect(onCreated).toHaveBeenCalledTimes(1)
+      expect(createRenderer).toHaveBeenCalledTimes(1)
+      expect(onCreated.mock.calls[0][0].gl).toBe(gl)
+      expect(onCreated.mock.calls[0][0].scene.children).toHaveLength(1)
+      expect(dispose).not.toHaveBeenCalled()
+
+      await act(async () => renderer.unmount())
+      expect(dispose).toHaveBeenCalledTimes(1)
     })
 
     it('never mounts when the canvas unmounts while the renderer is pending', async () => {
