@@ -1,9 +1,11 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
-import { renderToString } from 'react-dom/server.node'
 import * as THREE from 'three'
 import { Canvas, RootState, RootStore, useStore, useThree, useFrame } from '../src'
 import * as measure from 'react-use-measure'
+
+// Use the Node renderer in JSDOM; React 19.0 types only declare the public server entry.
+const { renderToString }: typeof import('react-dom/server') = require('react-dom/server.node')
 
 // CI also covers React 19.0, which has neither Activity nor its types.
 const Activity = (
