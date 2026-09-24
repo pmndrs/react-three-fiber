@@ -162,6 +162,51 @@ describe('renderer disposal on unmount', () => {
     expect(renderer.dispose).toHaveBeenCalledTimes(1)
   })
 
+  it('disposes a renderer built for a root whose configure failed before creating its scene', async () => {
+    const { root } = newRoot()
+    let renderer!: MockWebGPURenderer
+    // The renderer is built, then configure() throws on the camera props (zoom is a number, so it
+    // cannot be pierced), before the scene exists.
+    await expect(
+      root.configure({
+        renderer: (props: any) => (renderer = new MockWebGPURenderer(props)),
+        camera: { 'zoom-x': 1 } as any,
+        size,
+        frameloop: 'never',
+      }),
+    ).rejects.toThrow()
+    const warn = vi.spyOn(console, 'warn')
+
+    await unmountAndWait(root)
+    expect(renderer.dispose).toHaveBeenCalledTimes(1)
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('Error while unmounting root'), expect.anything())
+  })
+
+  it('disposes an owned renderer even when an earlier teardown step fails', async () => {
+    const { root } = newRoot()
+    let renderer!: MockWebGPURenderer
+    const store = await act(async () =>
+      (
+        await root.configure({
+          renderer: (props: any) => (renderer = new MockWebGPURenderer(props)),
+          size,
+          frameloop: 'never',
+        })
+      ).render(null),
+    )
+    store.getState().setEvents({
+      disconnect: () => {
+        throw new Error('disconnect failed')
+      },
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await unmountAndWait(root)
+    // The failure is still reported, but it must not cost the GPU device.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Error while unmounting root'), expect.anything())
+    expect(renderer.dispose).toHaveBeenCalledTimes(1)
+  })
+
   it('leaves a caller-supplied renderer instance alone', async () => {
     const { canvas, root } = newRoot()
     const renderer = new MockWebGPURenderer({ canvas })
