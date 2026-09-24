@@ -12,7 +12,7 @@ import {
   type Size,
   isRenderer,
 } from './store'
-import { applyProps, type Camera, is, prepare, type Properties } from './utils'
+import { applyProps, calculateDpr, type Camera, is, prepare, type Properties } from './utils'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -133,8 +133,9 @@ function computeInitialSize(canvas: Canvas, size?: Size): Size {
 
 /**
  * Applies the inputs that changed since the last configuration applied in full, to a root whose
- * renderer is installed. A runtime change, such as setDpr or an edit to gl.shadowMap, lasts until
- * its input changes. Objects and arrays compare shallowly, so an equal inline value is unchanged.
+ * renderer is installed. A runtime change, such as setFrameloop or an edit to gl.shadowMap, lasts
+ * until its input changes. The pixel ratio instead follows the device on every call. Objects and
+ * arrays compare shallowly, so an equal inline value is unchanged.
  */
 export function applyRootConfiguration(
   { store, configuration }: { store: RootStore; configuration: AppliedConfiguration },
@@ -155,7 +156,7 @@ export function applyRootConfiguration(
     onPointerMissed,
   } = props
   const size = computeInitialSize(canvas, props.size)
-  const next: Configuration = { ...props, shadows, linear, flat, legacy, frameloop, dpr, size }
+  const next: Configuration = { ...props, shadows, linear, flat, legacy, frameloop, size }
 
   const state = store.getState()
   const gl = state.gl
@@ -229,7 +230,8 @@ export function applyRootConfiguration(
   // Store events internally
   if (props.events && !state.events.handlers) state.set({ events: props.events(store) })
   if (changed('size')) state.setSize(size.width, size.height, size.top, size.left)
-  if (changed('dpr')) state.setDpr(dpr)
+  // The ratio follows window.devicePixelRatio, which changes with browser zoom or another display
+  if (state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
   if (changed('frameloop')) state.setFrameloop(frameloop)
   if (changed('onPointerMissed')) state.set({ onPointerMissed })
   // Performance options merge, so removing them keeps the current settings

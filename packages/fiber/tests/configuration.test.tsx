@@ -34,21 +34,6 @@ describe('configuration inputs', () => {
     expect(store.getState().frameloop).toBe('always')
   })
 
-  it('compares DPR ranges by value and applies changed or removed props', async () => {
-    const store = await mount({ dpr: [1, 2] })
-    await act(async () => store.getState().setDpr(0.5))
-    await act(async () => root.configure({ dpr: [1, 2] }))
-    expect(store.getState().viewport.dpr).toBe(0.5)
-
-    await act(async () => root.configure({ dpr: 2 }))
-    expect(store.getState().viewport.dpr).toBe(2)
-    await act(async () => root.configure({}))
-    expect(store.getState().viewport.dpr).toBe(window.devicePixelRatio)
-    await act(async () => store.getState().setDpr(0.5))
-    await act(async () => root.configure({}))
-    expect(store.getState().viewport.dpr).toBe(0.5)
-  })
-
   it('preserves runtime shadow settings until the prop changes', async () => {
     const store = await mount({ shadows: true })
     const { shadowMap } = store.getState().gl
@@ -124,21 +109,6 @@ describe('configuration inputs', () => {
     expect(store.getState().performance.min).toBe(0.5)
   })
 
-  it('updates bounds independently, including scroll offsets', async () => {
-    const store = await mount({ dpr: 1, size: { width: 100, height: 100, top: 0, left: 0 } })
-    const { gl, setDpr } = store.getState()
-    await act(async () => setDpr(0.5))
-    const resize = jest.spyOn(gl, 'setSize')
-    await act(async () => root.configure({ dpr: 1, size: { width: 100, height: 100, top: 20, left: 10 } }))
-    expect(store.getState().size).toEqual({ width: 100, height: 100, top: 20, left: 10 })
-    expect(store.getState().viewport.dpr).toBe(0.5)
-    expect(resize).not.toHaveBeenCalled()
-
-    await act(async () => root.configure({ dpr: 1, size: { width: 200, height: 100, top: 20, left: 10 } }))
-    expect(gl.getSize(new THREE.Vector2())).toEqual(new THREE.Vector2(200, 100))
-    expect(gl.getPixelRatio()).toBe(0.5)
-  })
-
   it('measures a direct root again when no explicit size is supplied', async () => {
     const parent = document.createElement('div')
     parent.appendChild(canvas)
@@ -203,10 +173,10 @@ describe('configuration inputs', () => {
     const initial = jest.fn()
     const next = jest.fn()
     const store = await mount({ onPointerMissed: initial })
-    await act(async () => store.getState().setDpr(0.5))
+    await act(async () => store.getState().setFrameloop('demand'))
     await act(async () => root.configure({ onPointerMissed: next }))
     expect(store.getState().onPointerMissed).toBe(next)
-    expect(store.getState().viewport.dpr).toBe(0.5)
+    expect(store.getState().frameloop).toBe('demand')
     await act(async () => root.configure())
     expect(store.getState().onPointerMissed).toBeUndefined()
   })

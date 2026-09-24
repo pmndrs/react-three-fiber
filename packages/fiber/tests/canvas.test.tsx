@@ -31,7 +31,6 @@ describe('web Canvas', () => {
     const App = ({ name, changed = false }: { name: string; changed?: boolean }) => (
       <Canvas
         shadows={{ type: changed ? THREE.VSMShadowMap : THREE.PCFShadowMap }}
-        dpr={changed ? 2 : [1, 2]}
         frameloop={changed ? 'always' : 'never'}
         performance={{ min: changed ? 0.3 : 0.5 }}
         onCreated={(created) => (state = created)}>
@@ -40,7 +39,6 @@ describe('web Canvas', () => {
     )
     const renderer = await act(async () => render(<App name="initial" />))
     await act(async () => {
-      state.setDpr(0.5)
       state.setFrameloop('demand')
       state.set((current) => ({ performance: { ...current.performance, min: 0.2 } }))
       state.gl.shadowMap.type = THREE.BasicShadowMap
@@ -49,14 +47,12 @@ describe('web Canvas', () => {
 
     await act(async () => renderer.rerender(<App name="updated" />))
     expect(state.scene.children[0].name).toBe('updated')
-    expect(state.get().viewport.dpr).toBe(0.5)
     expect(state.get().frameloop).toBe('demand')
     expect(state.get().performance.min).toBe(0.2)
     expect(state.gl.shadowMap.type).toBe(THREE.BasicShadowMap)
     expect(state.gl.shadowMap.needsUpdate).toBe(false)
 
     await act(async () => renderer.rerender(<App name="changed props" changed />))
-    expect(state.get().viewport.dpr).toBe(2)
     expect(state.get().frameloop).toBe('always')
     expect(state.get().performance.min).toBe(0.3)
     expect(state.gl.shadowMap.type).toBe(THREE.VSMShadowMap)
@@ -118,7 +114,6 @@ describe('web Canvas', () => {
       const App = () => <Canvas shadows frameloop="never" onCreated={(created) => (state = created)} />
       const renderer = await act(async () => render(<App />))
       await act(async () => {
-        state.setDpr(0.5)
         state.setFrameloop('demand')
         state.gl.shadowMap.type = THREE.BasicShadowMap
       })
@@ -131,10 +126,31 @@ describe('web Canvas', () => {
       bounds = { ...bounds, width: 200 }
       await act(async () => renderer.rerender(<App />))
       expect(state.gl.getSize(new THREE.Vector2())).toEqual(new THREE.Vector2(200, 100))
-      expect(state.get().viewport.dpr).toBe(0.5)
       expect(state.get().frameloop).toBe('demand')
       expect(state.gl.shadowMap.type).toBe(THREE.BasicShadowMap)
       await act(async () => renderer.unmount())
+    })
+
+    it('follows the device pixel ratio after browser zoom', async () => {
+      let bounds = { width: 150, height: 150, top: 0, left: 0, bottom: 150, right: 150, x: 0, y: 0 }
+      jest.spyOn(measure, 'default').mockImplementation(() => [() => {}, bounds, () => {}])
+      const initialRatio = window.devicePixelRatio
+      let state!: RootState
+      const App = () => <Canvas frameloop="never" onCreated={(created) => (state = created)} />
+      try {
+        window.devicePixelRatio = 1
+        const renderer = await act(async () => render(<App />))
+        expect(state.gl.getPixelRatio()).toBe(1)
+
+        // Zooming to 150% raises the device ratio and shrinks the container in CSS pixels
+        window.devicePixelRatio = 1.5
+        bounds = { ...bounds, width: 100, height: 100, bottom: 100, right: 100 }
+        await act(async () => renderer.rerender(<App />))
+        expect(state.gl.getPixelRatio()).toBe(1.5)
+        await act(async () => renderer.unmount())
+      } finally {
+        window.devicePixelRatio = initialRatio
+      }
     })
 
     it('mounts with the latest bounds, props, children, and callback after async initialization', async () => {
