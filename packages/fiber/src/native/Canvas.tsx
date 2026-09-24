@@ -69,6 +69,10 @@ function CanvasImpl({
   React.useImperativeHandle(ref, () => viewRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
+  const pointerMissed = React.useCallback(
+    (event: MouseEvent) => handlePointerMissed.current?.(event),
+    [handlePointerMissed],
+  )
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<Error | undefined>(undefined)
 
@@ -202,8 +206,8 @@ function CanvasImpl({
           // https://github.com/expo/expo-three/issues/39
           dpr: PixelRatio.get(),
           size: { width, height, top, left },
-          // Pass mutable reference to onPointerMissed so it's free to update
-          onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+          // Forwards to the latest onPointerMissed, so a new callback does not update the store
+          onPointerMissed: pointerMissed,
           // Overwrite onCreated to apply RN bindings
           onCreated: (state: RootState) => {
             // Bind render to RN bridge

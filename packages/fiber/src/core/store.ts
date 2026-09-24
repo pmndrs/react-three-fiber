@@ -68,8 +68,6 @@ export interface InternalState {
   priority: number
   frames: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
-  /** Whether R3F built `gl` (from defaults, props or a factory) and so disposes it on unmount */
-  ownsRenderer: boolean
 }
 
 export interface XRManager {
@@ -279,7 +277,6 @@ export const createStore = (
         active: false,
         frames: 0,
         priority: 0,
-        ownsRenderer: false,
         subscribe: (ref: React.RefObject<RenderCallback>, priority: number, store: RootStore) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands

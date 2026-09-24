@@ -21,9 +21,12 @@ export type {
   InstanceProps,
   Instance,
 } from './reconciler'
-export { extend, reconciler } from './reconciler'
-export type { ReconcilerRoot, GLProps, CameraProps, RenderProps, InjectState } from './renderer'
-export { _roots, createRoot, unmountComponentAtNode, createPortal, flushSync } from './renderer'
+export { extend, reconciler, flushSync } from './reconciler'
+export type { GLProps, CameraProps, RenderProps } from './configuration'
+export type { ReconcilerRoot } from './root'
+export { _roots, createRoot, unmountComponentAtNode } from './root'
+export type { InjectState } from './portal'
+export { createPortal } from './portal'
 export type {
   Subscription,
   Dpr,

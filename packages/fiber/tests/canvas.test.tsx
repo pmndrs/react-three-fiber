@@ -1,7 +1,8 @@
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three'
-import { Canvas, RootState } from '../src'
+import { Canvas, RootState, RootStore, useStore, useThree } from '../src'
+import * as measure from 'react-use-measure'
 
 // CI also covers React 19.0, which has neither Activity nor its types.
 const Activity = (
@@ -23,6 +24,170 @@ describe('web Canvas', () => {
     )
 
     expect(renderer.container).toMatchSnapshot()
+  })
+
+  it('updates children without restoring unchanged configuration props', async () => {
+    let state!: RootState
+    const App = ({ name, changed = false }: { name: string; changed?: boolean }) => (
+      <Canvas
+        shadows={{ type: changed ? THREE.VSMShadowMap : THREE.PCFShadowMap }}
+        frameloop={changed ? 'always' : 'never'}
+        performance={{ min: changed ? 0.3 : 0.5 }}
+        onCreated={(created) => (state = created)}>
+        <group name={name} />
+      </Canvas>
+    )
+    const renderer = await act(async () => render(<App name="initial" />))
+    await act(async () => {
+      state.setFrameloop('demand')
+      state.set((current) => ({ performance: { ...current.performance, min: 0.2 } }))
+      state.gl.shadowMap.type = THREE.BasicShadowMap
+    })
+    state.gl.shadowMap.needsUpdate = false
+
+    await act(async () => renderer.rerender(<App name="updated" />))
+    expect(state.scene.children[0].name).toBe('updated')
+    expect(state.get().frameloop).toBe('demand')
+    expect(state.get().performance.min).toBe(0.2)
+    expect(state.gl.shadowMap.type).toBe(THREE.BasicShadowMap)
+    expect(state.gl.shadowMap.needsUpdate).toBe(false)
+
+    await act(async () => renderer.rerender(<App name="changed props" changed />))
+    expect(state.get().frameloop).toBe('always')
+    expect(state.get().performance.min).toBe(0.3)
+    expect(state.gl.shadowMap.type).toBe(THREE.VSMShadowMap)
+    await act(async () => renderer.unmount())
+  })
+
+  describe('rerendering', () => {
+    afterEach(() => jest.restoreAllMocks())
+
+    it('calls the latest onPointerMissed without publishing store updates', async () => {
+      const missed = jest.fn()
+      let store!: RootStore
+      function Scene({ name }: { name: string }) {
+        store = useStore()
+        return <group name={name} />
+      }
+      const App = ({ name }: { name: string }) => (
+        <Canvas shadows frameloop="never" onPointerMissed={() => missed(name)}>
+          <Scene name={name} />
+        </Canvas>
+      )
+      const renderer = await act(async () => render(<App name="initial" />))
+      const listener = jest.fn()
+      const unsubscribe = store.subscribe(listener)
+
+      await act(async () => renderer.rerender(<App name="updated" />))
+      expect(store.getState().scene.children[0].name).toBe('updated')
+      store.getState().onPointerMissed?.(new MouseEvent('click'))
+      expect(missed).toHaveBeenCalledWith('updated')
+      expect(listener).not.toHaveBeenCalled()
+      unsubscribe()
+      await act(async () => renderer.unmount())
+    })
+
+    it('forwards context updates to stable children', async () => {
+      const Context = React.createContext('initial')
+      let state!: RootState
+      function Scene() {
+        return <group name={React.useContext(Context)} />
+      }
+      const children = <Scene />
+      const App = ({ value }: { value: string }) => (
+        <Context.Provider value={value}>
+          <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+            {children}
+          </Canvas>
+        </Context.Provider>
+      )
+      const renderer = await act(async () => render(<App value="initial" />))
+      await act(async () => renderer.rerender(<App value="updated" />))
+      expect(state.scene.children[0].name).toBe('updated')
+      await act(async () => renderer.unmount())
+    })
+
+    it('updates measured bounds without resetting runtime values', async () => {
+      let bounds = { width: 100, height: 100, top: 0, left: 0, bottom: 100, right: 100, x: 0, y: 0 }
+      jest.spyOn(measure, 'default').mockImplementation(() => [() => {}, bounds, () => {}])
+      let state!: RootState
+      const App = () => <Canvas shadows frameloop="never" onCreated={(created) => (state = created)} />
+      const renderer = await act(async () => render(<App />))
+      await act(async () => {
+        state.setFrameloop('demand')
+        state.gl.shadowMap.type = THREE.BasicShadowMap
+      })
+      const resize = jest.spyOn(state.gl, 'setSize')
+
+      bounds = { ...bounds, top: 20, left: 10 }
+      await act(async () => renderer.rerender(<App />))
+      expect(state.get().size).toEqual({ width: 100, height: 100, top: 20, left: 10 })
+      expect(resize).not.toHaveBeenCalled()
+      bounds = { ...bounds, width: 200 }
+      await act(async () => renderer.rerender(<App />))
+      expect(state.gl.getSize(new THREE.Vector2())).toEqual(new THREE.Vector2(200, 100))
+      expect(state.get().frameloop).toBe('demand')
+      expect(state.gl.shadowMap.type).toBe(THREE.BasicShadowMap)
+      await act(async () => renderer.unmount())
+    })
+
+    it('follows the device pixel ratio after browser zoom', async () => {
+      let bounds = { width: 150, height: 150, top: 0, left: 0, bottom: 150, right: 150, x: 0, y: 0 }
+      jest.spyOn(measure, 'default').mockImplementation(() => [() => {}, bounds, () => {}])
+      const initialRatio = window.devicePixelRatio
+      let state!: RootState
+      const App = () => <Canvas frameloop="never" onCreated={(created) => (state = created)} />
+      try {
+        window.devicePixelRatio = 1
+        const renderer = await act(async () => render(<App />))
+        expect(state.gl.getPixelRatio()).toBe(1)
+
+        // Zooming to 150% raises the device ratio and shrinks the container in CSS pixels
+        window.devicePixelRatio = 1.5
+        bounds = { ...bounds, width: 100, height: 100, bottom: 100, right: 100 }
+        await act(async () => renderer.rerender(<App />))
+        expect(state.gl.getPixelRatio()).toBe(1.5)
+        await act(async () => renderer.unmount())
+      } finally {
+        window.devicePixelRatio = initialRatio
+      }
+    })
+
+    it('mounts with the latest bounds, props, children, and callback after async initialization', async () => {
+      let bounds = { width: 100, height: 100, top: 0, left: 0, bottom: 100, right: 100, x: 0, y: 0 }
+      jest.spyOn(measure, 'default').mockImplementation(() => [() => {}, bounds, () => {}])
+      let ready!: () => void
+      const gl = jest.fn(async (props) => {
+        await new Promise<void>((resolve) => (ready = resolve))
+        return new THREE.WebGLRenderer(props)
+      })
+      const created = jest.fn()
+      const mounted = jest.fn()
+      function Scene({ name }: { name: string }) {
+        const { size, frameloop } = useThree()
+        React.useLayoutEffect(() => {
+          mounted(name, size.width, frameloop)
+        }, [name, size.width, frameloop])
+        return <group name={name} />
+      }
+      const App = ({ name, frameloop }: { name: string; frameloop: 'never' | 'demand' }) => (
+        <Canvas gl={gl} frameloop={frameloop} onCreated={(state) => created(name, state.size.width)}>
+          <Scene name={name} />
+        </Canvas>
+      )
+      const renderer = await act(async () => render(<App name="initial" frameloop="never" />))
+      await act(async () => renderer.rerender(<App name="changed config" frameloop="demand" />))
+      bounds = { ...bounds, width: 320 }
+      await act(async () => renderer.rerender(<App name="latest" frameloop="demand" />))
+      expect(created).not.toHaveBeenCalled()
+      expect(mounted).not.toHaveBeenCalled()
+
+      await act(async () => ready())
+      expect(gl).toHaveBeenCalledTimes(1)
+      expect(created.mock.calls).toEqual([['latest', 320]])
+      expect(mounted.mock.calls).toEqual([['latest', 320, 'demand']])
+      await act(async () => renderer.unmount())
+    })
   })
 
   it('should forward ref', async () => {
