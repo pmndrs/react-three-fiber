@@ -766,8 +766,44 @@ export const reconciler = /* @__PURE__ */ createReconciler<
 
   // https://github.com/facebook/react/pull/32451
   // https://github.com/facebook/react/pull/32760
-  startGestureTransition: () => null,
-  startViewTransition: () => null,
+  startViewTransition(
+    _suspendedState: null,
+    _rootContainer: RootStore,
+    _transitionTypes: null | string[],
+    mutationCallback: () => void,
+    layoutCallback: () => void,
+    _afterMutationCallback: () => void,
+    spawnedWorkCallback: () => void,
+    _passiveCallback: () => void,
+    _errorCallback: (_error: unknown) => void,
+    _blockedCallback: (_reason: string) => void,
+    finishedAnimation: (() => void) | null,
+  ): null {
+    mutationCallback()
+    layoutCallback()
+    // afterMutationCallback only measures for animations and spawned work schedules the passive
+    // effects itself, so both are skipped. Production builds pass null for finishedAnimation
+    finishedAnimation?.()
+    spawnedWorkCallback()
+    return null
+  },
+  startGestureTransition(
+    _suspendedState: null,
+    _rootContainer: RootStore,
+    _timeline: null,
+    _rangeStart: number,
+    _rangeEnd: number,
+    _transitionTypes: null | string[],
+    mutationCallback: () => void,
+    animateCallback: () => void,
+    _errorCallback: (_error: unknown) => void,
+    finishedAnimation: (() => void) | null,
+  ): null {
+    mutationCallback()
+    animateCallback()
+    finishedAnimation?.()
+    return null
+  },
   stopViewTransition(_transition: null) {},
 
   // https://github.com/facebook/react/pull/32038
