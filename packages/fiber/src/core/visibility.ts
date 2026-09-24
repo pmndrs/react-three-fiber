@@ -42,7 +42,8 @@ export function enableOcclusion(store: RootStore): void {
   if (internal.occlusionEnabled) return
 
   // Check for WebGPU support
-  const hasOcclusionSupport = R3F_BUILD_WEBGPU && typeof (renderer as any)?.isOccluded === 'function'
+  const hasOcclusionSupport =
+    R3F_BUILD_WEBGPU && !!renderer && 'isOccluded' in renderer && typeof renderer.isOccluded === 'function'
 
   if (!hasOcclusionSupport) {
     // Warn once about WebGL limitation
@@ -297,7 +298,7 @@ export function checkVisibility(state: RootState): void {
     }
 
     //* Occlusion Check (onOccluded) - WebGPU only, reads from cache --------------------------------
-    // The cache is populated by OcclusionObserverNode during render pass
+    // The cache is filled during the render pass by the observer mesh (see setupOcclusion)
     let currentOcclusion: boolean | null = null
     if (handlers.onOccluded && internal.occlusionEnabled) {
       currentOcclusion = internal.occlusionCache.get(object) ?? null
