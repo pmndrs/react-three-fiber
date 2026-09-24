@@ -20,7 +20,10 @@ export function extend(objects: Record<string, unknown>): void
 export function extend(objects: Record<string, unknown> | ConstructorRepresentation): unknown {
   if (isConstructor(objects)) {
     // Generated element ids draw from one shared counter so factory calls never collide across bundles.
-    const id = global[EXTEND_ID] ?? 0
+    // A copy of R3F that predates the shared counter still writes its module-local ids straight into
+    // the shared catalogue, so skip any slot that is already taken rather than trusting the counter.
+    let id = global[EXTEND_ID] ?? 0
+    while (`${id}` in catalogue) id++
     global[EXTEND_ID] = id + 1
     catalogue[id] = objects
     return `${id}`

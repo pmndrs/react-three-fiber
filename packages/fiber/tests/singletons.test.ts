@@ -129,6 +129,27 @@ describe('Cross-bundle singleton sharing', () => {
       expect(catalogue[idB]).toBe(FromBundleB)
     })
 
+    it('factory extend() skips catalogue ids a pre-shared-counter bundle already took', async () => {
+      // A copy of R3F from before the shared counter (v10 alphas) keeps a module-local `let i = 0`
+      // and writes `catalogue['0']` without ever touching EXTEND_ID. Simulate that bundle by seeding
+      // the shared catalogue directly, then check the current extend() lands on the next free slot.
+      vi.resetModules()
+      const current = await import('../src/core/extend')
+      const catalogue = (globalThis as any)[CATALOGUE_KEY]
+
+      class FromOldBundle {}
+      catalogue['0'] = FromOldBundle
+      expect((globalThis as any)[EXTEND_ID_KEY]).toBeUndefined()
+
+      class FromNewBundle {}
+      const id = current.extend(FromNewBundle) as unknown as string
+
+      expect(id).toBe('1')
+      expect(catalogue['0']).toBe(FromOldBundle)
+      expect(catalogue['1']).toBe(FromNewBundle)
+      expect((globalThis as any)[EXTEND_ID_KEY]).toBe(2)
+    })
+
     it('a reconciler from bundle B instantiates the class bundle A registered with extend()', async () => {
       // Regression for the pre-fix failure mode: each bundle counted from 0, so bundle B's factory
       // id overwrote bundle A's slot and rendering A's element constructed B's class. Go through
