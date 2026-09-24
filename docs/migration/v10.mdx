@@ -246,15 +246,20 @@ object directly. Keep its identity stable with `useCallback`: React re-invokes a
 every render. It runs again with a new object when `args` change.
 
 ```tsx
-const setup = useCallback((mesh: THREE.Mesh | null) => mesh?.lookAt(0, 0, 0), [])
-<mesh ref={setup} />
+// Braces matter: a React 19 ref callback's return value is its cleanup, and lookAt returns the mesh
+const setup = useCallback((mesh: THREE.Mesh | null) => {
+  mesh?.lookAt(0, 0, 0)
+}, [])
+return <mesh ref={setup} />
 ```
 
 `onUpdate` is no longer reserved, so it is applied to the object by name like any other prop. That
 is deliberate for `<texture>`: three.js has a real `Texture.onUpdate` callback that the renderer
-fires after uploading the texture to the GPU, and `<texture onUpdate={fn} />` now sets it. On an
-object with no such property (a mesh, a group) the assignment is inert, and R3F logs a one-time
-notice in case you were relying on the old hook.
+fires after uploading the texture to the GPU, and `<texture onUpdate={fn} />` now sets it. It is not
+called when props change, so a v9 `onUpdate={(self) => (self.needsUpdate = true)}` no longer flags a
+new `image` for upload: set `needsUpdate` in an effect keyed on the data instead. On a TSL node the
+prop replaces the `Node.onUpdate()` method, and on anything else (a mesh, a group) the assignment is
+inert. R3F logs a one-time notice the first time it sees an `onUpdate` prop.
 
 ### `<color attach="background">` Pattern Deprecated
 

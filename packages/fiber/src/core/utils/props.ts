@@ -246,14 +246,18 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (RESERVED_PROPS.includes(prop)) continue
 
     // `onUpdate` was an R3F hook (called after every prop update) until v10 and is now an ordinary
-    // prop, assigned by name like any other. three.js has a real `Texture.onUpdate` (fired after a
-    // GPU upload), so the notice is limited to objects that carry no such property, where the
-    // assignment is inert and the author almost certainly expected the old hook.
-    if (prop === 'onUpdate' && !(prop in object)) {
+    // prop, assigned by name like any other. The notice fires wherever it is used, not only where
+    // the assignment is inert: on a Texture it becomes three's callback fired *after* a GPU upload,
+    // so the v9 idiom `onUpdate={(self) => (self.needsUpdate = true)}` no longer flags a changed
+    // `image` for upload, and on a TSL Node it replaces the `Node.onUpdate()` method. Both change
+    // behavior silently.
+    if (prop === 'onUpdate') {
       notifyDepreciated({
         heading: 'onUpdate is no longer an R3F prop',
         body:
-          'v10 removed the onUpdate hook. The value is assigned to the object like any other prop and is not called on updates.\n\n' +
+          'v10 removed the onUpdate hook: R3F no longer calls it after prop updates. The value is assigned to the object by name. ' +
+          "On a Texture that sets three's Texture.onUpdate, which the renderer calls after a GPU upload, not after prop changes. " +
+          'On a node it replaces the Node.onUpdate() method. On other objects it is never called.\n\n' +
           'Use an effect keyed on the props that change, read the object in useFrame, or use a ref callback.',
         link: 'https://docs.pmnd.rs/react-three-fiber/migration/v10#onupdate-removed',
       })

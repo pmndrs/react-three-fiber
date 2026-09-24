@@ -13,8 +13,8 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   props that change, read the object in `useFrame`, or use a ref callback; see the
   [migration guide](./docs/migration/v10.mdx#onupdate-removed). `onUpdate` is no longer reserved, so
   it is assigned to the object by name: `<texture onUpdate={fn} />` now sets three's own
-  `Texture.onUpdate` (fired after a GPU upload). On an object without such a property R3F logs a
-  one-time notice.
+  `Texture.onUpdate` (fired after a GPU upload, not after prop changes). R3F logs a one-time notice
+  the first time it sees an `onUpdate` prop.
 
 ## 10.0.0-alpha.5
 
