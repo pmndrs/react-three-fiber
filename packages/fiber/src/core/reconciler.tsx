@@ -766,6 +766,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
 
   // https://github.com/facebook/react/pull/32451
   // https://github.com/facebook/react/pull/32760
+  // React hands the whole commit to the host when a transition touches a <ViewTransition> subtree.
+  // three.js has nothing to animate between commits, so this mirrors the react-dom fallback for
+  // browsers without document.startViewTransition and flushes the commit synchronously.
   startViewTransition(
     _suspendedState: null,
     _rootContainer: RootStore,
@@ -805,6 +808,12 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     return null
   },
   stopViewTransition(_transition: null) {},
+
+  // https://github.com/facebook/react/pull/35564
+  // Only reached with a non-null transition from startViewTransition, which never returns one here
+  addViewTransitionFinishedListener(_transition: null, callback: () => void) {
+    callback()
+  },
 
   // https://github.com/facebook/react/pull/32038
   createViewTransitionInstance: (_name: string): null => null,
