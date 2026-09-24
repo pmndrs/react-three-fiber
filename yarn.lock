@@ -6674,10 +6674,10 @@ iterator.prototype@^1.1.2:
     reflect.getprototypeof "^1.0.4"
     set-function-name "^2.0.1"
 
-its-fine@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/its-fine/-/its-fine-2.1.0.tgz#64889da38e984aa068b7cec904fdf9c8899bb758"
-  integrity sha512-zSoJjTJv3fuMLYww/k15BbzOFiewLIpDpuQVaaZ+5ZS0qL2trA2l1czPP+7Enm4+p9uhKEeXOTeRn+zkw2UUWA==
+its-fine@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.npmjs.org/its-fine/-/its-fine-2.1.1.tgz#e61e716ac9061e83ff63f8e052373daed2d5e8b6"
+  integrity sha512-C5ZoVkeqSt0Aje0tzESO+iT/EQpNFNL39GkP7mCACtoZUFD6GcyerFCr6kp0ZtiII4W9HoYkY48Soy5xE/uHKw==
   dependencies:
     "@types/react-reconciler" "^0.28.9"
 
