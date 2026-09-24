@@ -44,14 +44,25 @@ function uniformTypeAssertions() {
   // @ts-expect-error useUniforms must preserve exact keys.
   fog.missing
 
-  useLocalNodes(({ uniforms }) => {
+  const local = useLocalNodes(({ uniforms }) => {
     const scoped = uniforms.scope<FogUniformSchema>('fog')
 
     return {
       densityNode: scoped.density.mul(2),
       tintNode: mix(color('black'), scoped.tint, scoped.density),
     }
-  })
+  }, [])
+
+  local.densityNode.mul(2)
+  // @ts-expect-error useLocalNodes must preserve the creator's exact return keys.
+  local.missing
+
+  // A readonly dependency list is accepted, and inference is unchanged by its presence.
+  const readonlyDeps: readonly [number, string] = [1, 'a']
+  const withDeps = useLocalNodes(() => ({ scaled: speed.mul(2), label: 'x' as const }), readonlyDeps)
+  withDeps.scaled.mul(2)
+  const label: 'x' = withDeps.label
+  void label
 }
 
 type Assert<T extends true> = T

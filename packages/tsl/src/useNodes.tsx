@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
@@ -206,41 +206,125 @@ export default useNodes
 /** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
 export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
 
+/** `Object.is` over two dependency lists of equal length. Never deep: closures cannot be inferred. */
+function areDepsEqual(next: React.DependencyList, prev: React.DependencyList): boolean {
+  if (next.length !== prev.length) return false
+  for (let i = 0; i < next.length; i++) if (!Object.is(next[i], prev[i])) return false
+  return true
+}
+
+interface DependencyRecord {
+  deps: React.DependencyList | undefined
+  /** Fresh object whenever the declared dependencies change — the memo's one caller-driven input. */
+  token: object
+}
+
 /**
- * Creates local values that rebuild when uniforms, nodes, or textures change.
+ * Collapse a caller's dependency list into ONE memo input so hook order and dependency-list
+ * length stay fixed no matter how the caller invokes the hook. React must never see the
+ * caller's array directly: its length may legitimately differ between call sites, and forwarding
+ * a changing-length list is exactly what React warns about.
  *
- * Unlike `useNodes`, this does NOT register to the global store.
- * Use for component-specific nodes/values that depend on shared resources.
+ * - No array: a new token every render, so the memo re-evaluates every render.
+ * - Array: the previous token is reused while every entry is `Object.is`-equal to the previous
+ *   render's, and replaced otherwise. Comparison is against the last RENDERED list, which is
+ *   what `useMemo` itself does; an abandoned render can at worst cost one extra evaluation,
+ *   never a stale result, because the memo below still keys on the committed token.
+ *
+ * Development diagnostics cover the two contract violations a runtime can detect: the list
+ * appearing/disappearing between renders, and its length changing.
+ */
+function useDependencyToken(deps: React.DependencyList | undefined): object {
+  const previous = useRef<DependencyRecord | null>(null)
+  const record = previous.current
+
+  if (process.env.NODE_ENV !== 'production' && record) {
+    const hadDeps = record.deps !== undefined
+    const hasDeps = deps !== undefined
+    if (hadDeps !== hasDeps) {
+      console.warn(
+        `[useLocalNodes] The dependency array was ${hasDeps ? 'added' : 'omitted'} between renders. ` +
+          'Pass an array on every render or on none; the mode must not change for a mounted component.',
+      )
+    } else if (hasDeps && record.deps!.length !== deps.length) {
+      console.warn(
+        `[useLocalNodes] The dependency array length changed between renders (${record.deps!.length} → ${deps.length}). ` +
+          'Declare a fixed-length list; conditional dependencies belong inside the array as values.',
+      )
+    }
+  }
+
+  if (deps === undefined) {
+    previous.current = { deps: undefined, token: {} }
+  } else if (!record || record.deps === undefined || !areDepsEqual(deps, record.deps)) {
+    previous.current = { deps, token: {} }
+  } else if (record.deps !== deps) {
+    // Same values, new array literal: keep the token, remember the latest list.
+    previous.current = { deps, token: record.token }
+  }
+
+  return previous.current!.token
+}
+
+/**
+ * Creates component-local values from the rendering context and the shared TSL resources.
+ *
+ * Unlike `useNodes`, this does NOT register to the global store — nothing is published during
+ * render or commit. The creator runs in the render phase and is pure computation.
+ *
+ * **When the creator re-runs** is controlled by the optional `deps` array, mirroring `useMemo`:
+ *
+ * | Call                             | Ordinary component renders                                  |
+ * | -------------------------------- | ----------------------------------------------------------- |
+ * | `useLocalNodes(creator)`         | Re-evaluate every render, even with a `useCallback` creator |
+ * | `useLocalNodes(creator, [])`     | Reuse the result                                            |
+ * | `useLocalNodes(creator, [a, b])` | Reuse until a declared dependency changes by `Object.is`    |
+ *
+ * Independently of `deps`, a registered resource replacement (a `uniforms`/`nodes`/`textures`
+ * map change), a change of the owning (primary) store, and an HMR / `rebuild*` invalidation all
+ * re-run the creator. `[]` therefore means "no JavaScript construction inputs", not "never
+ * rebuild". Whenever it re-runs, the creator from the CURRENT render is used; creator identity
+ * itself is never a rebuild trigger once an array is supplied.
+ *
+ * List the JavaScript values the creator reads while building the graph (props, state, module
+ * constants that change) — not live TSL values. A `UniformNode` is referenced by the graph, so
+ * mutating its `.value` needs no rebuild and must not be a dependency.
  *
  * @example
  * ```tsx
- * // Destructure what you need from state
+ * // Resource-driven composition: no surrounding JS inputs.
  * const { wobble, uTime } = useLocalNodes(({ uniforms, nodes }) => ({
  *   wobble: sin(uniforms.uTime.mul(2)),
- *   uTime: uniforms.uTime,  // can return uniforms too
- * }))
+ *   uTime: uniforms.uTime, // can return uniforms too
+ * }), [])
  *
- * // Or access anything else from RootState
- * const { scaled } = useLocalNodes(({ camera, nodes }) => ({
- *   scaled: nodes.basePos.mul(camera.zoom),
- * }))
+ * // `strength` is a JavaScript construction input captured from this render.
+ * const { result } = useLocalNodes(({ nodes }) => ({
+ *   result: nodes.noise.mul(strength),
+ * }), [strength])
  *
  * // Type-safe uniform access
  * const { colorNode } = useLocalNodes(({ uniforms }) => {
  *   const uValue = uniforms.myUniform as UniformNode<number>
  *   return { colorNode: mix(colorA, colorB, uValue) }
- * })
+ * }, [])
  * ```
  */
-export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalNodeCreator<T>): T {
+export function useLocalNodes<T extends Record<string, unknown>>(
+  creator: LocalNodeCreator<T>,
+  deps?: React.DependencyList,
+): T {
   const store = usePrimaryStore()
 
-  // Subscribe to trigger recreation when these change
+  // Independent rebuild triggers: registered resource replacement (whole-map until #3919
+  // narrows it), owning store, and the HMR / manual-rebuild generation.
   const uniforms = usePrimaryThree((s) => s.uniforms)
   const nodes = usePrimaryThree((s) => s.nodes)
   const textures = usePrimaryThree((s) => s.textures)
-  // Subscribe to HMR version to rebuild on hot reload
   const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
+
+  // The caller's declared JavaScript construction inputs, collapsed to one stable input.
+  const depsToken = useDependencyToken(deps)
 
   return useMemo(() => {
     // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
@@ -248,6 +332,8 @@ export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalN
     // earlier in this render pass are visible here too.
     const wrappedState = createLazyCreatorState(store.getState(), store)
     return creator(wrappedState)
+    // `creator` is intentionally not a dependency: the memo closes over the current render's
+    // creator and only its declared inputs (depsToken) decide whether it runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, creator, uniforms, nodes, textures, hmrVersion]) // hmrVersion triggers rebuild on HMR
+  }, [store, uniforms, nodes, textures, hmrVersion, depsToken])
 }
