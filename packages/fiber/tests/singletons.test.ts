@@ -15,6 +15,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import * as React from 'react'
+import { act } from 'react'
+import * as THREE from 'three'
 
 //* Symbol keys used by the singleton pattern ==============================
 const CONTEXT_KEY = Symbol.for('@react-three/fiber.context')
@@ -124,6 +127,62 @@ describe('Cross-bundle singleton sharing', () => {
       const catalogue = (globalThis as any)[CATALOGUE_KEY]
       expect(catalogue[idA]).toBe(FromBundleA)
       expect(catalogue[idB]).toBe(FromBundleB)
+    })
+
+    it('factory extend() skips catalogue ids a pre-shared-counter bundle already took', async () => {
+      // A copy of R3F from before the shared counter (v10 alphas) keeps a module-local `let i = 0`
+      // and writes `catalogue['0']` without ever touching EXTEND_ID. Simulate that bundle by seeding
+      // the shared catalogue directly, then check the current extend() lands on the next free slot.
+      vi.resetModules()
+      const current = await import('../src/core/extend')
+      const catalogue = (globalThis as any)[CATALOGUE_KEY]
+
+      class FromOldBundle {}
+      catalogue['0'] = FromOldBundle
+      expect((globalThis as any)[EXTEND_ID_KEY]).toBeUndefined()
+
+      class FromNewBundle {}
+      const id = current.extend(FromNewBundle) as unknown as string
+
+      expect(id).toBe('1')
+      expect(catalogue['0']).toBe(FromOldBundle)
+      expect(catalogue['1']).toBe(FromNewBundle)
+      expect((globalThis as any)[EXTEND_ID_KEY]).toBe(2)
+    })
+
+    it('a reconciler from bundle B instantiates the class bundle A registered with extend()', async () => {
+      // Regression for the pre-fix failure mode: each bundle counted from 0, so bundle B's factory
+      // id overwrote bundle A's slot and rendering A's element constructed B's class. Go through
+      // the real reconciler (createInstance) rather than only inspecting catalogue slots.
+      class FromBundleA extends THREE.Object3D {}
+      class FromBundleB extends THREE.Object3D {}
+
+      vi.resetModules()
+      const bundleA = await import('../src/core/extend')
+      const ElementA = bundleA.extend(FromBundleA)
+
+      vi.resetModules()
+      const bundleB = await import('../src/index')
+      const ElementB = bundleB.extend(FromBundleB)
+
+      const root = bundleB.createRoot(document.createElement('canvas'))
+      try {
+        const store = await act(async () =>
+          root.render(
+            React.createElement(
+              React.Fragment,
+              null,
+              React.createElement(ElementA, { name: 'a' }),
+              React.createElement(ElementB, { name: 'b' }),
+            ),
+          ),
+        )
+        const { scene } = store.getState()
+        expect(scene.getObjectByName('a')).toBeInstanceOf(FromBundleA)
+        expect(scene.getObjectByName('b')).toBeInstanceOf(FromBundleB)
+      } finally {
+        await act(async () => root.unmount())
+      }
     })
   })
 })
