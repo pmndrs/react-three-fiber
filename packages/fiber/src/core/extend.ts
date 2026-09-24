@@ -54,7 +54,10 @@ export function extend(
   objects: Record<string, unknown> | ConstructorRepresentation,
 ): React.ExoticComponent<ThreeElement<any>> | void {
   if (isConstructor(objects)) {
-    const id = ids[R3F_EXTEND_ID] ?? 0
+    // A copy of R3F that predates the shared counter still writes its module-local ids straight into
+    // the shared catalogue, so skip any slot that is already taken rather than trusting the counter.
+    let id = ids[R3F_EXTEND_ID] ?? 0
+    while (`${id}` in catalogue) id++
     ids[R3F_EXTEND_ID] = id + 1
     const Component = `${id}`
     catalogue[Component] = objects
