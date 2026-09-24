@@ -72,6 +72,10 @@ function CanvasImpl({
   React.useImperativeHandle(ref, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
+  const pointerMissed = React.useCallback(
+    (event: MouseEvent) => handlePointerMissed.current?.(event),
+    [handlePointerMissed],
+  )
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -118,8 +122,8 @@ function CanvasImpl({
           raycaster,
           camera,
           size: containerRect,
-          // Pass mutable reference to onPointerMissed so it's free to update
-          onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+          // Forwards to the latest onPointerMissed, so a new callback does not update the store
+          onPointerMissed: pointerMissed,
           onCreated: (state) => {
             rootState.current = state
             // A ref to an ancestor is not attached yet. The effect below settles it

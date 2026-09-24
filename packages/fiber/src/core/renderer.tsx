@@ -8,42 +8,25 @@ import { ComputeFunction, EventManager } from './events'
 import { useStore } from './hooks'
 import { advance, invalidate } from './loop'
 import { reconciler, Root } from './reconciler'
-import {
-  context,
-  createStore,
-  Dpr,
-  Frameloop,
-  isRenderer,
-  Performance,
-  Renderer,
-  RootState,
-  RootStore,
-  Size,
-} from './store'
+import { context, createStore, Dpr, Frameloop, Performance, Renderer, RootState, RootStore, Size } from './store'
 import {
   type Properties,
-  applyProps,
-  calculateDpr,
   Camera,
   dispose,
-  EquConfig,
-  is,
   noop,
-  prepare,
   updateCamera,
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { fulfilled, isPromiseLike, rejected, tracked, TrackedPromise } from './promise'
+import { deferred, fulfilled, isPromiseLike, rejected, TrackedPromise } from './promise'
 import { transitionRoot } from './machine'
+import { applyRootConfiguration, createRenderer } from './configuration'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
 interface OffscreenCanvas extends EventTarget {}
 
 export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
-
-const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
   canvas: HTMLCanvasElement | OffscreenCanvas
@@ -122,27 +105,6 @@ export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCan
   unmount: () => void
 }
 
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
-  if (
-    !size &&
-    typeof HTMLCanvasElement !== 'undefined' &&
-    canvas instanceof HTMLCanvasElement &&
-    canvas.parentElement
-  ) {
-    const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-    return { width, height, top, left }
-  } else if (!size && typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
-    return {
-      width: canvas.width,
-      height: canvas.height,
-      top: 0,
-      left: 0,
-    }
-  }
-
-  return { width: 0, height: 0, top: 0, left: 0, ...size }
-}
-
 export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
 ): ReconcilerRoot<TCanvas> {
@@ -184,10 +146,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   const root: Root = prevRoot || { fiber, store, state: { status: 'open' }, ready: fulfilled(undefined) }
   if (!prevRoot) _roots.set(canvas, root)
 
-  // Locals
-  let onCreated: ((state: RootState) => void) | undefined
-  let lastCamera: RenderProps<TCanvas>['camera']
-
   let mounted = false
 
   return {
@@ -199,261 +157,46 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         return rejected(new Error('R3F: Cannot configure a root after disposal has started.'))
       }
 
-      const {
-        gl: glConfig,
-        size: propsSize,
-        scene: sceneOptions,
-        events,
-        onCreated: onCreatedCallback,
-        shadows = false,
-        linear = false,
-        flat = false,
-        legacy = false,
-        orthographic = false,
-        frameloop = 'always',
-        dpr = [1, 2],
-        performance,
-        raycaster: raycastOptions,
-        camera: cameraOptions,
-        onPointerMissed,
-      } = props
+      // Configuration applies in call order. Publishing first queues calls made while this one runs
+      const previous = root.ready
+      const { promise, resolve, reject } = deferred<ReconcilerRoot<TCanvas>>()
+      root.ready = promise
 
-      const defaultProps: DefaultGLProps = {
-        canvas: canvas as HTMLCanvasElement,
-        powerPreference: 'high-performance',
-        antialias: true,
-        alpha: true,
+      const apply = (gl: Renderer) => {
+        applyRootConfiguration(store, canvas, props, gl)
+        resolve(this)
       }
-
-      // Synchronous, and needs the renderer to exist
-      const apply = (customRenderer?: unknown) => {
-        const state = store.getState()
-
-        // Set up renderer (one time only!)
-        const first = !state.gl
-        let gl = state.gl
-        if (first) {
-          gl = isRenderer(customRenderer)
-            ? (customRenderer as THREE.WebGLRenderer)
-            : new THREE.WebGLRenderer({ ...defaultProps, ...(glConfig as object) })
-          // R3F owns what it builds, a factory's result included, since it calls the factory
-          // once per root. A renderer instance belongs to the caller
-          state.internal.ownsRenderer = !isRenderer(glConfig)
-          state.set({ gl })
-        }
-
-        // Set up raycaster (one time only!)
-        let raycaster = state.raycaster
-        if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
-
-        // Set raycaster options
-        const { params, ...options } = raycastOptions || {}
-        if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
-        if (!is.equ(params, raycaster.params, shallowLoose))
-          applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
-
-        // Create default camera, don't overwrite any user-set state
-        if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
-          lastCamera = cameraOptions
-          const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
-          const camera = isCamera
-            ? (cameraOptions as Camera)
-            : orthographic
-            ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-            : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-          if (!isCamera) {
-            camera.position.z = 5
-            if (cameraOptions) {
-              applyProps(camera, cameraOptions as any)
-              // Preserve user-defined frustum if possible
-              // https://github.com/pmndrs/react-three-fiber/issues/3160
-              if (!(camera as any).manual) {
-                if (
-                  'aspect' in cameraOptions ||
-                  'left' in cameraOptions ||
-                  'right' in cameraOptions ||
-                  'bottom' in cameraOptions ||
-                  'top' in cameraOptions
-                ) {
-                  ;(camera as any).manual = true
-                  camera.updateProjectionMatrix()
-                }
-              }
-            }
-            // Always look at center by default
-            if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
-          }
-          state.set({ camera })
-
-          // Configure raycaster
-          // https://github.com/pmndrs/react-xr/issues/300
-          raycaster.camera = camera
-        }
-
-        // Set up scene (one time only!)
-        if (!state.scene) {
-          let scene: THREE.Scene
-
-          if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
-            scene = sceneOptions as THREE.Scene
-            prepare(scene, store, '', {})
-          } else {
-            scene = new THREE.Scene()
-            prepare(scene, store, '', {})
-            if (sceneOptions) applyProps(scene as any, sceneOptions as any)
-          }
-
-          state.set({ scene })
-        }
-
-        // Store events internally
-        if (events && !state.events.handlers) state.set({ events: events(store) })
-        // Check size, allow it to take on container bounds initially
-        const size = computeInitialSize(canvas, propsSize)
-        if (!is.equ(size, state.size, shallowLoose)) {
-          state.setSize(size.width, size.height, size.top, size.left)
-        }
-        // Check pixelratio
-        if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
-        // Check frameloop
-        if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
-        // Check pointer missed
-        if (!state.onPointerMissed) state.set({ onPointerMissed })
-        // Check performance
-        if (performance && !is.equ(performance, state.performance, shallowLoose))
-          state.set((state) => ({ performance: { ...state.performance, ...performance } }))
-
-        // Set up XR (one time only!)
-        if (!state.xr) {
-          // Handle frame behavior in WebXR
-          const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
-            const state = store.getState()
-            if (state.frameloop === 'never') return
-            advance(timestamp, true, state, frame)
-          }
-
-          // Toggle render switching on session
-          const handleSessionChange = () => {
-            const state = store.getState()
-            state.gl.xr.enabled = state.gl.xr.isPresenting
-
-            state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
-            if (!state.gl.xr.isPresenting) invalidate(state)
-          }
-
-          // WebXR session manager
-          const xr = {
-            connect() {
-              const gl = store.getState().gl
-              gl.xr.addEventListener('sessionstart', handleSessionChange)
-              gl.xr.addEventListener('sessionend', handleSessionChange)
-            },
-            disconnect() {
-              const gl = store.getState().gl
-              gl.xr.removeEventListener('sessionstart', handleSessionChange)
-              gl.xr.removeEventListener('sessionend', handleSessionChange)
-            },
-          }
-
-          // Subscribe to WebXR session events
-          if (typeof gl.xr?.addEventListener === 'function') xr.connect()
-          state.set({ xr })
-        }
-
-        // Set shadowmap
-        if (gl.shadowMap) {
-          const oldEnabled = gl.shadowMap.enabled
-          const oldType = gl.shadowMap.type
-          gl.shadowMap.enabled = !!shadows
-
-          if (is.boo(shadows)) {
-            gl.shadowMap.type = THREE.PCFSoftShadowMap
-          } else if (is.str(shadows)) {
-            const types = {
-              basic: THREE.BasicShadowMap,
-              percentage: THREE.PCFShadowMap,
-              soft: THREE.PCFSoftShadowMap,
-              variance: THREE.VSMShadowMap,
-            }
-            gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
-          } else if (is.obj(shadows)) {
-            Object.assign(gl.shadowMap, shadows)
-          }
-
-          if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
-        }
-
-        THREE.ColorManagement.enabled = !legacy
-
-        // Set color space and tonemapping preferences
-        if (first) {
-          gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-          gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-        }
-
-        // Update color management state
-        if (state.legacy !== legacy) state.set(() => ({ legacy }))
-        if (state.linear !== linear) state.set(() => ({ linear }))
-        if (state.flat !== flat) state.set(() => ({ flat }))
-
-        // Set gl props
-        if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-          applyProps(gl, glConfig as any)
-
-        // Set locals
-        onCreated = onCreatedCallback
-      }
-
-      const fail = (error: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
-        return rejected<ReconcilerRoot<TCanvas>>(error)
-      }
-      const run = (customRenderer?: unknown): TrackedPromise<ReconcilerRoot<TCanvas>> => {
-        // Already accepted work can finish while closing so its renderer can be released.
-        if (root.state.status === 'disposed') {
-          return fail(new Error('R3F: Cannot configure a root after disposal has started.'))
-        }
+      const run = () => {
         try {
-          apply(customRenderer)
-          return fulfilled(this)
+          const gl = store.getState().gl ?? createRenderer(canvas, props.gl)
+          // Only an async renderer factory makes configuration asynchronous
+          if (isPromiseLike(gl)) Promise.resolve(gl).then(apply).catch(reject)
+          else apply(gl)
         } catch (error) {
-          return fail(error)
+          reject(error)
         }
       }
-      const setReady = (work: TrackedPromise<ReconcilerRoot<TCanvas>>) => {
-        // Readiness covers all queued configuration, not just renderer acquisition.
-        root.ready = work
-        return work
-      }
 
-      // The renderer exists, so applying props is synchronous
-      if (store.getState().gl && root.ready.status !== 'pending') return setReady(run())
-
-      // Another configure is creating it. Chaining keeps them in call order
-      if (root.ready.status === 'pending') return setReady(tracked(root.ready.then(() => run())))
-
-      // Only an async factory makes configure asynchronous
-      let customRenderer: unknown
-      try {
-        customRenderer = typeof glConfig === 'function' ? glConfig(defaultProps) : glConfig
-      } catch (error) {
-        return setReady(fail(error))
-      }
-      if (!isPromiseLike(customRenderer)) return setReady(run(customRenderer))
-
-      return setReady(tracked(customRenderer.then(run, fail)))
+      if (previous.status === 'pending') previous.then(run, reject)
+      else run()
+      return promise
     },
     render(children: React.ReactNode): RootStore {
       if (!transitionRoot(root, { type: 'use' })) return store
 
-      const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
+      // The root has to be configured before it can be rendered
+      if (!store.getState().gl && root.ready.status === 'fulfilled') this.configure()
+      if (root.ready.status === 'rejected') throw root.ready.reason
+
       const commit = () => {
-        if (root.state.status !== 'open') return
-        // More configuration may have been queued since render started waiting.
+        if (root.state.status !== 'open' || root.ready.status === 'rejected') return
+        // Wait for all queued configuration, including any queued while waiting
         if (root.ready.status === 'pending') {
           root.ready.then(commit, logRecoverableError)
           return
         }
-        if (root.ready.status === 'rejected') return
+        const onCreated = store.getState().internal.configuration.previous?.onCreated
+        const element = <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />
         if (mounted) {
           reconciler.updateContainer(element, fiber, null, noop)
           return
@@ -466,19 +209,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         reconciler.flushSyncWork()
       }
 
-      // The root has to be configured before it can be rendered
-      if (!store.getState().gl && root.ready.status === 'fulfilled') this.configure()
-
-      switch (root.ready.status) {
-        case 'pending':
-          root.ready.then(commit, logRecoverableError)
-          break
-        case 'rejected':
-          throw root.ready.reason
-        default:
-          commit()
-      }
-
+      commit()
       return store
     },
     unmount(): void {

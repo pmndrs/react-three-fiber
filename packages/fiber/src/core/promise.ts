@@ -1,5 +1,5 @@
-export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
-  typeof (value as PromiseLike<unknown> | undefined)?.then === 'function'
+export const isPromiseLike = <T>(value: T | PromiseLike<T>): value is PromiseLike<T> =>
+  typeof (value as PromiseLike<T> | undefined)?.then === 'function'
 
 /** A promise tagged with its state, the protocol React's `use` reads */
 export type TrackedPromise<T> = Promise<T> &
@@ -14,18 +14,21 @@ export const rejected = <T>(reason: unknown): TrackedPromise<T> => {
   return Object.assign(promise, { status: 'rejected', reason } as const)
 }
 
-/** Tags `promise` in place once it settles. */
-export const tracked = <T>(promise: PromiseLike<T>): TrackedPromise<T> => {
-  const result = Promise.resolve(promise) as TrackedPromise<T>
-  result.status = 'pending'
-  // Statement bodies: returning `result` would make this derived promise adopt its rejection
-  result.then(
-    (value) => {
-      Object.assign(result, { status: 'fulfilled', value })
-    },
-    (reason) => {
-      Object.assign(result, { status: 'rejected', reason })
-    },
-  )
-  return result
+/** A pending promise, settled once from outside. Its `status` updates the moment it settles */
+export const deferred = <T>() => {
+  let resolve!: (_value: T) => void
+  let reject!: (_reason: unknown) => void
+  const promise = new Promise<T>((yes, no) => {
+    resolve = (value) => {
+      Object.assign(promise, { status: 'fulfilled', value })
+      yes(value)
+    }
+    reject = (reason) => {
+      Object.assign(promise, { status: 'rejected', reason })
+      no(reason)
+    }
+  }) as TrackedPromise<T>
+  promise.status = 'pending'
+  promise.catch(() => {}) // the reason is read from `status`
+  return { promise, resolve, reject }
 }
