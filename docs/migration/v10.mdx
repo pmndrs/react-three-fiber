@@ -366,6 +366,8 @@ import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
 
 No. WebGL remains the default and will continue to be supported. WebGPU is opt-in for those who want to use TSL shaders or need WebGPU-specific features.
 
+If you do want TSL or node materials, start the canvas on `WebGPURenderer` (`<Canvas renderer>`, or the `/webgpu` entry): the legacy `WebGLRenderer` cannot compile them, and R3F warns in development when a node material is attached without `renderer`. That does not require browser WebGPU support — `WebGPURenderer` falls back to WebGL2 automatically.
+
 ### Will my drei/postprocessing code work?
 
 Mostly, with one caveat during the alpha. v10's default import keeps the v9 surface these packages

@@ -60,6 +60,9 @@ beforeAll(() => {
   console.warn = (...args: any[]) => {
     const message = args[0]?.toString() || ''
     if (message.includes('WebGlRenderer usage is deprecated')) return
+    // Same root cause: without `renderer` these roots run the legacy WebGLRenderer, so attaching a
+    // node material trips the #3889 hint. Covered in node-material-legacy-warning.test.tsx.
+    if (message.includes('A node material was attached')) return
     originalWarn.apply(console, args)
   }
 })

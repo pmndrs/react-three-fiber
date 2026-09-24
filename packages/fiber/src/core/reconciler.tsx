@@ -31,6 +31,7 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
+import { warnIfNodeMaterialOnLegacyRenderer } from './utils/nodeMaterial'
 import { removeInteractivity, swapInteractivity } from './events'
 import type { ThreeElement } from '../../types/three'
 
@@ -197,6 +198,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Append instance
   if (child.props.attach) {
     attach(parent, child)
+    warnIfNodeMaterialOnLegacyRenderer(child)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     const childIndex = parent.object.children.indexOf(beforeChild?.object)
     if (beforeChild && childIndex !== -1) {

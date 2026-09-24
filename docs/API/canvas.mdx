@@ -208,6 +208,8 @@ export default () => (
 
 `renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
+Node materials (`meshStandardNodeMaterial`, anything with `isNodeMaterial`) and TSL only compile on `WebGPURenderer`, so they need the `renderer` prop — without it the default entry runs the legacy `WebGLRenderer`, and in development R3F warns when a node material is attached to such a canvas. This is about which renderer you start on, not the browser: `WebGPURenderer` falls back to WebGL2 by itself where WebGPU is unavailable, so browser WebGPU support is not required.
+
 ## Custom Canvas
 
 R3F can render to a root, similar to how `react-dom` and all the other React renderers work. This allows you to shave off `react-dom` (~40kb), `react-use-measure` (~3kb) and, if you don't need them, `pointer-events` (~7kb) (you need to explicitly import `events` and add them to the config otherwise).
