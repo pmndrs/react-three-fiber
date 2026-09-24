@@ -120,7 +120,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  if (!prevRoot) _roots.set(canvas, { fiber, store })
+  const root: Root = prevRoot || { fiber, store, unmountClaim: null }
+  if (!prevRoot) _roots.set(canvas, root)
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
@@ -146,6 +147,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+      // Using the root again cancels a pending unmount (see unmountComponentAtNode). Cleared
+      // before the first await so a remount in the same tick as the unmount reclaims the root.
+      root.unmountClaim = null
+
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
@@ -858,10 +863,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return this
     },
     render(children: ReactNode): RootStore {
+      // A handle whose root was torn down (and possibly replaced on the same canvas) is inert
+      if (_roots.get(canvas) !== root) return store
+      root.unmountClaim = null
+
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
       pending!.then(() => {
+        // Rendering waits on the async renderer setup; an unmount that landed meanwhile wins
+        if (_roots.get(canvas) !== root || root.unmountClaim) return
         reconciler.updateContainer(
           <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
           fiber,
@@ -909,89 +920,87 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   callback?: (canvas: TCanvas) => void,
 ): void {
   const root = _roots.get(canvas)
-  const fiber = root?.fiber
-  if (fiber) {
-    const state = root?.store.getState()
-    if (state) {
+  if (!root) return
+
+  // Claim the root. configure() and render() clear the claim, which cancels this teardown: a root
+  // used again before its unmount has flushed (an imperative createRoot on the same canvas, a
+  // StrictMode-style remount) keeps its renderer, scene and scheduler registration (#3869).
+  const claim = (root.unmountClaim = Symbol('unmount'))
+
+  reconciler.updateContainer(null, root.fiber, null, () => {
+    if (root.unmountClaim !== claim) return
+
+    // Effect cleanups flush before the next update, so by the time this commits the unmounted
+    // tree has released its frame jobs, subscriptions and resources.
+    reconciler.updateContainer(null, root.fiber, null, () => {
+      if (root.unmountClaim !== claim) return
+      root.unmountClaim = null
+
+      // Read the live state: Provider replaces `internal` when it activates the root.
+      const state = root.store.getState()
       state.internal.active = false
-      // Stop scheduling this root immediately. Renderer and GPU disposal retain the
-      // existing grace period, but a dead Canvas must not keep running frame jobs.
-      const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
-      if (unregisterRoot) {
-        unregisterRoot()
-        ;(state.internal as any).unregisterRoot = undefined
+      try {
+        // Release the scheduler root first so no frame job runs against a disposed scene or
+        // renderer. Nothing is unregistered before this point, so a cancelled teardown leaves
+        // the root scheduled exactly as it was.
+        state.internal.unregisterRoot?.()
+        state.internal.unregisterRoot = undefined
+
+        const renderer = state.internal.actualRenderer
+
+        // Unregister primary canvas from registry (if it was registered)
+        const unregisterPrimary = state.internal.unregisterPrimary
+        if (unregisterPrimary) unregisterPrimary()
+
+        // Dispose the CanvasTarget we created. A primary's target is the renderer's own
+        // default target, which the renderer owns and which may outlive this root (an
+        // external renderer reused across mounts), so only secondaries dispose theirs.
+        const canvasTarget = state.internal.canvasTarget
+        if (state.internal.isSecondary && canvasTarget?.dispose) canvasTarget.dispose()
+
+        state.events.disconnect?.()
+        // Clean up occlusion system and helper group
+        cleanupHelperGroup(root.store)
+        // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
+        if (state.isLegacy && renderer) {
+          ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
+          ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
+        }
+        // Only disconnect XR and dispose renderer if this is not a secondary canvas
+        // Secondary canvases share the renderer, so we must not dispose it
+        if (!state.internal.isSecondary) {
+          if (renderer?.xr) state.xr?.disconnect()
+        }
+        // A root whose configure() never got this far has no XR manager or scene yet
+        if (state.scene) dispose(state.scene)
+      } catch (error) {
+        // Teardown is best-effort — a failure here must not throw out of unmount, or React is
+        // left with a half-torn-down root. But swallowing it silently hid real WebGPU teardown
+        // failures, which is how this surfaces as "dispose appears to do nothing".
+        console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
       }
-    }
-    reconciler.updateContainer(null, fiber, null, () => {
-      if (state) {
-        setTimeout(() => {
-          // A root configured and rendered again inside the grace period (an imperative
-          // createRoot on the same canvas, a StrictMode-style remount) is live again and must
-          // keep its renderer and scene. Provider replaces `internal` when it re-activates the
-          // root, so read it from the store rather than from the state captured above.
-          if (root.store.getState().internal.active) return
-          // Every unmount schedules its own teardown, so a root unmounted twice inside the grace
-          // period (or unmounted, remounted and unmounted again) has two pending. The first one
-          // releases the root; the rest must not dispose the scene or renderer a second time.
-          if (_roots.get(canvas) !== root) return
-          try {
-            const renderer = state.internal.actualRenderer
 
-            // Unregister primary canvas from registry (if it was registered)
-            const unregisterPrimary = state.internal.unregisterPrimary
-            if (unregisterPrimary) unregisterPrimary()
-
-            // Dispose the CanvasTarget we created. A primary's target is the renderer's own
-            // default target, which the renderer owns and which may outlive this root (an
-            // external renderer reused across mounts), so only secondaries dispose theirs.
-            const canvasTarget = state.internal.canvasTarget
-            if (state.internal.isSecondary && canvasTarget?.dispose) canvasTarget.dispose()
-
-            state.events.disconnect?.()
-            // Clean up occlusion system and helper group
-            cleanupHelperGroup(root!.store)
-            // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
-            if (state.isLegacy && renderer) {
-              ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
-              ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
-            }
-            // Only disconnect XR and dispose renderer if this is not a secondary canvas
-            // Secondary canvases share the renderer, so we must not dispose it
-            if (!state.internal.isSecondary) {
-              if (renderer?.xr) state.xr?.disconnect()
-            }
-            // A root whose configure() never got this far has no XR manager or scene yet
-            if (state.scene) dispose(state.scene)
-
-            _roots.delete(canvas)
-            if (callback) callback(canvas)
-          } catch (error) {
-            // Teardown is best-effort — a failure here must not throw out of unmount, or React is
-            // left with a half-torn-down root. But swallowing it silently hid real WebGPU teardown
-            // failures, which is how this surfaces as "dispose appears to do nothing".
-            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
-          }
-
-          // Release this root's hold on the renderer, and dispose it with the last one out if R3F
-          // built it (#3926). A primary and its secondaries all resolve to the primary's store, so
-          // whichever of them unmounts last does this; a caller-supplied instance is never
-          // disposed, whatever the mount order. Kept apart from the steps above so a failure in
-          // any of them cannot leak the renderer and its GPU device.
-          try {
-            const owner = state.primaryStore?.getState().internal
-            // Only the call that actually removes this root may dispose: a root releases its
-            // hold once, so the renderer is disposed once.
-            const released = owner?.rendererConsumers?.delete(root.store)
-            if (released && owner?.ownsRenderer && !owner.rendererConsumers?.size) {
-              state.internal.actualRenderer.dispose()
-            }
-          } catch (error) {
-            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
-          }
-        }, 500)
+      // Release this root's hold on the renderer, and dispose it with the last one out if R3F
+      // built it (#3926). A primary and its secondaries all resolve to the primary's store, so
+      // whichever of them unmounts last does this; a caller-supplied instance is never disposed,
+      // whatever the mount order. Kept apart from the steps above so a failure in any of them
+      // cannot leak the renderer and its GPU device.
+      try {
+        const owner = state.primaryStore?.getState().internal
+        // Only the call that actually removes this root may dispose: a root releases its hold
+        // once, so the renderer is disposed once.
+        const released = owner?.rendererConsumers?.delete(root.store)
+        if (released && owner?.ownsRenderer && !owner.rendererConsumers?.size) {
+          state.internal.actualRenderer.dispose()
+        }
+      } catch (error) {
+        console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
       }
+
+      _roots.delete(canvas)
+      if (callback) callback(canvas)
     })
-  }
+  })
 }
 
 export function createPortal(

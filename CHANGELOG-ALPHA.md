@@ -15,6 +15,12 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   renderer arrived: a props bag or a factory function asks R3F to build one, so R3F owns and
   disposes it; an existing instance passed to `renderer` or `gl` stays the caller's and is never
   disposed, whatever the mount order across a primary and its secondaries.
+- Unmounting a root tears it down deterministically through React, once the unmounted tree's
+  effect cleanups have flushed, instead of after a 500 ms timer. Configuring or rendering the root
+  again before then cancels the teardown, so a root that is remounted on the same canvas keeps its
+  renderer, scene and scheduler registration, and a root that is unmounted, remounted and unmounted
+  again is torn down exactly once. Ported from master
+  ([#3869](https://github.com/pmndrs/react-three-fiber/pull/3869)).
 
 ## 10.0.0-alpha.5
 
