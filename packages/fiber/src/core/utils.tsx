@@ -171,16 +171,22 @@ export function watchDpr(onChange: () => void): () => void {
     return () => {}
   }
 
-  let query: MediaQueryList | undefined
+  // Partial matchMedia polyfills (test setups, older environments) may return no listener methods,
+  // or throw on a query they can't parse. Following the ratio is best-effort: it runs inside
+  // configuration, which must not fail because of it
+  let query: Partial<MediaQueryList> | undefined
   const listen = () => {
-    query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
-    if (query.addEventListener) query.addEventListener('change', handleChange)
-    else query.addListener(handleChange)
+    try {
+      query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+      if (typeof query?.addEventListener === 'function') query.addEventListener('change', handleChange)
+      else query?.addListener?.(handleChange)
+    } catch {
+      query = undefined
+    }
   }
   const unlisten = () => {
-    if (!query) return
-    if (query.removeEventListener) query.removeEventListener('change', handleChange)
-    else query.removeListener(handleChange)
+    if (typeof query?.removeEventListener === 'function') query.removeEventListener('change', handleChange)
+    else query?.removeListener?.(handleChange)
     query = undefined
   }
   const handleChange = () => {
