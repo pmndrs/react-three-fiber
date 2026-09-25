@@ -10,9 +10,17 @@ import type { IsAllOptional } from './utils'
 // to avoid bundling @types/react-reconciler which causes absolute path issues
 type FiberRoot = any
 
+/** A promise tagged with its state, the protocol React's `use` reads */
+export type TrackedPromise<T> = Promise<T> &
+  ({ status: 'pending' } | { status: 'fulfilled'; value: T } | { status: 'rejected'; reason: unknown })
+
 export interface Root {
   fiber: FiberRoot
   store: RootStore
+  /** Set while a teardown waits on React. Configure and render clear it, which cancels the teardown */
+  unmountClaim: symbol | null
+  /** Pending only while a renderer is being created */
+  ready: TrackedPromise<unknown>
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
