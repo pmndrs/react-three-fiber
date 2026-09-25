@@ -21,6 +21,7 @@ nav: 31
 For most apps, nothing will change. For those that access the renderer using `useThree()` or `useFrame()` here's all you need to do:
 
 - [ ] Replace `state.gl` with `state.renderer`
+- [ ] Replace any `onUpdate` prop with an effect, `useFrame` or a ref callback (see [`onUpdate` Removed](#onupdate-removed))
 - [ ] That's it!
 
 If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
@@ -209,6 +210,56 @@ config bag rather than at the top level:
 + <Canvas gl={{ textureColorSpace: 'srgb' }} />
 + <Canvas renderer={{ textureColorSpace: 'srgb' }} />
 ```
+
+### `onUpdate` Removed
+
+The `onUpdate` prop is gone. It was called after every prop update as a hook into the reconciler's
+internals, but it fired for reasons that had nothing to do with the props you cared about (attach
+changes, Suspense hide/unhide, child mounts) and not for the ones that did (imperative mutation,
+anything set in a `useFrame`). What you want is one of these three, all plain React or R3F:
+
+**An effect keyed on the props that change.** The effect runs exactly when those values change, and
+you can read the object through its ref.
+
+```diff
+- <bufferGeometry onUpdate={(self) => self.computeVertexNormals()} />
++ const ref = useRef<THREE.BufferGeometry>(null)
++ useEffect(() => ref.current?.computeVertexNormals(), [positions])
++ <bufferGeometry ref={ref}>
++   <bufferAttribute attach="attributes-position" args={[positions, 3]} />
++ </bufferGeometry>
+```
+
+**Read the object in a `useFrame` loop.** For continuous work, or anything that has to react to
+mutations made outside React, read the object each frame instead of waiting for a render.
+
+```tsx
+const ref = useRef<THREE.Mesh>(null)
+useFrame(() => {
+  ref.current!.rotation.y += 0.01
+})
+return <mesh ref={ref} />
+```
+
+**A ref callback.** For one-time setup when the object is created, a ref callback receives the
+object directly. Keep its identity stable with `useCallback`: React re-invokes an inline callback on
+every render. It runs again with a new object when `args` change.
+
+```tsx
+// Braces matter: a React 19 ref callback's return value is its cleanup, and lookAt returns the mesh
+const setup = useCallback((mesh: THREE.Mesh | null) => {
+  mesh?.lookAt(0, 0, 0)
+}, [])
+return <mesh ref={setup} />
+```
+
+`onUpdate` is no longer reserved, so it is applied to the object by name like any other prop. That
+is deliberate for `<texture>`: three.js has a real `Texture.onUpdate` callback that the renderer
+fires after uploading the texture to the GPU, and `<texture onUpdate={fn} />` now sets it. It is not
+called when props change, so a v9 `onUpdate={(self) => (self.needsUpdate = true)}` no longer flags a
+new `image` for upload: set `needsUpdate` in an effect keyed on the data instead. On a TSL node the
+prop replaces the `Node.onUpdate()` method, and on anything else (a mesh, a group) the assignment is
+inert. R3F logs a one-time notice the first time it sees an `onUpdate` prop.
 
 ### `<color attach="background">` Pattern Deprecated
 
