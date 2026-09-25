@@ -1,7 +1,9 @@
 import { useLayoutEffect, useEffect, useRef, useCallback, useState } from 'react'
 import { useStore, useThree } from '../../core/hooks'
+import { setRenderOverride } from '../../core/extensions'
 import * as THREE from '#three'
 import { pass } from '#three/tsl'
+import type { RootStore } from '#types'
 
 // Types are declared globally in types/renderPipeline.d.ts:
 // - ScenePassNode
@@ -12,6 +14,19 @@ import { pass } from '#three/tsl'
 // - RenderPipelineMainCallback
 // - UseRenderPipelineActions
 // - UseRenderPipelineReturn
+
+//* Render Override ==============================
+
+/**
+ * The render function useRenderPipeline installs with setRenderOverride. It persists after the
+ * component that called the hook unmounts, matching the pipeline itself (see reset()).
+ */
+function renderThroughPipeline(store: RootStore): () => void {
+  return () => {
+    const pipeline = store.getState().renderPipeline
+    if (pipeline?.render) pipeline.render()
+  }
+}
 
 //* Hook Implementation ==============================
 
@@ -108,6 +123,7 @@ export function useRenderPipeline(
       renderPipeline: null,
       passes: {},
     })
+    setRenderOverride(store, null)
     // Safe to dispose synchronously here: the pipeline is torn down in the same tick, so nothing
     // is left referencing the pass. This is explicit user-requested cleanup.
     scenePassCacheRef.current?.scenePass.dispose()
@@ -196,6 +212,9 @@ export function useRenderPipeline(
 
       // Update state with the pipeline and initial scenePass
       set({ renderPipeline: pipeline, passes: currentPasses })
+      // Route the root's default render job through the pipeline. Read from state at call time so
+      // reset() (which nulls the pipeline) and a later re-creation both take effect.
+      setRenderOverride(store, renderThroughPipeline(store))
 
       //* Run setupCB and mainCB ==============================
       // Only run callbacks if:

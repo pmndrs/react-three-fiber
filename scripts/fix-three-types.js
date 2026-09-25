@@ -40,6 +40,12 @@ const typeFixups = {
     threeExports: `typeof import('three/webgpu')`,
     namespaceModule: 'three_webgpu',
   },
+  // Extension entry: three-free at runtime, but it re-exports the shared types, which are built
+  // with the default #three alias and so carry the same merged-namespace block.
+  'extension.d.ts': {
+    threeExports: `typeof import('three') & typeof import('three/webgpu')`,
+    namespaceModule: 'three_webgpu',
+  },
 }
 
 /**

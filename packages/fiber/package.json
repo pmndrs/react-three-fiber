@@ -53,6 +53,11 @@
       "import": "./dist/webgpu/index.mjs",
       "require": "./dist/webgpu/index.cjs"
     },
+    "./extension": {
+      "types": "./dist/extension.d.ts",
+      "import": "./dist/extension.mjs",
+      "require": "./dist/extension.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

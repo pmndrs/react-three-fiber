@@ -647,8 +647,13 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
 
     const state = store.getState()
     expect(state.renderPipeline).toBeInstanceOf(THREE.RenderPipeline)
-    // The render-loop delegation hook: renderer.tsx reads `state.renderPipeline?.render`.
-    expect(typeof (state.renderPipeline as any).render).toBe('function')
+    // The render-loop delegation: the hook installs a render override (setRenderOverride) that the
+    // default render job calls instead of renderer.render(). The job side is covered in
+    // tests/extensions.test.tsx; here, that the override drives this pipeline.
+    const renderSpy = vi.spyOn(state.renderPipeline as THREE.RenderPipeline, 'render').mockImplementation(() => {})
+    expect(state.internal.renderOverride).toBeTypeOf('function')
+    state.internal.renderOverride!()
+    expect(renderSpy).toHaveBeenCalledTimes(1)
     expect(state.passes.scenePass).toBeDefined()
     expect(api.isReady).toBe(true)
     // Type-level: isReady discriminates the return, narrowing renderPipeline to non-null.
@@ -694,10 +699,14 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     await act(async () => withStore(store, <Comp />))
     expect(store.getState().renderPipeline).not.toBeNull()
 
+    expect(store.getState().internal.renderOverride).toBeTypeOf('function')
+
     await act(async () => api.reset())
 
     expect(store.getState().renderPipeline).toBeNull()
     expect(store.getState().passes).toEqual({})
+    // The default render job goes back to renderer.render().
+    expect(store.getState().internal.renderOverride).toBeNull()
   })
 
   it('clearPasses(): empties passes without destroying the pipeline', async () => {
@@ -847,9 +856,9 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     expect(store.getState().renderPipeline).toBeNull()
   })
 
-  // The render loop actually calling state.renderPipeline.render() each frame,
-  // and that call producing correct post-processed output, both need a real device.
-  it.todo('covered by Tier 2: default render loop delegates to state.renderPipeline.render() each frame')
+  // The render loop calling the pipeline each frame is covered without a device: the default job
+  // calls the render override (tests/extensions.test.tsx) and the override drives the pipeline
+  // (the `create` test above). That the call produces correct post-processed output needs a device.
   it.todo('covered by Tier 2: renderPipeline / scenePass produce correct post-processed output')
   // Tier 1 proves needsUpdate flips; that the recompiled graph reaches the GPU needs a device.
   it.todo('covered by Tier 2: rebuild() output node change is visible in rendered output')
