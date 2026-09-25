@@ -243,7 +243,15 @@ type EnvironmentLoaderClearOptions = Pick<EnvironmentLoaderProps, 'files' | 'pre
 
 useEnvironment.clear = (options: EnvironmentLoaderClearOptions = {}) => {
   const source = resolveSource(options)
-  // A loader that never resolved has nothing cached under it.
+  const input = toLoaderInput(source.files)
+  const clear = (loader: EnvironmentLoader) => useLoader.clear(loader, input)
   const loader = loadedLoaders.get(source.format)
-  if (loader) useLoader.clear(loader, toLoaderInput(source.files))
+  if (loader) {
+    clear(loader)
+  } else {
+    // A preload may be waiting for its decoder. Its callback runs first, then this one clears it.
+    // A failed decoder import has no texture entry to clear.
+    const pending = pendingLoaders.get(source.format)
+    if (pending) void pending.then(clear, () => {})
+  }
 }
