@@ -80,6 +80,41 @@ function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: 
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
+/**
+ * Calls `onChange` whenever window.devicePixelRatio changes: moving to another display or zooming.
+ * Neither resizes the canvas, so resize observers won't see it. A resolution query only matches the
+ * current ratio, so it is re-created after every change.
+ *
+ * @param onChange - Called after each change
+ * @returns Function that stops watching
+ */
+function watchDpr(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function' || !window.devicePixelRatio) {
+    return () => {}
+  }
+
+  let query: MediaQueryList | undefined
+  const listen = () => {
+    query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+    if (query.addEventListener) query.addEventListener('change', handleChange)
+    else query.addListener(handleChange)
+  }
+  const unlisten = () => {
+    if (!query) return
+    if (query.removeEventListener) query.removeEventListener('change', handleChange)
+    else query.removeListener(handleChange)
+    query = undefined
+  }
+  const handleChange = () => {
+    unlisten()
+    listen()
+    onChange()
+  }
+
+  listen()
+  return unlisten
+}
+
 export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
 ): ReconcilerRoot<TCanvas> {
@@ -136,6 +171,31 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     schedulerAfter: NonNullable<RenderProps<TCanvas>['scheduler']>['after']
     schedulerOrder: NonNullable<RenderProps<TCanvas>['scheduler']>['order']
   }> = {}
+
+  // The pixel ratio last resolved from the dpr prop, and whether a display change waits on XR
+  let resolvedDpr = 0
+  let dprChangedInXR = false
+  let unwatchDpr: (() => void) | undefined
+
+  // A display change doesn't resize the canvas or change the prop, so re-resolve the prop here. A
+  // setDpr() since the last resolve owns the value, the same as across re-configures
+  const resolveDpr = () => {
+    // A configure still awaiting its renderer at unmount can start watching after teardown
+    if (_roots.get(canvas)?.store !== store) return unwatchDpr?.()
+    const state = store.getState()
+    // three doesn't resize during XR and restores its own pixel ratio once the session ends. It holds
+    // the session before it sets isPresenting
+    const xr = state.internal.actualRenderer?.xr as { isPresenting?: boolean; getSession?: () => unknown } | undefined
+    if (xr?.isPresenting || xr?.getSession?.()) {
+      dprChangedInXR = true
+      return
+    }
+    dprChangedInXR = false
+    const dpr = lastConfiguredProps.dpr
+    if (dpr === undefined || state.viewport.dpr !== resolvedDpr || calculateDpr(dpr) === resolvedDpr) return
+    state.setDpr(dpr)
+    resolvedDpr = store.getState().viewport.dpr
+  }
 
   let configured = false
   let pending: Promise<void> | null = null
@@ -501,6 +561,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (dpr !== undefined && !is.equ(dpr, lastConfiguredProps.dpr, shallowLoose)) {
         state.setDpr(dpr)
         lastConfiguredProps.dpr = dpr
+        resolvedDpr = store.getState().viewport.dpr
+      }
+      // Read internal fresh: configure may have replaced it above
+      const internal = store.getState().internal
+      // One watcher per root, bound to the handle configuring it. Only a range follows the display: a
+      // fixed dpr never touches matchMedia
+      if (Array.isArray(dpr) && (!unwatchDpr || internal.unwatchDpr !== unwatchDpr)) {
+        internal.unwatchDpr?.()
+        internal.unwatchDpr = unwatchDpr = watchDpr(resolveDpr)
       }
       // Check frameloop - only update if the PROP changed
       // This preserves imperative setFrameloop() changes across Canvas re-configures
@@ -546,7 +615,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
           // Cast to any - both renderer XR managers have setAnimationLoop but with slightly different types
           ;(renderer.xr as any).setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
-          if (!renderer.xr.isPresenting) invalidate(state)
+          if (!renderer.xr.isPresenting) {
+            if (dprChangedInXR) resolveDpr()
+            invalidate(state)
+          }
         }
 
         // WebXR session manager
@@ -904,6 +976,9 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
         unregisterRoot()
         ;(state.internal as any).unregisterRoot = undefined
       }
+      // A dead Canvas must not follow display changes either
+      state.internal.unwatchDpr?.()
+      state.internal.unwatchDpr = undefined
     }
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
@@ -935,6 +1010,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
               if (renderer?.xr) state.xr.disconnect()
             }
             dispose(state.scene)
+            // Again, for a configure that was still awaiting its renderer at unmount
+            root!.store.getState().internal.unwatchDpr?.()
             _roots.delete(canvas)
             if (callback) callback(canvas)
           } catch (error) {
