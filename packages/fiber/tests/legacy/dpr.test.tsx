@@ -238,6 +238,37 @@ describe('dpr display changes', () => {
     expect(listenerCount()).toBe(0)
   })
 
+  it('works with a partial matchMedia', async () => {
+    for (const result of [undefined, { matches: false }]) {
+      window.matchMedia = (() => result) as unknown as typeof window.matchMedia
+      const [root, store] = await render([1, 2])
+      expect(store.getState().viewport.dpr).toBe(1)
+      await act(async () => (await root.configure({ dpr: [1, 2] })).render(<group />))
+    }
+  })
+
+  it('works with a matchMedia that throws', async () => {
+    window.matchMedia = (() => {
+      throw new SyntaxError('unsupported media query')
+    }) as unknown as typeof window.matchMedia
+    const [root, store] = await render([1, 2])
+    expect(store.getState().viewport.dpr).toBe(1)
+    await act(async () => (await root.configure({ dpr: [1, 2] })).render(<group />))
+  })
+
+  it('applies a change even when watching again throws', async () => {
+    const [, store] = await render([1, 2])
+    const working = window.matchMedia
+    window.matchMedia = (() => {
+      throw new SyntaxError('unsupported media query')
+    }) as unknown as typeof window.matchMedia
+
+    await act(async () => setDisplayDpr(2))
+    expect(store.getState().viewport.dpr).toBe(2)
+    expect(listenerCount()).toBe(0)
+    window.matchMedia = working
+  })
+
   it('works without matchMedia', async () => {
     window.matchMedia = undefined as unknown as typeof window.matchMedia
     const [, store] = await render([1, 2])
