@@ -7,7 +7,7 @@ import { advance, invalidate } from './loop'
 import { deferred, fulfilled, isPromiseLike, rejected, type TrackedPromise } from './promise'
 import { reconciler } from './reconciler'
 import { context, createStore, isRenderer, type Renderer, type RootState, type RootStore } from './store'
-import { dispose, noop, useIsomorphicLayoutEffect } from './utils'
+import { calculateDpr, dispose, noop, useIsomorphicLayoutEffect, watchDpr } from './utils'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -22,6 +22,8 @@ export interface Root {
   configuration: AppliedConfiguration
   /** Whether R3F built `gl` (from defaults, props or a factory) and so disposes it on unmount */
   ownsRenderer: boolean
+  /** Stops following devicePixelRatio changes */
+  unwatchDpr?: () => void
 }
 
 export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
@@ -137,6 +139,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           state.set({ gl: gl as THREE.WebGLRenderer })
         }
         applyRootConfiguration(root, canvas, props)
+        // Only a range, including the default one, follows the display: a fixed dpr never touches matchMedia
+        if (!root.unwatchDpr && (props.dpr === undefined || Array.isArray(props.dpr))) root.unwatchDpr = followDpr(root)
         resolve(this)
       }
       const run = () => {
@@ -219,6 +223,35 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
 }
 
 /**
+ * Moving to another display or zooming changes window.devicePixelRatio without resizing the canvas,
+ * so nothing configures the root again. Resolves the ratio the way configuration does, from the last
+ * applied dpr. Returns the function that stops following.
+ */
+function followDpr(root: Root): () => void {
+  const xr = () => root.store.getState().gl?.xr
+  const follow = (): void => {
+    const state = root.store.getState()
+    // three doesn't resize during XR and restores its own pixel ratio once the session ends. It holds
+    // the session before it sets isPresenting. Listeners are deduplicated, so this waits once
+    if (xr()?.isPresenting || xr()?.getSession?.()) {
+      xr()!.addEventListener('sessionend', follow)
+      return
+    }
+    xr()?.removeEventListener?.('sessionend', follow)
+    // A failed configuration applies everything on the next one
+    const last = root.configuration.previous
+    if (!last) return
+    const dpr = last.dpr ?? [1, 2]
+    if (state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+  }
+  const unwatch = watchDpr(follow)
+  return () => {
+    unwatch()
+    xr()?.removeEventListener?.('sessionend', follow)
+  }
+}
+
+/**
  * Frees a renderer R3F built. WebGLRenderer.dispose() releases programs and caches but keeps its
  * context until garbage collection, and browsers cap live WebGL contexts, so the context is lost
  * after it. A WebGPURenderer (from a factory) releases its device and context inside dispose().
@@ -268,6 +301,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     state.internal.active = false
 
     // Release what uses the renderer before the renderer itself
+    attempt(() => root.unwatchDpr?.())
     attempt(() => state.events.disconnect?.())
     if (state.gl?.xr) attempt(() => state.xr.disconnect())
     if (state.scene) attempt(() => dispose(state.scene))
