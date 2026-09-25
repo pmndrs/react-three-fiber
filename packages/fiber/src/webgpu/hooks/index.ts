@@ -76,7 +76,7 @@ export {
 export type { TextureEntry, TextureNode } from './useTextures'
 
 // Low-level texture utilities (prefer useTextures hook instead)
-export { createTextureOperations, type TextureOperations } from './utils'
+export { createTextureOperations, type TextureOperations } from '../../core/utils/textures'
 
 // RenderPipeline - WebGPU render pipeline management
 // Types are declared globally in types/renderPipeline.d.ts
