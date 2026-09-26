@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { createReadTracker, isTrackerStale, warnMissingReads, type ReadTracker } from './internal/readTracking'
+import { useIsomorphicLayoutEffect } from './internal/react'
 import { isTSLNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
@@ -155,7 +157,9 @@ export function useNodes<T extends NodeRecord>(
     create: () => {
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
-      return (creatorOrScope as NodeCreator<T>)(createLazyCreatorState(store.getState(), store))
+      return (creatorOrScope as NodeCreator<T>)(
+        createLazyCreatorState(store.getState(), store, warnMissingReads('useNodes')),
+      )
     },
     prepare: (name, node) => {
       // Apply label for debugging
@@ -281,11 +285,16 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  * | `useLocalNodes(creator, [])`     | Reuse the result                                            |
  * | `useLocalNodes(creator, [a, b])` | Reuse until a declared dependency changes by `Object.is`    |
  *
- * Independently of `deps`, a registered resource replacement (a `uniforms`/`nodes`/`textures`
- * map change), a change of the owning (primary) store, and an HMR / `rebuild*` invalidation all
- * re-run the creator. `[]` therefore means "no JavaScript construction inputs", not "never
- * rebuild". Whenever it re-runs, the creator from the CURRENT render is used; creator identity
- * itself is never a rebuild trigger once an array is supplied.
+ * Independently of `deps`, three things re-run the creator: a change to a shared resource the
+ * creator READ (replaced, removed, or appearing where it read nothing), a change of the owning
+ * (primary) store, and an HMR / `rebuild*` invalidation. Registrations the creator did not read
+ * change nothing, and writing `.value` on a uniform it read is not a change. `[]` therefore means
+ * "no JavaScript construction inputs", not "never rebuild". Whenever it re-runs, the creator from
+ * the CURRENT render is used; creator identity itself is never a rebuild trigger once an array is
+ * supplied.
+ *
+ * Only reads the creator makes before it returns are tracked. Inside `Fn(() => …)` the body runs
+ * later, while three builds the shader, so read the resource in the creator and close over it.
  *
  * `[]` is the normal case. A value that changes (a color prop, a slider) belongs in a uniform: the
  * graph references the `UniformNode`, so updating its `.value` needs no rebuild and must not be a
@@ -318,24 +327,43 @@ export function useLocalNodes<T extends Record<string, unknown>>(
 ): T {
   const store = usePrimaryStore()
 
-  // Independent rebuild triggers: registered resource replacement (whole-map until #3919
-  // narrows it), owning store, and the HMR / manual-rebuild generation.
-  const uniforms = usePrimaryThree((s) => s.uniforms)
-  const nodes = usePrimaryThree((s) => s.nodes)
-  const textures = usePrimaryThree((s) => s.textures)
+  // Deliberate invalidation (HMR / rebuild*) re-runs every creator, whatever it read.
   const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   // The caller's declared JavaScript construction inputs, collapsed to one stable input.
   const depsToken = useDependencyToken(deps)
 
-  return useMemo(() => {
+  // The reads of the COMMITTED evaluation. Assigned at commit, so an evaluation React throws away
+  // never replaces the reads the component is subscribed through.
+  const committedReads = useRef<ReadTracker | null>(null)
+  const readsVersion = useRef(0)
+
+  // Changes whenever a committed read would now see something else. Unrelated store updates leave
+  // it as it is, so they neither re-render this component nor re-run the creator. The check is
+  // sticky per tracker, so repeated calls within one update agree.
+  const getReadsVersion = () => {
+    const tracker = committedReads.current
+    if (tracker && !tracker.stale && isTrackerStale(tracker, store.getState())) readsVersion.current++
+    return readsVersion.current
+  }
+  const resourceVersion = useSyncExternalStore(store.subscribe, getReadsVersion, getReadsVersion)
+
+  const evaluation = useMemo(() => {
     // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
     // The store is passed so entries staged (not yet committed) by creator hooks
     // earlier in this render pass are visible here too.
-    const wrappedState = createLazyCreatorState(store.getState(), store)
-    return creator(wrappedState)
+    const tracker = createReadTracker('useLocalNodes')
+    const value = creator(createLazyCreatorState(store.getState(), store, { observe: tracker.observe, nested: true }))
+    tracker.closed = true
+    return { value, tracker }
     // `creator` is intentionally not a dependency: the memo closes over the current render's
     // creator and only its declared inputs (depsToken) decide whether it runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, uniforms, nodes, textures, hmrVersion, depsToken])
+  }, [store, hmrVersion, depsToken, resourceVersion])
+
+  useIsomorphicLayoutEffect(() => {
+    committedReads.current = evaluation.tracker
+  }, [evaluation])
+
+  return evaluation.value
 }

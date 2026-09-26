@@ -45,6 +45,12 @@ function RegisterUnrelated() {
   return null
 }
 
+/** Registers `uWatched`, which the watching creators below read. */
+function RegisterWatched() {
+  useUniforms({ uWatched: 1 })
+  return null
+}
+
 /**
  * A probe that records every creator execution and the identity of the node it returned on
  * each render. `deps` is forwarded verbatim, so `undefined` means the no-array call.
@@ -160,9 +166,21 @@ describe('useLocalNodes — explicit dependency array', () => {
     const store = makeStore()
     const { Probe, log } = makeProbe()
 
+    // Reads `uWatched` (absent at first), so its registration is a rebuild trigger for this creator.
+    const Watching = ({ tag }: { tag: string }) => (
+      <Probe
+        tag={tag}
+        deps={[]}
+        creator={({ uniforms }) => {
+          log.runs++
+          return { node: uniforms.uWatched ?? float(1), tag }
+        }}
+      />
+    )
+
     const tree = (tag: string, extra?: React.ReactNode) => (
       <context.Provider value={store}>
-        <Probe tag={tag} deps={[]} />
+        <Watching tag={tag} />
         {extra}
       </context.Provider>
     )
@@ -176,21 +194,21 @@ describe('useLocalNodes — explicit dependency array', () => {
     expect(log.runs).toBe(1)
     expect(lastResult(log.results).tag).toBe('a')
 
-    // Registering a resource is an independent rebuild trigger; the rebuilt result must come
-    // from the creator of the render that performed it (captures 'b'), not the first one.
-    await act(async () => view.rerender(tree('b', <RegisterUnrelated />)))
+    // Registering a resource the creator read is an independent rebuild trigger; the rebuilt result
+    // must come from the creator of the render that performed it (captures 'b'), not the first one.
+    await act(async () => view.rerender(tree('b', <RegisterWatched />)))
     expect(log.runs).toBeGreaterThanOrEqual(2)
     expect(lastResult(log.results).tag).toBe('b')
   })
 
-  it('[] : a registered-resource replacement reconstructs (whole-map subscription until #3919)', async () => {
+  it('[] : a registration the creator did not read neither re-renders nor rebuilds (#3888 repro)', async () => {
     const store = makeStore()
     const { Probe, log } = makeProbe()
 
     const view = withStore(store, <Probe deps={[]} />)
     await act(async () => {})
     const first = lastResult(log.results)
-    const runsBefore = log.runs
+    const rendersBefore = log.results.length
 
     await act(async () =>
       view.rerender(
@@ -200,10 +218,15 @@ describe('useLocalNodes — explicit dependency array', () => {
         </context.Provider>,
       ),
     )
+    // The rerender above renders Probe once; the registration landing on the store must add nothing.
+    const rendersAfterRerender = log.results.length
+    await act(async () => {})
 
     expect(store.getState().uniforms['unrelated-scope']).toBeDefined()
-    expect(log.runs).toBeGreaterThan(runsBefore)
-    expect(lastResult(log.results).node).not.toBe(first.node)
+    expect(rendersAfterRerender).toBe(rendersBefore + 1)
+    expect(log.results.length).toBe(rendersAfterRerender)
+    expect(log.runs).toBe(1)
+    expect(lastResult(log.results).node).toBe(first.node)
   })
 
   it("[] : a change of owning store reconstructs using the current render's creator", async () => {

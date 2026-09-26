@@ -217,6 +217,8 @@ Once per generation. The first component to register a name wins, and later rend
 - A value that changes goes into a uniform (`useUniforms`), and the node reads the uniform.
 - A structural change goes through `rebuildNodes(scope)` (or a hot update), which starts a new generation: every creator re-runs together and every consumer sees the new nodes.
 
+Because of that, a creator that reads an entry before it exists keeps `undefined` until the next rebuild. Register what a creator reads above it (earlier in the same component, or higher in the tree). In development a warning names such a read; use `.has()` when probing for an optional entry on purpose. The same holds for `useUniforms`, `useBuffers` and `useGPUStorage` creators.
+
 ### Parameters
 
 | Parameter | Type                    | Description                                    |
@@ -370,7 +372,7 @@ Before this contract existed, `useLocalNodes` memoized against creator identity,
 
 Independently of `deps`, the creator re-runs when:
 
-- A registered resource is replaced - a uniform, node, or texture is added or removed (`state.uniforms`, `state.nodes`, `state.textures`). Until [#3919](https://github.com/pmndrs/react-three-fiber/issues/3919) lands this is the whole map: registering an unrelated uniform anywhere still counts.
+- A shared resource the creator **read** changes: it is replaced, removed, or appears where the creator read nothing. This covers `uniforms`, `nodes`, `buffers`, `gpuStorage` and `textures`. Registrations the creator did not read change nothing, so a model finishing loading or a panel registering its own uniforms neither re-renders this component nor rebuilds its graph.
 - The owning store changes (multi-canvas `primaryStore` resolution).
 - The HMR version is bumped, by a hot update or a manual `rebuild*` call (see [TSL HMR](./hmr)).
 
@@ -384,6 +386,32 @@ useFrame(() => {
   uTime.value = performance.now() // value-only change -> no rebuild
 })
 ```
+
+#### What counts as a read
+
+| In the creator                                      | Rebuilds when                                      |
+| --------------------------------------------------- | -------------------------------------------------- |
+| `uniforms.uTime`, `nodes.noise`, `buffers.positions` | that entry is replaced, removed, or appears        |
+| `uniforms.scope('fog').uDensity`, `uniforms.fog.uDensity` | that leaf changes; other leaves in `fog` don't count |
+| `uniforms.has('uTime')`, `'uTime' in uniforms`       | the entry appears or disappears                    |
+| `uniforms.keys()`, `Object.keys(...)`, spreading a scope | an entry is added to or removed from that scope |
+| `textures.get(url)`, `textures.has(url)`             | the texture at that URL is replaced, loads or goes |
+| iterating `textures`, `textures.size`                | a URL is added or removed, or an entry iterated changes |
+
+Only reads made **before the creator returns** are tracked. The body of a `Fn(() => ...)` runs later, while three builds the shader, so a lookup there is not seen - and you get a development warning. Read the resource in the creator and close over it:
+
+```tsx
+// Tracked: the uniform is read while the creator runs
+useLocalNodes(({ uniforms }) => {
+  const strength = uniforms.uStrength
+  return { effect: Fn(() => strength.mul(2)) }
+}, [])
+
+// Not tracked: the lookup happens inside Fn, after the creator returned
+useLocalNodes(({ uniforms }) => ({ effect: Fn(() => uniforms.uStrength.mul(2)) }), [])
+```
+
+The same applies to a value captured from **outside** the creator, such as a node returned by `useUniform`: the creator did not read it through its `state`, so declare it in `deps` if a replacement should rebuild the graph.
 
 Neither this hook nor React guarantees exactly one creator invocation: StrictMode, an initial suspension, or a discarded render can run it again. Keep creators pure apart from node construction.
 

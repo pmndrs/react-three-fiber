@@ -73,6 +73,17 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   invalidation remain independent triggers in every mode, and always run the current render's
   creator ([#3918](https://github.com/pmndrs/react-three-fiber/issues/3918), part 1 of
   [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
+- `@react-three/tsl`: `useLocalNodes` re-runs only when a shared resource its creator read changes.
+  It used to subscribe to the whole `uniforms`, `nodes` and `textures` maps, so registering any
+  uniform anywhere re-rendered every consumer and rebuilt its graph. Now reads through the
+  creator's `state` are tracked by identity (`uniforms.x`, `.scope('s').x`, dot access into a
+  scope, `has`, `keys`, `textures.get(url)`, iteration): an unrelated registration causes neither a
+  render nor a rebuild, and `buffers` and `gpuStorage` reads are tracked too (they were not
+  subscribed at all). Only reads made before the creator returns count; a lookup inside a deferred
+  `Fn` body warns in development. `useNodes`, `useUniforms`, `useBuffers` and `useGPUStorage`
+  creators warn in development when they read an entry that does not exist yet, since they will not
+  re-run when it appears ([#3919](https://github.com/pmndrs/react-three-fiber/issues/3919), part 2
+  of [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
 
 ### Changes
 

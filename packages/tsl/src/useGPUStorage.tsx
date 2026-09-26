@@ -4,6 +4,7 @@ import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { warnMissingReads } from './internal/readTracking'
 import { isStorageLike } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
@@ -183,7 +184,9 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
     create: () => {
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers/storage accessed
-      return (creatorOrScope as StorageCreator<T>)(createLazyCreatorState(store.getState(), store))
+      return (creatorOrScope as StorageCreator<T>)(
+        createLazyCreatorState(store.getState(), store, warnMissingReads('useGPUStorage')),
+      )
     },
     prepare: (name, storage) => {
       const label = scopedNodeName(scope, name)

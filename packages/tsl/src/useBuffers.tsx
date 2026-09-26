@@ -4,6 +4,7 @@ import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { warnMissingReads } from './internal/readTracking'
 import { isBufferLike } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
@@ -183,7 +184,9 @@ export function useBuffers<T extends Record<string, BufferLike>>(
     create: () => {
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers accessed
-      return (creatorOrScope as BufferCreator<T>)(createLazyCreatorState(store.getState(), store))
+      return (creatorOrScope as BufferCreator<T>)(
+        createLazyCreatorState(store.getState(), store, warnMissingReads('useBuffers')),
+      )
     },
     prepare: (name, buffer) => {
       // Apply label for debugging if it's a TSL node
