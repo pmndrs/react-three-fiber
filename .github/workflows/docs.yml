@@ -1,7 +1,27 @@
 name: Build documentation and deploy to GitHub Pages
+
+# One Pages site serves two release lines:
+#
+#   /        stable docs, built from `master`
+#   /next    prerelease docs, built from NEXT_REF (the alpha line)
+#
+# A repo has a single Pages site and every deploy replaces all of it, so both are always built and
+# deployed together, and only from `master`. A push to NEXT_REF therefore doesn't deploy anything
+# itself: it dispatches this workflow on `master`, which rebuilds both. Keep this file identical on
+# both branches.
+#
+# When the prerelease line ships as stable, point the stable build at it (merge it into `master`),
+# then either retire the /next build or point NEXT_REF at the following line, and update the
+# labels in VERSIONS.
+
+# `v10` below is NEXT_REF spelled out: `env` isn't available in `on:` or in a job's `if:`.
 on:
   push:
-    branches: ['master']
+    branches: ['master', 'v10']
+    paths:
+      - 'docs/**'
+      - '.github/docs/**'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 # Cancel previous run (see: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency)
@@ -9,18 +29,111 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NEXT_REF: v10
+  NEXT_PATH: /next
+  # Entries of the version picker injected into every page (see .github/docs/version-switcher.js).
+  VERSIONS: |
+    [
+      { "label": "v9", "tag": "latest", "path": "" },
+      { "label": "v10", "tag": "alpha", "path": "/next", "prerelease": true }
+    ]
+
 jobs:
+  dispatch:
+    name: Rebuild from master
+    if: github.ref_name == 'v10'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # to dispatch this workflow on master
+    steps:
+      - run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref master
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   build:
-    uses: pmndrs/docs/.github/workflows/build.yml@v3
-    with:
-      mdx: 'docs'
-      libname: 'React Three Fiber'
-      libname_short: 'r3f'
-      home_redirect: '/getting-started/introduction'
-      icon: '🇨🇭'
-      logo: '/logo.jpg'
-      github: 'https://github.com/pmndrs/react-three-fiber'
-      discord: 'https://discord.com/channels/740090768164651008/740093168770613279'
+    if: github.ref_name == 'master'
+    runs-on: ubuntu-latest
+
+    # Everything pmndrs/docs/.github/workflows/build.yml@v3 sets, minus what differs per build.
+    env:
+      # Pinned below 3.4.2, whose next-mdx-remote 6 strips JS expressions from MDX by default
+      # (`blockJS`): <Sandpack files={...}> arrives empty and the build fails, and props like
+      # <Grid cols={3}> are silently dropped. Unpin once pmndrs/docs opts back in (`blockJS: false`).
+      DOCS_IMAGE_TAG: '3.4.1'
+      NEXT_PUBLIC_LIBNAME: 'React Three Fiber'
+      NEXT_PUBLIC_LIBNAME_SHORT: 'r3f'
+      NEXT_PUBLIC_LIBNAME_DOTSUFFIX_LABEL: 'docs'
+      NEXT_PUBLIC_LIBNAME_DOTSUFFIX_HREF: 'https://docs.pmnd.rs'
+      HOME_REDIRECT: '/getting-started/introduction'
+      ICON: '🇨🇭'
+      LOGO: '/logo.jpg'
+      GITHUB: 'https://github.com/pmndrs/react-three-fiber'
+      DISCORD: 'https://discord.com/channels/740090768164651008/740093168770613279'
+      THEME_PRIMARY: '#323e48'
+      THEME_SCHEME: 'tonalSpot'
+      THEME_CONTRAST: '0'
+      THEME_NOTE: '#1f6feb'
+      THEME_TIP: '#238636'
+      THEME_IMPORTANT: '#8957e5'
+      THEME_WARNING: '#d29922'
+      THEME_CAUTION: '#da3633'
+      CONTRIBUTORS_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.NEXT_REF }}
+          path: .next-ref
+
+      - id: pages
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Build stable docs (master)
+        run: .github/docs/build.sh docs
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}
+          MDX_BASEURL: https://github.com/${{ github.repository }}/raw/master/docs
+          SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/master
+          EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/master/docs
+
+      # A broken prerelease build must never hold back the stable docs: on failure the site ships
+      # without /next and the picker drops it.
+      - name: Build prerelease docs (${{ env.NEXT_REF }})
+        id: next
+        continue-on-error: true
+        run: ../.github/docs/build.sh docs
+        working-directory: .next-ref
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}${{ env.NEXT_PATH }}
+          NEXT_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}${{ env.NEXT_PATH }}
+          MDX_BASEURL: https://github.com/${{ github.repository }}/raw/${{ env.NEXT_REF }}/docs
+          SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/${{ env.NEXT_REF }}
+          EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/${{ env.NEXT_REF }}/docs
+
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp -r "docs/out$BASE_PATH/." _site/
+          if [ "$NEXT_BUILT" = "success" ]; then
+            mkdir -p "_site$NEXT_PATH"
+            cp -r ".next-ref/docs/out$BASE_PATH$NEXT_PATH/." "_site$NEXT_PATH/"
+          else
+            echo "::warning::Prerelease docs ($NEXT_REF) failed to build; deploying stable docs only"
+          fi
+          node .github/docs/inject-version-switcher.mjs _site
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_BUILT: ${{ steps.next.outcome }}
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
 
   deploy:
     needs: build
@@ -38,4 +151,4 @@ jobs:
 
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
