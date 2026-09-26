@@ -11,7 +11,8 @@
  * renderer they still draw with.
  */
 
-import type { WebGLRenderer, WebGPURenderer } from '#three'
+import type { WebGLRenderer } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 
 type Renderer = WebGLRenderer | WebGPURenderer
 
