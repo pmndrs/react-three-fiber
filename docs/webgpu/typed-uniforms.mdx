@@ -1,7 +1,7 @@
 ---
 title: Typed Uniforms
 description: Type @react-three/tsl uniforms by name across your app with the Register interface, choose strict or loose checking, and back the types at runtime with configureTSL.
-nav: 17
+nav: 18
 ---
 
 Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Registering your uniforms once fixes that for the whole app.
