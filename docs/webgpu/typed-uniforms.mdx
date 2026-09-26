@@ -1,0 +1,104 @@
+---
+title: Typed Uniforms
+description: Type @react-three/tsl uniforms by name across your app with the Register interface, choose strict or loose checking, and back the types at runtime with configureTSL.
+nav: 17
+---
+
+Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Registering your uniforms once fixes that for the whole app.
+
+## Register your uniforms
+
+Define the uniforms as plain objects, then register their types with `@react-three/tsl`:
+
+```ts
+// uniforms.ts
+import { Color } from 'three/webgpu'
+import { configureTSL } from '@react-three/tsl'
+
+export const globalUniforms = { uTime: 0, uColor: new Color('hotpink') }
+export const playerUniforms = { uHealth: 1, uTint: new Color('white') }
+
+declare module '@react-three/tsl' {
+  interface Register {
+    uniforms: typeof globalUniforms
+    scopes: { player: typeof playerUniforms }
+  }
+}
+
+// Create them up front, so the registered types hold before the first frame
+configureTSL({ uniforms: globalUniforms, scopes: { player: playerUniforms } })
+```
+
+Import that file once, for example next to your `<Canvas>`. From then on:
+
+```tsx
+const all = useUniforms()
+all.uTime.value // number
+all.player.uHealth.value // number
+all.uTiem // ❌ type error: not registered
+
+const player = useUniforms('player') // 'player' autocompletes
+useUniform('uTime').value // number, no generic needed
+
+useFrame(({ uniforms }, delta) => {
+  uniforms.uTime.value += delta // state.uniforms is typed too
+})
+useThree((s) => s.uniforms.uColor) // and in useThree
+
+useNodes(({ uniforms }) => ({
+  tinted: mix(uniforms.uColor, uniforms.player.uTint, uniforms.uTime), // and in creators
+}))
+```
+
+Creators are checked against what you registered. New keys are always allowed:
+
+```tsx
+useUniforms(() => ({ uTime: 0, uWind: new Vector3() })) // ✅
+useUniforms(() => ({ uTime: 'fast' })) // ❌ uTime is registered as a number
+useUniforms({ uHealth: new Color() }, 'player') // ❌ uHealth is a number in 'player'
+```
+
+## What stays loose
+
+Registration never makes existing code stricter than it has to:
+
+| Call | Not registered | Registered |
+| --- | --- | --- |
+| `useUniforms(() => ({...}))` | Inferred from the creator | Inferred; registered keys keep their type |
+| `useUniforms()` / `state.uniforms` / a creator's `uniforms` | Loose `UniformStore` | Typed; unknown root keys are errors |
+| `useUniforms('player')` (registered scope) | Loose | Typed |
+| `useUniforms('enemy')` (other scope) | Loose | Loose |
+| `useUniforms<{ blur: number }>('fx')` | Typed by the explicit schema | Same |
+| `useUniform('uTime')` | Loose unless you pass a type | Typed by name |
+
+With nothing registered, every hook keeps exactly the types it had before.
+
+## Strict or loose
+
+By default, reading an unregistered key from the root (`useUniforms()`, `state.uniforms`, a creator's `uniforms`) is a type error. That is what catches typos. If your app creates many uniforms on the fly and reads them from the root elsewhere, opt out:
+
+```ts
+declare module '@react-three/tsl' {
+  interface Register {
+    uniforms: typeof globalUniforms
+    strict: false
+  }
+}
+```
+
+Registered keys stay fully typed. Unregistered root keys are allowed, typed as the loose `UniformNode | UniformRecord` union, so a typo compiles.
+
+## configureTSL
+
+`Register` only describes types. `configureTSL` makes them true at runtime: it creates the uniforms on every primary canvas's `RootState`, including canvases already mounted, before any component runs. Secondaries and portals see them like any shared uniform.
+
+- A hook that declares the same name later gets the configured node, not a new one.
+- Calling it again adds to the configuration. Uniforms that already exist are never replaced.
+- It is optional. Without it, a registered uniform only exists once some component creates it, so a read before that returns `undefined` even though its type says otherwise.
+
+Pass the same objects you registered, so the types and the runtime come from one place.
+
+## Notes
+
+- `Register` is global to your TypeScript program, like any module augmentation. Declare it once.
+- `useNodes`, `useBuffers` and `useGPUStorage` are not covered yet; they keep their current types.

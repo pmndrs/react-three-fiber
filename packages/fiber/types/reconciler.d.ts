@@ -43,7 +43,6 @@ export type InstanceProps<T = any, P = any> = ArgsProp<P> & {
   object?: T
   dispose?: null
   attach?: AttachType<T>
-  onUpdate?: (self: T) => void
 }
 
 export interface Instance<O = any> {

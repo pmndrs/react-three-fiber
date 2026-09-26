@@ -13,8 +13,7 @@
  */
 
 import { act } from 'react'
-import * as THREE from 'three'
-import { extend, _roots as mockRoots, createRoot, reconciler } from '@react-three/fiber'
+import { _roots as mockRoots, createRoot, reconciler } from '@react-three/fiber'
 
 import { createTestRenderer } from './createRenderer'
 import { waitFor, type WaitOptions } from './helpers/waitFor'
@@ -22,13 +21,11 @@ import { waitFor, type WaitOptions } from './helpers/waitFor'
 //* Initialize Test Renderer ==============================
 
 const renderer = createTestRenderer({
-  THREE,
   createRoot,
   mockRoots,
   reconciler,
   act,
-  extend,
-  mode: 'webgl', // Default uses WebGL context
+  mode: 'webgl', // The root entry renders with WebGL unless configured with `renderer`
 })
 
 //* Exports ==============================

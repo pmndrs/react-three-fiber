@@ -206,7 +206,7 @@ export default () => (
 )
 ```
 
-`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. Only the renderer a Canvas asks for is downloaded: three's WebGPU renderer is a separate chunk fetched when a `<Canvas renderer>` mounts, and a plain `<Canvas>` fetches only the WebGL one. For the single-renderer entries, node materials as JSX, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
 ## Custom Canvas
 

@@ -1,13 +1,21 @@
 //* useFrame Hook ==============================
 
 import * as React from 'react'
-import { context } from '../../store'
-import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
+// Leaf imports (no #three) so useFrame can ship in the three-free @react-three/fiber/extension entry.
+import { context } from '../../context'
+import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils/react'
 import { notifyDepreciated } from '../../utils/notices'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
-import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type {
+  FrameNextState,
+  FrameNextCallback,
+  UseFrameNextOptions,
+  FrameNextControls,
+} from '../../../../types/scheduler'
 
 /**
  * Frame hook with phase-based ordering, priority, and FPS throttling.

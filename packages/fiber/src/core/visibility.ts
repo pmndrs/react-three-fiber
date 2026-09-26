@@ -3,50 +3,38 @@
 // Includes WebGPU occlusion query support via Node-based observer
 // Author: DennisSmolek
 
-import * as THREE from '#three'
+import type { Frustum, Material, Mesh, Object3D } from 'three'
+import type { Node } from 'three/webgpu'
 import { updateFrustum } from './utils'
+import { getThree } from './three'
 
 //* Type Imports ==============================
-import type { RootStore, RootState, VisibilityEntry, EventHandlers } from '#types'
+import type { RootStore, RootState, VisibilityEntry, EventHandlers, OcclusionSupport } from '#types'
 
 //* Module-level State ==============================
-// Shared frustum for all visibility checks - avoids allocation per portal/root
-const tempFrustum = new THREE.Frustum()
+// Shared frustum for all visibility checks - avoids allocation per portal/root. Created on first
+// check, from the root's own frustum: core has no three at module scope.
+let tempFrustum: Frustum | undefined
 
 // Track if we've already warned about WebGL occlusion (once per session)
 let hasWarnedWebGL = false
-
-// Cached TSL imports (loaded dynamically for WebGPU only)
-let tslModule: { uniform: any; nodeObject: any } | null = null
 
 /** Reset WebGL warning flag (for testing only) */
 export function __resetWarningFlag() {
   hasWarnedWebGL = false
 }
 
-/** Load TSL module dynamically (WebGPU only) */
-async function loadTSL(): Promise<{ uniform: any; nodeObject: any } | null> {
-  if (tslModule) return tslModule
-  try {
-    const tsl = await import('three/tsl')
-    tslModule = { uniform: tsl.uniform, nodeObject: tsl.nodeObject }
-    return tslModule
-  } catch {
-    // TSL not available (WebGL build)
-    return null
-  }
-}
-
 //* OcclusionObserverNode ==============================
 // TSL Node that runs during render pass to cache isOccluded() results
 // This is necessary because renderer.isOccluded() only works during render
 // when _currentRenderContext is available.
+//
+// The node classes and TSL functions come from the WebGPU renderer support the root loaded
+// (state.internal.support.occlusion): core imports neither three/webgpu nor three/tsl.
 
-// Factory function to create the OcclusionObserverNode class
-// (needs to be created after TSL is loaded)
-function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node {
-  const node = new THREE.Node('float')
-  node.updateType = THREE.NodeUpdateType.OBJECT
+function createOcclusionObserverNode(store: RootStore, { Node, NodeUpdateType, uniform }: OcclusionSupport): Node {
+  const node = new Node('float')
+  node.updateType = NodeUpdateType.OBJECT
 
   // Override update method
   ;(node as any).update = function (frame: any) {
@@ -76,9 +64,6 @@ function createOcclusionObserverNode(store: RootStore, uniform: any): THREE.Node
 
 //* Occlusion Enable/Disable ==============================
 
-// Track if occlusion setup is in progress (to avoid duplicate async calls)
-let occlusionSetupPromise: Promise<void> | null = null
-
 /**
  * Enable the occlusion query system for this Canvas.
  * Creates an invisible observer mesh that caches isOccluded() results during render.
@@ -89,13 +74,13 @@ export function enableOcclusion(store: RootStore): void {
   const state = store.getState()
   const { internal, renderer } = state
 
-  // Already enabled or in progress
-  if (internal.occlusionEnabled || occlusionSetupPromise) return
+  // Already enabled
+  if (internal.occlusionEnabled) return
 
   // Check for WebGPU support
   const hasOcclusionSupport = typeof (renderer as any)?.isOccluded === 'function'
 
-  if (!hasOcclusionSupport) {
+  if (!hasOcclusionSupport || internal.support?.kind !== 'webgpu') {
     // Warn once about WebGL limitation
     if (!hasWarnedWebGL) {
       console.warn(
@@ -107,29 +92,19 @@ export function enableOcclusion(store: RootStore): void {
     return
   }
 
-  // Start async setup
-  occlusionSetupPromise = setupOcclusion(store)
+  setupOcclusion(store, internal.support.occlusion)
 }
 
-/** Internal async setup for occlusion system */
-async function setupOcclusion(store: RootStore): Promise<void> {
+/** Internal setup for occlusion system */
+function setupOcclusion(store: RootStore, occlusion: OcclusionSupport): void {
   const state = store.getState()
   const { internal, rootScene, set } = state
-
-  // Load TSL module
-  const tsl = await loadTSL()
-  if (!tsl) {
-    console.warn('[R3F] Warning: TSL module not available. Occlusion queries disabled.')
-    occlusionSetupPromise = null
-    return
-  }
-
-  const { uniform, nodeObject } = tsl
+  const { Group, BoxGeometry, Mesh } = getThree()
 
   // Create internal helper group if it doesn't exist
   let helperGroup = internal.helperGroup
   if (!helperGroup) {
-    helperGroup = new THREE.Group()
+    helperGroup = new Group()
     helperGroup.name = '__r3fInternal'
     // @ts-ignore - mark as internal so users know not to mess with it
     helperGroup.__r3fInternal = true
@@ -137,18 +112,18 @@ async function setupOcclusion(store: RootStore): Promise<void> {
   }
 
   // Create the observer mesh with NodeMaterial
-  const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const material = new THREE.MeshBasicNodeMaterial({
+  const geometry = new BoxGeometry(1, 1, 1)
+  const material = new occlusion.MeshBasicNodeMaterial({
     transparent: true,
     opacity: 0,
   })
 
   // Create and attach the observer node
-  const observerNode = nodeObject(createOcclusionObserverNode(store, uniform))
+  const observerNode = occlusion.nodeObject(createOcclusionObserverNode(store, occlusion))
   ;(material as any).colorNode = observerNode
   material.needsUpdate = true
 
-  const mesh = new THREE.Mesh(geometry, material)
+  const mesh = new Mesh(geometry, material)
   mesh.name = '__r3fOcclusionObserver'
   mesh.scale.setScalar(0.0001) // Tiny
   mesh.frustumCulled = false // Always render so Node.update() runs
@@ -166,8 +141,6 @@ async function setupOcclusion(store: RootStore): Promise<void> {
       occlusionEnabled: true,
     },
   }))
-
-  occlusionSetupPromise = null
 }
 
 /**
@@ -184,7 +157,7 @@ export function disableOcclusion(store: RootStore): void {
   if (internal.occlusionObserver) {
     internal.occlusionObserver.removeFromParent()
     internal.occlusionObserver.geometry.dispose()
-    ;(internal.occlusionObserver.material as THREE.Material).dispose()
+    ;(internal.occlusionObserver.material as Material).dispose()
   }
 
   // Clear cache
@@ -234,7 +207,7 @@ export function cleanupHelperGroup(store: RootStore): void {
  */
 export function registerVisibility(
   store: RootStore,
-  object: THREE.Object3D,
+  object: Object3D,
   handlers: Pick<EventHandlers, 'onFramed' | 'onOccluded' | 'onVisible'>,
 ): void {
   const { internal } = store.getState()
@@ -270,7 +243,7 @@ export function registerVisibility(
  * @param store - The root store for this object
  * @param object - The THREE.Object3D to stop tracking
  */
-export function unregisterVisibility(store: RootStore, object: THREE.Object3D): void {
+export function unregisterVisibility(store: RootStore, object: Object3D): void {
   const { internal } = store.getState()
   internal.visibilityRegistry.delete(object.uuid)
   internal.occlusionCache.delete(object)
@@ -296,7 +269,7 @@ export function unregisterVisibility(store: RootStore, object: THREE.Object3D): 
  */
 export function updateVisibilityHandlers(
   store: RootStore,
-  object: THREE.Object3D,
+  object: Object3D,
   handlers: Pick<EventHandlers, 'onFramed' | 'onOccluded' | 'onVisible'>,
 ): boolean {
   const { internal } = store.getState()
@@ -331,6 +304,7 @@ export function checkVisibility(state: RootState): void {
   if (registry.size === 0) return
 
   // Update temp frustum from current camera
+  tempFrustum ??= state.frustum.clone()
   updateFrustum(camera, tempFrustum)
 
   // Iterate registered objects
@@ -342,10 +316,10 @@ export function checkVisibility(state: RootState): void {
     const computeFrustum = () => {
       if (inFrustum === null) {
         // Ensure object has updated bounding sphere for accurate check
-        if ((object as THREE.Mesh).geometry?.boundingSphere === null) {
-          ;(object as THREE.Mesh).geometry?.computeBoundingSphere()
+        if ((object as Mesh).geometry?.boundingSphere === null) {
+          ;(object as Mesh).geometry?.computeBoundingSphere()
         }
-        inFrustum = tempFrustum.intersectsObject(object)
+        inFrustum = tempFrustum!.intersectsObject(object)
       }
       return inFrustum
     }

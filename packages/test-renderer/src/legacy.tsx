@@ -11,8 +11,7 @@
  */
 
 import { act } from 'react'
-import * as THREE from 'three'
-import { extend, _roots as mockRoots, createRoot, reconciler } from '@react-three/fiber/legacy'
+import { _roots as mockRoots, createRoot, reconciler } from '@react-three/fiber/legacy'
 
 import { createTestRenderer } from './createRenderer'
 import { waitFor, type WaitOptions } from './helpers/waitFor'
@@ -20,12 +19,10 @@ import { waitFor, type WaitOptions } from './helpers/waitFor'
 //* Initialize Test Renderer ==============================
 
 const renderer = createTestRenderer({
-  THREE,
   createRoot,
   mockRoots,
   reconciler,
   act,
-  extend,
   mode: 'webgl',
 })
 
