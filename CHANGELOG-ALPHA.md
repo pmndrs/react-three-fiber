@@ -84,6 +84,11 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- Importing any entry no longer breaks JSX whose tag is typed `React.ElementType`
+  (`<IconComponent size={size} />` failed with "Type 'number' is not assignable to type 'never'").
+  `ThreeToJSXElements` drops three's non-constructor exports (constants, functions, namespaces)
+  from `JSX.IntrinsicElements` instead of mapping them to `never`-valued elements
+  ([#3898](https://github.com/pmndrs/react-three-fiber/issues/3898)).
 - Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
   `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
   `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the

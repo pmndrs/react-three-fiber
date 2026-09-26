@@ -8,7 +8,8 @@
     "moduleResolution": "Bundler",
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["@webgpu/types"]
+    "types": ["@webgpu/types"],
+    "jsx": "react-jsx"
   },
-  "files": ["./webgpu-consumer.ts"]
+  "files": ["./webgpu-consumer.ts", "./webgpu-element-type.tsx"]
 }

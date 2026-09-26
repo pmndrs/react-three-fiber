@@ -39,7 +39,31 @@ function typeAssertions() {
   return [raycaster, eventSource, eventSourceRef, primitive, custom]
 }
 
+type IconProps = {
+  icon: React.ElementType
+  size?: number
+}
+
+// #3898: a `React.ElementType` tag keeps its props once R3F's intrinsic elements are merged in. A
+// non-constructor three export (constant, function, namespace) must not become a `never`-valued
+// intrinsic element: one is enough to collapse the props of every `ElementType` tag to `never`.
+function Icon({ icon: IconComponent, size = 24 }: IconProps) {
+  return <IconComponent size={size} />
+}
+
+function elementTypeAssertions() {
+  return (
+    <>
+      <Icon icon="svg" size={32} />
+      <Canvas>
+        <group />
+      </Canvas>
+    </>
+  )
+}
+
 void typeAssertions
+void elementTypeAssertions
 
 describe('public prop declarations', () => {
   it('compile through source declarations', () => {
