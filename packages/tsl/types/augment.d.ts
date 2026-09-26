@@ -1,5 +1,6 @@
 import type { RenderPipeline } from 'three/webgpu'
 import type { BufferStore, NodeStore, StorageStore } from './resources'
+import type { AppUniforms } from '../src/register'
 
 /**
  * The fields @react-three/tsl adds to RootState. Its root extension sets them up on every canvas;
@@ -7,8 +8,12 @@ import type { BufferStore, NodeStore, StorageStore } from './resources'
  * `state.uniforms` reads the same in useFrame, useThree, creators and handlers, on any canvas.
  */
 export interface TSLRootState {
-  /** TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() */
-  uniforms: UniformStore
+  /**
+   * TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms(). Typed by name
+   * once you register them (see `Register`), so `useFrame(({ uniforms }) => uniforms.uTime.value)`
+   * needs no cast.
+   */
+  uniforms: AppUniforms
   /** TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() */
   nodes: NodeStore
   /** Buffers - root-level buffers + scoped sub-objects. Use useBuffers() */

@@ -2,13 +2,20 @@ import { useCallback, useMemo } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import * as THREE from 'three/webgpu'
-import { uniform } from 'three/tsl'
-import { vectorize, scopedNodeName } from './internal/utils'
+import { vectorize } from './internal/utils'
 import { useCompareMemoize } from './internal/useCompareMemoize'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
 import { isUniformNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
+import { createUniform } from './internal/createUniform'
+import type {
+  AppUniforms,
+  RegisteredScopes,
+  RegisteredScopeUniforms,
+  RootUniformInput,
+  ScopeUniformInput,
+} from './register'
 
 //* Types ==============================
 
@@ -32,36 +39,41 @@ export type UniformsWithUtils<T extends UniformRecord | UniformStore = UniformRe
 }
 
 //* Hook Overloads ==============================
+// Registration-aware (see ./register). With nothing registered every signature below behaves
+// exactly as before: RootUniformInput is UniformInputRecord and AppUniforms is UniformStore.
 
-// Create/get uniforms at root level (no scope) - function (+ utils)
-export function useUniforms<T extends UniformInputRecord>(
+// Create/get uniforms at root level - function (+ utils). Registered keys keep their type.
+export function useUniforms<T extends RootUniformInput>(
   creator: UniformCreator<T>,
 ): UniformsWithUtils<UniformNodesFor<T>>
 
-// Create/get uniforms within a scope - function (+ utils)
-export function useUniforms<T extends UniformInputRecord>(
-  creator: UniformCreator<T>,
-  scope: string,
+// Create/get uniforms within a scope - function (+ utils). A registered scope is type-checked.
+export function useUniforms<T extends UniformInputRecord, S extends string>(
+  creator: (state: CreatorState) => T & ScopeUniformInput<S>,
+  scope: S,
 ): UniformsWithUtils<UniformNodesFor<T>>
 
-// Create/get uniforms at root level (no scope) - object (+ utils)
-export function useUniforms<T extends UniformInputRecord>(uniforms: T): UniformsWithUtils<UniformNodesFor<T>>
+// Create/get uniforms at root level - object (+ utils). Registered keys keep their type.
+export function useUniforms<T extends RootUniformInput>(uniforms: T): UniformsWithUtils<UniformNodesFor<T>>
 
-// Create/get uniforms within a scope - object (+ utils)
-export function useUniforms<T extends UniformInputRecord>(
-  uniforms: T,
-  scope: string,
+// Create/get uniforms within a scope - object (+ utils). A registered scope is type-checked.
+export function useUniforms<T extends UniformInputRecord, S extends string>(
+  uniforms: T & ScopeUniformInput<S>,
+  scope: S,
 ): UniformsWithUtils<UniformNodesFor<T>>
 
-// Get all uniforms (returns full structure with root uniforms and scopes + utils)
-export function useUniforms(): UniformsWithUtils<UniformStore>
+// Get all uniforms: typed by name when registered, loose otherwise (+ utils)
+export function useUniforms(): UniformsWithUtils<AppUniforms>
 
-// Get uniforms from a specific scope (+ utils)
-export function useUniforms(scope: string): UniformsWithUtils
+// Get a registered scope: typed by name, and the scope name autocompletes (+ utils)
+export function useUniforms<S extends keyof RegisteredScopes & string>(
+  scope: S,
+): UniformsWithUtils<RegisteredScopeUniforms<S>>
 
 // Read existing uniforms against an explicit schema, at root (no scope) or within a scope.
 // A reader cannot infer types from a runtime string; supply the values the creator registered:
 //   useUniforms<{ blurAmount: number }>() // blurAmount: UniformNode<'float', number>
+// With no schema this is the loose reader for any other scope.
 export function useUniforms<T extends UniformInputRecord>(scope?: string): UniformsWithUtils<UniformNodesFor<T>>
 
 //* Hook Implementation ==============================
@@ -289,37 +301,6 @@ export function rebuildAllUniforms(store: ReturnType<typeof useStore>, scope?: s
 export default useUniforms
 
 //* Helper Functions ==============================
-
-/**
- * Creates a TSL uniform node from various input types
- * - Already a UniformNode: returns as-is
- * - TSL nodes (color(), vec3(), float()): passed to uniform() for type casting
- * - Plain objects: converted to vectors via vectorize()
- * - String colors: converted to Color via vectorize()
- * - Raw values: wrapped in uniform()
- */
-function createUniform(inName: string, node: any, scope?: string): UniformNode {
-  // Already a UniformNode - return as-is
-  if (node.type === 'UniformNode') return node
-
-  // vectorize handles:
-  // - TSL nodes: passed through unchanged
-  // - Plain objects {x,y,z}: converted to Vector3
-  // - String colors: converted to THREE.Color
-  // - Other values: passed through unchanged
-  const inValue = vectorize(node)
-  // See useUniform.tsx: three's uniform() accepts any value at runtime, but its declared
-  // overloads are a closed set that R3F's wider (already-normalised) input can't select from.
-  const newUniform = (uniform as (value: unknown, type?: string) => UniformNode)(inValue)
-
-  // Set debug name for easier identification in GPU tools.
-  // Shares scopedNodeName with the other resource hooks so the separator cannot drift again.
-  if (typeof newUniform.setName === 'function') {
-    newUniform.setName(scopedNodeName(scope, inName))
-  }
-
-  return newUniform
-}
 
 /** Type guard for Three.js Vector2/3/4 */
 function isThreeVector(inVector: unknown): boolean {

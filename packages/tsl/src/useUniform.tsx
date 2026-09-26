@@ -6,6 +6,7 @@ import { usePrimaryStore } from './internal/usePrimaryStore'
 import { ROOT_SCOPE, peekStaged } from './internal/resourceRegistry'
 import { isTSLNode, isUniformNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
+import type { RegisteredUniform, RegisteredUniforms } from './register'
 
 /**
  * `uniform()` typed to its documented runtime contract.
@@ -46,6 +47,9 @@ export type UniformValue =
   | UniformNode // Allow passing existing uniform nodes
 
 //* Hook Overloads ==============================
+
+// Get a registered uniform: typed by name, no generic needed (see ./register)
+export function useUniform<K extends keyof RegisteredUniforms & string>(name: K): RegisteredUniform<K>
 
 // Get existing uniform (throws if not found)
 export function useUniform<T extends UniformValue = UniformValue>(name: string): UniformNodeFor<T>

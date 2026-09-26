@@ -174,6 +174,8 @@ function runPublicConsumerTest() {
     ['TSL (webgpu)', 'scripts/type-tests/tsconfig.tsl.json'],
     ['TSL (default)', 'scripts/type-tests/tsconfig.tsl.default.json'],
     ['TSL (legacy)', 'scripts/type-tests/tsconfig.tsl.legacy.json'],
+    ['TSL Register (strict)', 'scripts/type-tests/tsconfig.tsl.register.json'],
+    ['TSL Register (strict: false)', 'scripts/type-tests/tsconfig.tsl.register-loose.json'],
   ]
 
   try {

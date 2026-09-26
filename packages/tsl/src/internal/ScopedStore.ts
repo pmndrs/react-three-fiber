@@ -22,6 +22,7 @@ import { withStagedOverlay } from './resourceRegistry'
 import type { RootState, RootStore } from '@react-three/fiber/extension'
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
+import type { CreatorUniforms } from '../register'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -35,7 +36,7 @@ const INTERNAL_IS_LEAF = Symbol('ScopedStore.isLeaf')
  * Use `.scope(key)` for nested object access.
  *
  */
-type ScopedStoreMethods<TLeaf> = {
+export type ScopedStoreMethods<TLeaf> = {
   /** Access a nested scope by key. Returns empty wrapper if scope doesn't exist. */
   scope<TScope extends Record<string, TLeaf> = Record<string, TLeaf>>(key: string): ScopedStoreType<TLeaf, TScope>
   /** Check if a key exists in the store */
@@ -150,8 +151,8 @@ export function createScopedStore<TLeaf>(
  * Provides type-safe access to uniforms, nodes, buffers, and gpuStorage without manual casting.
  */
 export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
-  /** Type-safe uniform access - property access returns UniformNode */
-  uniforms: ScopedStoreType<UniformNode>
+  /** Type-safe uniform access - property access returns UniformNode, typed by name when registered */
+  uniforms: CreatorUniforms
   /** Type-safe node access for real, callable, and legacy structural nodes */
   nodes: ScopedStoreType<NodeLike>
   /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */

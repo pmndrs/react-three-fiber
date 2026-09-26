@@ -3,152 +3,34 @@
  *
  * TSL resources belong to a renderer: every canvas drawing through it -- the primary, its
  * secondaries, and all their portals -- sees the same uniforms, nodes, buffers and GPU storage. They
- * live on the primary canvas's RootState. Portals already mirror their parent's state; a secondary
- * canvas is given the primary's map objects by the TSL root extension and follows them.
+ * live on the primary canvas's RootState. Portals follow their parent's state; a secondary canvas is
+ * given the primary's map objects by the TSL root extension and follows them.
  *
  * So `state.uniforms` reads the same everywhere: in useFrame, useThree, creators and handlers, on any
- * canvas or portal. This file pins that on REAL roots (createRoot + a mock WebGPU renderer that keeps
- * three's CanvasTarget contract, as in primary-canvas-target.test.tsx).
+ * canvas or portal. This file pins that on real roots (see ./roots).
  */
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
-import { CanvasTarget } from 'three/webgpu'
 import { float, mix } from 'three/tsl'
-import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
-import {
-  createRoot,
-  createPortal,
-  extend,
-  getScheduler,
-  Scheduler,
-  useFrame,
-  useStore,
-  useThree,
-} from '@react-three/fiber'
-import type { RootState, RootStore } from '@react-three/fiber'
+import { createPortal, extend, getScheduler, useFrame, useStore, useThree } from '@react-three/fiber'
+import type { RootStore } from '@react-three/fiber'
 import { useUniforms, useUniform, useNodes } from '../src'
 import { notifyRootExtensionsHmr } from '../../fiber/src/core/extensions'
+import {
+  mountIndependent,
+  mountPrimary,
+  mountSecondary,
+  prefix,
+  setupRealRoots,
+  startSecondary,
+  unmount,
+} from './roots'
 
 extend(THREE)
 
-extend(THREE)
-
-//* Mock Renderer ==============================
-// Enough of three's WebGPURenderer contract for primary/secondary canvases: a default CanvasTarget
-// around the element, setCanvasTarget, and target-implicit sizing.
-class MockWebGPURenderer {
-  canvas: HTMLCanvasElement
-  backend = { isWebGPUBackend: true, updateSize: () => {} }
-  shadowMap = { enabled: false, type: THREE.PCFSoftShadowMap }
-  outputColorSpace = THREE.SRGBColorSpace
-  toneMapping = THREE.ACESFilmicToneMapping
-  renderLists = { dispose: () => {} }
-  xr = {
-    enabled: false,
-    isPresenting: false,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    setAnimationLoop: () => {},
-  }
-  private _canvasTarget: CanvasTarget
-
-  constructor(params: { canvas: HTMLCanvasElement }) {
-    this.canvas = params.canvas
-    this._canvasTarget = new CanvasTarget(params.canvas)
-  }
-  async init() {}
-  hasInitialized() {
-    return true
-  }
-  getCanvasTarget() {
-    return this._canvasTarget
-  }
-  setCanvasTarget(target: CanvasTarget) {
-    this._canvasTarget = target
-  }
-  setSize(width: number, height: number, updateStyle?: boolean) {
-    this._canvasTarget.setSize(width, height, updateStyle)
-  }
-  setPixelRatio(value: number) {
-    this._canvasTarget.setPixelRatio(value)
-  }
-  render() {}
-  dispose() {}
-  forceContextLoss() {}
-}
-
-//* Harness ==============================
-
-type TestRoot = ReturnType<typeof createRoot>
-const size = { width: 320, height: 240, top: 0, left: 0 }
-
-let run = 0
-let prefix: string
-const roots: TestRoot[] = []
-
-beforeEach(() => {
-  Scheduler.reset()
-  prefix = `shared-store-${++run}`
-})
-
-afterEach(async () => {
-  await act(async () => {
-    for (const root of roots) root.unmount()
-  })
-  roots.length = 0
-  Scheduler.reset()
-})
-
-async function mountPrimary(children: React.ReactNode, id = `${prefix}-main`) {
-  const canvas = createCanvas()
-  const root = createRoot(canvas)
-  roots.push(root)
-  const renderer = new MockWebGPURenderer({ canvas })
-  let store!: RootStore
-  await act(async () => {
-    store = (await root.configure({ id, renderer: renderer as any, size, frameloop: 'never' })).render(children)
-  })
-  return { root, store, id }
-}
-
-/** Starts configuring a secondary. Returns once it has rendered (it waits for its primary). */
-function startSecondary(primaryCanvas: string, children: React.ReactNode, id = `${prefix}-sec-${roots.length}`) {
-  const canvas = createCanvas()
-  const root = createRoot(canvas)
-  roots.push(root)
-  const ready = (async () => {
-    const configured = await root.configure({
-      id,
-      primaryCanvas,
-      renderer: { primaryCanvas } as any,
-      size,
-      frameloop: 'never',
-      scheduler: { after: primaryCanvas },
-    })
-    return configured.render(children)
-  })()
-  return { root, ready }
-}
-
-async function mountSecondary(primaryCanvas: string, children: React.ReactNode) {
-  const { root, ready } = startSecondary(primaryCanvas, children)
-  let store!: RootStore
-  await act(async () => {
-    store = await ready
-  })
-  return { root, store }
-}
-
-async function mountIndependent(children: React.ReactNode) {
-  return mountPrimary(children, `${prefix}-solo-${roots.length}`)
-}
-
-async function unmount(root: TestRoot) {
-  await act(async () => root.unmount())
-  await act(async () => {})
-}
+setupRealRoots('shared-state')
 
 /** Renders nothing; hands the store it sees (a portal's own, inside a portal) to the test. */
 function Probe({ onRender }: { onRender: (store: RootStore) => void }) {
@@ -404,7 +286,7 @@ describe('mount and unmount order', () => {
       useUniforms({ uEarly: 1 })
       return null
     }
-    const id = `${prefix}-late-primary`
+    const id = `${prefix()}-late-primary`
     const secondary = startSecondary(id, <OnSecondary />)
     const { store: primary } = await mountPrimary(<group />, id)
     let secondaryStore!: RootStore

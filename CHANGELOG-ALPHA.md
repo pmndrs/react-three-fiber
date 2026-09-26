@@ -8,6 +8,18 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ### Features
 
+- `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
+  uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
+globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in
+  `useFrame`, `useThree` and handlers), a creator's `uniforms`, `useUniforms()`,
+  `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
+  are checked against registered keys. Strict by default (unknown root keys are errors, catching
+  typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
+  types, unchanged.
+- `configureTSL({ uniforms, scopes })` creates registered uniforms on every primary canvas up
+  front, including canvases already mounted, so registered types hold before the first frame.
+  Secondaries and portals see them like any shared uniform, and hooks that declare the same names
+  reuse those nodes.
 - New package `@react-three/tsl` with the TSL resource hooks. It builds on
   `@react-three/fiber/extension`, so it adds no second copy of fiber to an app whichever fiber
   entry the app uses.

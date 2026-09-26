@@ -13,6 +13,18 @@
  *   const uniforms = useThree((s) => s.uniforms)
  */
 
+// Typed uniforms by registration (declare module '@react-three/tsl' { interface Register {...} })
+export type {
+  Register,
+  AppUniforms,
+  RegisteredUniforms,
+  RegisteredScopes,
+  RootUniformInput,
+  ScopeUniformInput,
+  RegisteredScopeUniforms,
+  RegisteredUniform,
+} from './register'
+
 // Global TSL and render-pipeline types, and the RootState augmentation
 export type * from '../types'
 
@@ -20,6 +32,9 @@ export type * from '../types'
 // every root configured after the import, and every live one, gets its TSL fields.
 import { ensureTSLExtension } from './internal/tslExtension'
 ensureTSLExtension()
+
+// Uniforms that exist on every primary canvas from the start (the runtime half of Register)
+export { configureTSL, type TSLConfig } from './internal/configure'
 
 // ScopedStore - type-safe wrapper for creator function state
 export { createScopedStore, type ScopedStoreType, type CreatorState } from './internal/ScopedStore'

@@ -1,5 +1,6 @@
 import { registerRootExtension } from '@react-three/fiber/extension'
 import { clearHmrCaches } from './hmr'
+import { trackPrimary, untrackPrimary } from './configure'
 
 import type { RootState, RootStore } from '@react-three/fiber/extension'
 
@@ -23,11 +24,16 @@ export function createResourceState(): Pick<RootState, (typeof SHARED_KEYS)[numb
   return { uniforms: {}, nodes: {}, buffers: {}, gpuStorage: {}, _hmrVersion: 0 }
 }
 
-function setup(store: RootStore): Partial<RootState> | void {
+function setup(store: RootStore): void {
   const primary = store.getState().primaryStore
   // A primary (or a single canvas) owns its maps. Any renderer: test-renderer/webgpu runs the hooks
   // on WebGL roots.
-  if (!primary || primary === store) return createResourceState()
+  if (!primary || primary === store) {
+    store.setState(createResourceState())
+    // configureTSL's uniforms, if any, go straight onto the fresh maps.
+    trackPrimary(store)
+    return
+  }
   followPrimary(store, primary)
 }
 
@@ -49,7 +55,8 @@ function followPrimary(store: RootStore, primary: RootStore): void {
   following.set(store, primary.subscribe(sync))
 }
 
-function stopFollowing(store: RootStore): void {
+function dispose(store: RootStore): void {
+  untrackPrimary(store)
   following.get(store)?.()
   following.delete(store)
 }
@@ -67,7 +74,7 @@ export function ensureTSLExtension(): void {
   registerRootExtension({
     name: '@react-three/tsl',
     setup,
-    dispose: stopFollowing,
+    dispose,
     // Resolves primaryStore itself, so every canvas sharing a renderer refreshes the same resources.
     hmr: clearHmrCaches,
   })
