@@ -166,6 +166,8 @@ useFrame(() => updateGame(), { phase: 'update' })
 useFrame(() => updateAI(), { after: 'update', before: 'render' })
 ```
 
+> **Ordering direction is reversed.** A bare number is mapped to `{ priority: n }`, and v10 runs higher priority first (v9 ran lower first). Left unmigrated, the v9 example above runs `updateAI` first and `physicsStep` last on v10. Only `priority > 0` (render takeover) and negative values (reversed ordering) emit a deprecation notice; a bare `0` is the default and is silent. Migrate to `before`/`after`, or to `{ priority }` written for the v10 direction (higher runs earlier).
+
 ---
 
 ## Removed Props
