@@ -1554,5 +1554,91 @@ describe('renderer', () => {
 
       subscribeSpy.mockRestore()
     })
+
+    // A portal's state holds a copy of every parent field. Before, `...injectState` then won on every
+    // later parent change, so fields other than size/events/viewport froze at mount (a later camera,
+    // controls, or an extension's fields such as TSL uniforms).
+    it('follows parent fields that change after the portal mounted', async () => {
+      const container = new THREE.Group()
+      let portalState: RootState = null!
+      const frames: RootState[] = []
+
+      function PortalProbe() {
+        portalState = useThree()
+        useFrame((state) => {
+          frames.push(state)
+        })
+        return null
+      }
+
+      const rootStore: RootStore = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalProbe />, container)}
+          </>,
+        ),
+      )
+
+      const camera = new THREE.PerspectiveCamera()
+      const controls = new THREE.EventDispatcher() as RootState['controls']
+      await act(async () => rootStore.setState({ camera, controls }))
+
+      expect(portalState.camera).toBe(camera)
+      expect(portalState.controls).toBe(controls)
+      await act(async () => rootStore.getState().advance(1000))
+      expect(frames.at(-1)!.controls).toBe(controls)
+    })
+
+    it('keeps fields the portal overrides through its state prop', async () => {
+      const container = new THREE.Group()
+      const portalCamera = new THREE.PerspectiveCamera()
+      let portalState: RootState = null!
+
+      function PortalProbe() {
+        portalState = useThree()
+        return null
+      }
+
+      const rootStore: RootStore = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalProbe />, container, { camera: portalCamera })}
+          </>,
+        ),
+      )
+      expect(portalState.camera).toBe(portalCamera)
+
+      await act(async () => rootStore.setState({ camera: new THREE.PerspectiveCamera() }))
+      expect(portalState.camera).toBe(portalCamera)
+    })
+
+    it('keeps unrelated portal-local values when the parent changes something else', async () => {
+      const container = new THREE.Group()
+      let portalState: RootState = null!
+      const local = new THREE.PerspectiveCamera()
+
+      function PortalProbe() {
+        portalState = useThree()
+        return null
+      }
+
+      const rootStore: RootStore = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalProbe />, container)}
+          </>,
+        ),
+      )
+
+      // A value set inside the portal survives parent changes to other fields.
+      await act(async () => portalState.set({ camera: local }))
+      const renderer = {} as RootState['renderer']
+      await act(async () => rootStore.setState({ renderer }))
+      expect(portalState.camera).toBe(local)
+      expect(portalState.renderer).toBe(renderer)
+    })
   })
 })

@@ -13,6 +13,10 @@ import {
 import type { RootStore } from '#types'
 import { ensureTSLExtension } from './tslExtension'
 
+// Every resource hook goes through this module, so registering here covers them all -- at module
+// load, before any root renders.
+ensureTSLExtension()
+
 /**
  * @template C candidate type — what the creator produces (raw uniform inputs, TSL nodes, …)
  * @template V value type — what is stored on the map (UniformNode, TSL node, buffer, …)
@@ -69,7 +73,6 @@ export interface ScopedResourceOptions<C, V> {
  */
 export function useScopedResource<C, V = C>(options: ScopedResourceOptions<C, V>): Record<string, V> {
   const { store, kind, scope, isLeaf, create, prepare, reconcile, input } = options
-  ensureTSLExtension()
   const scopeKey = scope ?? ROOT_SCOPE
 
   // Re-run creators when a rebuild/HMR invalidation bumps the version. The
