@@ -117,9 +117,8 @@ describe('suspending inside <Canvas> (#3850)', () => {
       await new Promise((r) => setTimeout(r, 20))
     })
 
-    // `internal.active = false` is the first thing unmountComponentAtNode does, and it does it
-    // synchronously — the rest of the teardown (including the _roots delete) is deferred behind a
-    // 500ms timer, so this is the signal that actually pins "the teardown ran" without racing it.
+    // unmountComponentAtNode tears the root down through React once the tree's cleanups have
+    // flushed, and that teardown sets `internal.active = false`, so this pins "the teardown ran".
     expect(store.getState().internal.active).toBe(false)
   })
 })
