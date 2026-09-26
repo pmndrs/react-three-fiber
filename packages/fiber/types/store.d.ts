@@ -6,11 +6,13 @@ import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
+import type { ForRegisteredRenderer, R3FRenderer, R3FRendererSupport } from './register'
 
 //* Renderer Types ========================================
 
-/** Default renderer type - union of WebGL and WebGPU renderers */
-export type R3FRenderer = THREE.WebGLRenderer | WebGPURenderer
+// `R3FRenderer` -- the type of `state.renderer` -- is the union of both renderers unless the app
+// registered one (types/register.d.ts). Re-exported here for the many places that import it.
+export type { R3FRenderer }
 
 //* Core Store Types ========================================
 
@@ -104,6 +106,12 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: R3FRenderer
+  /**
+   * The renderer support `configure()` loaded for this root: the three namespace of that flavour
+   * (JSX constructors, core's classes) and the renderer-specific classes core needs by name.
+   * Selected once, from the entry's provider, and copied into portals with the rest of `internal`.
+   */
+  support: R3FRendererSupport
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
   /**
@@ -189,8 +197,12 @@ export interface RootState {
    */
   primaryStore: RootStore
   /** @deprecated Use `renderer` instead. The instance of the renderer (typed as WebGLRenderer for backwards compat) */
-  gl: THREE.WebGLRenderer
-  /** The renderer instance - type depends on entry point (WebGPU, Legacy, or union for default) */
+  gl: ForRegisteredRenderer<WebGPURenderer, THREE.WebGLRenderer, THREE.WebGLRenderer>
+  /**
+   * The renderer instance. Both renderers unless the app registered one
+   * (`declare module '@react-three/fiber' { interface Register { renderer: 'webgpu' } }`), or the
+   * entry decides it (`/webgpu`, `/legacy`).
+   */
   renderer: R3FRenderer
   /** Inspector of the webGPU Renderer. Init in the canvas */
   inspector: any // Inspector type from three/webgpu
@@ -268,7 +280,7 @@ export interface RootState {
   internal: InternalState
   // flags for triggers
   // if we are using the webGl renderer, this will be true
-  isLegacy: boolean
+  isLegacy: ForRegisteredRenderer<false, true, boolean>
   // regardless of renderer, if the system supports webGpu, this will be true
   webGPUSupported: boolean
   //if we are on native

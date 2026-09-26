@@ -1,6 +1,6 @@
 import { useRef, useImperativeHandle, useMemo } from 'react'
 import { buildGraph } from '../utils'
-import { Object3D } from '#three'
+import type { Object3D } from 'three'
 
 //* Type Imports ==============================
 import type { Instance, ObjectMap } from '#types'

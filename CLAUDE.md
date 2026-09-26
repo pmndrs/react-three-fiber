@@ -19,7 +19,8 @@ pnpm test:watch       # Watch mode testing
 
 # Building & Verification
 pnpm build            # Build fiber + eslint-plugin packages
-pnpm verify-bundles   # Verify THREE.js imports are correct per entry point
+pnpm verify-treeshake # Bundle consumer apps from dist and check which renderer each carries
+pnpm verify-types     # Check the built declarations per entry
 pnpm typecheck        # TypeScript type checking
 
 # Code Quality
@@ -29,7 +30,7 @@ pnpm format           # Check Prettier formatting
 pnpm format:fix       # Auto-fix formatting
 
 # Full CI Suite
-pnpm run ci           # build → typecheck → eslint → dev → test → format
+pnpm run ci           # build → verify-treeshake → verify-types → typecheck → eslint → dev → test → format
 
 # Single Test File
 vitest packages/fiber/tests/hooks.test.tsx
@@ -39,22 +40,22 @@ vitest packages/fiber/tests/hooks.test.tsx
 
 ### Entry Points
 
-R3F has three entry points with different THREE.js imports controlled via `#three` alias resolution:
+One core, built once, shared by four entries. Core has **no static import from `three` or `three/webgpu`**: each renderer is described by a support module (`src/support/webgl.ts`, `src/support/webgpu.ts`) that owns its three namespace and the renderer-specific classes, and an entry hands `createRoot`/`Canvas` a provider saying how to load them.
 
-| Entry     | Import Path                    | THREE Imports     | Build Flags               |
-| --------- | ------------------------------ | ----------------- | ------------------------- |
-| Default   | `@react-three/fiber`           | WebGL + WebGPU    | Both true                 |
-| Legacy    | `@react-three/fiber/legacy`    | WebGL only        | LEGACY=true, WEBGPU=false |
-| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU only       | LEGACY=false, WEBGPU=true |
-| Extension | `@react-three/fiber/extension` | None (three-free) | n/a                       |
+| Entry     | Import Path                    | Renderer                                             | Flags                     |
+| --------- | ------------------------------ | ---------------------------------------------------- | ------------------------- |
+| Default   | `@react-three/fiber`           | Either; `<Canvas renderer>` = WebGPU, loaded lazily  | Both true                 |
+| Legacy    | `@react-three/fiber/legacy`    | WebGL, support imported statically                   | LEGACY=true, WEBGPU=false |
+| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU, support imported statically                  | LEGACY=false, WEBGPU=true |
+| Extension | `@react-three/fiber/extension` | None: hooks, context and the extension registry only | n/a                       |
 
-The extension entry (`src/extension.tsx`) is for packages that build on fiber: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension` and `setRenderOverride`, with no three imports. `pnpm verify-bundles` fails if it ever imports three or grows past 60 KB, so only import leaf modules (`core/context.ts`, `core/hooks/useStore.ts`, `core/extensions.ts`, `core/utils/react.tsx`) into it, never `store.ts` or the `utils` barrel.
+On the root entry both supports are dynamic imports, so an app downloads only the renderer its Canvas asks for and nothing of three before that. `/legacy` and `/webgpu` skip that request and narrow `useThree`/`useFrame`/`Canvas`/`useRenderTarget` to one renderer's types. The extension entry is the stable surface for packages that build on fiber (`@react-three/tsl`); with one shared core it adds no second copy of anything.
 
-The `#three` alias resolves to different files per entry point during build (configured in `packages/fiber/build.config.ts`):
+How core reaches three at runtime:
 
-- Default → `src/three/index.ts`
-- Legacy → `src/three/legacy.ts`
-- WebGPU → `src/three/webgpu.ts`
+- `state.internal.support` — the loaded support: `kind`, `three` (the namespace, also the JSX constructors for this root), `Renderer`, `RenderTarget`, `CubeRenderTarget`, and on WebGPU `CanvasTarget` + `occlusion`.
+- `getThree()` (`src/core/three.ts`) — three's shared core (`Vector3`, `Scene`, constants, ...), registered by the first support that loads. Both flavours export the same objects for these.
+- JSX names resolve explicit `extend()` registrations first, then `support.three` (`src/core/catalogue.ts`). No entry calls `extend(THREE)` at import time.
 
 ### Package Structure
 
@@ -66,7 +67,7 @@ packages/
 │   │   ├── legacy.tsx      # Legacy entry (WebGL only)
 │   │   ├── core/           # Shared reconciler, hooks, events, store
 │   │   ├── webgpu/         # WebGPU-specific code
-│   │   └── three/          # #three alias resolution files
+│   │   └── support/        # webgl.ts / webgpu.ts: the only modules that import three
 │   ├── types/              # TypeScript definitions
 │   └── tests/              # Vitest tests
 ├── tsl/                    # @react-three/tsl - TSL resource hooks (built on fiber/extension)
@@ -86,11 +87,11 @@ packages/
 
 **For all entry points**: Add to `src/core/`, export from `src/core/index.tsx`
 
-**For WebGPU only**: Add to `src/webgpu/`, export from `src/webgpu/index.tsx`
+**For WebGPU only**: Add to `src/webgpu/`, export from `src/webgpu/index.tsx`. A renderer-specific class core needs goes on the support object (`types/provider.d.ts`, `src/support/*.ts`) and is read from `state.internal.support`.
 
-**TSL resource hooks** (`useUniforms`, `useNodes`, `useRenderPipeline`, ...) live in `packages/tsl`. That package imports fiber only from `@react-three/fiber/extension` (never another entry or fiber's source) and three only from `three/webgpu` / `three/tsl`; `pnpm verify-bundles` enforces both.
+**TSL resource hooks** (`useUniforms`, `useNodes`, `useRenderPipeline`, ...) live in `packages/tsl`. That package imports fiber only from `@react-three/fiber/extension` (never another entry or fiber's source) and three only from `three/webgpu` / `three/tsl`.
 
-**New THREE.js imports**: Update the appropriate file in `src/three/` and import via `#three` in core code
+**New THREE.js imports**: In `src/core/`, only `import type`. A class from three's shared core comes from `getThree()`; a renderer-specific one from `state.internal.support`. A three addon (`three/examples/jsm/*`) imports from `three`, so it is loaded with a dynamic import where it is used (see `useEnvironment.tsx`).
 
 ### React Reconciler
 
@@ -102,7 +103,7 @@ The react-reconciler package is patched during postinstall (via Vite) and bundle
 - **Coverage**: v8 provider
 - **Setup**: `packages/fiber/tests/setupTests.ts` (mocks WebGL2, ResizeObserver, PointerEvent)
 
-Tests run against source files. Bundle verification (`pnpm verify-bundles`) checks built dist files for correct THREE.js imports.
+Tests run against source files. `pnpm verify-treeshake` bundles consumer apps from the built `dist` with Vite and esbuild and checks which renderer each carries; `pnpm verify-types` checks the built declarations.
 
 ## Code Style
 
@@ -146,7 +147,7 @@ Prefer clean, minimal code patterns:
 
 ## Common Pitfalls
 
-1. **Always import from `#three`** in core code, never directly from `three` - the alias resolution handles per-entry imports
+1. **Never import a value from `three` or `three/webgpu` in `src/core/`** - either one would put that renderer into every app's eager bundle. Types are free; values come from `getThree()` or `state.internal.support`
 2. **Run `pnpm dev`** after `pnpm install` if stubs seem stale
 3. **Windows symlinks**: May need Developer Mode enabled for stub generation
 4. **"Multiple instances of Three.js" warning**: Safe to ignore in tests, suppressed in setupTests.ts

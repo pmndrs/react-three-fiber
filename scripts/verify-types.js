@@ -1,13 +1,15 @@
 /**
  * Type verification script for @react-three/fiber
  *
- * Verifies that ThreeExports is properly typed after build (not resolving to `any`).
+ * Verifies the built declarations: each entry's ThreeExports names the right three namespace(s),
+ * the JSX augmentation is declared per entry, nothing in dist carries a runtime helper, an
+ * internal alias or a local path, and the public entries typecheck from a consumer's side.
  * Run after `pnpm build` to catch type regressions.
  *
  * Usage: node scripts/verify-types.js
  */
 
-import { readFileSync, writeFileSync, unlinkSync } from 'fs'
+import { readFileSync, writeFileSync, unlinkSync, readdirSync, statSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
@@ -23,7 +25,8 @@ const expectedPatterns = {
     name: 'Default',
     // Should reference both three and three/webgpu
     threeExports: /typeof import\(['"]three['"]\)\s*&\s*typeof import\(['"]three\/webgpu['"]\)/,
-    forbiddenPatterns: [/typeof THREE\b(?!\$)/], // Should NOT have typeof THREE (merged namespace)
+    // Should NOT be left as an unresolved namespace (the merged-namespace bug this check was born for)
+    forbiddenPatterns: [/typeof THREE\b(?!\$)/],
   },
   'legacy.d.ts': {
     name: 'Legacy',
@@ -60,7 +63,12 @@ function verifyDtsFile(filename, config) {
     return false
   }
 
-  const threeExportsLine = threeExportsMatch[0]
+  // rollup-dts writes `import * as THREE from 'three'` + `typeof THREE`; resolve the alias to the
+  // module specifier so the patterns below read the same whatever name it picked.
+  let threeExportsLine = threeExportsMatch[0]
+  for (const [, alias, specifier] of content.matchAll(/import \* as (\w+) from '([^']+)';/g)) {
+    threeExportsLine = threeExportsLine.replace(new RegExp(`typeof ${alias}\\b`, 'g'), `typeof import('${specifier}')`)
+  }
   console.log(`   📝 ${threeExportsLine}`)
 
   let passed = true
@@ -90,6 +98,55 @@ function verifyDtsFile(filename, config) {
     console.log(`   ✅ ThreeElements interface exists`)
   }
 
+  // Each entry augments react's JSX with its own map; the shared chunk must not (it would give
+  // every entry every element)
+  if (
+    !/declare module 'react' \{\s*namespace JSX \{\s*interface IntrinsicElements extends ThreeElements/.test(content)
+  ) {
+    console.error(`   ❌ JSX IntrinsicElements augmentation not declared in this entry`)
+    passed = false
+  } else {
+    console.log(`   ✅ JSX IntrinsicElements augmented by this entry`)
+  }
+
+  return passed
+}
+
+/** Reject runtime helpers, internal aliases and local paths anywhere in the declarations. */
+function verifyDistHygiene() {
+  console.log('\n📦 Declaration hygiene')
+  console.log('─'.repeat(60))
+
+  const forbidden = [
+    // A rollup runtime helper is invalid in a declaration file
+    [/_mergeNamespaces/, 'rollup namespace runtime'],
+    // Internal alias only tsconfig paths and the build know about
+    [/from '#types'/, "'#types' import"],
+    // A path from the machine that built it
+    [/['"]\/(home|Users)\/|['"][A-Z]:\\/, 'absolute local path'],
+    // The shared chunk must not carry the JSX augmentation
+    [/declare module 'react'/, 'JSX augmentation (belongs in an entry, not a shared chunk)', /shared[\\/]/],
+  ]
+
+  let passed = true
+  const walk = (dir) =>
+    readdirSync(dir).flatMap((name) => {
+      const full = resolve(dir, name)
+      return statSync(full).isDirectory() ? walk(full) : /\.d\.[cm]?ts$/.test(name) ? [full] : []
+    })
+
+  for (const file of walk(distDir)) {
+    const content = readFileSync(file, 'utf-8')
+    const relative = file.slice(distDir.length + 1)
+    for (const [pattern, label, onlyIn] of forbidden) {
+      if (onlyIn && !onlyIn.test(relative)) continue
+      if (pattern.test(content)) {
+        console.error(`   ❌ ${relative} contains ${label}`)
+        passed = false
+      }
+    }
+  }
+  if (passed) console.log('   ✅ No namespace runtime, alias imports, local paths or misplaced augmentations')
   return passed
 }
 
@@ -171,6 +228,8 @@ function runPublicConsumerTest() {
     ['Legacy', 'scripts/type-tests/tsconfig.legacy.json'],
     ['WebGPU', 'scripts/type-tests/tsconfig.json'],
     ['Extension', 'scripts/type-tests/tsconfig.extension.json'],
+    ['Register (webgpu)', 'scripts/type-tests/tsconfig.register.webgpu.json'],
+    ['Register (webgl)', 'scripts/type-tests/tsconfig.register.webgl.json'],
     ['TSL (webgpu)', 'scripts/type-tests/tsconfig.tsl.json'],
     ['TSL (default)', 'scripts/type-tests/tsconfig.tsl.default.json'],
     ['TSL (legacy)', 'scripts/type-tests/tsconfig.tsl.legacy.json'],
@@ -213,6 +272,10 @@ function main() {
     if (!verifyDtsFile(filename, config)) {
       allPassed = false
     }
+  }
+
+  if (!verifyDistHygiene()) {
+    allPassed = false
   }
 
   // Run type resolution test

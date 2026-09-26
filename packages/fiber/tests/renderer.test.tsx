@@ -15,8 +15,6 @@ import {
 import type { RootState, RootStore } from '../src/index'
 import { suspend } from 'suspend-react'
 
-extend(THREE)
-
 class Mock extends THREE.Group {
   static instances: string[]
   constructor(name: string = '') {

@@ -6,8 +6,42 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ## Unreleased
 
+### Breaking Changes
+
+- `@monogrid/gainmap-js` is no longer a dependency. `<Environment>` / `useEnvironment` drop the
+  split gain map format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`), which only that package
+  reads. `.hdr`, `.exr`, six-face cube sets and single-file Ultra HDR `.jpg` (three's own
+  `UltraHDRLoader`, the Android / ISO 21496-1 standard) stay. Every decoder is now three's own and
+  decodes on the CPU, so `.jpg` environments can be preloaded like the others. Apps that need the
+  split format keep it through drei's `<Environment>`.
+
 ### Features
 
+- One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
+  imports `three` or `three/webgpu`: each renderer lives in a support module that the root entry
+  loads on demand, so a plain `<Canvas>` downloads only the WebGL renderer and `<Canvas renderer>`
+  only the WebGPU one, as separate lazy chunks. All entries are built in one pass on a shared core,
+  so a library importing hooks from `@react-three/fiber` adds no renderer and no second copy of
+  fiber to an app on any entry. `/legacy` and `/webgpu` remain as static, narrowed aliases (no extra
+  request, one renderer's types, `useRenderTarget` typed to its target). JSX element names resolve
+  against explicit `extend()` registrations first, then the three namespace of the root's own
+  renderer, so a WebGL root no longer advertises node materials it cannot build; each entry
+  declares its own `ThreeElements` (`ThreeElementsOf<T>`) and `ReactThreeFiber` namespace. Core
+  code reaches three's shared core through `getThree()` / `whenThree()` / `hasThree()` and the
+  renderer-specific classes through `state.internal.support`. The environment decoders and
+  `GroundedSkybox` load on demand.
+  `pnpm verify-treeshake` (Vite and esbuild) replaces `verify-bundles`. Supersedes #3950-#3952:
+  the shared-core build, provider and per-root element resolution follow that stack; the
+  three-free core and lazy renderer supports are new. See
+  [BUILD.md](./docs/development/BUILD.md).
+- `Register` for the renderer: `declare module '@react-three/fiber' { interface Register { renderer:
+'webgpu' } }` (or `'webgl'`) narrows `state.renderer`, `state.gl`, `state.isLegacy`,
+  `state.internal.support` and `useRenderTarget` app-wide, so `useThree`, `useFrame` and `onCreated`
+  need no cast on the root entry. Nothing registered keeps the union. Same pattern as
+  `@react-three/tsl`'s `Register`. See [TypeScript](./docs/API/typescript.mdx#typing-the-renderer).
+- The Canvas `renderer` prop is typed. It used to be `any`; it now accepts `true`, a renderer
+  instance or factory (structural, like `gl`), or a props bag of `WebGPURendererParameters`,
+  renderer properties and the config keys, with autocomplete and typo checking.
 - `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
   uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
 globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in

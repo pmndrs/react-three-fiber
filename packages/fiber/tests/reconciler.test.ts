@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { createCanvas as createTestCanvas } from '../../test-renderer/src/createTestCanvas'
 
 // Imported *and* re-exported: `reconciler.prod.test.ts` pulls `act`/`createCanvas` from here, and a

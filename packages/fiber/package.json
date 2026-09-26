@@ -63,12 +63,10 @@
   "scripts": {
     "prebuild": "node -e \"require('fs').copyFileSync('../../readme.md', 'readme.md')\"",
     "build": "unbuild",
-    "postbuild": "node ../../scripts/fix-three-types.js",
     "stub": "unbuild --stub"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.6",
-    "@monogrid/gainmap-js": "^3.4.0",
     "@pmndrs/scheduler": "^0.2.0",
     "dequal": "^2.0.3",
     "its-fine": "^2.0.0",

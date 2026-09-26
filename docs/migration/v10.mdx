@@ -14,7 +14,7 @@ nav: 31
 
 ## The Short Version
 
-**Your existing code works.** v10 is designed to be backwards compatible. The default import now supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
+**Your existing code works.** v10 is designed to be backwards compatible. The default import supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU with `<Canvas renderer>`. Only the renderer your Canvas asks for is downloaded. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
 
 ## Quick Checklist
 
@@ -96,23 +96,25 @@ function MyComponent() {
 
 ### Renderer Selection
 
-| Your Use Case             | Import From                 | Renderer             |
-| ------------------------- | --------------------------- | -------------------- |
-| Default (webgl or webgpu) | `@react-three/fiber`        | WebGL (WebGPU-ready) |
-| WebGL only, no warnings   | `@react-three/fiber/legacy` | WebGLRenderer        |
-| WebGPU with TSL           | `@react-three/fiber/webgpu` | WebGPURenderer       |
+| Your Use Case                    | Import From                 | Renderer                                   |
+| -------------------------------- | --------------------------- | ------------------------------------------ |
+| Default (WebGL, or WebGPU with `renderer`) | `@react-three/fiber`        | Chosen per Canvas, downloaded on demand    |
+| WebGL only, no warnings          | `@react-three/fiber/legacy` | WebGLRenderer, no extra request            |
+| WebGPU only                      | `@react-three/fiber/webgpu` | WebGPURenderer, no extra request           |
 
 ```tsx
-// Default - works with both WebGL and WebGPU
+// Default - WebGL by default, WebGPU with <Canvas renderer>. Only the one you use is downloaded.
 import { Canvas, useFrame } from '@react-three/fiber'
 
-// Legacy - WebGLRenderer only, smaller bundle
+// Legacy - WebGLRenderer only, typed as such
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 
-// WebGPU - WebGPURenderer only (TSL hooks come from @react-three/tsl)
+// WebGPU - WebGPURenderer only, typed as such (TSL hooks come from @react-three/tsl)
 import { Canvas, useFrame } from '@react-three/fiber/webgpu'
 import { useUniforms } from '@react-three/tsl'
 ```
+
+All three entries share one core, so libraries built on `@react-three/fiber` work under a Canvas from any of them without adding a renderer to your bundle.
 
 ### `useFrame` Clock Removed
 
@@ -354,7 +356,7 @@ v10 brings **first-class WebGPU support** with a suite of hooks that make TSL (T
 **Write shaders the React way** - Uniforms, nodes, and post-processing all managed declaratively. Share shader logic across components. Update values without re-renders.
 
 ```tsx
-import { Canvas } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber'
 import { useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 import { Fn, vec3, sin, time, positionLocal, normalLocal } from 'three/tsl'
 

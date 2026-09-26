@@ -1,6 +1,16 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
+import { getThree } from '../three'
 import type { Instance, EventHandlers } from '#types'
-import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
+import {
+  hasConstructor,
+  is,
+  isColorRepresentation,
+  isCopyable,
+  isLayers,
+  isTexture,
+  isUniform,
+  isVectorLike,
+} from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
 import {
   registerVisibility,
@@ -327,7 +337,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
 
     // Layers must be written to the mask property
-    if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
+    if (isLayers(target) && isLayers(value)) {
       target.mask = value.mask
     }
 
@@ -354,7 +364,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // ShaderMaterial uniforms must keep a stable target reference so that pierced updates
     // (uniforms-foo-value) and references held by animation code keep working across renders.
-    else if (root instanceof THREE.ShaderMaterial && key === 'uniforms' && is.obj(value)) {
+    else if ((root as THREE.ShaderMaterial).isShaderMaterial && key === 'uniforms' && is.obj(value)) {
       if (!is.obj(root.uniforms)) root.uniforms = {}
       const uniforms = root.uniforms as Record<string, THREE.Uniform>
       const nextUniforms = value as Record<string, THREE.Uniform | { value: unknown }>
@@ -365,7 +375,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
         if (targetUniform) Object.assign(targetUniform, uniform)
         else {
-          const nextUniform = uniform instanceof THREE.Uniform ? uniform.clone() : new THREE.Uniform(uniform.value)
+          const nextUniform = isUniform(uniform) ? uniform.clone() : new (getThree().Uniform)(uniform.value)
           uniforms[name] = nextUniform
         }
       }
@@ -383,15 +393,16 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // Most 8-bit textures are authored in sRGB regardless of output display space
       // https://github.com/pmndrs/react-three-fiber/issues/344
       // https://github.com/mrdoob/three.js/pull/25857
+      const three = rootState && getThree()
       if (
-        rootState &&
-        rootState.renderer?.outputColorSpace === THREE.SRGBColorSpace &&
+        three &&
+        rootState.renderer?.outputColorSpace === three.SRGBColorSpace &&
         colorMaps.includes(key) &&
         isTexture(value) &&
         (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
-        root[key].format === THREE.RGBAFormat &&
-        root[key].type === THREE.UnsignedByteType
+        root[key].format === three.RGBAFormat &&
+        root[key].type === three.UnsignedByteType
       ) {
         root[key].colorSpace = rootState.textureColorSpace
       }

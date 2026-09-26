@@ -1,7 +1,7 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frustum, SRGBColorSpace } from '#three'
-// Type-only: a value import would pull the Inspector into the eager module graph
-// and reintroduce the Turbopack import cycle. See src/three/webgpu.ts (#3846).
-import type { Inspector } from '#three'
+// Types only. Core never imports a three value: the Vector3/Frustum/... a store needs are created
+// once its root has loaded a renderer support (see ./three.ts and configure() in ./renderer.tsx).
+import type { WebGLRenderer, Scene, Raycaster, Vector2, Vector3, Frustum } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 import { getScheduler } from '@pmndrs/scheduler'
@@ -22,11 +22,13 @@ import type {
   ThreeCamera,
   VisibilityEntry,
   PointerState,
+  RendererSupport,
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
+import { getThree } from './three'
 
 //* Cross-Bundle Singleton ==============================
 // Defined in ./context (three-free, so the extension entry can ship it); re-exported here so
@@ -38,14 +40,21 @@ export const createStore = (
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
-    const position = new Vector3()
-    const defaultTarget = new Vector3()
-    const tempTarget = new Vector3()
+    // Scratch vectors, created on first use: getCurrentViewport runs after the root's renderer
+    // support is loaded (configure sets the size), which is when three's classes exist.
+    let position: Vector3 | undefined
+    let defaultTarget: Vector3 | undefined
+    let tempTarget: Vector3 | undefined
     function getCurrentViewport(
       camera: ThreeCamera = get().camera,
-      target: Vector3 | Parameters<Vector3['set']> = defaultTarget,
+      target: Vector3 | Parameters<Vector3['set']> | undefined = undefined,
       size: Size = get().size,
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
+      const { Vector3 } = getThree()
+      position ??= new Vector3()
+      defaultTarget ??= new Vector3()
+      tempTarget ??= new Vector3()
+      target ??= defaultTarget
       const { width, height, top, left } = size
       const aspect = width / height
       if ((target as Vector3).isVector3) tempTarget.copy(target as Vector3)
@@ -65,8 +74,6 @@ export const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
-    const pointer = new Vector2()
-
     // Packages building on fiber (e.g. @react-three/tsl) augment RootState with fields their root
     // extension's setup adds, so what core creates is only its own part of RootState.
     const rootState: Partial<RootState> = {
@@ -79,7 +86,8 @@ export const createStore = (
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
-      frustum: new Frustum(),
+      // frustum, pointer and mouse are three objects; configure() creates them with the renderer
+      frustum: null as unknown as Frustum,
       autoUpdateFrustum: true,
       raycaster: null as unknown as Raycaster,
       events: {
@@ -93,19 +101,19 @@ export const createStore = (
       scene: null as unknown as Scene,
       rootScene: null as unknown as Scene,
       xr: null as unknown as XRManager,
-      inspector: null as unknown as Inspector,
+      inspector: null,
 
       invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
-      textureColorSpace: SRGBColorSpace,
+      textureColorSpace: 'srgb', // THREE.SRGBColorSpace
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,
 
       controls: null,
-      pointer,
-      mouse: pointer,
+      pointer: null as unknown as Vector2,
+      mouse: null as unknown as Vector2,
 
       frameloop: 'always',
       onPointerMissed: undefined,
@@ -269,6 +277,8 @@ export const createStore = (
 
         // Renderer Storage (single source of truth)
         actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
+        // The renderer support configure() loads for this root
+        support: null as unknown as RendererSupport,
 
         // Scheduler for useFrameNext (initialized in renderer.tsx)
         scheduler: null,

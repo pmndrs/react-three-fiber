@@ -1,7 +1,7 @@
-import type * as THREE from '#three'
+import type * as THREE from 'three'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
 
-type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
+export type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
 
 export interface MathRepresentation {
   set(...args: number[]): any
@@ -73,7 +73,7 @@ export type GeometryProps<P> = P extends THREE.BufferGeometry ? GeometryTransfor
  * The Node base class has properties that subclasses (OperatorNode, ConstNode, etc.) don't inherit.
  * This transforms `Node | null` properties to accept any object with node-like shape.
  */
-type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
+export type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
 
 /**
  * For node material properties (colorNode, positionNode, etc.), accept broader types
@@ -103,16 +103,25 @@ export type ThreeToJSXElements<T extends Record<string, any>> = {
 }
 
 /** Method names of Object3D, excluded from the `primitive` element's typed props. */
-type Object3DMethod = NonNullable<
+export type Object3DMethod = NonNullable<
   {
     [K in keyof THREE.Object3D]-?: THREE.Object3D[K] extends (...args: any[]) => any ? K : never
   }[keyof THREE.Object3D]
 >
 
-type ThreeExports = typeof THREE
-type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
+/** Look up a key present in a generic element map. */
+export type ElementOf<E, K extends string> = E[Extract<keyof E, K>]
 
-export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source' | 'line' | 'path'> {
+/**
+ * The JSX element map derived from an entry's Three.js exports. Each entry declares its own
+ * `ThreeElements` from this (`src/index.tsx`, `src/legacy.tsx`, `src/webgpu/index.tsx`) and augments
+ * react's `IntrinsicElements` with it, so `/legacy` never advertises node materials and `/webgpu`
+ * never advertises a `<webGLRenderer>`.
+ */
+export type ThreeElementsOf<T extends Record<string, any>> = Omit<
+  ThreeToJSXElements<T>,
+  'audio' | 'source' | 'line' | 'path'
+> & {
   /**
    * `primitive` wraps a pre-existing object, so its props cannot be derived from one class.
    * Events are typed from `EventHandlers` (`onClick={(e) => ...}` infers `e`), the ref is
@@ -126,26 +135,8 @@ export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source
     [prop: string]: unknown
   }
   // Conflicts with DOM types can be accessed through a three* prefix
-  threeAudio: ThreeElementsImpl['audio']
-  threeSource: ThreeElementsImpl['source']
-  threeLine: ThreeElementsImpl['line']
-  threePath: ThreeElementsImpl['path']
-}
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-dev-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
+  threeAudio: ElementOf<ThreeToJSXElements<T>, 'audio'>
+  threeSource: ElementOf<ThreeToJSXElements<T>, 'source'>
+  threeLine: ElementOf<ThreeToJSXElements<T>, 'line'>
+  threePath: ElementOf<ThreeToJSXElements<T>, 'path'>
 }

@@ -5,7 +5,7 @@
  *
  * This entry provides:
  * - WebGPU context mocking for Node.js tests
- * - Automatic THREE extension with node materials
+ * - Node materials as JSX elements (the /webgpu entry resolves them from three/webgpu)
  *
  * The TSL hooks (useUniforms, useNodes, ...) live in @react-three/tsl; import them from there in
  * tests as in app code.
@@ -16,13 +16,11 @@
  */
 
 import { act } from 'react'
-import * as THREE from 'three/webgpu'
 // All WebGPU hooks come from fiber's public entry, never from its source tree. Importing via
-// relative `../../fiber/src/...` paths pulled fiber's internal `#three` / `#types` aliases into
-// this package's bundle — unresolvable for consumers — and bundled a second copy of hooks whose
-// module-level scoped stores must be shared with the fiber instance under test.
+// relative `../../fiber/src/...` paths pulled fiber's internal `#types` alias into this package's
+// bundle — unresolvable for consumers — and bundled a second copy of hooks whose module-level
+// scoped stores must be shared with the fiber instance under test.
 import {
-  extend,
   _roots as mockRoots,
   createRoot,
   reconciler,
@@ -43,12 +41,10 @@ mockWebGPU()
 //* Initialize Test Renderer ==============================
 
 const renderer = createTestRenderer({
-  THREE,
   createRoot,
   mockRoots,
   reconciler,
   act,
-  extend,
   mode: 'webgpu',
 })
 

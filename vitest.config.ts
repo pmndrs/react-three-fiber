@@ -10,7 +10,6 @@ export default defineConfig({
       '@react-three/fiber/extension': path.resolve(__dirname, './packages/fiber/src/extension.tsx'),
       '@react-three/fiber/webgpu': path.resolve(__dirname, './packages/fiber/src/webgpu/index.tsx'),
       '@react-three/fiber': path.resolve(__dirname, './packages/fiber/src/index.tsx'),
-      '#three': path.resolve(__dirname, './packages/fiber/src/three'),
       '#types': path.resolve(__dirname, './packages/fiber/src/types.ts'),
       '#utils': path.resolve(__dirname, './packages/fiber/src/core/utils.ts'),
       'three/addons': path.resolve(__dirname, './node_modules/three/examples/jsm'),

@@ -28,8 +28,6 @@ import {
   unmount,
 } from './roots'
 
-extend(THREE)
-
 setupRealRoots('shared-state')
 
 /** Renders nothing; hands the store it sees (a portal's own, inside a portal) to the test. */

@@ -28,8 +28,8 @@ export interface TSLRootState {
   passes?: PassRecord
 }
 
-// Each fiber entry bundles its own copy of RootState, so every entry the hooks can run under is
-// augmented. The /legacy entry is not: it never has a WebGPU renderer.
+// Every fiber entry shares one core, and so one RootState: augmenting it through the root entry
+// reaches /legacy, /webgpu and /extension as well.
 declare module '@react-three/fiber' {
   interface RootState extends TSLRootState {}
 }
