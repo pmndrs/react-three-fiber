@@ -15,13 +15,13 @@
 
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber/webgpu'
-import { useUniforms, useRenderPipeline } from '@react-three/fiber/webgpu'
 import { useControls } from 'leva'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three/webgpu'
 import { mrt, output, velocity, screenUV, texture, uv } from 'three/tsl'
 import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { useUniforms, useRenderPipeline } from '@react-three/tsl'
 
 //* Render Pipeline Manager ==============================
 // This component sets up and manages the render pipeline

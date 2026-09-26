@@ -1,5 +1,6 @@
 // Migrated from Drei
-import { Texture as _Texture, TextureLoader } from '#three'
+import type { Texture as _Texture } from 'three'
+import { getThree, hasThree, whenThree } from '../three'
 import { useLoader, useThree, useStore } from './'
 import { useLayoutEffect, useEffect, useMemo, useRef, ReactNode } from 'react'
 
@@ -171,7 +172,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
   //* Load via useLoader (handles suspense) --
   // This always runs to maintain hooks order, but we may not use the result
   const loadedTextures = useLoader(
-    TextureLoader,
+    getThree().TextureLoader,
     IsObject(stableInput) ? Object.values(stableInput) : stableInput,
   ) as MappedTextureType<Url>
 
@@ -214,14 +215,14 @@ export function useTexture<Url extends string[] | string | Record<string, string
       let textureArray: _Texture[] = []
       if (Array.isArray(loadedTextures)) {
         textureArray = loadedTextures
-      } else if (loadedTextures instanceof _Texture) {
-        textureArray = [loadedTextures]
+      } else if ((loadedTextures as _Texture).isTexture) {
+        textureArray = [loadedTextures as _Texture]
       } else if (IsObject(loadedTextures)) {
-        textureArray = Object.values(loadedTextures)
+        textureArray = Object.values(loadedTextures) as unknown as _Texture[]
       }
 
       textureArray.forEach((texture) => {
-        if (texture instanceof _Texture) {
+        if (texture?.isTexture) {
           renderer.initTexture(texture)
         }
       })
@@ -288,8 +289,14 @@ export function useTexture<Url extends string[] | string | Record<string, string
 
 //* Static Methods ==============================
 
-useTexture.preload = (url: string | string[]) => useLoader.preload(TextureLoader, url)
-useTexture.clear = (input: string | string[]) => useLoader.clear(TextureLoader, input)
+// The loader class arrives with the first root's renderer. A preload issued before any Canvas
+// exists starts as soon as one does; there is nothing to clear before then.
+useTexture.preload = (url: string | string[]) => {
+  whenThree().then((three) => useLoader.preload(three.TextureLoader, url))
+}
+useTexture.clear = (input: string | string[]) => {
+  if (hasThree()) useLoader.clear(getThree().TextureLoader, input)
+}
 
 //* Component Wrapper ==============================
 

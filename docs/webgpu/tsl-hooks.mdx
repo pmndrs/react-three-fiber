@@ -4,10 +4,10 @@ description: React hooks for managing TSL uniforms and nodes - useUniform, useUn
 nav: 14
 ---
 
-These hooks manage TSL uniforms and nodes in R3F's root store. For build-time vs run-time concepts and TSL built-ins, see the [WebGPU Overview](./overview).
+These hooks, from `@react-three/tsl`, manage TSL uniforms and nodes in a store shared by every canvas and portal on the renderer. For build-time vs run-time concepts and TSL built-ins, see the [WebGPU Overview](./overview).
 
 ```tsx
-import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 ```
 
 ## useUniform
@@ -59,7 +59,7 @@ type UniformValue =
 ### Usage
 
 ```tsx
-import { useUniform } from '@react-three/fiber/webgpu'
+import { useUniform } from '@react-three/tsl'
 import { positionLocal, normalLocal } from 'three/tsl'
 
 function DisplacedSphere() {
@@ -256,7 +256,7 @@ Don't store trivial expressions or constants - use them directly instead.
 ### Usage
 
 ```tsx
-import { useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { useNodes, useLocalNodes } from '@react-three/tsl'
 import { Fn, vec3, sin, cos, time } from 'three/tsl'
 
 // Define shared nodes once, usually near the root
@@ -363,7 +363,7 @@ const { colorNode } = useLocalNodes(({ uniforms, nodes }) => ({
 Creator functions for `useUniforms`, `useNodes`, `useLocalNodes`, `useBuffers`, and `useGPUStorage` receive a `CreatorState`, not the raw `RootState`. `CreatorState` wraps the nested stores in a **ScopedStore** for type-safe access:
 
 ```typescript
-type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
+type CreatorState = RootState & {
   uniforms: ScopedStoreType<UniformNode>
   nodes: ScopedStoreType<NodeLike>
   buffers: ScopedStoreType<BufferLike>

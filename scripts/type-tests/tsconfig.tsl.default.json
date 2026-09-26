@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["./tsl-consumer-default.tsx"],
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}
