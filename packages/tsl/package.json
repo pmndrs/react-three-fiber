@@ -52,7 +52,7 @@
     "zustand": "^5.0.10"
   },
   "peerDependencies": {
-    "@react-three/fiber": "^10.0.0-alpha.5",
+    "@react-three/fiber": "^10.0.0-alpha.6",
     "react": ">=19.0 <19.3",
     "three": ">=0.185.0"
   },
