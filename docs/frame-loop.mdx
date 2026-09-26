@@ -106,7 +106,7 @@ Adding a phase with no position appends it to the end. Duplicate phase names are
 
 ## Ordering jobs {#ordering}
 
-Within a phase, jobs run in registration order, with `priority` as a tie-breaker (higher `priority` runs earlier, default `0`).
+Within a phase, jobs are sorted by `priority` (higher `priority` runs earlier, default `0`); jobs with equal priority run in registration order. `before` / `after` constraints between jobs take precedence over `priority`.
 
 For ordering across jobs, every job has a unique `id` (auto-generated from React's `useId()` if you don't supply one). Reference an `id` — or a phase name — via `before` / `after` to create explicit dependencies:
 
