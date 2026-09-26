@@ -25,8 +25,6 @@ import { suspend } from 'suspend-react'
 import { Canvas, extend, useStore } from '../src'
 import type { RootStore } from '../src'
 
-extend(THREE as any)
-
 /** A child that suspends until the returned `resolve` is called, like useTexture does. */
 function makeGate(key: string) {
   let resolve: (v: unknown) => void = () => {}

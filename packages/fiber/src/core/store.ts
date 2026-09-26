@@ -1,9 +1,10 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frustum, SRGBColorSpace } from '#three'
-// Type-only: a value import would pull the Inspector into the eager module graph
-// and reintroduce the Turbopack import cycle. See src/three/webgpu.ts (#3846).
-import type { Inspector } from '#three'
+// Types only. Core never imports a three value: the Vector3/Frustum/... a store needs are created
+// once its root has loaded a renderer support (see ./three.ts and configure() in ./renderer.tsx).
+import type { WebGLRenderer, Scene, Raycaster, Vector2, Vector3, Frustum } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
+import { getScheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
 import type {
@@ -21,34 +22,39 @@ import type {
   ThreeCamera,
   VisibilityEntry,
   PointerState,
+  RendererSupport,
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
-import { getScheduler } from '@pmndrs/scheduler'
+import { getThree } from './three'
 
 //* Cross-Bundle Singleton ==============================
-// Use Symbol.for() to ensure context is shared across bundle boundaries
-// This prevents issues when mixing imports from @react-three/fiber and @react-three/fiber/webgpu
-const R3F_CONTEXT = Symbol.for('@react-three/fiber.context')
-
-export const context: React.Context<RootStore> =
-  (globalThis as any)[R3F_CONTEXT] ?? ((globalThis as any)[R3F_CONTEXT] = React.createContext<RootStore>(null!))
+// Defined in ./context (three-free, so the extension entry can ship it); re-exported here so
+// existing imports of `context` from the store keep working.
+export { context } from './context'
 
 export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
-    const position = new Vector3()
-    const defaultTarget = new Vector3()
-    const tempTarget = new Vector3()
+    // Scratch vectors, created on first use: getCurrentViewport runs after the root's renderer
+    // support is loaded (configure sets the size), which is when three's classes exist.
+    let position: Vector3 | undefined
+    let defaultTarget: Vector3 | undefined
+    let tempTarget: Vector3 | undefined
     function getCurrentViewport(
       camera: ThreeCamera = get().camera,
-      target: Vector3 | Parameters<Vector3['set']> = defaultTarget,
+      target: Vector3 | Parameters<Vector3['set']> | undefined = undefined,
       size: Size = get().size,
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
+      const { Vector3 } = getThree()
+      position ??= new Vector3()
+      defaultTarget ??= new Vector3()
+      tempTarget ??= new Vector3()
+      target ??= defaultTarget
       const { width, height, top, left } = size
       const aspect = width / height
       if ((target as Vector3).isVector3) tempTarget.copy(target as Vector3)
@@ -68,9 +74,9 @@ export const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
-    const pointer = new Vector2()
-
-    const rootState: RootState = {
+    // Packages building on fiber (e.g. @react-three/tsl) augment RootState with fields their root
+    // extension's setup adds, so what core creates is only its own part of RootState.
+    const rootState: Partial<RootState> = {
       set,
       get,
 
@@ -80,7 +86,8 @@ export const createStore = (
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
-      frustum: new Frustum(),
+      // frustum, pointer and mouse are three objects; configure() creates them with the renderer
+      frustum: null as unknown as Frustum,
       autoUpdateFrustum: true,
       raycaster: null as unknown as Raycaster,
       events: {
@@ -94,19 +101,19 @@ export const createStore = (
       scene: null as unknown as Scene,
       rootScene: null as unknown as Scene,
       xr: null as unknown as XRManager,
-      inspector: null as unknown as Inspector,
+      inspector: null,
 
       invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
-      textureColorSpace: SRGBColorSpace,
+      textureColorSpace: 'srgb', // THREE.SRGBColorSpace
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,
 
       controls: null,
-      pointer,
-      mouse: pointer,
+      pointer: null as unknown as Vector2,
+      mouse: null as unknown as Vector2,
 
       frameloop: 'always',
       onPointerMissed: undefined,
@@ -170,8 +177,9 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
-              // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-              getScheduler().invalidate()
+              // Invalidate this root so a demand Canvas renders its resize without
+              // waking sibling roots.
+              get().invalidate()
             }
           }
           return
@@ -189,8 +197,9 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
-        // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-        getScheduler().invalidate()
+        // Invalidate this root so a demand Canvas renders its resize without
+        // waking sibling roots.
+        get().invalidate()
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -198,26 +207,21 @@ export const createStore = (
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
+        const rootId = (get().internal as any).rootId as string | undefined
+        // Update a registered scheduler root first so the store mutation's invalidation
+        // is evaluated against the new mode. In particular, entering demand must retain
+        // one transition frame for rendering and deferred event flushes.
+        if (rootId) getScheduler().setRootFrameloop(rootId, frameloop)
+        // Before registration this remains state-only; registerRoot reads the stored mode.
         set(() => ({ frameloop }))
-        // Mirror the mode onto the scheduler. `configure()` only pushes the *prop* value, so
-        // without this an imperative setFrameloop() would update store state while the RAF loop
-        // kept running (or stayed stopped) — the mode change would never take effect at runtime.
-        // The scheduler's setter is idempotent and owns starting/stopping the loop.
-        getScheduler().frameloop = frameloop
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
 
-      //* TSL State (managed via hooks: useUniforms, useNodes, useBuffers, useGPUStorage, useTextures, useRenderPipeline) ==============================
-      uniforms: {},
-      nodes: {},
-      buffers: {},
-      gpuStorage: {},
+      //* Texture registry (useTextures) ==============================
+      // TSL fields (uniforms, nodes, ..., renderPipeline) are added by @react-three/tsl's root extension.
       textures: new Map(),
       _textureRefs: new Map(),
-      renderPipeline: null,
-      passes: {},
-      _hmrVersion: 0,
       _sizeImperative: false,
       _sizeProps: null,
 
@@ -273,13 +277,18 @@ export const createStore = (
 
         // Renderer Storage (single source of truth)
         actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
+        // The renderer support configure() loads for this root
+        support: null as unknown as RendererSupport,
 
         // Scheduler for useFrameNext (initialized in renderer.tsx)
         scheduler: null,
+
+        // Replaces the default render call when set (see setRenderOverride)
+        renderOverride: null,
       },
     }
 
-    return rootState
+    return rootState as RootState
   })
 
   const state = rootStore.getState()
@@ -389,7 +398,7 @@ export const createStore = (
       if (viewport.dpr > 0) resizeTarget.setPixelRatio(viewport.dpr)
       resizeTarget.setSize(size.width, size.height, false)
 
-      // Invalidate this root's cached render pass descriptor on the next frame.
+      // Invalidate this root's cached render pass descriptor on the next frame, if three didn't.
       //
       // WebGPUBackend caches the depth-stencil attachment view per canvas and only rebuilds it
       // when the sample count changes, while the colour attachment is pulled fresh from the swap
@@ -402,7 +411,12 @@ export const createStore = (
       // one, so it cannot be called safely from here. The flush happens in the canvas-target job
       // (see renderer.tsx), which runs in the `start` phase where our own target is guaranteed
       // active. See #3847.
-      internal.canvasTargetSizeDirty = true
+      //
+      // When our target *is* the active one (a lone primary owns the renderer's default target,
+      // so this is the whole single-canvas path) the listener already ran inside setSize and a
+      // second flush would only reconfigure the swap chain again for nothing.
+      const activeTarget = (actualRenderer as Partial<{ getCanvasTarget(): unknown }>).getCanvasTarget?.()
+      if (!canvasTarget || activeTarget !== canvasTarget) internal.canvasTargetSizeDirty = true
     }
 
     // Update viewport and frustum once the camera changes

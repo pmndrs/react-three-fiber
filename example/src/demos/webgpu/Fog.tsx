@@ -1,9 +1,8 @@
 import { useThree } from '@react-three/fiber/webgpu'
 import { useEffect } from 'react'
 import { useControls } from 'leva'
-import { useUniforms } from '@react-three/fiber/webgpu'
-import { useLocalNodes } from '@react-three/fiber/src/webgpu/hooks/useNodes'
 import { uniform, fog, color, float, positionView, triNoise3D, positionWorld, normalWorld } from 'three/tsl'
+import { useLocalNodes, useUniforms } from '@react-three/tsl'
 
 export const Fog = () => {
   const { scene } = useThree()
@@ -32,10 +31,11 @@ export const Fog = () => {
 
   //* Apply Uniforms ==============================
   useUniforms(levaUniforms, 'fog')
+  type FogUniformSchema = UniformNodesFor<typeof levaUniforms>
 
   //* Create Fog Nodes ==============================
   const { fogNode, backgroundNode } = useLocalNodes(({ uniforms }) => {
-    const u = uniforms.fog as UniformRecord
+    const u = uniforms.scope<FogUniformSchema>('fog')
 
     // Timer for animated noise
     const timer = uniform(0).onFrameUpdate((frame) => frame.time)

@@ -1,5 +1,21 @@
 # @react-three/eslint-plugin
 
+## 1.0.0-alpha.5
+
+### Patch Changes
+
+- `no-clone-in-loop` only flags `.clone()` calls. Its selector matched any identifier named
+  `clone` inside a `useFrame` body, so a loop variable named `clone` used as `clone.position`
+  was reported with no clone() invocation anywhere.
+
+## 1.0.0-alpha.4
+
+### Patch Changes
+
+- No rule changes. Released alongside `@react-three/fiber@10.0.0-alpha.4` to keep the prerelease
+  train aligned. See [Fiber's changelog](../fiber/CHANGELOG.md) and the
+  [full Alpha 4 notes](../../CHANGELOG-ALPHA.md#1000-alpha4).
+
 ## 1.0.0-alpha.3
 
 ### Patch Changes

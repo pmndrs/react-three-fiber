@@ -1,5 +1,21 @@
 # @react-three/test-renderer
 
+## 10.0.0-alpha.5
+
+### Patch Changes
+
+- Tracks `@react-three/fiber@10.0.0-alpha.5`. There are no package-specific runtime changes in this
+  release. See [Fiber's changelog](../fiber/CHANGELOG.md) and the
+  [full Alpha 5 notes](../../CHANGELOG-ALPHA.md#1000-alpha5).
+
+## 10.0.0-alpha.4
+
+### Patch Changes
+
+- Tracks `@react-three/fiber@10.0.0-alpha.4`. There are no package-specific runtime changes in this
+  release. See [Fiber's changelog](../fiber/CHANGELOG.md) and the
+  [full Alpha 4 notes](../../CHANGELOG-ALPHA.md#1000-alpha4).
+
 ## 10.0.0-alpha.3
 
 ### Major Changes

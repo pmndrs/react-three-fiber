@@ -1,6 +1,6 @@
 // holds the basic sea nodes that we can input from elsewhere
 import { useEffect, useRef } from 'react'
-import { PlaneGeometry } from 'three/webgpu'
+import { PlaneGeometry, type Node } from 'three/webgpu'
 import { folder } from 'leva'
 import {
   Fn,
@@ -42,11 +42,13 @@ export function getLevaSeaConfig() {
   }
 }
 
-export function makeSeaNodes(inUniforms?: UniformStore | UniformRecord) {
-  const uniforms = (inUniforms ? inUniforms : makeSeaUniforms()) as UniformRecord
+type SeaUniforms = ReturnType<typeof makeSeaUniforms>
+
+export function makeSeaNodes(inUniforms?: SeaUniforms) {
+  const uniforms = inUniforms ?? makeSeaUniforms()
   const u = uniforms // abreviated for readability
 
-  const wavesElevation = Fn(([position]) => {
+  const wavesElevation = Fn(([position]: [Node<'vec3'>]) => {
     const elevation = mul(
       sin(position.x.mul(u.largeWavesFrequency.x).add(time.mul(u.largeWavesSpeed))),
       sin(position.z.mul(u.largeWavesFrequency.y).add(time.mul(u.largeWavesSpeed))),

@@ -1,4 +1,5 @@
 import type * as THREE from 'three'
+import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
 import type { ReactNode } from 'react'
 import type { ThreeElement } from './three'
 import type { ComputeFunction, EventManager } from './events'
@@ -65,12 +66,19 @@ export type DefaultRendererProps = {
  */
 export interface CanvasSchedulerConfig {
   /**
-   * Render this canvas after another canvas completes.
-   * Pass the `id` of another canvas.
+   * Run this Canvas root before the referenced Canvas root id(s).
    */
-  after?: string
+  before?: string | string[]
   /**
-   * Limit this canvas's render rate (frames per second).
+   * Run this Canvas root after the referenced Canvas root id(s).
+   */
+  after?: string | string[]
+  /**
+   * Numeric root order. Lower values run first.
+   */
+  order?: number
+  /**
+   * Limit this Canvas's default render job (frames per second).
    */
   fps?: number
 }
@@ -85,11 +93,20 @@ export interface RendererConfigExtended extends ColorManagementConfig {
   scheduler?: CanvasSchedulerConfig
 }
 
+/**
+ * The `renderer` prop: opt into three's WebGPU renderer.
+ * - `true` (the `<Canvas renderer>` shorthand) or `{}`: a default `WebGPURenderer`
+ * - a props bag: constructor parameters (`antialias`, `forceWebGL`, ...) and renderer properties
+ *   (`toneMapping`, ...), plus `textureColorSpace`, `primaryCanvas` and `scheduler`
+ * - a renderer instance, or a sync/async factory receiving the default props. Structural, like
+ *   the `gl` prop: anything with `render()`, so a wrapped or mocked renderer is accepted.
+ */
 export type RendererProps =
-  | any // WebGPURenderer
-  | ((defaultProps: DefaultRendererProps) => any)
-  | ((defaultProps: DefaultRendererProps) => Promise<any>)
-  | (Partial<Properties<any> | Record<string, any>> & RendererConfigExtended)
+  | boolean
+  | Renderer
+  | ((defaultProps: DefaultRendererProps) => Renderer)
+  | ((defaultProps: DefaultRendererProps) => Promise<Renderer>)
+  | (Partial<Properties<WebGPURenderer> & WebGPURendererParameters> & RendererConfigExtended)
 
 //* Camera Props ==============================
 
@@ -157,14 +174,17 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   performance?: Partial<Omit<Performance, 'regress'>>
   /** Target pixel ratio. Can clamp between a range: `[min, max]` */
   dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
+  /**
+   * Props that go into the default raycaster. `params` is merged into the raycaster's defaults,
+   * so a single threshold can be set: `raycaster={{ params: { Points: { threshold: 0.2 } } }}`.
+   */
+  raycaster?: Partial<Omit<THREE.Raycaster, 'params'>> & { params?: Partial<THREE.RaycasterParameters> }
   /** A `THREE.Scene` instance or props that go into the default scene */
   scene?: THREE.Scene | Partial<THREE.Scene>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: CameraProps
   /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
+  events?: (store: RootStore) => EventManager<Element>
   /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */

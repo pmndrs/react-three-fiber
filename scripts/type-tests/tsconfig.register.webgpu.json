@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["./register-webgpu-consumer.tsx"],
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

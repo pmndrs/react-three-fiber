@@ -50,7 +50,7 @@ All properties whose underlying object has a `.set()` method can directly receiv
 ```
 
 > [!NOTE]
-> If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the other hand, it will overwrite, because more these objects do not have a .set() method.
+> If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the other hand, it will overwrite, because these objects do not have a .set() method. The copy happens when the prop changes, not on every render. See [Immutability](#immutability).
 
 ### SetScalar
 
@@ -67,6 +67,46 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 ```jsx
 <mesh rotation-x={1} material-uniforms-resolution-value={[512, 512]} />
+```
+
+## Immutability
+
+React Three Fiber follows React's rules and enforces props only update with immutable state. On every commit it compares each prop against the value it saw last time and only touches the underlying three.js object when something has changed. Class instances are compared **by reference**, arrays and plain objects are compared **shallowly**.
+
+That means a mutation is invisible to R3F whenever the reference you pass stays the same.
+
+❌ The vector is created once and mutated in place, so its reference never changes. R3F sees the same prop it saw on the previous commit and skips it. The mest never moves.
+
+```jsx
+function Component({ x }) {
+  const position = useMemo(() => new THREE.Vector3(), [])
+  position.set(x, 0, 0)
+
+  return <mesh position={position} />
+}
+```
+
+✅ Pass a value instead. Both of these change with `x`, so the prop is diffed and applied:
+
+```jsx
+<mesh position={[x, 0, 0]} />
+<mesh position-x={x} />
+```
+
+> [!WARNING]
+> The same trap applies to arrays. `position={[x, 0, 0]}` is fine because a fresh array is allocated on every render, but a memoized array mutated in place (`coords[0] = x`) has a stable reference and is skipped just like the vector above.
+
+### Mutating three.js objects directly
+
+Immutability applies to props, not to the objects R3F creates for you. Reaching into the scene graph through a ref is the intended escape hatch, and the recommended way to animate. Do not mutate the property in a ref if it is also controlled via a React prop. The React prop will overwrite the imperative mutations.
+
+```jsx
+function Component({ x }) {
+  const ref = useRef()
+  useFrame(() => ref.current.position.set(x, 0, 0))
+
+  return <mesh ref={ref} />
+}
 ```
 
 ## Dealing with non-scene objects

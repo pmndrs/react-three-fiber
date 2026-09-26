@@ -1,18 +1,22 @@
 import * as React from 'react'
-import * as THREE from '#three'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
-import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
+import { createRoot, unmountComponentAtNode, _roots } from './renderer'
 import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
 import { Environment } from './components/Environment/Environment'
 import { parseBackground } from './utils/parseBackground'
 import { parseRendererConfig } from './utils/parseRendererConfig'
-import { clearHmrCaches } from './utils/hmr'
+import { notifyRootExtensionsHmr } from './extensions'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, RendererProvider } from '#types'
+
+/** The renderer provider of the entry that exported this Canvas. Not part of the public props. */
+export interface CanvasProviderProps {
+  provider: RendererProvider
+}
 
 function CanvasImpl({
   ref,
@@ -45,15 +49,11 @@ function CanvasImpl({
   height,
   background,
   forceEven,
+  provider,
   ...props
-}: CanvasProps) {
+}: CanvasProps & CanvasProviderProps) {
   // Extract nested props (primaryCanvas, scheduler) from renderer object if it's a config bag rather than a renderer instance
   const { primaryCanvas, scheduler, renderer } = parseRendererConfig(rendererProp)
-  // Create a known catalogue of Threejs-native elements
-  // This will include the entire THREE namespace by default, users can extend
-  // their own elements by using the createRoot API instead
-  React.useMemo(() => extend(THREE as any), [])
-
   const Bridge = useBridge()
 
   //* Background Prop Parsing ==============================
@@ -61,13 +61,12 @@ function CanvasImpl({
   const backgroundProps = React.useMemo(() => parseBackground(background), [background])
 
   //* Dynamic Debounce for Fast Initial Render ==============================
-  // Track if we've gotten initial size measurement
-  const hasInitialSizeRef = React.useRef(false)
+  const [hasInitialSize, setHasInitialSize] = React.useState(false)
 
   // Create measure config with immediate initial measurement (0ms debounce)
   // After first size, we'll use user-provided debounce for subsequent updates
   const measureConfig = React.useMemo(() => {
-    if (!hasInitialSizeRef.current) {
+    if (!hasInitialSize) {
       // First measurement: use 0ms debounce for immediate rendering
       return {
         ...resize,
@@ -81,7 +80,7 @@ function CanvasImpl({
       debounce: { scroll: 50, resize: 0 },
       ...resize,
     }
-  }, [resize, hasInitialSizeRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasInitialSize, resize])
 
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
@@ -101,10 +100,10 @@ function CanvasImpl({
     }
   }, [width, height, containerRect, forceEven])
 
-  // Mark that we have initial size (for next render cycle)
-  if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
-    hasInitialSizeRef.current = true
-  }
+  // Restart this render with the steady-state config as soon as the immediate
+  // measurement succeeds. This happens before effects commit, so Canvas setup
+  // still runs only once for this size change.
+  if (!hasInitialSize && effectiveSize.width > 0 && effectiveSize.height > 0) setHasInitialSize(true)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
@@ -136,7 +135,7 @@ function CanvasImpl({
 
     if (effectiveSize.width > 0 && effectiveSize.height > 0 && canvas) {
       if (!root.current) {
-        root.current = createRoot<HTMLCanvasElement>(canvas)
+        root.current = createRoot<HTMLCanvasElement>(canvas, provider)
 
         // Show alpha warning once per session
         notifyAlpha({
@@ -286,9 +285,9 @@ function CanvasImpl({
     }
   }, [])
 
-  //* HMR Support for TSL Resources ==============================
-  // Automatically refresh nodes/uniforms/buffers/gpuStorage when HMR is detected (dev mode only)
-  // Can be disabled with hmr={false} prop
+  //* HMR Support ==============================
+  // Forward hot updates to root extensions (e.g. the TSL hooks refresh nodes/uniforms/buffers/
+  // gpuStorage). Dev mode only; can be disabled with hmr={false} prop
   React.useEffect(() => {
     // Skip if explicitly disabled
     if (hmr === false) return
@@ -296,13 +295,13 @@ function CanvasImpl({
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // HMR refresh handler - clears caches and bumps version to trigger re-creation
+    // HMR refresh handler - lets each extension that set this root up refresh its state
     // Uses queueMicrotask to defer setState out of any current render cycle,
     // avoiding "Cannot update a component while rendering" errors
     const handleHMR = () => {
       queueMicrotask(() => {
         const rootEntry = _roots.get(canvas)
-        if (rootEntry?.store) clearHmrCaches(rootEntry.store)
+        if (rootEntry?.store) notifyRootExtensionsHmr(rootEntry.store)
       })
     }
 
@@ -359,10 +358,11 @@ function CanvasImpl({
 }
 
 /**
- * A DOM canvas which accepts threejs elements as children.
+ * A DOM canvas which accepts threejs elements as children. Each public entry exports this bound to
+ * its renderer provider; app code renders `<Canvas>` from `@react-three/fiber` (or `/legacy`, `/webgpu`).
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export function Canvas(props: CanvasProps) {
+export function Canvas(props: CanvasProps & CanvasProviderProps) {
   return (
     <FiberProvider>
       <CanvasImpl {...props} />

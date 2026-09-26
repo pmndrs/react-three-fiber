@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { createCanvas as createTestCanvas } from '../../test-renderer/src/createTestCanvas'
 
 // Imported *and* re-exported: `reconciler.prod.test.ts` pulls `act`/`createCanvas` from here, and a
@@ -27,7 +27,7 @@ describe('reconciler development', () => {
     // Ensure that the correct build was loaded
     expect(typeof React.act === 'function')
 
-    R3F.extend(THREE as any)
+    R3F.extend(THREE)
     const canvas = createCanvas()
     const root = R3F.createRoot(canvas)
 
@@ -72,7 +72,7 @@ describe('React 19.2 root view-transition host methods', () => {
     const React = await import('react')
     const R3F = await import('../src/index')
 
-    R3F.extend(THREE as any)
+    R3F.extend(THREE)
     const root = R3F.createRoot(createCanvas())
 
     function Test({ scale }: { scale: number }) {

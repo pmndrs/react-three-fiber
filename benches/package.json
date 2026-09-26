@@ -1,0 +1,15 @@
+{
+  "name": "@react-three/benches",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "bench": "NODE_ENV=production labs",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@pmndrs/labs": "^0.9.0",
+    "react": "^19.2.3",
+    "three": "^0.185.1"
+  }
+}

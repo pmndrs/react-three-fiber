@@ -348,6 +348,21 @@ describe('diffProps', () => {
     expect((filtered.scale as THREE.Vector3).toArray()).toStrictEqual([1, 1, 1])
   })
 
+  it('resets a removed prop to the class default when the constructor takes arguments', () => {
+    // Every material, geometry and camera constructor takes a parameters object. The reset used
+    // to be gated on a zero-length constructor and wrote a literal 0 for everything else, which
+    // turned a removed `color` black and a removed `map` into a broken texture slot.
+    const material = new THREE.MeshBasicMaterial({ color: 'red', transparent: true, map: new THREE.Texture() })
+    const instance = prepare(material, store, '', { color: 'red', transparent: true, map: material.map })
+    const filtered = diffProps(instance, {})
+
+    const defaults = new THREE.MeshBasicMaterial()
+    expect((filtered.color as THREE.Color).getHexString()).toBe(defaults.color.getHexString())
+    expect(filtered.transparent).toBe(false)
+    expect(filtered.map).toBeNull()
+    expect(Object.values(filtered)).not.toContain(0)
+  })
+
   it('should filter reserved props without accessing them', () => {
     const get = vi.fn()
     const set = vi.fn()

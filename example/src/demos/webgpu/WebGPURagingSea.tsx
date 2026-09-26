@@ -1,22 +1,23 @@
-import { Canvas, useUniforms, useNodes, type ThreeElements } from '@react-three/fiber/webgpu'
-import { useControls } from 'leva'
+import { Canvas, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Leva, useControls } from 'leva'
 import { getLevaSeaConfig, makeSeaNodes, TerrainGeometry } from './seaNodes'
 import { CameraControls, Environment } from '@react-three/drei'
+import { useUniforms, useNodes } from '@react-three/tsl'
 
 // single setup of nodes for the app
 const Experience = () => {
   //* Leva Controls ==============================
   const levaUniforms = useControls('Raging Sea', getLevaSeaConfig())
-  useUniforms(levaUniforms)
+  const uniforms = useUniforms(levaUniforms)
 
   //* Nodes Setup ==============================
-  useNodes(({ uniforms }) => makeSeaNodes(uniforms), 'sea')
+  useNodes(() => makeSeaNodes(uniforms), 'sea')
 
   return (
     <>
       <Lights />
       <SeaSurface />
-      <CameraControls />
+      <CameraControls makeDefault />
     </>
   )
 }
@@ -46,9 +47,11 @@ function SeaSurface(props: ThreeElements['mesh']) {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }}>
-      <color attach="background" args={['#271442']} />
-      <Experience />
-    </Canvas>
+    <>
+      <Canvas renderer camera={{ fov: 50, position: [0, 1.5, 2.5] }} background={'#271442'}>
+        <Experience />
+      </Canvas>
+      <Leva collapsed />
+    </>
   )
 }
