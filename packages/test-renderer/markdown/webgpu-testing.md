@@ -24,7 +24,7 @@ yarn add -D @react-three/test-renderer
 
 ### Import Structure
 
-When testing WebGPU applications, use the `/webgpu` entry point:
+When testing WebGPU applications, use the `/webgpu` entry point; it installs the mocked GPU context and every root it creates renders with `WebGPURenderer`, so node materials resolve as JSX without any `extend()` call:
 
 ```tsx
 // Match your test renderer entry to your fiber entry

@@ -1,0 +1,65 @@
+{
+  "name": "@react-three/tsl",
+  "version": "10.0.0-alpha.5",
+  "description": "TSL resource hooks for react-three-fiber: uniforms, nodes, buffers, GPU storage and render pipelines on WebGPU",
+  "keywords": [
+    "react",
+    "three",
+    "threejs",
+    "react-three-fiber",
+    "webgpu",
+    "tsl"
+  ],
+  "author": "Dennis Smolek (https://github.com/dennissmolek)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-fiber/tree/v10/packages/tsl#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git",
+    "directory": "packages/tsl"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "./dist/index.mjs",
+    "./dist/index.cjs"
+  ],
+  "files": [
+    "dist",
+    "readme.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub"
+  },
+  "dependencies": {
+    "dequal": "^2.0.3",
+    "zustand": "^5.0.10"
+  },
+  "peerDependencies": {
+    "@react-three/fiber": "^10.0.0-alpha.6",
+    "react": ">=19.0 <19.4",
+    "three": ">=0.185.0"
+  },
+  "devDependencies": {
+    "@react-three/fiber": "workspace:*",
+    "@types/three": "^0.185.0",
+    "@webgpu/types": "^0.1.64",
+    "three": ">=0.185.0"
+  }
+}

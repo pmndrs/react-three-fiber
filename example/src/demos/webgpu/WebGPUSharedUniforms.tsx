@@ -1,7 +1,8 @@
 import { easing } from 'maath'
 import { useState } from 'react'
 import { mix, positionLocal, sin, time, vec3 } from 'three/tsl'
-import { Canvas, useFrame, useNodes, useUniform, useUniforms, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber/webgpu'
+import { useNodes, useUniform, useUniforms } from '@react-three/tsl'
 
 function Scene() {
   const [hovered, setHovered] = useState(false)

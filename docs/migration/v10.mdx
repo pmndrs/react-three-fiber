@@ -14,13 +14,14 @@ nav: 31
 
 ## The Short Version
 
-**Your existing code works.** v10 is designed to be backwards compatible. The default import now supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
+**Your existing code works.** v10 is designed to be backwards compatible. The default import supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU with `<Canvas renderer>`. Only the renderer your Canvas asks for is downloaded. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
 
 ## Quick Checklist
 
 For most apps, nothing will change. For those that access the renderer using `useThree()` or `useFrame()` here's all you need to do:
 
 - [ ] Replace `state.gl` with `state.renderer`
+- [ ] Replace any `onUpdate` prop with an effect, `useFrame` or a ref callback (see [`onUpdate` Removed](#onupdate-removed))
 - [ ] That's it!
 
 If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
@@ -96,22 +97,25 @@ function MyComponent() {
 
 ### Renderer Selection
 
-| Your Use Case             | Import From                 | Renderer             |
-| ------------------------- | --------------------------- | -------------------- |
-| Default (webgl or webgpu) | `@react-three/fiber`        | WebGL (WebGPU-ready) |
-| WebGL only, no warnings   | `@react-three/fiber/legacy` | WebGLRenderer        |
-| WebGPU with TSL           | `@react-three/fiber/webgpu` | WebGPURenderer       |
+| Your Use Case                    | Import From                 | Renderer                                   |
+| -------------------------------- | --------------------------- | ------------------------------------------ |
+| Default (WebGL, or WebGPU with `renderer`) | `@react-three/fiber`        | Chosen per Canvas, downloaded on demand    |
+| WebGL only, no warnings          | `@react-three/fiber/legacy` | WebGLRenderer, no extra request            |
+| WebGPU only                      | `@react-three/fiber/webgpu` | WebGPURenderer, no extra request           |
 
 ```tsx
-// Default - works with both WebGL and WebGPU
+// Default - WebGL by default, WebGPU with <Canvas renderer>. Only the one you use is downloaded.
 import { Canvas, useFrame } from '@react-three/fiber'
 
-// Legacy - WebGLRenderer only, smaller bundle
+// Legacy - WebGLRenderer only, typed as such
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 
-// WebGPU - includes WebGPU hooks for TSL shaders
-import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
+// WebGPU - WebGPURenderer only, typed as such (TSL hooks come from @react-three/tsl)
+import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { useUniforms } from '@react-three/tsl'
 ```
+
+All three entries share one core, so libraries built on `@react-three/fiber` work under a Canvas from any of them without adding a renderer to your bundle.
 
 ### `useFrame` Clock Removed
 
@@ -211,6 +215,56 @@ config bag rather than at the top level:
 + <Canvas renderer={{ textureColorSpace: 'srgb' }} />
 ```
 
+### `onUpdate` Removed
+
+The `onUpdate` prop is gone. It was called after every prop update as a hook into the reconciler's
+internals, but it fired for reasons that had nothing to do with the props you cared about (attach
+changes, Suspense hide/unhide, child mounts) and not for the ones that did (imperative mutation,
+anything set in a `useFrame`). What you want is one of these three, all plain React or R3F:
+
+**An effect keyed on the props that change.** The effect runs exactly when those values change, and
+you can read the object through its ref.
+
+```diff
+- <bufferGeometry onUpdate={(self) => self.computeVertexNormals()} />
++ const ref = useRef<THREE.BufferGeometry>(null)
++ useEffect(() => ref.current?.computeVertexNormals(), [positions])
++ <bufferGeometry ref={ref}>
++   <bufferAttribute attach="attributes-position" args={[positions, 3]} />
++ </bufferGeometry>
+```
+
+**Read the object in a `useFrame` loop.** For continuous work, or anything that has to react to
+mutations made outside React, read the object each frame instead of waiting for a render.
+
+```tsx
+const ref = useRef<THREE.Mesh>(null)
+useFrame(() => {
+  ref.current!.rotation.y += 0.01
+})
+return <mesh ref={ref} />
+```
+
+**A ref callback.** For one-time setup when the object is created, a ref callback receives the
+object directly. Keep its identity stable with `useCallback`: React re-invokes an inline callback on
+every render. It runs again with a new object when `args` change.
+
+```tsx
+// Braces matter: a React 19 ref callback's return value is its cleanup, and lookAt returns the mesh
+const setup = useCallback((mesh: THREE.Mesh | null) => {
+  mesh?.lookAt(0, 0, 0)
+}, [])
+return <mesh ref={setup} />
+```
+
+`onUpdate` is no longer reserved, so it is applied to the object by name like any other prop. That
+is deliberate for `<texture>`: three.js has a real `Texture.onUpdate` callback that the renderer
+fires after uploading the texture to the GPU, and `<texture onUpdate={fn} />` now sets it. It is not
+called when props change, so a v9 `onUpdate={(self) => (self.needsUpdate = true)}` no longer flags a
+new `image` for upload: set `needsUpdate` in an effect keyed on the data instead. On a TSL node the
+prop replaces the `Node.onUpdate()` method, and on anything else (a mesh, a group) the assignment is
+inert. R3F logs a one-time notice the first time it sees an `onUpdate` prop.
+
 ### `<color attach="background">` Pattern Deprecated
 
 The pattern of using `<color attach="background">` to set the scene background is deprecated in favor of the new `background` prop on Canvas.
@@ -303,7 +357,8 @@ v10 brings **first-class WebGPU support** with a suite of hooks that make TSL (T
 **Write shaders the React way** - Uniforms, nodes, and post-processing all managed declaratively. Share shader logic across components. Update values without re-renders.
 
 ```tsx
-import { Canvas, useUniforms, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber'
+import { useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 import { Fn, vec3, sin, time, positionLocal, normalLocal } from 'three/tsl'
 
 // Define reusable shader functions
@@ -337,6 +392,29 @@ function WobblyMesh() {
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
 - **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
 - **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
+
+#### TSL hooks moved to `@react-three/tsl` {#tsl-hooks-moved}
+
+The TSL resource hooks live in their own package. Install it and change the import; nothing else changes. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
+
+```bash
+npm install @react-three/tsl
+```
+
+```tsx
+// Before
+import { Canvas, useUniforms, useNodes } from '@react-three/fiber/webgpu'
+
+// After
+import { Canvas } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes } from '@react-three/tsl'
+```
+
+This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`, and the `rebuildAll*` helpers. In tests, import them from `@react-three/tsl` too: `@react-three/test-renderer/webgpu` no longer re-exports them.
+
+#### Deprecated standalone TSL utilities removed {#tsl-standalone-utils-removed}
+
+`removeUniforms(set, ...)`, `clearScope`, `clearRootUniforms`, `removeNodes(set, ...)`, `clearNodeScope` and `clearRootNodes` are removed. Use the utilities the hooks return instead: `const { removeUniforms, clearUniforms } = useUniforms()` and `const { removeNodes, clearNodes } = useNodes()`.
 
 📚 **Learn more:** [WebGPU Overview](/webgpu/overview)
 

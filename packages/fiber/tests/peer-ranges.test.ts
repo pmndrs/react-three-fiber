@@ -1,6 +1,7 @@
 /**
  * @fileoverview The workspace packages that peer on React must state the same supported range,
- * otherwise installing @react-three/test-renderer next to a supported React fails peer resolution.
+ * otherwise installing @react-three/test-renderer or @react-three/tsl next to a supported React fails
+ * peer resolution.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -15,5 +16,11 @@ describe('peer ranges', () => {
     const testRenderer = readManifest('test-renderer')
     expect(testRenderer.peerDependencies.react).toBe(fiber.peerDependencies.react)
     expect(fiber.peerDependencies['react-dom']).toBe(fiber.peerDependencies.react)
+  })
+
+  it('tsl accepts every React version fiber accepts', () => {
+    const fiber = readManifest('fiber')
+    const tsl = readManifest('tsl')
+    expect(tsl.peerDependencies.react).toBe(fiber.peerDependencies.react)
   })
 })

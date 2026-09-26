@@ -1,11 +1,12 @@
 //* Visibility Events ==============================
 
-import { Canvas, useLocalNodes, useUniform } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber/webgpu'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 import { useFrame } from '@react-three/fiber'
 import { color, mix } from 'three/tsl'
+import { useLocalNodes, useUniform } from '@react-three/tsl'
 
 const LIGHTNING_URL = '/models/lightning.gltf'
 const palette = {
