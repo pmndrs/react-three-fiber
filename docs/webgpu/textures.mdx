@@ -122,7 +122,7 @@ textures.add('rt-main', renderTarget.texture)
 
 ## Lifecycle and disposal
 
-Each mounted `useTexture` consumer holds a reference on the keys it uses, and releases it on unmount.
+Each mounted `useTexture` consumer (with `cache` on, the default) holds a reference on the keys it uses, and releases it on unmount.
 
 `dispose(key)` is refcount-aware. If the key is still referenced by a mounted consumer, it **warns to the console, skips the disposal, and returns `false`**:
 

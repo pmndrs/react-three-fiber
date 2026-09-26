@@ -1,7 +1,7 @@
 ---
 title: Visibility & Frustum
 description: Track when objects enter or leave view with onFramed, onVisible and onOccluded, and work with the camera frustum directly
-nav: 20
+nav: 21
 ---
 
 R3F v10 can tell you when an object's visibility changes. Three event handlers fire on *state transitions* (not every frame): `onFramed` for frustum culling, `onOccluded` for GPU occlusion (WebGPU only), and `onVisible` for the combined result. The root state also exposes a live `THREE.Frustum` you can query yourself.
