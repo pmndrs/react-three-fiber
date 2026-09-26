@@ -10,6 +10,28 @@ These hooks, from `@react-three/tsl`, manage TSL uniforms and nodes in a store s
 import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 ```
 
+## Which Hook Does What
+
+The hooks split the work between **values** and **graphs**, and keeping them apart is what keeps shaders from recompiling:
+
+- **`useUniforms` carries values.** Pass it the values from props, state or Leva on every render; it updates each uniform's `.value`, which reaches the GPU with no rebuild and no recompile. It is the whole binding - calling it for its side effect and ignoring the return is normal.
+- **`useNodes` builds shared graphs, once.** Its creators run once per generation, and every component that reads a node gets the same object. A value that changes goes into a uniform the node reads; a change of structure goes through `rebuildNodes`.
+- **`useLocalNodes` builds a component's own graph.** It is `useMemo` for TSL, not a value binding: pass `[]`, read uniforms from its `state`, and it rebuilds only when a shared resource it read is replaced, or when an input in its array changes the graph's structure. It can also install what it built onto a Three object, like `scene.fogNode`.
+
+```tsx
+// Values: bound every render, no rebuild
+useUniforms({ uColor: pickedColor, uDensity: density }, 'fog')
+
+// Graph: built once from the uniforms, installed on the scene
+useLocalNodes(({ scene, uniforms }) => {
+  const fogNode = fog(uniforms.scope('fog').uColor, uniforms.scope('fog').uDensity)
+  return () => {
+    scene.fogNode = fogNode
+    return () => void (scene.fogNode = null)
+  }
+}, [])
+```
+
 ## useUniform
 
 Single-uniform hook with create/get/update semantics.
