@@ -95,6 +95,14 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 - `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against
   `LegacyRootState`, so `state.renderer` is a `WebGLRenderer` without a cast. The entry already
   exported `LegacyRootState as RootState`, but the hooks returned the base state.
+- A renderer R3F created for a Canvas is disposed once the last canvas rendering through it has
+  unmounted, so a `WebGPURenderer` built for `<Canvas renderer />` no longer outlives its root with
+  its GPU device ([#3926](https://github.com/pmndrs/react-three-fiber/issues/3926)). R3F owns what it
+  builds (the default, a config bag, or a factory's result); a renderer instance passed to `renderer`
+  or `gl` stays the caller's and is never disposed, nor is a caller's `WebGLRenderer` force-lost any
+  more. A secondary canvas keeps the primary's renderer alive until it unmounts too.
+- Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
+  rendering the same canvas before that commit cancels the teardown.
 
 ### Breaking Changes
 
