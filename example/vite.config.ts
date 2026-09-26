@@ -15,6 +15,10 @@ export default defineConfig({
         find: '@react-three/fiber/webgpu',
         replacement: path.resolve(__dirname, '../packages/fiber/src/webgpu/index.tsx'),
       },
+      {
+        find: '@react-three/fiber/extension',
+        replacement: path.resolve(__dirname, '../packages/fiber/src/extension.tsx'),
+      },
       { find: '@react-three/fiber/legacy', replacement: path.resolve(__dirname, '../packages/fiber/src/legacy.tsx') },
       { find: '@react-three/fiber', replacement: path.resolve(__dirname, '../packages/fiber/src/index.tsx') },
       // Resolve internal aliases used in fiber source

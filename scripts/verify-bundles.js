@@ -260,6 +260,52 @@ if (dtsWithLocalPaths.length > 0) {
 
 if (!crossCuttingPassed) allPassed = false
 
+//* Extension entry ==============================
+// @react-three/fiber/extension exists so packages building on fiber (e.g. @react-three/tsl) can reach
+// the context, hooks and extension registry WITHOUT a copy of core. It is only worth shipping while
+// it stays three-free and small; a stray import of store.ts or the utils barrel would silently pull
+// three and most of core back in. It is also a real build, not a jiti stub -- but far below the
+// size floor the other entries use, so that is checked by content rather than by size.
+
+console.log('\n\n📦 Extension entry (@react-three/fiber/extension)')
+console.log('-'.repeat(60))
+
+// A real extension build is ~10 KB. Core leaking in would add hundreds.
+const MAX_EXTENSION_BYTES = 60 * 1024
+let extensionPassed = true
+
+for (const file of ['extension.mjs', 'extension.cjs']) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) {
+    console.log(`   ❌ dist/${file} is missing`)
+    extensionPassed = false
+    continue
+  }
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const { size } = fs.statSync(filePath)
+  const threeImport = content.match(/(?:from|require\()\s*['"]three(?:\/[^'"]*)?['"]/)
+  const selfImport = content.match(/(?:from|require\()\s*['"]@react-three\/fiber(?:\/[^'"]*)?['"]/)
+  const isStub = /jiti/.test(content)
+
+  if (threeImport) console.log(`   ❌ dist/${file} imports three (${threeImport[0]}) -- the entry must stay three-free`)
+  if (selfImport) console.log(`   ❌ dist/${file} imports ${selfImport[0]} -- use a relative import instead`)
+  if (isStub) console.log(`   ❌ dist/${file} is a jiti stub -- run \`pnpm build\``)
+  if (size > MAX_EXTENSION_BYTES)
+    console.log(`   ❌ dist/${file} is ${(size / 1024).toFixed(1)} KB -- core is leaking into the extension entry`)
+
+  if (threeImport || selfImport || isStub || size > MAX_EXTENSION_BYTES) extensionPassed = false
+  else console.log(`   ✅ dist/${file} (${(size / 1024).toFixed(1)} KB, three-free)`)
+}
+
+const extensionDts = path.join(FIBER_DIST, 'extension.d.ts')
+if (fs.existsSync(extensionDts) && /["']\/(?:Users|home)\//.test(fs.readFileSync(extensionDts, 'utf-8'))) {
+  console.log('   ❌ Absolute local paths in extension.d.ts')
+  extensionPassed = false
+}
+
+if (!extensionPassed) allPassed = false
+
 //* Summary ==============================
 
 console.log('\n' + '='.repeat(60))

@@ -24,6 +24,8 @@ nav: 9
 | `updateFrustum`      | Recomputes the camera frustum — `updateFrustum(camera, frustum?)` (see [Visibility & Frustum](/scene/visibility)) |
 | `Environment`        | Scene background / image-based lighting component (see [Canvas Background](/api/canvas#canvas-background)) |
 | `Portal`             | Re-parents children into another container (see [Camera Parenting](/scene/camera-parenting)) |
+| `registerRootExtension` | Attaches per-root setup, dispose and HMR handling (for library authors, see [below](#extending-the-root)) |
+| `setRenderOverride`  | Replaces the default render call for a root (for library authors, see [below](#extending-the-root)) |
 
 ## Prop Utilities
 
@@ -82,3 +84,53 @@ import { once } from '@react-three/fiber'
 `once` is typed as the value the prop declares: a single argument is the argument itself, several arguments are the tuple, and a bare `once()` is `true`. Pass the arguments individually, not as an array: `once([0, 0, 5])` calls `translate([0, 0, 5])`.
 
 When `args` change (triggering element reconstruction), `once` methods run again on the new instance.
+
+## Extending the root {#extending-the-root}
+
+These are for packages that build on R3F, such as `@react-three/tsl`. App code rarely needs them.
+
+### `registerRootExtension`
+
+Registers per-root setup, cleanup and hot-reload handling without R3F knowing about your package.
+
+```tsx
+import { registerRootExtension } from '@react-three/fiber/extension'
+
+registerRootExtension({
+  name: 'my-library',
+  // Once per root, after its renderer exists and before onCreated and the first frame.
+  // Return fields to merge into the root's state, or nothing to skip this root.
+  setup(store) {
+    if (store.getState().isLegacy) return
+    return { /* per-root state */ }
+  },
+  // When a root this extension set up unmounts.
+  dispose(store) {},
+  // When <Canvas> detects hot module replacement (skipped with hmr={false}).
+  hmr(store) {},
+})
+```
+
+- Roots that already exist when you register are set up immediately; later roots as they are created.
+- Registering the same `name` again replaces the entry, which keeps hot reloads safe: roots it already set up are not set up twice, and the new entry's `dispose` and `hmr` take over.
+- The function returned by `registerRootExtension` unregisters it. Roots it already set up keep their state and still get `dispose` when they unmount.
+
+### `setRenderOverride`
+
+Points a root's default render job at your own render function, for example a post-processing pipeline. Pass `null` to go back to `renderer.render(scene, camera)`.
+
+```tsx
+import { setRenderOverride, useStore } from '@react-three/fiber/extension'
+
+const store = useStore()
+setRenderOverride(store, () => composer.render())
+```
+
+Unlike taking over the `render` phase with `useFrame`, the default job keeps its behaviour: the Canvas `fps` throttle, error reporting to the error boundary, and backing off when a user registers a `{ phase: 'render' }` job. `useRenderPipeline` renders through this.
+
+### The `@react-three/fiber/extension` entry
+
+Every other entry bundles its own copy of R3F's core. A library that imported from `@react-three/fiber/webgpu` would therefore ship a second copy of core to apps that import `Canvas` from `@react-three/fiber`, and the other way round.
+
+`@react-three/fiber/extension` contains only what an extension needs and imports nothing from three: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension`, `setRenderOverride` and the shared types. It works under a `<Canvas>` from any entry. Apps should keep importing from `@react-three/fiber`, `/webgpu` or `/legacy`.
+

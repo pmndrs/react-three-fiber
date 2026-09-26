@@ -29,12 +29,9 @@ import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
 
 //* Cross-Bundle Singleton ==============================
-// Use Symbol.for() to ensure context is shared across bundle boundaries
-// This prevents issues when mixing imports from @react-three/fiber and @react-three/fiber/webgpu
-const R3F_CONTEXT = Symbol.for('@react-three/fiber.context')
-
-export const context: React.Context<RootStore> =
-  (globalThis as any)[R3F_CONTEXT] ?? ((globalThis as any)[R3F_CONTEXT] = React.createContext<RootStore>(null!))
+// Defined in ./context (three-free, so the extension entry can ship it); re-exported here so
+// existing imports of `context` from the store keep working.
+export { context } from './context'
 
 export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
@@ -279,6 +276,9 @@ export const createStore = (
 
         // Scheduler for useFrameNext (initialized in renderer.tsx)
         scheduler: null,
+
+        // Replaces the default render call when set (see setRenderOverride)
+        renderOverride: null,
       },
     }
 

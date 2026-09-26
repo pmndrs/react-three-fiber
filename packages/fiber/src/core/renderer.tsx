@@ -9,6 +9,7 @@ import { useStore } from './hooks'
 import { advance, invalidate } from './hooks/useFrame/legacy'
 import { reconciler } from './reconciler'
 import { context, createStore } from './store'
+import { attachRootExtensions, detachRootExtensions } from './extensions'
 import {
   applyProps,
   calculateDpr,
@@ -774,11 +775,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
-            // Use RenderPipeline if available (from useRenderPipeline hook)
-            // Otherwise fall back to standard renderer.render()
+            // A render override (setRenderOverride, e.g. useRenderPipeline) replaces the plain
+            // renderer.render() call; fps throttling, takeover and error handling stay here.
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
-              if (state.renderPipeline?.render) state.renderPipeline.render()
+              const renderOverride = state.internal.renderOverride
+              if (renderOverride) renderOverride()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
               // Propagate render errors to error boundary
@@ -833,6 +835,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       lastConfiguredProps.schedulerBefore = schedulerConfig?.before
       lastConfiguredProps.schedulerAfter = schedulerConfig?.after
       lastConfiguredProps.schedulerOrder = schedulerConfig?.order
+
+      // The renderer exists, isLegacy/primaryStore are known, and nothing has rendered or called
+      // onCreated yet: this is where extensions set up their per-root state. Runs on every
+      // configure() but is idempotent -- a root is set up once per extension -- so it also covers a
+      // store reused by createRoot after an unmount detached it.
+      attachRootExtensions(store)
 
       // Set locals
       onCreated = onCreatedCallback
@@ -906,6 +914,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
       }
     }
     reconciler.updateContainer(null, fiber, null, () => {
+      // Children have unmounted (their hook cleanups ran); let extensions release per-root state.
+      if (root?.store) detachRootExtensions(root.store)
       if (state) {
         setTimeout(() => {
           try {

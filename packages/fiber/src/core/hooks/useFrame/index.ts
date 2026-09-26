@@ -1,8 +1,9 @@
 //* useFrame Hook ==============================
 
 import * as React from 'react'
-import { context } from '../../store'
-import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
+// Leaf imports (no #three) so useFrame can ship in the three-free @react-three/fiber/extension entry.
+import { context } from '../../context'
+import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils/react'
 import { notifyDepreciated } from '../../utils/notices'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 

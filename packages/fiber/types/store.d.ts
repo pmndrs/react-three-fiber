@@ -198,6 +198,12 @@ export interface InternalState {
   actualRenderer: R3FRenderer
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
+  /**
+   * Replaces `renderer.render(scene, camera)` in the default render job when set. Set it with
+   * `setRenderOverride(store, fn)`; the job keeps its fps throttle, error handling and user
+   * render-phase takeover. Used by `useRenderPipeline`.
+   */
+  renderOverride?: (() => void) | null
   /** This root's unique ID in the global scheduler */
   rootId?: string
   /** Function to unregister this root from the global scheduler */

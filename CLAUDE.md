@@ -41,11 +41,14 @@ vitest packages/fiber/tests/hooks.test.tsx
 
 R3F has three entry points with different THREE.js imports controlled via `#three` alias resolution:
 
-| Entry   | Import Path                 | THREE Imports  | Build Flags               |
-| ------- | --------------------------- | -------------- | ------------------------- |
-| Default | `@react-three/fiber`        | WebGL + WebGPU | Both true                 |
-| Legacy  | `@react-three/fiber/legacy` | WebGL only     | LEGACY=true, WEBGPU=false |
-| WebGPU  | `@react-three/fiber/webgpu` | WebGPU only    | LEGACY=false, WEBGPU=true |
+| Entry     | Import Path                    | THREE Imports     | Build Flags               |
+| --------- | ------------------------------ | ----------------- | ------------------------- |
+| Default   | `@react-three/fiber`           | WebGL + WebGPU    | Both true                 |
+| Legacy    | `@react-three/fiber/legacy`    | WebGL only        | LEGACY=true, WEBGPU=false |
+| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU only       | LEGACY=false, WEBGPU=true |
+| Extension | `@react-three/fiber/extension` | None (three-free) | n/a                       |
+
+The extension entry (`src/extension.tsx`) is for packages that build on fiber: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension` and `setRenderOverride`, with no three imports. `pnpm verify-bundles` fails if it ever imports three or grows past 60 KB, so only import leaf modules (`core/context.ts`, `core/hooks/useStore.ts`, `core/extensions.ts`, `core/utils/react.tsx`) into it, never `store.ts` or the `utils` barrel.
 
 The `#three` alias resolves to different files per entry point during build (configured in `packages/fiber/build.config.ts`):
 

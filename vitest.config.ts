@@ -6,6 +6,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'three', 'use-sync-external-store'],
     alias: {
       '@react-three/fiber/legacy': path.resolve(__dirname, './packages/fiber/src/legacy.tsx'),
+      '@react-three/fiber/extension': path.resolve(__dirname, './packages/fiber/src/extension.tsx'),
       '@react-three/fiber/webgpu': path.resolve(__dirname, './packages/fiber/src/webgpu/index.tsx'),
       '@react-three/fiber': path.resolve(__dirname, './packages/fiber/src/index.tsx'),
       '#three': path.resolve(__dirname, './packages/fiber/src/three'),

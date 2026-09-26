@@ -119,4 +119,23 @@ export default defineBuildConfig([
     },
     externals: [...baseExternals, 'three/webgpu', 'three/tsl', 'three/addons/inspector/Inspector.js'],
   },
+
+  //* Extension Entry - three-free, for packages that build on fiber ==============================
+  // context, useStore, useThree, useFrame, registerRootExtension, setRenderOverride. Must never import
+  // three: verify-bundles fails the build if it does. `three` stays external so an accidental import
+  // shows up as an import statement there instead of silently bundling three into the file.
+  {
+    name: 'extension',
+    entries: ['src/extension.tsx'],
+    outDir: 'dist',
+    declaration: true, // Generate .d.ts files for consumers
+    failOnWarn: false,
+    rollup: sharedRollup,
+    hooks: {
+      'rollup:options': (_ctx, options) => {
+        options.plugins = [createAliasPlugin('default'), ...(Array.isArray(options.plugins) ? options.plugins : [])]
+      },
+    },
+    externals: [...baseExternals, 'three', 'three/webgpu', 'three/tsl'],
+  },
 ])

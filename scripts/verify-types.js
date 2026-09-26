@@ -170,6 +170,7 @@ function runPublicConsumerTest() {
     ['Default', 'scripts/type-tests/tsconfig.default.json'],
     ['Legacy', 'scripts/type-tests/tsconfig.legacy.json'],
     ['WebGPU', 'scripts/type-tests/tsconfig.json'],
+    ['Extension', 'scripts/type-tests/tsconfig.extension.json'],
   ]
 
   try {

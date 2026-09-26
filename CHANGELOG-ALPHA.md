@@ -6,6 +6,30 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ## Unreleased
 
+### Features
+
+- `registerRootExtension` and `setRenderOverride`: a small, public way for packages building on R3F
+  to attach per-root setup, cleanup and hot-reload handling, and to replace the default render call
+  while keeping its `fps` throttle, error reporting and user render-phase takeover. See
+  [Extending the root](./docs/API/additional-exports.mdx#extending-the-root).
+- New `@react-three/fiber/extension` entry for those packages. It contains only `useStore`,
+  `useThree`, `useFrame`, `context`, the two functions above and the types, imports nothing from
+  three, and works under a `<Canvas>` from any entry, so an extension no longer drags a second copy
+  of core into apps that use a different entry.
+
+### Changes
+
+- `useRenderPipeline` renders through `setRenderOverride`; the default render job no longer reads
+  `state.renderPipeline`. Behaviour is unchanged.
+- `<Canvas>` hot-reload handling notifies registered extensions instead of calling the TSL cache
+  refresh directly. The TSL hooks register themselves the first time one is used.
+
+### Fixes
+
+- `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against
+  `LegacyRootState`, so `state.renderer` is a `WebGLRenderer` without a cast. The entry already
+  exported `LegacyRootState as RootState`, but the hooks returned the base state.
+
 ### Breaking Changes
 
 - The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
