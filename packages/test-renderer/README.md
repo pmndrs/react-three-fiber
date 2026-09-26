@@ -32,11 +32,13 @@ Essentially, this package makes it easy to grab a snapshot of the Scene Graph re
 
 Choose the entry point that matches your `@react-three/fiber` import:
 
-| Your Fiber Import           | Test Renderer Import                | Use Case                             |
-| --------------------------- | ----------------------------------- | ------------------------------------ |
-| `@react-three/fiber`        | `@react-three/test-renderer`        | Default (WebGL with WebGPU fallback) |
-| `@react-three/fiber/legacy` | `@react-three/test-renderer/legacy` | WebGL only                           |
-| `@react-three/fiber/webgpu` | `@react-three/test-renderer/webgpu` | WebGPU with TSL hooks                |
+| Your Fiber Import           | Test Renderer Import                | Use Case                            |
+| --------------------------- | ----------------------------------- | ----------------------------------- |
+| `@react-three/fiber`        | `@react-three/test-renderer`        | Default (WebGL)                     |
+| `@react-three/fiber/legacy` | `@react-three/test-renderer/legacy` | WebGL only                          |
+| `@react-three/fiber/webgpu` | `@react-three/test-renderer/webgpu` | WebGPU, with the mocked GPU context |
+
+Whichever entry you pick, the root resolves JSX elements from the three namespace of the renderer it loads, exactly as in the app: node materials exist under WebGPU and not under WebGL.
 
 ### Default Entry
 

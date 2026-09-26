@@ -1,27 +1,18 @@
 import * as React from 'react'
-// Relative, never the package name. A self-import leaves rollup unable to resolve the specifier,
-// so it stays external and every entry ends up importing `@react-three/fiber` -- which resolves
-// back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
+import { suspend } from 'suspend-react'
+// Relative, never the package name: this component is part of the shared core chunk.
 import { useThree, useFrame } from '../../hooks'
+import { getThree } from '../../three'
 import { createPortal } from '../../renderer'
 import { extend } from '../../reconciler'
 import { applyProps } from '../../utils'
 // `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),
 // not three's class. That is what the package-name import was resolving to, and narrowing it to
 // three's `Euler` would quietly break `backgroundRotation={[0, 0, 0]}` for every consumer.
-import type { Euler, ThreeElement } from '../../../../types/three'
-import {
-  WebGLCubeRenderTarget,
-  CubeRenderTarget,
-  Texture,
-  Scene,
-  CubeCamera,
-  HalfFloatType,
-  CubeTexture,
-  Color,
-  ColorRepresentation,
-} from '#three'
-import { GroundedSkybox as GroundProjectedEnvImpl } from 'three/examples/jsm/objects/GroundedSkybox.js'
+import type { Euler } from '../../../../types/three'
+// Types only: the classes come from three's shared core (getThree) and the root's renderer
+// support (the cube render target differs per renderer).
+import type { Texture, Scene, CubeCamera, CubeTexture, ColorRepresentation } from 'three'
 import { PresetsType } from './environment-assets'
 import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironment'
 
@@ -276,19 +267,19 @@ export function EnvironmentPortal({
   extensions,
 }: EnvironmentProps) {
   const renderer = useThree((state) => state.renderer)
-  const isLegacy = useThree((state) => state.isLegacy)
+  const support = useThree((state) => state.internal.support)
   const defaultScene = useThree((state) => state.scene)
   const camera = React.useRef<CubeCamera>(null!)
-  const [virtualScene] = React.useState(() => new Scene())
+  const [virtualScene] = React.useState(() => new (getThree().Scene)())
   const fbo = React.useMemo(() => {
     // WebGLCubeRenderTarget is WebGL-only. Under WebGPURenderer the equivalent is three's
     // CubeRenderTarget, which exists precisely because the WebGL one is not compatible —
-    // 'three/webgpu' stopped exporting WebGLCubeRenderTarget in r185 for that reason.
-    // Mirrors the selection useRenderTarget makes for regular render targets.
-    const fbo = isLegacy ? new WebGLCubeRenderTarget(resolution) : new CubeRenderTarget(resolution)
-    fbo.texture.type = HalfFloatType
+    // 'three/webgpu' stopped exporting WebGLCubeRenderTarget in r185 for that reason. The
+    // renderer support of this root carries the matching one.
+    const fbo = new support.CubeRenderTarget(resolution)
+    fbo.texture.type = getThree().HalfFloatType
     return fbo
-  }, [resolution, isLegacy])
+  }, [resolution, support])
 
   React.useEffect(() => {
     return () => {
@@ -356,11 +347,11 @@ export function EnvironmentPortal({
   )
 }
 
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    groundProjectedEnvImpl: ThreeElement<typeof GroundProjectedEnvImpl>
-  }
-}
+// GroundedSkybox imports from `three`, so it loads on demand: a static import would put the WebGL
+// renderer into the eager graph of every app that renders an <Environment>, ground or not.
+const GROUND_KEY = Symbol('r3f-grounded-skybox')
+const useGroundProjectedEnvImpl = () =>
+  suspend(() => import('three/examples/jsm/objects/GroundedSkybox.js').then((m) => m.GroundedSkybox), [GROUND_KEY])
 
 /**
  * Internal component for ground-projected environment.
@@ -387,7 +378,8 @@ function EnvironmentGround(props: EnvironmentProps) {
   const textureDefault = useEnvironment(props)
   const texture = props.map || textureDefault
 
-  React.useMemo(() => extend({ GroundProjectedEnvImpl }), [])
+  const GroundProjectedEnvImpl = useGroundProjectedEnvImpl()
+  React.useMemo(() => extend({ GroundProjectedEnvImpl }), [GroundProjectedEnvImpl])
 
   React.useEffect(() => {
     return () => {
@@ -404,10 +396,13 @@ function EnvironmentGround(props: EnvironmentProps) {
     [texture, height, radius],
   )
 
+  // Created by name rather than as typed JSX: `groundProjectedEnvImpl` is deliberately not on the
+  // element map. drei declares an element of that name against its own class, and a second
+  // declaration with a different signature would break every app that has both installed.
   return (
     <>
       <EnvironmentMap {...props} map={texture} />
-      <groundProjectedEnvImpl args={args} scale={scale} />
+      {React.createElement('groundProjectedEnvImpl', { args, scale })}
     </>
   )
 }
@@ -429,7 +424,7 @@ function EnvironmentColor({ color, scene }: EnvironmentProps) {
     if (color === undefined) return
     const target = resolveScene(scene || defaultScene)
     const oldBg = target.background
-    target.background = new Color(color)
+    target.background = new (getThree().Color)(color)
     return () => {
       target.background = oldBg
     }

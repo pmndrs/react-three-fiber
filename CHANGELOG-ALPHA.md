@@ -8,6 +8,23 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ### Features
 
+- One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
+  imports `three` or `three/webgpu`: each renderer lives in a support module that the root entry
+  loads on demand, so a plain `<Canvas>` downloads only the WebGL renderer and `<Canvas renderer>`
+  only the WebGPU one, as separate lazy chunks. All entries are built in one pass on a shared core,
+  so a library importing hooks from `@react-three/fiber` adds no renderer and no second copy of
+  fiber to an app on any entry. `/legacy` and `/webgpu` remain as static, narrowed aliases (no extra
+  request, one renderer's types, `useRenderTarget` typed to its target). JSX element names resolve
+  against explicit `extend()` registrations first, then the three namespace of the root's own
+  renderer, so a WebGL root no longer advertises node materials it cannot build; each entry
+  declares its own `ThreeElements` (`ThreeElementsOf<T>`) and `ReactThreeFiber` namespace. Core
+  code reaches three's shared core through `getThree()` / `whenThree()` / `hasThree()` and the
+  renderer-specific classes through `state.internal.support`. The environment decoders, the gain
+  map decoder (now the WebGPU one under a WebGPU renderer) and `GroundedSkybox` load on demand.
+  `pnpm verify-treeshake` (Vite and esbuild) replaces `verify-bundles`. Supersedes #3950-#3952:
+  the shared-core build, provider and per-root element resolution follow that stack; the
+  three-free core and lazy renderer supports are new. See
+  [BUILD.md](./docs/development/BUILD.md).
 - `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
   uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
 globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in

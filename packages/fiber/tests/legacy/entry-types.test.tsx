@@ -65,6 +65,8 @@ describe('legacy entry: narrowed state hooks', () => {
     // exactly what re-typing rather than wrapping was meant to avoid.
     expect(useThree).toBe(useThreeCore)
     expect(useFrame).toBe(useFrameCore)
-    expect(Canvas).toBe(CanvasCore)
+    // Canvas is a wrapper that binds the core component to this entry's renderer provider
+    expect(typeof Canvas).toBe('function')
+    expect(Canvas).not.toBe(CanvasCore)
   })
 })

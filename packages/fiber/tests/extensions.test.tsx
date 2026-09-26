@@ -19,8 +19,6 @@ import { createRoot, useFrame, extend, registerRootExtension, setRenderOverride 
 import type { RootExtension, RootStore } from '../src'
 import { detachRootExtensions, notifyRootExtensionsHmr } from '../src/core/extensions'
 
-extend(THREE)
-
 //* Mock Renderer ==============================
 class MockWebGPURenderer {
   canvas: HTMLCanvasElement

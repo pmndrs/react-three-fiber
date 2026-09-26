@@ -23,8 +23,6 @@ export default defineConfig({
       { find: '@react-three/fiber/legacy', replacement: path.resolve(__dirname, '../packages/fiber/src/legacy.tsx') },
       { find: '@react-three/fiber', replacement: path.resolve(__dirname, '../packages/fiber/src/index.tsx') },
       // Resolve internal aliases used in fiber source
-      { find: '#three/tsl', replacement: path.resolve(__dirname, '../packages/fiber/src/three/tsl.ts') },
-      { find: '#three', replacement: path.resolve(__dirname, '../packages/fiber/src/three/index.ts') },
       { find: '#types', replacement: path.resolve(__dirname, '../packages/fiber/types/index.ts') },
     ],
   },

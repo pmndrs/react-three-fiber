@@ -130,7 +130,7 @@ Unlike taking over the `render` phase with `useFrame`, the default job keeps its
 
 ### The `@react-three/fiber/extension` entry
 
-Every other entry bundles its own copy of R3F's core. A library that imported from `@react-three/fiber/webgpu` would therefore ship a second copy of core to apps that import `Canvas` from `@react-three/fiber`, and the other way round.
+Every entry shares one core, and nothing in that core imports three: a library can import hooks from `@react-three/fiber` and add no renderer and no second copy of fiber to an app on any entry.
 
-`@react-three/fiber/extension` contains only what an extension needs and imports nothing from three: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension`, `setRenderOverride` and the shared types. It works under a `<Canvas>` from any entry. Apps should keep importing from `@react-three/fiber`, `/webgpu` or `/legacy`.
+`@react-three/fiber/extension` is the smallest stable surface for a package that builds on fiber: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension`, `setRenderOverride` and the shared types, and nothing that could ever grow a renderer. It works under a `<Canvas>` from any entry. Apps should keep importing from `@react-three/fiber`, `/webgpu` or `/legacy`.
 

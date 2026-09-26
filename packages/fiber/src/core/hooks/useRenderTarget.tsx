@@ -1,11 +1,5 @@
 import { useMemo } from 'react'
-import {
-  R3F_BUILD_LEGACY,
-  R3F_BUILD_WEBGPU,
-  RenderTarget,
-  WebGLRenderTarget,
-  RenderTargetCompat, // Alias used by single-renderer builds
-} from '#three'
+import type { RenderTarget, WebGLRenderTarget } from 'three'
 import { useThree } from './index'
 
 import type { RenderTargetOptions } from '#types'
@@ -13,9 +7,9 @@ import type { RenderTargetOptions } from '#types'
 /**
  * Creates a render target compatible with the current renderer.
  *
- * - Legacy build: Returns WebGLRenderTarget
- * - WebGPU build: Returns RenderTarget
- * - Default build: Returns whichever matches the active renderer
+ * Both classes live in three's shared core; which one you get follows the renderer this root
+ * loaded: a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU. The `/legacy` and `/webgpu`
+ * entries narrow the return type to the one their renderer produces.
  *
  * @example
  * ```tsx
@@ -38,15 +32,19 @@ import type { RenderTargetOptions } from '#types'
  * const fbo = useRenderTarget(512, 256, { samples: 4 })
  * ```
  */
-export function useRenderTarget(options?: RenderTargetOptions): RenderTargetCompat
-export function useRenderTarget(size: number, options?: RenderTargetOptions): RenderTargetCompat
-export function useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTargetCompat
+export function useRenderTarget(options?: RenderTargetOptions): WebGLRenderTarget | RenderTarget
+export function useRenderTarget(size: number, options?: RenderTargetOptions): WebGLRenderTarget | RenderTarget
+export function useRenderTarget(
+  width: number,
+  height: number,
+  options?: RenderTargetOptions,
+): WebGLRenderTarget | RenderTarget
 export function useRenderTarget(
   widthOrOptions?: number | RenderTargetOptions,
   heightOrOptions?: number | RenderTargetOptions,
   options?: RenderTargetOptions,
 ) {
-  const isLegacy = useThree((s) => s.isLegacy)
+  const support = useThree((s) => s.internal.support)
   const size = useThree((s) => s.size)
 
   // Parse arguments
@@ -76,14 +74,13 @@ export function useRenderTarget(
   return useMemo(() => {
     const w = width ?? size.width
     const h = height ?? size.height
-
-    // Default build: both renderers available, runtime decision
-    if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU) {
-      return isLegacy ? new WebGLRenderTarget(w, h, opts) : new RenderTarget(w, h, opts)
-    }
-
-    // Single-renderer builds: use the compat alias
-    // Build flags ensure dead code elimination - only one branch survives
-    return new RenderTargetCompat(w, h, opts)
-  }, [width, height, size.width, size.height, opts, isLegacy])
+    // The support of the root's renderer carries the matching target class. Both constructors take
+    // (width, height, options); the union only fails to unify on their option generics.
+    const Target = support.RenderTarget as new (
+      w: number,
+      h: number,
+      o?: RenderTargetOptions,
+    ) => WebGLRenderTarget | RenderTarget
+    return new Target(w, h, opts)
+  }, [width, height, size.width, size.height, opts, support])
 }
