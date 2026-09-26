@@ -387,6 +387,22 @@ useFrame(() => {
 })
 ```
 
+#### Textures in a creator
+
+`textures` is the canvas's texture registry, a `Map` keyed by URL. A texture that `useTexture` loads earlier in the same render is already there, before its registration lands, so a creator right after it builds with the texture on the first try:
+
+```tsx
+const TEXTURES = { day: '/earth-day.jpg', night: '/earth-night.jpg' }
+
+function Globe() {
+  useTexture(TEXTURES)
+  const { dayNode } = useLocalNodes(({ textures }) => ({ dayNode: texture(textures.get(TEXTURES.day)) }), [])
+  // ...
+}
+```
+
+A texture loaded somewhere else later rebuilds a creator that read its URL as missing.
+
 #### What counts as a read
 
 | In the creator                                      | Rebuilds when                                      |

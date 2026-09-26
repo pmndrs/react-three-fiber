@@ -92,6 +92,13 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   hook returns nothing in this form; a creator that returns nothing is a type error and warns in
   development ([#3890](https://github.com/pmndrs/react-three-fiber/issues/3890),
   [#3893](https://github.com/pmndrs/react-three-fiber/issues/3893)).
+- A texture `useTexture` loads is visible to a `useLocalNodes` creator later in the same render:
+  `textures.get(url)` no longer comes back empty on the first render after a fresh load, and the
+  creator does not rebuild when the registration lands. `useTexture` stages what it loaded during
+  render (no store write, no refcount) and registers it in its layout effect as before; a render
+  React discards registers and retains nothing. `@react-three/fiber/extension` exports
+  `getTextureView(store)`, the registry including those staged textures
+  ([#3895](https://github.com/pmndrs/react-three-fiber/issues/3895)).
 
 ### Changes
 
@@ -111,6 +118,10 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- `@react-three/tsl`: on a secondary canvas, a `useLocalNodes` creator's `scene`, `camera` and
+  `textures` are that canvas's own. They were the primary canvas's, so an install step on a
+  secondary would have written the primary's `scene.fogNode`. The TSL maps still come from the
+  primary, where they are shared.
 - Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
   `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
   `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the

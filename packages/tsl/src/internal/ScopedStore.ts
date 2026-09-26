@@ -19,7 +19,7 @@
  */
 
 import { withStagedOverlay } from './resourceRegistry'
-import type { RootState, RootStore } from '@react-three/fiber/extension'
+import { getTextureView, type RootState, type RootStore } from '@react-three/fiber/extension'
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
 import { SCOPE, type ReadObserver, type ResourceView, type TrackedKind } from './readTracking'
@@ -288,13 +288,14 @@ function observeTextures(map: TextureMap, observe: ReadObserver): TextureMap {
 /**
  * The resource maps as a creator on `local` sees them: the TSL maps from the primary store (where
  * they are registered and shared) with this render pass's staged entries overlaid, and `textures`
- * from the component's own canvas (where `useTexture` registers them). Each call reads the stores
+ * from the component's own canvas (where `useTexture` registers them), including textures a
+ * `useTexture` earlier in this render loaded but has not registered yet. Each call reads the stores
  * now, so a view used after commit sees what was flushed in that commit.
  */
 export function createResourceView(primary: RootStore, local: RootStore = primary): ResourceView {
   return ((kind: TrackedKind) =>
     kind === 'textures'
-      ? local.getState().textures
+      ? getTextureView(local)
       : withStagedOverlay(primary, kind, primary.getState()[kind])) as ResourceView
 }
 
