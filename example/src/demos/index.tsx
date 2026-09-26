@@ -68,6 +68,7 @@ const webgpuDemos = {
   WebGPUMotionBlur: demo(() => import('./webgpu/WebGPUMotionBlur')),
   WebGPUMultiCanvas: demo(() => import('./webgpu/WebGPUMultiCanvas')),
   WebGPUPrimaryOnly: demo(() => import('./webgpu/WebGPUPrimaryOnly')),
+  WebGPURendererRelease: demo(() => import('./webgpu/WebGPURendererRelease')),
   WebGPURagingSea: demo(() => import('./webgpu/WebGPURagingSea')),
   WebGPUSharedUniforms: demo(() => import('./webgpu/WebGPUSharedUniforms')),
 }
