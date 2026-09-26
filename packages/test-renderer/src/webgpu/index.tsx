@@ -1,16 +1,18 @@
 /**
  * @fileoverview WebGPU Entry Point - Full WebGPU Support with Hooks
  *
- * Use this entry point when testing applications that use:
- *   import { Canvas, useUniforms, useNodes } from '@react-three/fiber/webgpu'
+ * Use this entry point when testing applications built on @react-three/fiber/webgpu.
  *
  * This entry provides:
  * - WebGPU context mocking for Node.js tests
- * - All WebGPU-specific hooks for testing TSL uniforms and nodes
  * - Automatic THREE extension with node materials
  *
+ * The TSL hooks (useUniforms, useNodes, ...) live in @react-three/tsl; import them from there in
+ * tests as in app code.
+ *
  * Usage:
- *   import ReactThreeTestRenderer, { useUniform, useNodes } from '@react-three/test-renderer/webgpu'
+ *   import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
+ *   import { useUniforms } from '@react-three/tsl'
  */
 
 import { act } from 'react'
@@ -24,23 +26,7 @@ import {
   _roots as mockRoots,
   createRoot,
   reconciler,
-  useUniform,
-  useUniforms,
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  useNodes,
-  useLocalNodes,
-  removeNodes,
-  clearNodeScope,
-  clearRootNodes,
   useTextures,
-  type UniformValue,
-  type UniformCreator,
-  type TSLNode,
-  type NodeRecord,
-  type NodeCreator,
-  type LocalNodeCreator,
   type TextureEntry,
   type TextureNode,
   type UseTexturesReturn,
@@ -73,36 +59,11 @@ export const { create } = renderer
 export { act, waitFor }
 export type { WaitOptions }
 
-// WebGPU-specific hooks (re-exported from fiber/webgpu)
-export {
-  // Uniforms
-  useUniform,
-  useUniforms,
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  // Nodes
-  useNodes,
-  useLocalNodes,
-  removeNodes,
-  clearNodeScope,
-  clearRootNodes,
-  // Textures
-  useTextures,
-}
+// Texture registry hook (re-exported from fiber/webgpu)
+export { useTextures }
 
-// WebGPU-specific types
-export type {
-  UniformCreator,
-  UniformValue,
-  TSLNode,
-  NodeRecord,
-  NodeCreator,
-  LocalNodeCreator,
-  TextureEntry,
-  TextureNode,
-  UseTexturesReturn,
-}
+// Texture types
+export type { TextureEntry, TextureNode, UseTexturesReturn }
 
 // Mock utilities (for advanced use cases)
 export { mockWebGPU, unmockWebGPU }

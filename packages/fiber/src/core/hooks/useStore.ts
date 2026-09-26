@@ -2,7 +2,9 @@ import { useContext } from 'react'
 import { context } from '../context'
 
 //* Type Imports ==============================
-import type { RootState, RootStore } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type { RootState, RootStore } from '../../../types/store'
 
 // Kept in a leaf module with no #three imports so the @react-three/fiber/extension entry can ship
 // these two hooks without a copy of core. Re-exported from ./index for everything else.

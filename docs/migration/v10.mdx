@@ -109,8 +109,9 @@ import { Canvas, useFrame } from '@react-three/fiber'
 // Legacy - WebGLRenderer only, smaller bundle
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 
-// WebGPU - includes WebGPU hooks for TSL shaders
-import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
+// WebGPU - WebGPURenderer only (TSL hooks come from @react-three/tsl)
+import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { useUniforms } from '@react-three/tsl'
 ```
 
 ### `useFrame` Clock Removed
@@ -353,7 +354,8 @@ v10 brings **first-class WebGPU support** with a suite of hooks that make TSL (T
 **Write shaders the React way** - Uniforms, nodes, and post-processing all managed declaratively. Share shader logic across components. Update values without re-renders.
 
 ```tsx
-import { Canvas, useUniforms, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 import { Fn, vec3, sin, time, positionLocal, normalLocal } from 'three/tsl'
 
 // Define reusable shader functions
@@ -387,6 +389,29 @@ function WobblyMesh() {
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
 - **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
 - **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
+
+#### TSL hooks moved to `@react-three/tsl` {#tsl-hooks-moved}
+
+The TSL resource hooks live in their own package. Install it and change the import; nothing else changes. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
+
+```bash
+npm install @react-three/tsl
+```
+
+```tsx
+// Before
+import { Canvas, useUniforms, useNodes } from '@react-three/fiber/webgpu'
+
+// After
+import { Canvas } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes } from '@react-three/tsl'
+```
+
+This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`, and the `rebuildAll*` helpers. In tests, import them from `@react-three/tsl` too: `@react-three/test-renderer/webgpu` no longer re-exports them.
+
+#### Deprecated standalone TSL utilities removed {#tsl-standalone-utils-removed}
+
+`removeUniforms(set, ...)`, `clearScope`, `clearRootUniforms`, `removeNodes(set, ...)`, `clearNodeScope` and `clearRootNodes` are removed. Use the utilities the hooks return instead: `const { removeUniforms, clearUniforms } = useUniforms()` and `const { removeNodes, clearNodes } = useNodes()`.
 
 📚 **Learn more:** [WebGPU Overview](/webgpu/overview)
 

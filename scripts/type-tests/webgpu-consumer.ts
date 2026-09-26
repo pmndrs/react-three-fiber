@@ -1,4 +1,7 @@
-import { Canvas, useGPUStorage, useLocalNodes, useUniform, useUniforms } from '../../packages/fiber/dist/webgpu/index'
+import { Canvas } from '../../packages/fiber/dist/webgpu/index'
+// The TSL hooks ship in @react-three/tsl; its declarations also carry the global TSL types
+// (UniformNodesFor, ...) used below.
+import { useGPUStorage, useLocalNodes, useUniform, useUniforms } from '../../packages/tsl/dist/index'
 import { createElement } from 'react'
 import { Color, Matrix2, Storage3DTexture, Vector2 } from 'three/webgpu'
 import { color, float, Fn, mix } from 'three/tsl'

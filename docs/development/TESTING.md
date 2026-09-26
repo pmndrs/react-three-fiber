@@ -143,7 +143,7 @@ The local full gate and the CI workflow **must run the same checks in the same w
 ### Conventions
 
 - **One area per file.** Match the source file/feature you're testing (`events.ts` → `events.test.tsx`).
-- **Co-locate WebGPU hook tests** under a `tests/webgpu/` area and drive them against `WebGPUContext`. Note in the file which assertions are mock-validated vs Tier-2-only.
+- **Co-locate TSL hook tests** in `packages/tsl/tests/` (fiber's own WebGPU-entry tests stay in `packages/fiber/tests/webgpu/`) and drive them against `WebGPUContext`. Note in the file which assertions are mock-validated vs Tier-2-only.
 - **Keep Tier-2 out of Vitest.** Browser specs use a distinct extension (`*.gpu.spec.ts`) and live outside the Vitest `include` glob so they can never run (and fail) in jsdom.
 - **Label the irreducible.** If a behavior genuinely needs a GPU, leave an `it.todo('covered by Tier 2: <check>')` rather than a hollow jsdom assertion — that keeps the gap visible.
 - **Tests run against source**, not `dist`. Bundle/type correctness is verified separately (below).
@@ -151,7 +151,7 @@ The local full gate and the CI workflow **must run the same checks in the same w
 ### How to add a test
 
 - **Pure-JS / React behavior** → add a `*.test.tsx` in `packages/fiber/tests/`, run `pnpm test:watch`.
-- **A WebGPU hook's lifecycle** → add a test under `tests/webgpu/` driven by `WebGPUContext`; cover create/update/dispose/rebuild. If a path needs a real device, stop and add it to the Tier-2 checklist instead.
+- **A TSL hook's lifecycle** → add a test under `packages/tsl/tests/` driven by `WebGPUContext`; cover create/update/dispose/rebuild. If a path needs a real device, stop and add it to the Tier-2 checklist instead.
 - **A new export** → add/extend the parity test in `tests/{default,legacy,webgpu}/`.
 - **A real-GPU behavior** → add it to the [Tier-2 checklist](#what-tier-2-must-prove-the-checklist); script it once the harness exists.
 

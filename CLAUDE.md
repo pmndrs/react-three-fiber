@@ -69,6 +69,7 @@ packages/
 │   │   └── three/          # #three alias resolution files
 │   ├── types/              # TypeScript definitions
 │   └── tests/              # Vitest tests
+├── tsl/                    # @react-three/tsl - TSL resource hooks (built on fiber/extension)
 ├── eslint-plugin/          # @react-three/eslint-plugin
 └── test-renderer/          # @react-three/test-renderer
 ```
@@ -86,6 +87,8 @@ packages/
 **For all entry points**: Add to `src/core/`, export from `src/core/index.tsx`
 
 **For WebGPU only**: Add to `src/webgpu/`, export from `src/webgpu/index.tsx`
+
+**TSL resource hooks** (`useUniforms`, `useNodes`, `useRenderPipeline`, ...) live in `packages/tsl`. That package imports fiber only from `@react-three/fiber/extension` (never another entry or fiber's source) and three only from `three/webgpu` / `three/tsl`; `pnpm verify-bundles` enforces both.
 
 **New THREE.js imports**: Update the appropriate file in `src/three/` and import via `#three` in core code
 

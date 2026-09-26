@@ -16,7 +16,5 @@ export * from './renderTarget'
 
 // Side-effect imports for module augmentations
 import './three'
-import './tsl'
-import './renderPipeline'
 
 // Note: webgpu types are exported separately via the /webgpu entry point

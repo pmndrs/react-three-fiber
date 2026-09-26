@@ -15,6 +15,7 @@ export default defineConfig({
         find: '@react-three/fiber/webgpu',
         replacement: path.resolve(__dirname, '../packages/fiber/src/webgpu/index.tsx'),
       },
+      { find: '@react-three/tsl', replacement: path.resolve(__dirname, '../packages/tsl/src/index.ts') },
       {
         find: '@react-three/fiber/extension',
         replacement: path.resolve(__dirname, '../packages/fiber/src/extension.tsx'),

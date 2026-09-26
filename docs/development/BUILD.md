@@ -123,6 +123,21 @@ To add a specialized bundle (e.g., a new rendering backend):
 
 ---
 
+## Publishing `@react-three/tsl` for the first time
+
+`@react-three/tsl` builds and tests with the rest of the monorepo, but it is deliberately **not** in `scripts/release.js` or `.github/workflows/canary.yml` yet. The canary publishes with npm trusted publishing (OIDC, no token), which can only be configured for a package that already exists on npm. Adding tsl to the canary before that would fail every push to `v10` after fiber and test-renderer had already published.
+
+1. **Build and check** from the repo root: `pnpm build && pnpm verify-bundles && pnpm verify-types`.
+2. **Publish the first version by hand**, logged in to npm as a `@react-three` maintainer:
+   `pnpm --filter @react-three/tsl publish --tag alpha --access public`.
+   The version must match fiber's (the release script refuses mixed channels).
+3. **Configure trusted publishing** on npmjs.com → `@react-three/tsl` → Settings: GitHub Actions, repository `pmndrs/react-three-fiber`, workflow `canary.yml`.
+4. **Add tsl to the automation**:
+   - `scripts/release.js`: add `'tsl'` to `PACKAGES`, after `'fiber'` (it declares a peer on fiber).
+   - `.github/workflows/canary.yml`: add `tsl` to the `for pkg in ...` version loop, and a `pnpm --filter @react-three/tsl publish --tag canary --no-git-checks --provenance` line after fiber's.
+
+To check the package as npm will see it without publishing: `cd packages/tsl && pnpm pack`, then install the tarball (next to a packed fiber) into a fresh app.
+
 ## Migration History
 
 ### Jest → Vitest (v10)

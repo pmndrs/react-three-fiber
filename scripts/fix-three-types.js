@@ -28,31 +28,20 @@ const typeFixups = {
   // Default entry: both WebGL and WebGPU types
   'index.d.ts': {
     threeExports: `typeof import('three') & typeof import('three/webgpu')`,
-    namespaceModule: 'three_webgpu',
   },
   // Legacy entry: WebGL only
   'legacy.d.ts': {
     threeExports: `typeof import('three')`,
-    namespaceModule: 'THREE$1',
   },
   // WebGPU entry: WebGPU only
   'webgpu/index.d.ts': {
     threeExports: `typeof import('three/webgpu')`,
-    namespaceModule: 'three_webgpu',
   },
   // Extension entry: three-free at runtime, but it re-exports the shared types, which are built
   // with the default #three alias and so carry the same merged-namespace block.
   'extension.d.ts': {
     threeExports: `typeof import('three') & typeof import('three/webgpu')`,
-    namespaceModule: 'three_webgpu',
   },
-}
-
-/**
- * Escape text for an exact regular-expression fragment.
- */
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -66,7 +55,7 @@ function countMatches(content, pattern) {
  * Remove the one Rollup runtime namespace block that unbuild emits into a public declaration.
  * ThreeExports no longer references this variable after its type fix.
  */
-function removeNamespaceRuntime(filename, content, namespaceModule) {
+function removeNamespaceRuntime(filename, content) {
   const helperMarker = 'function _mergeNamespaces('
   const namespaceMarker = 'var THREE = /*#__PURE__*/_mergeNamespaces('
   const helperMarkerCount = content.split(helperMarker).length - 1
@@ -82,10 +71,10 @@ function removeNamespaceRuntime(filename, content, namespaceModule) {
   }
 
   const mergeHelperPattern = /\nfunction _mergeNamespaces\([\s\S]*?\n}\n/g
-  const mergedNamespacePattern = new RegExp(
-    `\\nvar THREE = /\\*#__PURE__\\*/_mergeNamespaces\\(\\{[\\s\\S]*?\\n\\}, \\[${escapeRegExp(namespaceModule)}\\]\\);\\n`,
-    'g',
-  )
+  // The namespace identifier rollup picks for `three/webgpu` (`three_webgpu`, `webgpu`, ...) depends on
+  // which other imports the declaration bundle happens to contain, so accept any identifier; the
+  // exact name is not stable across builds.
+  const mergedNamespacePattern = /\nvar THREE = \/\*#__PURE__\*\/_mergeNamespaces\(\{[\s\S]*?\n\}, \[[\w$]+\]\);\n/g
   const helperBlockCount = countMatches(content, mergeHelperPattern)
   const namespaceBlockCount = countMatches(content, mergedNamespacePattern)
 
@@ -109,7 +98,7 @@ function removeNamespaceRuntime(filename, content, namespaceModule) {
 /**
  * Fix the ThreeExports type in a .d.ts file
  */
-function fixDtsFile(filename, { threeExports, namespaceModule }) {
+function fixDtsFile(filename, { threeExports }) {
   const filepath = resolve(distDir, filename)
   let content
 
@@ -126,7 +115,7 @@ function fixDtsFile(filename, { threeExports, namespaceModule }) {
 
   let modified = content
 
-  modified = removeNamespaceRuntime(filename, modified, namespaceModule)
+  modified = removeNamespaceRuntime(filename, modified)
   if (modified === null) return false
 
   // Replace the broken type alias with the correct one

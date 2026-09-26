@@ -2,11 +2,12 @@
  * @fileoverview WebGPU entry point - WebGPU only, no legacy WebGL
  *
  * This entry point is for apps that want to use ONLY WebGPURenderer.
- * Includes WebGPU-specific hooks (useUniforms, useNodes, useTextures).
  * Auto-extends THREE with WebGPU node materials (MeshBasicNodeMaterial, etc.)
+ * The TSL resource hooks (useUniforms, useNodes, useRenderPipeline, ...) are in @react-three/tsl.
  *
  * Usage:
- *   import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
+ *   import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+ *   import { useUniforms } from '@react-three/tsl'
  */
 
 // NOTE: Use explicit path for Jest compatibility (build overrides via alias)
@@ -28,11 +29,15 @@ import { extend } from '../core/reconciler'
 extend(THREE)
 
 //* WebGPU-specific exports ==============================
-// These hooks are only meaningful with WebGPU/TSL
+// Texture registry types and utilities (the TSL resource hooks moved to @react-three/tsl)
 export * from './hooks'
 
 //* WebGPU-specific types ==============================
 // Re-export WebGPURootState as RootState so useThree() returns WebGPURenderer-typed state
+// The base state stays exported under its own name: useStore(), state.get(), previousRoot and
+// primaryStore are typed with it, and packages that add fields to RootState (e.g.
+// @react-three/tsl) augment it here, so WebGPURootState, which extends it, gets them too.
+export type { RootState as BaseRootState } from '../../types/store'
 export type {
   WebGPURootState as RootState,
   WebGPUInternalState as InternalState,

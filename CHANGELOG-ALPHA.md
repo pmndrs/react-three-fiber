@@ -8,6 +8,21 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ### Features
 
+- `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
+  uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
+globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in
+  `useFrame`, `useThree` and handlers), a creator's `uniforms`, `useUniforms()`,
+  `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
+  are checked against registered keys. Strict by default (unknown root keys are errors, catching
+  typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
+  types, unchanged. See [Typed Uniforms](./docs/webgpu/typed-uniforms.mdx).
+- `configureTSL({ uniforms, scopes })` creates registered uniforms on every primary canvas up
+  front, including canvases already mounted, so registered types hold before the first frame.
+  Secondaries and portals see them like any shared uniform, and hooks that declare the same names
+  reuse those nodes.
+- New package `@react-three/tsl` with the TSL resource hooks. It builds on
+  `@react-three/fiber/extension`, so it adds no second copy of fiber to an app whichever fiber
+  entry the app uses.
 - `registerRootExtension` and `setRenderOverride`: a small, public way for packages building on R3F
   to attach per-root setup, cleanup and hot-reload handling, and to replace the default render call
   while keeping its `fps` throttle, error reporting and user render-phase takeover. See
@@ -22,7 +37,10 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 - `useRenderPipeline` renders through `setRenderOverride`; the default render job no longer reads
   `state.renderPipeline`. Behaviour is unchanged.
 - `<Canvas>` hot-reload handling notifies registered extensions instead of calling the TSL cache
-  refresh directly. The TSL hooks register themselves when their module loads.
+  refresh directly. `@react-three/tsl` registers its extension when it is imported.
+- `@react-three/fiber/webgpu` also exports the base state type as `BaseRootState` (the entry's
+  `RootState` is `WebGPURootState`, which extends it). `useStore()`, `state.get()` and
+  `primaryStore` are typed with it, and packages that add fields to `RootState` augment it.
 - Portals pick up parent state they inherit when it changes after they mount (a later uniform,
   `controls` or `renderer`). Before, the portal's copy of the parent state won on every later change,
   so everything except `size`, `events` and `viewport` stayed as it was at mount. What a portal owns
@@ -38,12 +56,29 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   hooks wrote to the primary.
 - `useUniform` on a secondary canvas registers on the primary, where `useUniforms` looks. It used to
   register on the secondary's own store.
+- `@react-three/fiber/extension`'s type declarations no longer include the global JSX element
+  augmentation, which conflicted with `/legacy`'s for any package built on the extension entry.
 - `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against
   `LegacyRootState`, so `state.renderer` is a `WebGLRenderer` without a cast. The entry already
   exported `LegacyRootState as RootState`, but the hooks returned the base state.
 
 ### Breaking Changes
 
+- The TSL resource hooks moved to a new package, `@react-three/tsl`: `useUniforms`, `useUniform`,
+  `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline` and the
+  `rebuildAll*` helpers. They are no longer exported from `@react-three/fiber/webgpu`, and
+  `@react-three/test-renderer/webgpu` no longer re-exports them. Install `@react-three/tsl` and
+  change the import; the API is the same. See the
+  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved).
+- `state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`, `state.renderPipeline` and
+  `state.passes` are added to `RootState` by `@react-three/tsl` (its root extension sets them up and
+  its types augment `RootState` on the default, `/webgpu` and `/extension` entries). They still read
+  the same in `useFrame`, `useThree` and handlers once the package is imported. Core no longer
+  creates them, and `/legacy` types no longer have them. `renderPipeline` and `passes` are optional:
+  they exist once `useRenderPipeline` creates a pipeline.
+- The deprecated standalone TSL utilities are removed: `removeUniforms(set, …)`, `clearScope`,
+  `clearRootUniforms`, `removeNodes(set, …)`, `clearNodeScope` and `clearRootNodes` (also from
+  `@react-three/test-renderer/webgpu`). Use the utilities `useUniforms()` and `useNodes()` return.
 - The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
   It hooked into reconciler internals and fired on unrelated updates. Use an effect keyed on the
   props that change, read the object in `useFrame`, or use a ref callback; see the

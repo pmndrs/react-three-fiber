@@ -1,4 +1,6 @@
-import type { RootState, RootStore } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type { RootState, RootStore } from '../../types/store'
 
 //* Root Extensions ==============================
 // The one seam packages building on fiber (e.g. @react-three/tsl) use to attach per-root state and

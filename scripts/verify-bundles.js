@@ -306,6 +306,50 @@ if (fs.existsSync(extensionDts) && /["']\/(?:Users|home)\//.test(fs.readFileSync
 
 if (!extensionPassed) allPassed = false
 
+//* @react-three/tsl ==============================
+// The TSL package must reach fiber only through the three-free extension entry. Importing any other
+// fiber entry would drag a full copy of fiber's core into every app that uses it (and a second one
+// into apps that use a different entry). It targets WebGPU only, so no plain 'three' either.
+
+console.log('\n\n📦 @react-three/tsl')
+console.log('-'.repeat(60))
+
+const TSL_DIST = path.join(__dirname, '../packages/tsl/dist')
+// ~35 KB today; fiber's core leaking in would add ~650 KB.
+const MAX_TSL_BYTES = 150 * 1024
+let tslPassed = true
+
+for (const file of ['index.mjs', 'index.cjs']) {
+  const filePath = path.join(TSL_DIST, file)
+  if (!fs.existsSync(filePath)) {
+    console.log(`   ❌ packages/tsl/dist/${file} is missing -- run \`pnpm build\``)
+    tslPassed = false
+    continue
+  }
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const { size } = fs.statSync(filePath)
+  const fiberImports = [...content.matchAll(/(?:from|require\()\s*['"](@react-three\/fiber[^'"]*)['"]/g)].map(
+    (m) => m[1],
+  )
+  const wrongFiber = fiberImports.filter((spec) => spec !== '@react-three/fiber/extension')
+  const plainThree = content.match(/(?:from|require\()\s*['"]three['"]/)
+  const isStub = /jiti/.test(content)
+
+  if (wrongFiber.length)
+    console.log(`   ❌ ${file} imports ${[...new Set(wrongFiber)].join(', ')} -- use @react-three/fiber/extension`)
+  if (!fiberImports.length)
+    console.log(`   ❌ ${file} does not import @react-three/fiber/extension -- is fiber being bundled in?`)
+  if (plainThree) console.log(`   ❌ ${file} imports plain 'three' -- use 'three/webgpu'`)
+  if (isStub) console.log(`   ❌ ${file} is a jiti stub -- run \`pnpm build\``)
+  if (size > MAX_TSL_BYTES) console.log(`   ❌ ${file} is ${(size / 1024).toFixed(1)} KB -- fiber's core is leaking in`)
+
+  if (wrongFiber.length || !fiberImports.length || plainThree || isStub || size > MAX_TSL_BYTES) tslPassed = false
+  else console.log(`   ✅ ${file} (${(size / 1024).toFixed(1)} KB, fiber only via /extension)`)
+}
+
+if (!tslPassed) allPassed = false
+
 //* Summary ==============================
 
 console.log('\n' + '='.repeat(60))

@@ -1,71 +1,5 @@
-// ScopedStore - type-safe wrapper for creator function state
-export { createScopedStore, type ScopedStoreType, type CreatorState } from './ScopedStore'
-
-// Uniforms - root-level + scoped with create-if-not-exists pattern
-// Note: UniformNode and UniformRecord are global types from types/tsl.d.ts
-export {
-  useUniforms,
-  // Global rebuild function for HMR integration
-  rebuildAllUniforms,
-  // Deprecated standalone utils (prefer useUniforms().removeUniforms/clearUniforms)
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  type UniformCreator,
-  type RemoveUniformsFn,
-  type ClearUniformsFn,
-  type RebuildUniformsFn,
-  type UniformsWithUtils,
-} from './useUniforms'
-
-// Single uniform - simple create/get/update API
-export { useUniform, type UniformValue } from './useUniform'
-
-// Nodes - root-level + scoped with create-if-not-exists pattern
-export {
-  useNodes,
-  useLocalNodes,
-  // Global rebuild function for HMR integration
-  rebuildAllNodes,
-  // Deprecated standalone utils (prefer useNodes().removeNodes/clearNodes)
-  removeNodes,
-  clearNodeScope,
-  clearRootNodes,
-  type TSLNode,
-  type TSLNodeLike,
-  type NodeCreator,
-  type LocalNodeCreator,
-  type RemoveNodesFn,
-  type ClearNodesFn,
-  type RebuildNodesFn,
-  type NodesWithUtils,
-} from './useNodes'
-
-// Buffers - root-level + scoped with create-if-not-exists pattern
-export {
-  useBuffers,
-  // Global rebuild function for HMR integration
-  rebuildAllBuffers,
-  type BufferCreator,
-  type RemoveBuffersFn,
-  type ClearBuffersFn,
-  type RebuildBuffersFn,
-  type DisposeBuffersFn,
-  type BuffersWithUtils,
-} from './useBuffers'
-
-// GPU Storage - root-level + scoped with create-if-not-exists pattern
-export {
-  useGPUStorage,
-  // Global rebuild function for HMR integration
-  rebuildAllStorage,
-  type StorageCreator,
-  type RemoveStorageFn,
-  type ClearStorageFn,
-  type RebuildStorageFn,
-  type DisposeStorageFn,
-  type StorageWithUtils,
-} from './useGPUStorage'
+// The TSL resource hooks (useUniforms, useNodes, useBuffers, useGPUStorage, useRenderPipeline)
+// live in @react-three/tsl. What remains here is the texture registry, which is core.
 
 // Textures - Re-exported from core (useTextures is now a core R3F hook)
 // Note: the runtime bindings are not re-exported here to avoid duplicate exports, since ../core
@@ -77,7 +11,3 @@ export type { TextureEntry, TextureNode } from './useTextures'
 
 // Low-level texture utilities (prefer useTextures hook instead)
 export { createTextureOperations, type TextureOperations } from '../../core/utils/textures'
-
-// RenderPipeline - WebGPU render pipeline management
-// Types are declared globally in types/renderPipeline.d.ts
-export { useRenderPipeline } from './useRenderPipeline'
