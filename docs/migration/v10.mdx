@@ -392,7 +392,7 @@ function WobblyMesh() {
 - **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
 - **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
 
-#### TSL hooks moved to `@react-three/tsl` {#tsl-hooks-moved}
+#### TSL hooks moved to `@react-three/tsl`
 
 The TSL resource hooks live in their own package. Install it and change the import; nothing else changes. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
 
@@ -411,7 +411,7 @@ import { useUniforms, useNodes } from '@react-three/tsl'
 
 This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`, and the `rebuildAll*` helpers. In tests, import them from `@react-three/tsl` too: `@react-three/test-renderer/webgpu` no longer re-exports them.
 
-#### Deprecated standalone TSL utilities removed {#tsl-standalone-utils-removed}
+#### Deprecated standalone TSL utilities removed
 
 `removeUniforms(set, ...)`, `clearScope`, `clearRootUniforms`, `removeNodes(set, ...)`, `clearNodeScope` and `clearRootNodes` are removed. Use the utilities the hooks return instead: `const { removeUniforms, clearUniforms } = useUniforms()` and `const { removeNodes, clearNodes } = useNodes()`.
 

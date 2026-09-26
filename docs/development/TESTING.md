@@ -252,5 +252,3 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 - [~] **Invest in the `WebGPUContext` mock** — done for the TSL hook lifecycle (`useUniforms`/`useNodes`/`useBuffers`/`useGPUStorage`/`useRenderPipeline` now 62–90% via the mock). Extend further as new GPU paths become mockable.
 - [ ] **Stand up the Tier-2 Playwright harness** (`pnpm test:gpu`, Chromium + WebGPU, pointed at the example app) so the [Tier-2 checklist](#what-tier-2-must-prove-the-checklist) is a runnable suite, not a manual list. _(task C0)_
 - [ ] **Spike Tier 3** — headless WebGPU via SwiftShader/Dawn; if it runs our paths, add a non-blocking CI job. _(task D8)_
-      </content>
-      </invoke>
