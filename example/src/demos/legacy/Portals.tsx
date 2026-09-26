@@ -7,7 +7,7 @@ import {
   type ThreeEvent,
   useFrame,
   useThree,
-} from '@react-three/fiber/legacy'
+} from '@react-three/fiber'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 

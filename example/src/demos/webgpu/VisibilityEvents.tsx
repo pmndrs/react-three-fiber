@@ -1,10 +1,9 @@
 //* Visibility Events ==============================
 
-import { Canvas } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
-import { useFrame } from '@react-three/fiber'
 import { color, mix } from 'three/tsl'
 import { useLocalNodes, useUniform } from '@react-three/tsl'
 
