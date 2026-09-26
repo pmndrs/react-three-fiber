@@ -3,12 +3,12 @@
  *
  * Omitting `renderer` on <Canvas> (default entry) gives the legacy WebGLRenderer, which cannot
  * compile node materials; three then throws an unactionable `reading 'replace'` on the first
- * frame. R3F warns once per root when such a material is attached, with the fix in the message.
+ * frame. A node material element is not part of a WebGL root's namespace, so it throws at once with
+ * the fix in the error; a node material instance made by the app warns once per root when attached.
  *
  * Notes on the harness:
- *  - `#three` resolves to the default entry in vitest (both build flags true), so a <Canvas>
- *    without `renderer` really is a WebGLRenderer here, and `<Canvas renderer>` really is a
- *    WebGPURenderer on its WebGL2 backend.
+ *  - `Canvas` comes from the default entry, so a <Canvas> without `renderer` really is a
+ *    WebGLRenderer here, and `<Canvas renderer>` really is a WebGPURenderer on its WebGL2 backend.
  *  - `frameloop="never"` keeps the WebGLRenderer from trying to draw the fake material.
  *
  * @see https://github.com/pmndrs/react-three-fiber/issues/3889
@@ -188,6 +188,44 @@ describe('node material under the legacy WebGLRenderer', () => {
     )
 
     expect(nodeMaterialWarnings()).toHaveLength(0)
+  })
+
+  it('throws with the fix for a node material element when <Canvas> has no renderer prop', async () => {
+    // The repro from #3889: the WebGL root's namespace has no node materials
+    let caught: Error | null = null
+    class Boundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+      state = { hasError: false }
+      static getDerivedStateFromError() {
+        return { hasError: true }
+      }
+      componentDidCatch(error: Error) {
+        caught = error
+      }
+      render() {
+        return this.state.hasError ? null : this.props.children
+      }
+    }
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(noop)
+    try {
+      await act(async () =>
+        render(
+          <Boundary>
+            <Canvas frameloop="never">
+              <mesh>
+                <boxGeometry />
+                <meshStandardNodeMaterial />
+              </mesh>
+            </Canvas>
+          </Boundary>,
+        ),
+      )
+    } finally {
+      errSpy.mockRestore()
+    }
+
+    expect(caught!.message).toContain('MeshStandardNodeMaterial')
+    expect(caught!.message).toContain('Pass `renderer` to <Canvas>')
   })
 
   describe('renderer not yet resolved at attach time', () => {

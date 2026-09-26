@@ -206,9 +206,9 @@ export default () => (
 )
 ```
 
-`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. Only the renderer a Canvas asks for is downloaded: three's WebGPU renderer is a separate chunk fetched when a `<Canvas renderer>` mounts, and a plain `<Canvas>` fetches only the WebGL one. For the single-renderer entries, node materials as JSX, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
-Node materials (`meshStandardNodeMaterial`, anything with `isNodeMaterial`) and TSL only compile on `WebGPURenderer`, so they need the `renderer` prop — without it the default entry runs the legacy `WebGLRenderer`, and in development R3F warns when a node material is attached to such a canvas. This is about which renderer you start on, not the browser: `WebGPURenderer` falls back to WebGL2 by itself where WebGPU is unavailable, so browser WebGPU support is not required.
+Node materials (`meshStandardNodeMaterial`, anything with `isNodeMaterial`) and TSL only compile on `WebGPURenderer`, so they need the `renderer` prop — without it the default entry runs the legacy `WebGLRenderer`: a node material element such as `<meshStandardNodeMaterial />` throws with this fix in the error, and in development R3F warns when a node material instance (a `<primitive>` or `material` prop) is attached to such a canvas. This is about which renderer you start on, not the browser: `WebGPURenderer` falls back to WebGL2 by itself where WebGPU is unavailable, so browser WebGPU support is not required.
 
 ## Custom Canvas
 

@@ -3,8 +3,6 @@ import { act } from 'react'
 import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, extend, fromRef } from '../src/index'
 
-extend(THREE)
-
 describe('fromRef', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
 

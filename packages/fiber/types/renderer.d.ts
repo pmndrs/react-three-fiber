@@ -1,4 +1,5 @@
 import type * as THREE from 'three'
+import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
 import type { ReactNode } from 'react'
 import type { ThreeElement } from './three'
 import type { ComputeFunction, EventManager } from './events'
@@ -92,11 +93,20 @@ export interface RendererConfigExtended extends ColorManagementConfig {
   scheduler?: CanvasSchedulerConfig
 }
 
+/**
+ * The `renderer` prop: opt into three's WebGPU renderer.
+ * - `true` (the `<Canvas renderer>` shorthand) or `{}`: a default `WebGPURenderer`
+ * - a props bag: constructor parameters (`antialias`, `forceWebGL`, ...) and renderer properties
+ *   (`toneMapping`, ...), plus `textureColorSpace`, `primaryCanvas` and `scheduler`
+ * - a renderer instance, or a sync/async factory receiving the default props. Structural, like
+ *   the `gl` prop: anything with `render()`, so a wrapped or mocked renderer is accepted.
+ */
 export type RendererProps =
-  | any // WebGPURenderer
-  | ((defaultProps: DefaultRendererProps) => any)
-  | ((defaultProps: DefaultRendererProps) => Promise<any>)
-  | (Partial<Properties<any> | Record<string, any>> & RendererConfigExtended)
+  | boolean
+  | Renderer
+  | ((defaultProps: DefaultRendererProps) => Renderer)
+  | ((defaultProps: DefaultRendererProps) => Promise<Renderer>)
+  | (Partial<Properties<WebGPURenderer> & WebGPURendererParameters> & RendererConfigExtended)
 
 //* Camera Props ==============================
 

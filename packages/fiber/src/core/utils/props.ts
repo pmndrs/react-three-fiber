@@ -1,6 +1,16 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
+import { getThree } from '../three'
 import type { Instance, EventHandlers } from '#types'
-import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
+import {
+  hasConstructor,
+  is,
+  isColorRepresentation,
+  isCopyable,
+  isLayers,
+  isTexture,
+  isUniform,
+  isVectorLike,
+} from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
 import {
   registerVisibility,
@@ -10,6 +20,7 @@ import {
 } from '../visibility'
 import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
+import { notifyDepreciated } from './notices'
 import { warnIfNodeMaterialOnLegacyRenderer } from './nodeMaterial'
 
 //* Property Resolution & Application ==============================
@@ -27,7 +38,6 @@ export const RESERVED_PROPS = [
   'dispose',
   'attach',
   'object',
-  'onUpdate',
   // Behavior flags
   'dispose',
 ]
@@ -246,6 +256,24 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
 
+    // `onUpdate` was an R3F hook (called after every prop update) until v10 and is now an ordinary
+    // prop, assigned by name like any other. The notice fires wherever it is used, not only where
+    // the assignment is inert: on a Texture it becomes three's callback fired *after* a GPU upload,
+    // so the v9 idiom `onUpdate={(self) => (self.needsUpdate = true)}` no longer flags a changed
+    // `image` for upload, and on a TSL Node it replaces the `Node.onUpdate()` method. Both change
+    // behavior silently.
+    if (prop === 'onUpdate') {
+      notifyDepreciated({
+        heading: 'onUpdate is no longer an R3F prop',
+        body:
+          'v10 removed the onUpdate hook: R3F no longer calls it after prop updates. The value is assigned to the object by name. ' +
+          "On a Texture that sets three's Texture.onUpdate, which the renderer calls after a GPU upload, not after prop changes. " +
+          'On a node it replaces the Node.onUpdate() method. On other objects it is never called.\n\n' +
+          'Use an effect keyed on the props that change, read the object in useFrame, or use a ref callback.',
+        link: 'https://docs.pmnd.rs/react-three-fiber/migration/v10#onupdate-removed',
+      })
+    }
+
     // Deal with pointer events, including removing them if undefined
     if (instance && EVENT_REGEX.test(prop)) {
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
@@ -310,7 +338,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
 
     // Layers must be written to the mask property
-    if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
+    if (isLayers(target) && isLayers(value)) {
       target.mask = value.mask
     }
 
@@ -337,7 +365,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // ShaderMaterial uniforms must keep a stable target reference so that pierced updates
     // (uniforms-foo-value) and references held by animation code keep working across renders.
-    else if (root instanceof THREE.ShaderMaterial && key === 'uniforms' && is.obj(value)) {
+    else if ((root as THREE.ShaderMaterial).isShaderMaterial && key === 'uniforms' && is.obj(value)) {
       if (!is.obj(root.uniforms)) root.uniforms = {}
       const uniforms = root.uniforms as Record<string, THREE.Uniform>
       const nextUniforms = value as Record<string, THREE.Uniform | { value: unknown }>
@@ -348,7 +376,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
         if (targetUniform) Object.assign(targetUniform, uniform)
         else {
-          const nextUniform = uniform instanceof THREE.Uniform ? uniform.clone() : new THREE.Uniform(uniform.value)
+          const nextUniform = isUniform(uniform) ? uniform.clone() : new (getThree().Uniform)(uniform.value)
           uniforms[name] = nextUniform
         }
       }
@@ -370,15 +398,16 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // Most 8-bit textures are authored in sRGB regardless of output display space
       // https://github.com/pmndrs/react-three-fiber/issues/344
       // https://github.com/mrdoob/three.js/pull/25857
+      const three = rootState && getThree()
       if (
-        rootState &&
-        rootState.renderer?.outputColorSpace === THREE.SRGBColorSpace &&
+        three &&
+        rootState.renderer?.outputColorSpace === three.SRGBColorSpace &&
         colorMaps.includes(key) &&
         isTexture(value) &&
         (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
-        root[key].format === THREE.RGBAFormat &&
-        root[key].type === THREE.UnsignedByteType
+        root[key].format === three.RGBAFormat &&
+        root[key].type === three.UnsignedByteType
       ) {
         root[key].colorSpace = rootState.textureColorSpace
       }
