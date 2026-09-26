@@ -19,8 +19,6 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useFrame, invalidate, advance, extend } from '../src'
 
-extend(THREE)
-
 //* Deterministic RAF Controller ==============================
 
 function createRafController() {

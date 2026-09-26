@@ -6,12 +6,12 @@ This is the hub for all technical documentation. It covers day-to-day workflow, 
 
 v10 introduces significant architectural changes:
 
-- **WebGPU Support** — New `@react-three/fiber/webgpu` entry point alongside the default and legacy builds
+- **WebGPU Support** — `<Canvas renderer>` on `@react-three/fiber`, with `/webgpu` and `/legacy` entries for one renderer only
 - **Native Split** — React Native support moved to separate `@react-three/native` package
-- **New Build System** — Unbuild with per-entry alias resolution for THREE.js imports
+- **New Build System** — Unbuild, one build with a shared core; renderer supports loaded on demand
 - **Modern Tooling** — pnpm workspaces and Vitest for testing
 
-These changes enable tree-shaking between WebGL and WebGPU code paths and cleaner dependency management.
+These changes mean an app downloads only the renderer its Canvas asks for, and libraries built on fiber add no renderer at all.
 
 ---
 
@@ -44,14 +44,14 @@ packages/fiber/
 │   ├── legacy.tsx          # Legacy entry (WebGL only)
 │   ├── webgpu/             # WebGPU-specific entry/logic
 │   ├── core/               # Core reconciler and hooks (shared)
-│   └── three/              # THREE.js alias resolution files
+│   └── support/            # webgl.ts / webgpu.ts: the only modules that import three
 ├── types/                  # Internal TypeScript definitions
 ├── tests/                  # Vitest tests
 └── build.config.ts         # Build entry point configuration
 ```
 
 - **Shared Logic** — Most changes happen in `src/core/`
-- **THREE.js Aliases** — We use `#three` to dynamically switch between THREE.js variants (see [BUILD](./BUILD.md))
+- **Three imports** — Core never imports a three value; it reads classes from the renderer support a root loaded (see [BUILD](./BUILD.md))
 
 ---
 
@@ -67,22 +67,23 @@ packages/fiber/
 
 1. Add code to `src/webgpu/`
 2. Export from `src/webgpu/index.tsx`
-3. Only included in `@react-three/fiber/webgpu`
+3. Only exported from `@react-three/fiber/webgpu`
 
 //\* New THREE.js Imports --------------------------------
 
-1. Update the relevant variant in `src/three/` (`index.ts`, `legacy.ts`, or `webgpu.ts`)
-2. Import from `#three` in your core code
+1. In `src/core/`, `import type` only. Read a shared-core class from `getThree()`, a renderer-specific one from `state.internal.support`
+2. A renderer-specific class core does not have yet goes on the support (`types/provider.d.ts`, `src/support/webgl.ts`, `src/support/webgpu.ts`)
+3. A three addon is loaded where it is used, with a dynamic import
 
 ---
 
 ## Documentation Index
 
-| Guide                                         | Purpose                                                          |
-| :-------------------------------------------- | :--------------------------------------------------------------- |
-| **[BUILD](./BUILD.md)**                       | Build system architecture, alias resolution, adding entry points |
-| **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting           |
-| **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                 |
+| Guide                                         | Purpose                                                           |
+| :-------------------------------------------- | :---------------------------------------------------------------- |
+| **[BUILD](./BUILD.md)**                       | Build system architecture, renderer supports, adding entry points |
+| **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting            |
+| **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                  |
 
 Design rationale is not kept as separate documents — it lives with the feature it explains. See
 [README](./README.md#where-design-rationale-lives).

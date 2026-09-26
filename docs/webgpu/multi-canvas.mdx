@@ -110,7 +110,7 @@ Each canvas maintains its own scene graph and camera, event handling, and state 
 
 Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context.
 
-The `primaryStore` on each canvas's state provides access to the primary's shared TSL resources (uniforms, nodes) and its scene/camera, enabling advanced patterns like HUDs.
+The `primaryStore` on each canvas's state provides access to the primary's scene/camera, enabling advanced patterns like HUDs. TSL resources (uniforms, nodes, buffers, GPU storage) are shared automatically: they live on the primary's `RootState`, each secondary holds the same map objects, and portals inherit them from their parent, so `state.uniforms` (and the `@react-three/tsl` hooks) read the same set on every canvas and portal.
 
 R3F automatically manages `CanvasTarget` switching across canvases. A job in the scheduler's `start` phase sets the correct canvas target before any other jobs run for that root, so user render callbacks render to the right canvas automatically.
 

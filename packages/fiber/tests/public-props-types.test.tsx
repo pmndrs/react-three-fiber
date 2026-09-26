@@ -7,8 +7,6 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { Canvas, extend, type ThreeEvent } from '../src'
 
-extend(THREE)
-
 class Custom extends THREE.Group {}
 
 function typeAssertions() {

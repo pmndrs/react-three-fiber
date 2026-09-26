@@ -116,19 +116,36 @@ const Element = extend(CustomElement)
 <Element />
 ```
 
-## Extending three default elements
+## Three's own elements
 
-If you open your own root instead of using `<Canvas>`, you can extend the default elements with `extend`. The `* as THREE` namespace contains functions, numbers and strings alongside the classes; `extend` accepts it as-is and registers only the constructors, so no cast is needed. Extract the exact classes (`extend({ Mesh, Group, ... })`) when you want a smaller catalogue.
+Every three class is a JSX element without any `extend()` call, on `<Canvas>` and on a root you open with `createRoot` alike. A root resolves element names against the namespace of the renderer it loaded, so a WebGPU root has `<meshStandardNodeMaterial>` and a WebGL root does not. The element map follows the entry you import from: `@react-three/fiber` types both namespaces, `/legacy` only `three`, `/webgpu` only `three/webgpu`.
+
+`extend` is for classes three does not ship, and a registration always wins over the namespace, so `extend({ Mesh: MyMesh })` replaces `<mesh>` on every root.
+
+## Typing the renderer
+
+`@react-three/fiber` can construct either renderer, so `state.renderer` is `WebGLRenderer | WebGPURenderer` by default and a member only one of them has (`renderer.compute`, `renderer.shadowMap`) needs a narrow. An app that has decided on a renderer registers it once, anywhere, and everything renderer-typed follows: `useThree`, `useFrame`, `onCreated`, `useRenderTarget`, `state.isLegacy`.
 
 ```tsx
-import * as THREE from 'three'
-import { extend, createRoot, events } from '@react-three/fiber'
+declare module '@react-three/fiber' {
+  interface Register {
+    renderer: 'webgpu' // or 'webgl'
+  }
+}
 
-// Register the THREE namespace as native JSX elements.
-extend(THREE)
+// From here on, with no cast:
+const renderer = useThree((s) => s.renderer) // WebGPURenderer
+useFrame(({ renderer }) => renderer.compute(kernel))
+const fbo = useRenderTarget() // RenderTarget
+```
 
-// Create a react root
-const root = createRoot(document.querySelector('canvas'))
+This types what your app does; it does not change what a Canvas renders, so keep the `renderer` prop on `<Canvas>`. The `/webgpu` and `/legacy` entries give the same narrowed types by import path instead, for apps that would rather not have the declaration. Both use the same core, so libraries typed against the union keep working under either.
+
+When you have not registered a renderer and need a WebGPU member in one place, narrow with the flag three sets:
+
+```tsx
+const renderer = useThree((s) => s.renderer)
+if ('isWebGPURenderer' in renderer) renderer.compute(kernel)
 ```
 
 ## Exported types
@@ -145,6 +162,8 @@ RenderCallback
 
 // `useThree`'s returned internal state
 RootState
+// Register the renderer your app uses, to narrow RootState (see above)
+Register
 Performance
 Dpr
 Size
