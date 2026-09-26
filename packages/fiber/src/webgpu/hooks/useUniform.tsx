@@ -2,7 +2,7 @@ import { uniform } from '#three/tsl'
 import { Color as ThreeColor, Node } from '#three'
 
 import type { Vector2, Vector3, Vector4, Color, Matrix2, Matrix3, Matrix4 } from '#three'
-import { useStore } from '../../core/hooks'
+import { usePrimaryStore } from '../../core/hooks/usePrimaryStore'
 import { ROOT_SCOPE, peekStaged } from '../../core/utils/resourceRegistry'
 import { isTSLNode, isUniformNode } from './resourceGuards'
 import { useScopedResource } from './useScopedResource'
@@ -89,7 +89,9 @@ export function useUniform<T extends UniformValue>(name: string, value: T): Unif
  * ```
  */
 export function useUniform<T extends UniformValue = UniformValue>(name: string, value?: T): UniformNodeFor<T> {
-  const store = useStore()
+  // The primary canvas's store, like every other resource hook: on a secondary canvas this used to
+  // register on the local store, where useUniforms never looked.
+  const store = usePrimaryStore()
 
   // Create mode: register through the shared staged mechanism (render-phase
   // creation, commit-phase store write, generation-aware reuse). In get-only

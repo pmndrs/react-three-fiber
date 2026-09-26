@@ -22,10 +22,22 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 - `useRenderPipeline` renders through `setRenderOverride`; the default render job no longer reads
   `state.renderPipeline`. Behaviour is unchanged.
 - `<Canvas>` hot-reload handling notifies registered extensions instead of calling the TSL cache
-  refresh directly. The TSL hooks register themselves the first time one is used.
+  refresh directly. The TSL hooks register themselves when their module loads.
+- Portals pick up parent state they inherit when it changes after they mount (a later uniform,
+  `controls` or `renderer`). Before, the portal's copy of the parent state won on every later change,
+  so everything except `size`, `events` and `viewport` stayed as it was at mount. What a portal owns
+  is unchanged: its own scene, fields set through its `state` prop, and fields it sets itself (a
+  camera or controls made default inside it, as drei's `Hud`, `RenderTexture` and `View` do) are
+  never overwritten by the parent.
 
 ### Fixes
 
+- Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
+  `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
+  `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the
+  hooks wrote to the primary.
+- `useUniform` on a secondary canvas registers on the primary, where `useUniforms` looks. It used to
+  register on the secondary's own store.
 - `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against
   `LegacyRootState`, so `state.renderer` is a `WebGLRenderer` without a cast. The entry already
   exported `LegacyRootState as RootState`, but the hooks returned the base state.

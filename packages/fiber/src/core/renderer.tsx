@@ -1,7 +1,7 @@
 import * as THREE from '#three'
 import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, type Object3D } from '#three'
 
-import { useCallback, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
+import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -1057,14 +1057,35 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     }
   }, [portalScene, container, injectScene])
 
+  // The parent state at the last sync, to tell which parent fields have changed since.
+  const lastRootState = useRef<RootState | null>(null)
+
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
+    // The portal's state holds a copy of every parent field, so `...injectState` alone would freeze
+    // inherited fields at mount (a later uniform, controls, renderer...). A parent change comes
+    // through only for a field the portal still inherits: not one set through its `state` prop, and
+    // not one it set itself (its value no longer matches what it last got from the parent) -- e.g.
+    // a camera or controls made default inside the portal (drei's Hud, RenderTexture, View).
+    const followed: Partial<RootState> = {}
+    const lastRoot = lastRootState.current
+    if (lastRoot) {
+      for (const key in rootState) {
+        const field = key as keyof RootState
+        const changed = rootState[field] !== lastRoot[field]
+        const inherited = !(key in rest) && injectState[field] === lastRoot[field]
+        if (changed && inherited) (followed as any)[field] = rootState[field]
+      }
+    }
+    lastRootState.current = rootState
+
     // Resolve size: parent → portal's accumulated state → explicit prop override
     // This ensures portal size persists through parent resize events
     const resolvedSize = { ...rootState.size, ...injectState.size, ...size }
 
     let viewport = undefined
-    if (injectState.camera && (size || injectState.size)) {
-      const camera = injectState.camera
+    const portalCamera = followed.camera ?? injectState.camera
+    if (portalCamera && (size || injectState.size)) {
+      const camera = portalCamera
       // Calculate the override viewport, if present
       viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), resolvedSize)
       // Update the portal camera, if it differs from the previous layer
@@ -1080,6 +1101,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       // The intersect consists of the previous root state
       ...rootState,
       ...injectState,
+      ...followed,
       // Portals have their own scene - always a real THREE.Scene (injected if needed)
       scene: portalScene,
       // rootScene always points to the actual THREE.Scene, even inside portals
