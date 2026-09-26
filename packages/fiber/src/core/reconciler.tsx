@@ -31,6 +31,11 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
+import {
+  isNodeMaterialName,
+  NODE_MATERIAL_ON_WEBGL_HINT,
+  warnIfNodeMaterialOnLegacyRenderer,
+} from './utils/nodeMaterial'
 import { removeInteractivity, swapInteractivity } from './events'
 
 //* Type Imports ==============================
@@ -95,6 +100,10 @@ function validateInstance(type: string, props: HostConfig['props'], root: RootSt
 
   // Validate element target
   if (type !== 'primitive' && !target) {
+    // A WebGL root resolves against `three`, which has no node materials: say which renderer they need
+    if (isNodeMaterialName(name) && root.getState().isLegacy) {
+      throw new Error(`R3F: ${name} is not part of the THREE namespace of this canvas. ${NODE_MATERIAL_ON_WEBGL_HINT}`)
+    }
     throw new Error(
       `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
     )
@@ -169,6 +178,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Append instance
   if (child.props.attach) {
     attach(parent, child)
+    warnIfNodeMaterialOnLegacyRenderer(child.root, child.object)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     const childIndex = parent.object.children.indexOf(beforeChild?.object)
     if (beforeChild && childIndex !== -1) {

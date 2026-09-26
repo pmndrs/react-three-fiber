@@ -204,6 +204,8 @@ describe('entries', () => {
       )
       errSpy.mockRestore()
       expect(caught!.message).toMatch(/MeshBasicNodeMaterial is not part of the THREE namespace/)
+      // ... and the error says which renderer node materials need (#3889)
+      expect(caught!.message).toContain('Pass `renderer` to <Canvas>')
     })
 
     it('root entry: a WebGPU root gets node materials, a WebGL root does not', async () => {
