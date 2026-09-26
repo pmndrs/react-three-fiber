@@ -1,4 +1,4 @@
-import type { Scene } from '#three'
+import type { Scene } from 'three'
 import packageData from '../../package.json'
 
 import * as React from 'react'
@@ -32,10 +32,14 @@ import {
   FROM_REF,
 } from './utils'
 import { removeInteractivity, swapInteractivity } from './events'
-import type { ThreeElement } from '../../types/three'
 
 //* Type Imports ==============================
-import type { RootStore, ConstructorRepresentation, Catalogue, Instance, HostConfig } from '#types'
+import type { RootStore, Instance, HostConfig } from '#types'
+import { extend, toPascalCase } from './extend'
+import { resolveConstructor } from './catalogue'
+
+// `extend` keeps its historical home in the public API; it lives in ./extend with the catalogue.
+export { extend }
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
@@ -82,38 +86,12 @@ function createReconciler<
 
 const NoEventPriority = 0
 
-//* Cross-Bundle Singleton ==============================
-// Use Symbol.for() to ensure catalogue is shared across bundle boundaries
-// This allows extend() from one entry point to work with JSX from another
-const R3F_CATALOGUE = Symbol.for('@react-three/fiber.catalogue')
-const catalogue: Catalogue = (globalThis as any)[R3F_CATALOGUE] ?? ((globalThis as any)[R3F_CATALOGUE] = {})
-
 const PREFIX_REGEX = /^three(?=[A-Z])/
 
-const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
-
-let i = 0
-
-const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
-
-export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
-export function extend<T extends Catalogue>(objects: T): void
-export function extend<T extends Catalogue | ConstructorRepresentation>(
-  objects: T,
-): React.ExoticComponent<ThreeElement<any>> | void {
-  if (isConstructor(objects)) {
-    const Component = `${i++}`
-    catalogue[Component] = objects
-    return Component as any
-  } else {
-    Object.assign(catalogue, objects)
-  }
-}
-
-function validateInstance(type: string, props: HostConfig['props']): void {
-  // Get target from catalogue
+function validateInstance(type: string, props: HostConfig['props'], root: RootStore): void {
+  // Explicit extend() registrations first, then the three namespace of this root's renderer
   const name = toPascalCase(type)
-  const target = catalogue[name]
+  const target = resolveConstructor(name, root)
 
   // Validate element target
   if (type !== 'primitive' && !target) {
@@ -131,9 +109,9 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Remove three* prefix from elements if native element not present
-  type = toPascalCase(type) in catalogue ? type : type.replace(PREFIX_REGEX, '')
+  type = resolveConstructor(toPascalCase(type), root) ? type : type.replace(PREFIX_REGEX, '')
 
-  validateInstance(type, props)
+  validateInstance(type, props, root)
 
   // Regenerate the R3F instance for primitives to simulate a new object
   if (type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
@@ -177,8 +155,8 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
 
   // Create & link object on first run
   if (!child.object) {
-    // Get target from catalogue
-    const target = catalogue[toPascalCase(child.type)]
+    // Validated by createInstance, so the constructor is known to resolve
+    const target = resolveConstructor(toPascalCase(child.type), child.root)!
 
     // Create object
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
@@ -400,8 +378,8 @@ function swapReconstructedInstances(): void {
 
     const parent = instance.parent
     if (parent) {
-      // Get target from catalogue
-      const target = catalogue[toPascalCase(instance.type)]
+      // Validated by createInstance, so the constructor is known to resolve
+      const target = resolveConstructor(toPascalCase(instance.type), instance.root)!
 
       // Create object
       const prevObject = instance.object
@@ -626,7 +604,10 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     newProps: HostConfig['props'],
     fiber: Fiber,
   ) {
-    validateInstance(type, newProps)
+    // `type` is the raw JSX tag. createInstance may have stripped a `three` prefix from it
+    // (`<threeLine>` → `Line`) and stored the resolved name on the instance; validating the raw
+    // tag here would throw "ThreeLine is not part of the THREE namespace" on the first update.
+    validateInstance(instance.type, newProps, instance.root)
 
     let reconstruct = false
 
@@ -668,8 +649,8 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     for (const prop in instance.props) {
       const value = instance.props[prop]
       if (isFromRef(value)) {
-        const ref = value[FROM_REF]
-        if (ref.current != null) resolved[prop] = ref.current
+        const { [FROM_REF]: ref, transform } = value
+        if (ref.current != null) resolved[prop] = transform ? transform(ref.current) : ref.current
       }
     }
     if (Object.keys(resolved).length) applyProps(instance.object, resolved)

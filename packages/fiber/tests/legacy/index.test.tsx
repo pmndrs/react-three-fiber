@@ -6,11 +6,10 @@
  */
 import * as React from 'react'
 import { act } from 'react'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
 import { ReconcilerRoot, createRoot as createRootImpl, useFrame, useThree, RootState, extend } from '../../src/legacy'
 
-extend(THREE as any)
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
 const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
 

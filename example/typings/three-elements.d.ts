@@ -1,38 +1,18 @@
 /**
  * Three.js JSX Elements Type Augmentation
  *
- * During development (with stubs), the #three alias resolution doesn't
- * provide complete type information. This directly augments the JSX
- * IntrinsicElements with Three.js element types.
+ * Each fiber entry augments react's `JSX.IntrinsicElements` with its own element map. The example
+ * app compiles fiber from source through tsconfig paths, and resolves `react` from its own
+ * node_modules, so that augmentation lands on a different module identity than the demos see.
+ * Re-declare it here against the example's `react`, from the root entry's map (both renderers).
  *
  * This is only needed for development - the built package has correct types.
  */
 
-import type { ThreeToJSXElements, ThreeElement } from '@react-three/fiber'
-import type * as THREE from 'three/webgpu'
-
-type ThreeJSXElements = ThreeToJSXElements<typeof THREE>
+import type { ThreeElements } from '@react-three/fiber'
 
 declare module 'react' {
   namespace JSX {
-    interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
-    }
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
-    }
-  }
-}
-
-declare module 'react/jsx-dev-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeJSXElements {
-      primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
-    }
+    interface IntrinsicElements extends ThreeElements {}
   }
 }

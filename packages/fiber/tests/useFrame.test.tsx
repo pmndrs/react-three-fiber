@@ -7,8 +7,6 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useThree, extend, useFrame } from '../src'
 
-extend(THREE as any)
-
 //* Integration Tests (with Canvas) ==============================
 
 describe('useFrame hook', () => {

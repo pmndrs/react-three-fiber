@@ -1,7 +1,8 @@
 import { easing } from 'maath'
 import { useState } from 'react'
 import { mix, positionLocal, sin, time, vec3 } from 'three/tsl'
-import { Canvas, useFrame, useNodes, useUniform, useUniforms, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber/webgpu'
+import { useNodes, useUniform, useUniforms } from '@react-three/tsl'
 
 function Scene() {
   const [hovered, setHovered] = useState(false)
@@ -13,7 +14,7 @@ function Scene() {
     uHoverColor: 'aquamarine',
   }))
 
-  useNodes(() => {
+  const { colorNode, positionNode } = useNodes(() => {
     const wave = sin(time.mul(speed))
     return {
       colorNode: mix(mix(uBaseColor, uAccentColor, wave.add(1).div(2)), uHoverColor, hover),
@@ -25,22 +26,22 @@ function Scene() {
 
   return (
     <group onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-      <Shape position={[-2, 0, 0]}>
+      <Shape colorNode={colorNode} positionNode={positionNode} position={[-2, 0, 0]}>
         <circleGeometry args={[0.75, 64]} />
       </Shape>
-      <Shape position={[0, 0, 0]}>
+      <Shape colorNode={colorNode} positionNode={positionNode} position={[0, 0, 0]}>
         <ringGeometry args={[0.35, 0.75, 64]} />
       </Shape>
-      <Shape position={[2, 0, 0]} rotation-z={Math.PI / 4}>
+      <Shape colorNode={colorNode} positionNode={positionNode} position={[2, 0, 0]} rotation-z={Math.PI / 4}>
         <planeGeometry args={[1.15, 1.15]} />
       </Shape>
     </group>
   )
 }
 
-function Shape({ children, ...props }: ThreeElements['mesh']) {
-  const { colorNode, positionNode } = useNodes()
+type ShapeProps = ThreeElements['mesh'] & Pick<ThreeElements['meshBasicNodeMaterial'], 'colorNode' | 'positionNode'>
 
+function Shape({ children, colorNode, positionNode, ...props }: ShapeProps) {
   return (
     <mesh {...props}>
       {children}

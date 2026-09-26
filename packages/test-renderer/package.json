@@ -1,6 +1,6 @@
 {
   "name": "@react-three/test-renderer",
-  "version": "10.0.0-alpha.4",
+  "version": "10.0.0-alpha.5",
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "@react-three/fiber": "workspace:*",
+    "@react-three/tsl": "workspace:*",
     "@webgpu/types": "^0.1.64",
     "three": ">=0.185.0"
   },

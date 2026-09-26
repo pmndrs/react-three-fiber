@@ -27,9 +27,18 @@ export const ONCE = Symbol.for('@react-three/fiber.once')
  * // No arguments
  * <geometry center={once()} />
  */
-export function once<T>(...args: T[]): T {
-  return { [ONCE]: args.length ? args : true } as unknown as T
+export function once<A extends unknown[]>(...args: A): OnceValue<A> {
+  return { [ONCE]: args.length ? args : true } as unknown as OnceValue<A>
 }
+
+/**
+ * What `once(...args)` is typed as, so the marker is assignable to the prop it targets:
+ * the single argument itself (`rotateX={once(angle)}`), the argument tuple for multi-argument
+ * methods (`translate={once(x, y, z)}`), or `true` for a bare call (`center={once()}`).
+ *
+ * The runtime value is always the marker object; only the declared type follows the prop.
+ */
+export type OnceValue<A extends unknown[]> = A extends [] ? true : A extends [infer Single] ? Single : A
 
 /**
  * Type guard to check if a value is a once marker.

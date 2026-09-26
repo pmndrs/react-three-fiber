@@ -1,7 +1,7 @@
-import type * as THREE from '#three'
+import type * as THREE from 'three'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
 
-type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
+export type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
 
 export interface MathRepresentation {
   set(...args: number[]): any
@@ -73,14 +73,15 @@ export type GeometryProps<P> = P extends THREE.BufferGeometry ? GeometryTransfor
  * The Node base class has properties that subclasses (OperatorNode, ConstNode, etc.) don't inherit.
  * This transforms `Node | null` properties to accept any object with node-like shape.
  */
-type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
+export type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
 
 /**
  * For node material properties (colorNode, positionNode, etc.), accept broader types
- * since @types/three has broken inheritance for TSL node subclasses.
+ * since @types/three has broken inheritance for TSL node subclasses. NodeClass requires
+ * `nodeType`, so this structural key test remains neutral to the selected Three entry.
  */
 export type NodeProps<P> = {
-  [K in keyof P as P[K] extends THREE.Node | null ? K : never]?: TSLNodeInput
+  [K in keyof P as NonNullable<P[K]> extends { nodeType: string | null } ? K : never]?: TSLNodeInput
 }
 
 export interface ReactProps<P> {
@@ -101,32 +102,41 @@ export type ThreeToJSXElements<T extends Record<string, any>> = {
   [K in keyof T & string as Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
 }
 
-type ThreeExports = typeof THREE
-type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
+/** Method names of Object3D, excluded from the `primitive` element's typed props. */
+export type Object3DMethod = NonNullable<
+  {
+    [K in keyof THREE.Object3D]-?: THREE.Object3D[K] extends (...args: any[]) => any ? K : never
+  }[keyof THREE.Object3D]
+>
 
-export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source' | 'line' | 'path'> {
-  primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+/** Look up a key present in a generic element map. */
+export type ElementOf<E, K extends string> = E[Extract<keyof E, K>]
+
+/**
+ * The JSX element map derived from an entry's Three.js exports. Each entry declares its own
+ * `ThreeElements` from this (`src/index.tsx`, `src/legacy.tsx`, `src/webgpu/index.tsx`) and augments
+ * react's `IntrinsicElements` with it, so `/legacy` never advertises node materials and `/webgpu`
+ * never advertises a `<webGLRenderer>`.
+ */
+export type ThreeElementsOf<T extends Record<string, any>> = Omit<
+  ThreeToJSXElements<T>,
+  'audio' | 'source' | 'line' | 'path'
+> & {
+  /**
+   * `primitive` wraps a pre-existing object, so its props cannot be derived from one class.
+   * Events are typed from `EventHandlers` (`onClick={(e) => ...}` infers `e`), the ref is
+   * untyped, and any other prop is accepted and applied to the object by name. Object3D's own
+   * methods are left out of the typed surface: they return `this`, so a subclass element's
+   * props (`ThreeElements['group']`) could not be spread onto a primitive otherwise.
+   */
+  primitive: Omit<ThreeElement<typeof THREE.Object3D>, 'args' | 'object' | 'ref' | Object3DMethod> & {
+    object: object
+    ref?: React.Ref<any>
+    [prop: string]: unknown
+  }
   // Conflicts with DOM types can be accessed through a three* prefix
-  threeAudio: ThreeElementsImpl['audio']
-  threeSource: ThreeElementsImpl['source']
-  threeLine: ThreeElementsImpl['line']
-  threePath: ThreeElementsImpl['path']
-}
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-dev-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
+  threeAudio: ElementOf<ThreeToJSXElements<T>, 'audio'>
+  threeSource: ElementOf<ThreeToJSXElements<T>, 'source'>
+  threeLine: ElementOf<ThreeToJSXElements<T>, 'line'>
+  threePath: ElementOf<ThreeToJSXElements<T>, 'path'>
 }

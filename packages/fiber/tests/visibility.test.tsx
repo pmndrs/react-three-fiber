@@ -7,10 +7,8 @@ import { useRef, useEffect } from 'react'
 import { render, act as rtlAct } from '@testing-library/react'
 import { Canvas, useThree, useFrame, extend } from '../src'
 import { __resetWarningFlag } from '../src/core/visibility'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { RootState } from '#types'
-
-extend(THREE as any)
 
 // Reset warning flag before each test to ensure clean state
 beforeEach(() => {

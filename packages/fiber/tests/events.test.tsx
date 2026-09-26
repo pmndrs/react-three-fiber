@@ -3,10 +3,8 @@ import * as React from 'react'
 import { render, fireEvent, RenderResult, createEvent } from '@testing-library/react'
 import { act } from './utils/act'
 import { Canvas, extend } from '../src'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { RootState } from '#types'
-
-extend(THREE as any)
 
 const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
 

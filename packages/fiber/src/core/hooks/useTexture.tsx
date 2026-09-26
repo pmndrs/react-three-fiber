@@ -1,5 +1,6 @@
 // Migrated from Drei
-import { Texture as _Texture, TextureLoader } from '#three'
+import type { Texture as _Texture } from 'three'
+import { getThree, hasThree, whenThree } from '../three'
 import { useLoader, useThree, useStore } from './'
 import { useLayoutEffect, useEffect, useMemo, useRef, ReactNode } from 'react'
 
@@ -171,45 +172,14 @@ export function useTexture<Url extends string[] | string | Record<string, string
   //* Load via useLoader (handles suspense) --
   // This always runs to maintain hooks order, but we may not use the result
   const loadedTextures = useLoader(
-    TextureLoader,
+    getThree().TextureLoader,
     IsObject(stableInput) ? Object.values(stableInput) : stableInput,
   ) as MappedTextureType<Url>
 
-  // Call onLoad when textures are ready (only on initial load, not cache hits)
-  // Keyed on inputKey (computed above) so repeat renders don't re-fire the callback
-  useLayoutEffect(() => {
-    if (cachedResult) return
-    if (onLoadCalledForRef.current === inputKey) return
-    onLoadCalledForRef.current = inputKey
-    onLoadRef.current?.(loadedTextures)
-  }, [cachedResult, loadedTextures, inputKey])
-
-  // https://github.com/mrdoob/three.js/issues/22696
-  // Upload the texture to the GPU immediately instead of waiting for the first render
-  // NOTE: only available for WebGLRenderer
-  useEffect(() => {
-    // Skip if using cached textures (already initialized)
-    if (cachedResult) return
-
-    if ('initTexture' in renderer) {
-      let textureArray: _Texture[] = []
-      if (Array.isArray(loadedTextures)) {
-        textureArray = loadedTextures
-      } else if (loadedTextures instanceof _Texture) {
-        textureArray = [loadedTextures]
-      } else if (IsObject(loadedTextures)) {
-        textureArray = Object.values(loadedTextures)
-      }
-
-      textureArray.forEach((texture) => {
-        if (texture instanceof _Texture) {
-          renderer.initTexture(texture)
-        }
-      })
-    }
-  }, [renderer, loadedTextures, cachedResult])
-
-  // Map textures to keys if object input was provided
+  // Map textures to keys if object input was provided. Built before onLoad fires so the
+  // callback receives the same shape the hook returns: useLoader hands back a positional array
+  // for the record form, and handing that to a callback typed against the keyed record crashed
+  // at the first `textures.map.wrapT`.
   const mappedTextures = useMemo(() => {
     // If we have cached result, it's already in the right format
     if (cachedResult) return cachedResult
@@ -223,7 +193,41 @@ export function useTexture<Url extends string[] | string | Record<string, string
     } else {
       return loadedTextures
     }
-  }, [stableInput, loadedTextures, cachedResult])
+  }, [stableInput, loadedTextures, cachedResult]) as MappedTextureType<Url>
+
+  // Call onLoad when textures are ready (only on initial load, not cache hits)
+  // Keyed on inputKey (computed above) so repeat renders don't re-fire the callback
+  useLayoutEffect(() => {
+    if (cachedResult) return
+    if (onLoadCalledForRef.current === inputKey) return
+    onLoadCalledForRef.current = inputKey
+    onLoadRef.current?.(mappedTextures)
+  }, [cachedResult, mappedTextures, inputKey])
+
+  // https://github.com/mrdoob/three.js/issues/22696
+  // Upload the texture to the GPU immediately instead of waiting for the first render
+  // NOTE: only available for WebGLRenderer
+  useEffect(() => {
+    // Skip if using cached textures (already initialized)
+    if (cachedResult) return
+
+    if ('initTexture' in renderer) {
+      let textureArray: _Texture[] = []
+      if (Array.isArray(loadedTextures)) {
+        textureArray = loadedTextures
+      } else if ((loadedTextures as _Texture).isTexture) {
+        textureArray = [loadedTextures as _Texture]
+      } else if (IsObject(loadedTextures)) {
+        textureArray = Object.values(loadedTextures) as unknown as _Texture[]
+      }
+
+      textureArray.forEach((texture) => {
+        if (texture?.isTexture) {
+          renderer.initTexture(texture)
+        }
+      })
+    }
+  }, [renderer, loadedTextures, cachedResult])
 
   //* Register in the texture cache + refcount while mounted --
   // Adds missing textures and retains them so useTextures().dispose() is safe; releases on unmount.
@@ -285,8 +289,14 @@ export function useTexture<Url extends string[] | string | Record<string, string
 
 //* Static Methods ==============================
 
-useTexture.preload = (url: string | string[]) => useLoader.preload(TextureLoader, url)
-useTexture.clear = (input: string | string[]) => useLoader.clear(TextureLoader, input)
+// The loader class arrives with the first root's renderer. A preload issued before any Canvas
+// exists starts as soon as one does; there is nothing to clear before then.
+useTexture.preload = (url: string | string[]) => {
+  whenThree().then((three) => useLoader.preload(three.TextureLoader, url))
+}
+useTexture.clear = (input: string | string[]) => {
+  if (hasThree()) useLoader.clear(getThree().TextureLoader, input)
+}
 
 //* Component Wrapper ==============================
 

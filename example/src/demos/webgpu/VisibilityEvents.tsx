@@ -1,11 +1,12 @@
 //* Visibility Events ==============================
 
-import { Canvas, useLocalNodes, useUniform } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber/webgpu'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 import { useFrame } from '@react-three/fiber'
 import { color, mix } from 'three/tsl'
+import { useLocalNodes, useUniform } from '@react-three/tsl'
 
 const LIGHTNING_URL = '/models/lightning.gltf'
 const palette = {
@@ -90,12 +91,10 @@ function OrbitingPanels() {
     groupRef.current.rotation.y = elapsed
   })
 
-  const { colorNode } = useLocalNodes(({ uniforms }) => {
-    const uIsOccluded = uniforms.isOccluded as UniformNode<number>
-    return {
-      colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
-    }
-  })
+  const uIsOccluded = useUniform<number>('isOccluded')
+  const { colorNode } = useLocalNodes(() => ({
+    colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
+  }))
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       <mesh position={[0, 0, 1.5]}>
