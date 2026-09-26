@@ -1,7 +1,8 @@
-import { Canvas, useUniforms, useNodes, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Canvas, type ThreeElements } from '@react-three/fiber/webgpu'
 import { Leva, useControls } from 'leva'
 import { getLevaSeaConfig, makeSeaNodes, TerrainGeometry } from './seaNodes'
 import { CameraControls, Environment } from '@react-three/drei'
+import { useUniforms, useNodes } from '@react-three/tsl'
 
 // single setup of nodes for the app
 const Experience = () => {

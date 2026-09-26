@@ -18,4 +18,10 @@ export { useStore, useThree } from './core/hooks/useStore'
 export { useFrame } from './core/hooks/useFrame'
 export { registerRootExtension, setRenderOverride, type RootExtension } from './core/extensions'
 
-export type * from '#types'
+// The shared state and frame types -- deliberately not the whole #types barrel, which carries the
+// global JSX element augmentation. Each app entry declares its own; an extension must not add a
+// second, conflicting one (e.g. next to /legacy).
+export type * from '../types/store'
+export type * from '../types/events'
+export type * from '../types/scheduler'
+export type * from '../types/utils'

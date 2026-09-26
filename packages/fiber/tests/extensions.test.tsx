@@ -18,7 +18,6 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 import { createRoot, useFrame, extend, registerRootExtension, setRenderOverride } from '../src'
 import type { RootExtension, RootStore } from '../src'
 import { detachRootExtensions, notifyRootExtensionsHmr } from '../src/core/extensions'
-import { useUniforms } from '../src/webgpu'
 
 extend(THREE)
 
@@ -329,27 +328,6 @@ describe('setRenderOverride', () => {
     // Clear it again so the Canvas error path does not leak into unmount.
     await act(async () => store.getState().setError(null))
     setRenderOverride(store, null)
-    await unmount()
-  })
-})
-
-//* The TSL hooks as an extension ==============================
-
-describe('TSL hooks through the extension registry', () => {
-  it('a hot update reaches the TSL resources once a TSL hook has run on the root', async () => {
-    // Canvas no longer calls TSL code on HMR; it notifies extensions. The TSL hooks register
-    // themselves (lazily, on first use), so the same refresh must still happen through that path.
-    const UsesUniforms = () => {
-      useUniforms({ uTime: 0 })
-      return null
-    }
-    const { store, unmount } = await mount({ children: <UsesUniforms /> })
-    expect((store.getState().uniforms as any).uTime).toBeDefined()
-    const before = store.getState()._hmrVersion
-
-    await act(async () => notifyRootExtensionsHmr(store))
-
-    expect(store.getState()._hmrVersion).toBe(before + 1)
     await unmount()
   })
 })

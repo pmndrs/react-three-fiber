@@ -1,6 +1,8 @@
 import * as React from 'react'
 
-import type { RootStore } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type { RootStore } from '../../types/store'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries

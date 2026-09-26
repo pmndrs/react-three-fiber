@@ -23,6 +23,7 @@
       "#types/*": ["packages/fiber/types/*"],
       "@react-three/fiber": ["packages/fiber/src/index.tsx"],
       "@react-three/fiber/*": ["packages/fiber/src/*"],
+      "@react-three/tsl": ["packages/tsl/src/index.ts"],
       "@react-three/test-renderer": ["packages/test-renderer/src/index.tsx"],
       "@react-three/eslint-plugin": ["packages/eslint-plugin/src/index.ts"],
       "three/tsl": ["node_modules/@types/three/build/three.tsl.d.ts"]

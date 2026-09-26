@@ -67,7 +67,9 @@ export const createStore = (
 
     const pointer = new Vector2()
 
-    const rootState: RootState = {
+    // Packages building on fiber (e.g. @react-three/tsl) augment RootState with fields their root
+    // extension's setup adds, so what core creates is only its own part of RootState.
+    const rootState: Partial<RootState> = {
       set,
       get,
 
@@ -208,16 +210,10 @@ export const createStore = (
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
 
-      //* TSL State (managed via hooks: useUniforms, useNodes, useBuffers, useGPUStorage, useTextures, useRenderPipeline) ==============================
-      uniforms: {},
-      nodes: {},
-      buffers: {},
-      gpuStorage: {},
+      //* Texture registry (useTextures) ==============================
+      // TSL fields (uniforms, nodes, ..., renderPipeline) are added by @react-three/tsl's root extension.
       textures: new Map(),
       _textureRefs: new Map(),
-      renderPipeline: null,
-      passes: {},
-      _hmrVersion: 0,
       _sizeImperative: false,
       _sizeProps: null,
 
@@ -282,7 +278,7 @@ export const createStore = (
       },
     }
 
-    return rootState
+    return rootState as RootState
   })
 
   const state = rootStore.getState()

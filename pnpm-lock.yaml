@@ -151,6 +151,9 @@ importers:
       '@react-three/fiber':
         specifier: workspace:*
         version: link:../packages/fiber
+      '@react-three/tsl':
+        specifier: workspace:*
+        version: link:../packages/tsl
       '@use-gesture/react':
         specifier: ^10.3.1
         version: 10.3.1(react@19.2.3)
@@ -305,6 +308,34 @@ importers:
       '@react-three/fiber':
         specifier: workspace:*
         version: link:../fiber
+      '@react-three/tsl':
+        specifier: workspace:*
+        version: link:../tsl
+      '@webgpu/types':
+        specifier: ^0.1.64
+        version: 0.1.71
+      three:
+        specifier: '>=0.185.0'
+        version: 0.185.1
+
+  packages/tsl:
+    dependencies:
+      dequal:
+        specifier: ^2.0.3
+        version: 2.0.3
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.10(@types/react@19.2.8)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
+    devDependencies:
+      '@react-three/fiber':
+        specifier: workspace:*
+        version: link:../fiber
+      '@types/three':
+        specifier: ^0.185.0
+        version: 0.185.1
       '@webgpu/types':
         specifier: ^0.1.64
         version: 0.1.71
