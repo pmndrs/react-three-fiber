@@ -8,7 +8,7 @@
  * Secondary canvas: Has `renderer={{ primaryCanvas: 'id' }}`, shares primary's renderer via CanvasTarget
  */
 
-import type { WebGPURenderer } from '#three'
+import type { WebGPURenderer } from 'three/webgpu'
 import type { RootStore } from '#types'
 
 export interface PrimaryCanvasEntry {

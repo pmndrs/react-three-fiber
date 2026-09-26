@@ -24,7 +24,11 @@ import * as THREE from 'three'
 import { CanvasTarget } from 'three/webgpu'
 
 import { createStore } from '../src/core/store'
+import { registerThree } from '../src/core/three'
 import type { RootStore } from '../src'
+
+// These stores never go through configure(), which is what loads three for a root.
+registerThree(THREE)
 
 const noop = () => {}
 
