@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
-import type { Bridge, UnblockProps } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type { Bridge, UnblockProps } from '../../../types/utils'
 
 //* React Utilities ==============================
 // React-specific hooks, components, and utilities for R3F

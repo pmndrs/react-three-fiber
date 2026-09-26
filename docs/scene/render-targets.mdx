@@ -93,10 +93,10 @@ The return type `RenderTargetCompat` resolves to `WebGLRenderTarget` or `RenderT
 
 ## Per-renderer type
 
-The class you get back depends on the build entry point and, for the default build, the renderer that is actually running:
+The class you get back follows the renderer the Canvas loaded: a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU. The hook constructs the target class carried by the root's renderer support (`state.internal.support.RenderTarget`), so it is always valid for the renderer in use without branching yourself.
 
-- **Legacy build** (`@react-three/fiber/legacy`): always returns a `WebGLRenderTarget`.
-- **WebGPU build** (`@react-three/fiber/webgpu`): always returns a `RenderTarget`.
-- **Default build** (`@react-three/fiber`): returns whichever matches the active renderer at runtime — a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU.
+The entries only differ in the declared type:
 
-In the default build the decision is made from the root state's `isLegacy` flag, so you can rely on the target being valid for the renderer in use without branching yourself.
+- **`@react-three/fiber`**: `WebGLRenderTarget | RenderTarget` (either renderer can be running).
+- **`@react-three/fiber/legacy`**: `WebGLRenderTarget`.
+- **`@react-three/fiber/webgpu`**: `RenderTarget`.

@@ -5,11 +5,9 @@
  */
 import * as React from 'react'
 import { act } from 'react'
-import * as THREE from '#three'
+import type * as THREE from 'three'
 import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
-import { ReconcilerRoot, RenderProps, RootStore, createRoot, extend } from '../../src/legacy'
-
-extend(THREE)
+import { ReconcilerRoot, RenderProps, RootStore, createRoot } from '../../src/legacy'
 
 type Listener = () => void
 const queries: { media: string; listeners: Set<Listener> }[] = []

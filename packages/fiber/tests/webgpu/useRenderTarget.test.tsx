@@ -2,11 +2,11 @@
  * @fileoverview Tier-1 coverage for the core `useRenderTarget` hook.
  *
  * `useRenderTarget` is a CORE hook, but its whole reason to exist is the
- * per-entry WebGL-vs-WebGPU render-target distinction, so it lives here beside
- * the WebGPU suite. Under the test `#three` alias both build flags are true
- * (default build), so the hook takes its runtime branch:
+ * per-renderer WebGL-vs-WebGPU render-target distinction, so it lives here beside
+ * the WebGPU suite. The hook constructs `state.internal.support.RenderTarget`, the
+ * class the root's renderer support carries, so the test seeds that support:
  *
- *     isLegacy ? new WebGLRenderTarget(...) : new RenderTarget(...)
+ *     new support.RenderTarget(...)   // WebGLRenderTarget or RenderTarget
  *
  * Constructing a render target does NOT touch the GPU (no device needed), so
  * argument parsing, the isLegacy type split, sizing from the store, memoization,
@@ -21,10 +21,15 @@
 import * as React from 'react'
 import { act } from 'react'
 import { render } from '@testing-library/react'
+import * as THREE from 'three'
 import { RenderTarget } from 'three/webgpu'
 import { WebGLRenderTarget, PerspectiveCamera } from 'three'
 
 import { createStore, context } from '../../src/core/store'
+import { registerThree } from '../../src/core/three'
+
+// A bare store has no root to load a renderer for it; register three the way configure() would.
+registerThree(THREE)
 import { useRenderTarget } from '../../src'
 import type { RootStore } from '../../src'
 
@@ -43,11 +48,14 @@ function withStore(store: RootStore, children: React.ReactNode) {
  */
 function seed(store: RootStore, size: { width: number; height: number }, isLegacy = false) {
   const state = store.getState()
+  const support = isLegacy
+    ? { kind: 'webgl', RenderTarget: WebGLRenderTarget }
+    : { kind: 'webgpu', RenderTarget: RenderTarget }
   store.setState({
     camera: new PerspectiveCamera(),
     size: { ...size, top: 0, left: 0 },
     isLegacy,
-    internal: { ...state.internal, actualRenderer: { setSize() {}, setPixelRatio() {} } },
+    internal: { ...state.internal, support, actualRenderer: { setSize() {}, setPixelRatio() {} } },
   } as any)
 }
 

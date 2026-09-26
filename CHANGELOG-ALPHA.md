@@ -8,6 +8,111 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ### Breaking Changes
 
+- `@monogrid/gainmap-js` is no longer a dependency. `<Environment>` / `useEnvironment` drop the
+  split gain map format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`), which only that package
+  reads. `.hdr`, `.exr`, six-face cube sets and single-file Ultra HDR `.jpg` (three's own
+  `UltraHDRLoader`, the Android / ISO 21496-1 standard) stay. Every decoder is now three's own and
+  decodes on the CPU, so `.jpg` environments can be preloaded like the others. Apps that need the
+  split format keep it through drei's `<Environment>`.
+
+### Features
+
+- One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
+  imports `three` or `three/webgpu`: each renderer lives in a support module that the root entry
+  loads on demand, so a plain `<Canvas>` downloads only the WebGL renderer and `<Canvas renderer>`
+  only the WebGPU one, as separate lazy chunks. All entries are built in one pass on a shared core,
+  so a library importing hooks from `@react-three/fiber` adds no renderer and no second copy of
+  fiber to an app on any entry. `/legacy` and `/webgpu` remain as static, narrowed aliases (no extra
+  request, one renderer's types, `useRenderTarget` typed to its target). JSX element names resolve
+  against explicit `extend()` registrations first, then the three namespace of the root's own
+  renderer, so a WebGL root no longer advertises node materials it cannot build; each entry
+  declares its own `ThreeElements` (`ThreeElementsOf<T>`) and `ReactThreeFiber` namespace. Core
+  code reaches three's shared core through `getThree()` / `whenThree()` / `hasThree()` and the
+  renderer-specific classes through `state.internal.support`. The environment decoders and
+  `GroundedSkybox` load on demand.
+  `pnpm verify-treeshake` (Vite and esbuild) replaces `verify-bundles`. Supersedes #3950-#3952:
+  the shared-core build, provider and per-root element resolution follow that stack; the
+  three-free core and lazy renderer supports are new. See
+  [BUILD.md](./docs/development/BUILD.md).
+- `Register` for the renderer: `declare module '@react-three/fiber' { interface Register { renderer:
+'webgpu' } }` (or `'webgl'`) narrows `state.renderer`, `state.gl`, `state.isLegacy`,
+  `state.internal.support` and `useRenderTarget` app-wide, so `useThree`, `useFrame` and `onCreated`
+  need no cast on the root entry. Nothing registered keeps the union. Same pattern as
+  `@react-three/tsl`'s `Register`. See [TypeScript](./docs/API/typescript.mdx#typing-the-renderer).
+- The Canvas `renderer` prop is typed. It used to be `any`; it now accepts `true`, a renderer
+  instance or factory (structural, like `gl`), or a props bag of `WebGPURendererParameters`,
+  renderer properties and the config keys, with autocomplete and typo checking.
+- `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
+  uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
+globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in
+  `useFrame`, `useThree` and handlers), a creator's `uniforms`, `useUniforms()`,
+  `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
+  are checked against registered keys. Strict by default (unknown root keys are errors, catching
+  typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
+  types, unchanged. See [Typed Uniforms](./docs/webgpu/typed-uniforms.mdx).
+- `configureTSL({ uniforms, scopes })` creates registered uniforms on every primary canvas up
+  front, including canvases already mounted, so registered types hold before the first frame.
+  Secondaries and portals see them like any shared uniform, and hooks that declare the same names
+  reuse those nodes.
+- New package `@react-three/tsl` with the TSL resource hooks. It builds on
+  `@react-three/fiber/extension`, so it adds no second copy of fiber to an app whichever fiber
+  entry the app uses.
+- `registerRootExtension` and `setRenderOverride`: a small, public way for packages building on R3F
+  to attach per-root setup, cleanup and hot-reload handling, and to replace the default render call
+  while keeping its `fps` throttle, error reporting and user render-phase takeover. See
+  [Extending the root](./docs/API/additional-exports.mdx#extending-the-root).
+- New `@react-three/fiber/extension` entry for those packages. It contains only `useStore`,
+  `useThree`, `useFrame`, `context`, the two functions above and the types, imports nothing from
+  three, and works under a `<Canvas>` from any entry, so an extension no longer drags a second copy
+  of core into apps that use a different entry.
+
+### Changes
+
+- `useRenderPipeline` renders through `setRenderOverride`; the default render job no longer reads
+  `state.renderPipeline`. Behaviour is unchanged.
+- `<Canvas>` hot-reload handling notifies registered extensions instead of calling the TSL cache
+  refresh directly. `@react-three/tsl` registers its extension when it is imported.
+- `@react-three/fiber/webgpu` also exports the base state type as `BaseRootState` (the entry's
+  `RootState` is `WebGPURootState`, which extends it). `useStore()`, `state.get()` and
+  `primaryStore` are typed with it, and packages that add fields to `RootState` augment it.
+- Portals pick up parent state they inherit when it changes after they mount (a later uniform,
+  `controls` or `renderer`). Before, the portal's copy of the parent state won on every later change,
+  so everything except `size`, `events` and `viewport` stayed as it was at mount. What a portal owns
+  is unchanged: its own scene, fields set through its `state` prop, and fields it sets itself (a
+  camera or controls made default inside it, as drei's `Hud`, `RenderTexture` and `View` do) are
+  never overwritten by the parent.
+
+### Fixes
+
+- Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
+  `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
+  `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the
+  hooks wrote to the primary.
+- `useUniform` on a secondary canvas registers on the primary, where `useUniforms` looks. It used to
+  register on the secondary's own store.
+- `@react-three/fiber/extension`'s type declarations no longer include the global JSX element
+  augmentation, which conflicted with `/legacy`'s for any package built on the extension entry.
+- `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against
+  `LegacyRootState`, so `state.renderer` is a `WebGLRenderer` without a cast. The entry already
+  exported `LegacyRootState as RootState`, but the hooks returned the base state.
+
+### Breaking Changes
+
+- The TSL resource hooks moved to a new package, `@react-three/tsl`: `useUniforms`, `useUniform`,
+  `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline` and the
+  `rebuildAll*` helpers. They are no longer exported from `@react-three/fiber/webgpu`, and
+  `@react-three/test-renderer/webgpu` no longer re-exports them. Install `@react-three/tsl` and
+  change the import; the API is the same. See the
+  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved).
+- `state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`, `state.renderPipeline` and
+  `state.passes` are added to `RootState` by `@react-three/tsl` (its root extension sets them up and
+  its types augment `RootState` on the default, `/webgpu` and `/extension` entries). They still read
+  the same in `useFrame`, `useThree` and handlers once the package is imported. Core no longer
+  creates them, and `/legacy` types no longer have them. `renderPipeline` and `passes` are optional:
+  they exist once `useRenderPipeline` creates a pipeline.
+- The deprecated standalone TSL utilities are removed: `removeUniforms(set, …)`, `clearScope`,
+  `clearRootUniforms`, `removeNodes(set, …)`, `clearNodeScope` and `clearRootNodes` (also from
+  `@react-three/test-renderer/webgpu`). Use the utilities `useUniforms()` and `useNodes()` return.
 - The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
   It hooked into reconciler internals and fired on unrelated updates. Use an effect keyed on the
   props that change, read the object in `useFrame`, or use a ref callback; see the

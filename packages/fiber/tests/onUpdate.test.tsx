@@ -12,8 +12,6 @@ vi.mock('../src/core/utils/notices', async (importOriginal) => {
   return { ...actual, notifyDepreciated: vi.fn() }
 })
 
-extend(THREE)
-
 /**
  * `onUpdate` was an R3F hook until v10 (#3903). It is now an ordinary prop: applied to the object by
  * name, never invoked by the reconciler. That matters for `<texture>`, whose `onUpdate` is a real
