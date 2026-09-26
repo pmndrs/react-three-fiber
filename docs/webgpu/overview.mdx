@@ -8,6 +8,12 @@ react-three-fiber v10 brings first-class WebGPU support. The WebGPU hooks provid
 
 > **v10+ only.** The WebGPU hooks require React 19 and a WebGPU renderer.
 
+The TSL hooks ship in their own package, `@react-three/tsl`, next to `@react-three/fiber`:
+
+```bash
+npm install @react-three/fiber @react-three/tsl three
+```
+
 ## Enabling WebGPU
 
 Opt into WebGPU by adding the `renderer` prop to `Canvas`. No manual renderer initialization is required - R3F handles it.
@@ -55,7 +61,8 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 
 // WebGPU - includes the WebGPU/TSL hooks
-import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { useUniforms } from '@react-three/tsl'
 ```
 
 The WebGPU/TSL hooks (`useUniforms`, `useNodes`, `useLocalNodes`, `useRenderPipeline`, `useBuffers`, `useGPUStorage`) are only exported from `@react-three/fiber/webgpu`.
@@ -90,7 +97,7 @@ function App() {
 ### Uniforms
 
 ```tsx
-import { useUniforms } from '@react-three/fiber/webgpu'
+import { useUniforms } from '@react-three/tsl'
 import { positionLocal, normalLocal } from 'three/tsl'
 
 function DisplacedSphere() {
@@ -112,7 +119,7 @@ function DisplacedSphere() {
 ### Shared Nodes
 
 ```tsx
-import { useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { useNodes, useLocalNodes } from '@react-three/tsl'
 import { Fn, vec3, sin, time } from 'three/tsl'
 
 // Define shared nodes once
@@ -210,9 +217,9 @@ const { waveNode } = useLocalNodes(() => ({ waveNode: sin(time.mul(2)) }))
 // ❌ Don't create and drive a uTime uniform manually
 ```
 
-### When to Use RootState
+### When to Use Canvas State
 
-Use uniforms from RootState for values that have no TSL built-in, such as viewport/size:
+Creators receive the canvas state, so you can derive uniforms for values that have no TSL built-in, such as viewport/size:
 
 ```tsx
 const { uAspect, uDpr } = useUniforms((state) => ({
@@ -223,19 +230,30 @@ const { uAspect, uDpr } = useUniforms((state) => ({
 
 ## Architecture
 
-All WebGPU hooks interact with R3F's root store:
+Uniforms, nodes, buffers and GPU storage belong to the **renderer**, not to one canvas. They live on the primary canvas's `RootState`, which `@react-three/tsl` extends:
 
 ```typescript
+// Added to RootState by @react-three/tsl
 interface RootState {
-  uniforms: UniformRecord // Global uniforms + scopes
-  nodes: NodeRecord // Global TSL nodes + scopes
-  buffers: BufferRecord // GPU buffer storage + scopes
-  gpuStorage: StorageRecord // GPU texture storage + scopes
-  textures: TextureRecord // Texture registry
-  renderPipeline: RenderPipeline | null
-  passes: PassRecord // Render pipeline passes
+  uniforms: UniformStore // Global uniforms + scopes (typed by name once registered)
+  nodes: NodeStore // Global TSL nodes + scopes
+  buffers: BufferStore // GPU buffer storage + scopes
+  gpuStorage: StorageStore // GPU texture storage + scopes
+  renderPipeline?: RenderPipeline | null // Per canvas, set by useRenderPipeline
+  passes?: PassRecord // Render pipeline passes
 }
 ```
+
+A secondary canvas holds the primary's map objects, and portals inherit them from their parent (a portal's own scene, camera and `state`-prop fields stay its own), so `state.uniforms` reads the same everywhere: in `useFrame`, `useThree`, creators and event handlers, on any canvas or portal.
+
+```tsx
+useFrame(({ uniforms, elapsed }) => {
+  uniforms.uTime.value = elapsed
+})
+const uniforms = useThree((s) => s.uniforms)
+```
+
+To type uniforms by name across the app, see [Typed Uniforms](./typed-uniforms).
 
 ### Create-If-Not-Exists
 
@@ -256,6 +274,7 @@ This means no duplicate GPU allocations, shared state across the component tree,
 - [TSL Hooks](./tsl-hooks) - `useUniform`, `useUniforms`, `useNodes`, `useLocalNodes`, ScopedStore
 - [Render Pipeline](./render-pipeline) - `useRenderPipeline`, MRT, custom passes
 - [Compute (Buffers & Storage)](./compute) - `useBuffers`, `useGPUStorage`
+- [Typed Uniforms](./typed-uniforms) - `Register`, `configureTSL`
 - [Multi-Canvas](./multi-canvas) - sharing a renderer across canvases
 - [TSL HMR](./hmr) - what rebuilds on hot reload
 

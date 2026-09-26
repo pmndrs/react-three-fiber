@@ -15,7 +15,7 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
   are checked against registered keys. Strict by default (unknown root keys are errors, catching
   typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
-  types, unchanged.
+  types, unchanged. See [Typed Uniforms](./docs/webgpu/typed-uniforms.mdx).
 - `configureTSL({ uniforms, scopes })` creates registered uniforms on every primary canvas up
   front, including canvases already mounted, so registered types hold before the first frame.
   Secondaries and portals see them like any shared uniform, and hooks that declare the same names

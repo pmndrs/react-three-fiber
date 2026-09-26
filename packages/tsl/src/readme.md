@@ -1,9 +1,9 @@
-# WebGPU Hooks
+# @react-three/tsl source
 
 React hooks for WebGPU/TSL shader development. **v10+ only.**
 
 ```tsx
-import { useUniforms, useNodes, useLocalNodes, useRenderPipeline } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes, useLocalNodes, useRenderPipeline } from '@react-three/tsl'
 ```
 
 | Hook                           | What it does                                                |

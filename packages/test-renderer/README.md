@@ -77,13 +77,10 @@ const renderer = await ReactThreeTestRenderer.create(<MyScene />)
 For applications using WebGPU with TSL (Three Shading Language):
 
 ```tsx
-import ReactThreeTestRenderer, {
-  useUniform,
-  useUniforms,
-  useNodes,
-  useLocalNodes,
-} from '@react-three/test-renderer/webgpu'
-import { Canvas, useUniforms } from '@react-three/fiber/webgpu'
+import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
+import { Canvas } from '@react-three/fiber/webgpu'
+// The TSL hooks come from @react-three/tsl, in tests as in app code
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 
 // Component using WebGPU hooks
 function MyWebGPUScene() {
@@ -137,20 +134,9 @@ console.log(renderer.toGraph())
 The `/webgpu` entry exports all WebGPU-specific hooks for testing TSL uniforms and nodes:
 
 ```tsx
-import ReactThreeTestRenderer, {
-  useUniform,
-  useUniforms,
-  useNodes,
-  useLocalNodes,
-  // Cleanup utilities
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  removeNodes,
-  clearNodeScope,
-  clearRootNodes,
-} from '@react-three/test-renderer/webgpu'
+import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
 import { useThree } from '@react-three/fiber/webgpu'
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 
 describe('My WebGPU Scene', () => {
   it('should create and use uniforms', async () => {

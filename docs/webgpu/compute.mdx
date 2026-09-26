@@ -9,7 +9,7 @@ nav: 16
 `useBuffers` and `useGPUStorage` manage GPU storage for compute operations. They follow the same create-if-not-exists pattern and scoping model as [`useNodes` and `useUniforms`](./tsl-hooks), and their creators receive a [`CreatorState`](./tsl-hooks#scopedstore) with ScopedStore wrappers.
 
 ```tsx
-import { useBuffers, useGPUStorage } from '@react-three/fiber/webgpu'
+import { useBuffers, useGPUStorage } from '@react-three/tsl'
 ```
 
 ## useBuffers
@@ -145,7 +145,7 @@ const { positionNode, heightNode } = useNodes(({ buffers, gpuStorage }) => ({
 ## Example: Particle System
 
 ```tsx
-import { useBuffers, useGPUStorage, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { useBuffers, useGPUStorage, useNodes, useLocalNodes } from '@react-three/tsl'
 import { instancedArray, Fn, vec3, instanceIndex, texture } from 'three/tsl'
 import { StorageTexture } from 'three/webgpu'
 
