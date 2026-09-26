@@ -362,7 +362,7 @@ useFrame(() => {
 
 An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model.
 
-If you find yourself adding a prop or a piece of state to `deps`, first ask whether it should be a uniform instead. Declaring it rebuilds the graph - and recompiles every material using it - each time it changes; a uniform does neither. For the same reason, don't enable `react-hooks/exhaustive-deps` for `useLocalNodes` through `additionalHooks`: it asks for every captured value to be declared, which steers towards rebuilding on every prop change.
+If you find yourself adding a prop or a piece of state to `deps`, first ask whether it should be a uniform instead. Declaring it rebuilds the graph - and recompiles every material using it - each time it changes; a uniform does neither. For the same reason, don't enable `react-hooks/exhaustive-deps` for `useLocalNodes` through `additionalHooks`: it asks for every captured value to be declared, which steers towards rebuilding on every prop change. Use [`@react-three/eslint-plugin`](https://github.com/pmndrs/react-three-fiber/blob/master/packages/eslint-plugin/docs/rules/prefer-local-nodes-deps.md)'s `prefer-local-nodes-deps` instead (in its `recommended` config): it flags an inline creator with no array, and when the creator reads values from the component it points you to a uniform first.
 
 #### Behavior change for stable callbacks
 

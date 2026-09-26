@@ -99,6 +99,10 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   React discards registers and retains nothing. `@react-three/fiber/extension` exports
   `getTextureView(store)`, the registry including those staged textures
   ([#3895](https://github.com/pmndrs/react-three-fiber/issues/3895)).
+- `@react-three/eslint-plugin`: `prefer-local-nodes-deps` (in `recommended`) flags `useLocalNodes`
+  with an inline creator and no dependency array, which rebuilds the graph on every render. When
+  the creator reads values from the component it names them and points to a uniform first, rather
+  than asking for them to be declared; otherwise it offers `[]` as a suggestion.
 
 ### Changes
 
