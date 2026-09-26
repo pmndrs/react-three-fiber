@@ -185,7 +185,7 @@ export function useBuffers<T extends Record<string, BufferLike>>(
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers accessed
       return (creatorOrScope as BufferCreator<T>)(
-        createLazyCreatorState(store.getState(), store, warnMissingReads('useBuffers')),
+        createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useBuffers') }),
       )
     },
     prepare: (name, buffer) => {

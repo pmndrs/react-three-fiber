@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
-import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { createLazyCreatorState, createResourceView, type CreatorState } from './internal/ScopedStore'
 import {
   createReadTracker,
   isTrackerStale,
@@ -164,7 +164,7 @@ export function useNodes<T extends NodeRecord>(
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
       return (creatorOrScope as NodeCreator<T>)(
-        createLazyCreatorState(store.getState(), store, warnMissingReads('useNodes')),
+        createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useNodes') }),
       )
     },
     prepare: (name, node) => {
@@ -361,7 +361,11 @@ export function useLocalNodes<T extends Record<string, unknown>>(
   creator: LocalNodeCreator<T> | LocalNodeInstaller,
   deps?: React.DependencyList,
 ): T | void {
+  // The TSL maps live on the primary store; `scene`, `camera`, `textures` and the rest of the
+  // creator's state come from this component's own canvas (a secondary has its own scene).
+  const local = useStore()
   const store = usePrimaryStore()
+  const view = useMemo(() => createResourceView(store, local), [store, local])
 
   // Deliberate invalidation (HMR / rebuild*) re-runs every creator, whatever it read.
   const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
@@ -379,23 +383,36 @@ export function useLocalNodes<T extends Record<string, unknown>>(
   // sticky per tracker, so repeated calls within one update agree.
   const getReadsVersion = () => {
     const tracker = committedReads.current
-    if (tracker && !tracker.stale && isTrackerStale(tracker, store.getState())) readsVersion.current++
+    if (tracker && !tracker.stale && isTrackerStale(tracker, view)) readsVersion.current++
     return readsVersion.current
   }
-  const resourceVersion = useSyncExternalStore(store.subscribe, getReadsVersion, getReadsVersion)
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const unsubscribe = store.subscribe(onChange)
+      if (local === store) return unsubscribe
+      const unsubscribeLocal = local.subscribe(onChange)
+      return () => {
+        unsubscribe()
+        unsubscribeLocal()
+      }
+    },
+    [store, local],
+  )
+  const resourceVersion = useSyncExternalStore(subscribe, getReadsVersion, getReadsVersion)
 
   const evaluation = useMemo(() => {
     // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
     // The store is passed so entries staged (not yet committed) by creator hooks
     // earlier in this render pass are visible here too.
     const tracker = createReadTracker('useLocalNodes')
-    const value = creator(createLazyCreatorState(store.getState(), store, { observe: tracker.observe, nested: true }))
+    const reads = { observe: tracker.observe, nested: true }
+    const value = creator(createLazyCreatorState(local.getState(), store, { reads, view }))
     tracker.closed = true
     return { value, tracker }
     // `creator` is intentionally not a dependency: the memo closes over the current render's
     // creator and only its declared inputs (depsToken) decide whether it runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, hmrVersion, depsToken, resourceVersion])
+  }, [view, hmrVersion, depsToken, resourceVersion])
 
   const { value, tracker } = evaluation
   const installing = typeof value === 'function'

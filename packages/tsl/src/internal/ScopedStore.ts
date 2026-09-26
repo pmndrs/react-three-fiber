@@ -22,7 +22,7 @@ import { withStagedOverlay } from './resourceRegistry'
 import type { RootState, RootStore } from '@react-three/fiber/extension'
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
-import { SCOPE, type ReadObserver, type TrackedKind } from './readTracking'
+import { SCOPE, type ReadObserver, type ResourceView, type TrackedKind } from './readTracking'
 import type { CreatorUniforms } from '../register'
 
 //* Symbol for internal data storage ==============================
@@ -283,7 +283,32 @@ function observeTextures(map: TextureMap, observe: ReadObserver): TextureMap {
   })
 }
 
+//* Resource View ==============================
+
+/**
+ * The resource maps as a creator on `local` sees them: the TSL maps from the primary store (where
+ * they are registered and shared) with this render pass's staged entries overlaid, and `textures`
+ * from the component's own canvas (where `useTexture` registers them). Each call reads the stores
+ * now, so a view used after commit sees what was flushed in that commit.
+ */
+export function createResourceView(primary: RootStore, local: RootStore = primary): ResourceView {
+  return ((kind: TrackedKind) =>
+    kind === 'textures'
+      ? local.getState().textures
+      : withStagedOverlay(primary, kind, primary.getState()[kind])) as ResourceView
+}
+
 //* Lazy Creator State Factory ==============================
+
+export interface CreatorStateOptions {
+  /** Report every resource read (see ./readTracking). */
+  reads?: ReadOptions
+  /**
+   * Where the resource maps and `textures` come from. Without it the TSL maps come from `store`
+   * (with its staged overlay) and `textures` from `state`.
+   */
+  view?: ResourceView
+}
 
 /**
  * Creates a CreatorState with lazy ScopedStore wrappers.
@@ -298,12 +323,16 @@ function observeTextures(map: TextureMap, observe: ReadObserver): TextureMap {
  * resources a sibling hook created earlier in the same render (e.g. a node
  * deriving from a uniform declared two lines above).
  *
- * With `reads`, every resource read is reported to `reads.observe`, `textures` included
- * (see ./readTracking); this is how `useLocalNodes` knows what its creator depends on.
+ * The maps are read when a wrapper is first accessed, not taken from `state`: during render they
+ * are the same, but an install step (see useLocalNodes) may first touch a wrapper after commit,
+ * when entries staged during render have been flushed and are no longer in the overlay.
  *
- * @param state - The raw RootState from store.getState()
- * @param store - The (primary-resolved) store, for the staged-entry overlay
- * @param reads - Optional read reporting
+ * With `options.reads`, every resource read is reported, `textures` included (see ./readTracking);
+ * this is how `useLocalNodes` knows what its creator depends on.
+ *
+ * @param state - The RootState the creator's other fields (`scene`, `camera`, ...) come from
+ * @param store - The (primary-resolved) store, for the TSL maps and their staged overlay
+ * @param options - Optional read reporting and resource view
  * @returns CreatorState with lazy-initialized ScopedStore wrappers
  *
  * @example
@@ -313,7 +342,14 @@ function observeTextures(map: TextureMap, observe: ReadObserver): TextureMap {
  * // Proxy only created if creatorFn accessed uniforms or nodes
  * ```
  */
-export function createLazyCreatorState(state: RootState, store?: RootStore, reads?: ReadOptions): CreatorState {
+export function createLazyCreatorState(
+  state: RootState,
+  store?: RootStore,
+  options: CreatorStateOptions = {},
+): CreatorState {
+  const { reads } = options
+  const view = options.view ?? (store ? createResourceView(store) : undefined)
+
   let _uniforms: ScopedStoreType<UniformNode> | null = null
   let _nodes: ScopedStoreType<NodeLike> | null = null
   let _buffers: ScopedStoreType<BufferLike> | null = null
@@ -322,15 +358,12 @@ export function createLazyCreatorState(state: RootState, store?: RootStore, read
 
   // The overlay is a plain `Record<string, unknown>`: which entries are leaves and which are
   // nested scopes is decided at access time by the guard each wrapper is given, not by the type.
-  // Read from the store when a wrapper is first accessed, not from `state`: during render they are the
-  // same, but an install step (see useLocalNodes) first touches a wrapper after commit, when entries
-  // staged during render have been flushed onto the store and are no longer in the overlay.
-  const view = <TLeaf>(kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'): ScopedStoreData<TLeaf> =>
-    (store ? withStagedOverlay(store, kind, store.getState()[kind]) : state[kind]) as ScopedStoreData<TLeaf>
+  const read = <TLeaf>(kind: ReadContext['kind']): ScopedStoreData<TLeaf> =>
+    (view ? view(kind) : state[kind]) as ScopedStoreData<TLeaf>
 
   const wrap = <TLeaf>(kind: ReadContext['kind'], isLeaf: ResourceLeafGuard<TLeaf>) =>
     new ScopedStore(
-      view<TLeaf>(kind),
+      read<TLeaf>(kind),
       isLeaf,
       reads && { ...reads, kind, path: [] },
     ) as unknown as ScopedStoreType<TLeaf>
@@ -357,10 +390,11 @@ export function createLazyCreatorState(state: RootState, store?: RootStore, read
       },
     },
   }
-  if (reads) {
+  if (options.view) {
     properties.textures = {
       get() {
-        return (_textures ??= observeTextures((store ?? { getState: () => state }).getState().textures, reads.observe))
+        const textures = options.view!('textures') as TextureMap
+        return (_textures ??= reads ? observeTextures(textures, reads.observe) : textures)
       },
     }
   }

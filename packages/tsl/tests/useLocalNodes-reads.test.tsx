@@ -414,3 +414,39 @@ describe('diagnostics', () => {
     expect(messages.some((m: string) => m.includes('uProbe'))).toBe(false)
   })
 })
+
+describe('useLocalNodes: staged entries that have not committed', () => {
+  it('a read of an entry staged by a suspended render settles instead of looping', async () => {
+    const store = makeStore()
+    const pending = new Promise<void>(noop)
+    const log = { runs: 0 }
+
+    // Stages uLater during render, then suspends before its commit could flush it.
+    function Stager() {
+      useUniforms({ uLater: 1 })
+      React.use(pending)
+      return null
+    }
+    function Reader() {
+      useLocalNodes(({ uniforms }) => {
+        log.runs++
+        return { node: uniforms.uLater }
+      }, [])
+      return null
+    }
+
+    await act(async () =>
+      render(
+        <context.Provider value={store}>
+          <React.Suspense fallback={null}>
+            <Stager />
+          </React.Suspense>
+          <Reader />
+        </context.Provider>,
+      ),
+    )
+    await act(async () => {})
+
+    expect(log.runs).toBeLessThanOrEqual(2)
+  })
+})

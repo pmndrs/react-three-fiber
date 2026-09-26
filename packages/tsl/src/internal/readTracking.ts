@@ -1,4 +1,3 @@
-import type { RootState } from '@react-three/fiber/extension'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode } from './resourceGuards'
 
 /**
@@ -33,6 +32,17 @@ export type ResourceRead =
 /** Receives each read a wrapper serves. */
 export type ReadObserver = (read: ResourceRead) => void
 
+/**
+ * The resource maps as a creator sees them: committed entries with this render pass's staged ones
+ * overlaid. A staleness check must read through the SAME view the creator read through. Checking
+ * against committed entries alone would find a difference for every entry that is staged but not
+ * yet committed (its component suspended), re-evaluate, see it staged again, and loop.
+ */
+export type ResourceView = {
+  (kind: Exclude<TrackedKind, 'textures'>): Record<string, unknown>
+  (kind: 'textures'): ReadonlyMap<string, unknown>
+}
+
 export interface ReadTracker {
   readonly reads: ResourceRead[]
   /** Set once the creator returns; a read after that (inside a deferred `Fn`) is not tracked. */
@@ -64,8 +74,8 @@ export function classify(kind: TrackedKind, value: unknown): unknown {
 }
 
 /** The container a scope path names, or `undefined` when any step is absent or not a scope. */
-function resolveContainer(kind: ScopedKind, state: RootState, scopePath: readonly string[]) {
-  let container: Record<string, unknown> | undefined = state[kind] as Record<string, unknown>
+function resolveContainer(kind: ScopedKind, root: Record<string, unknown>, scopePath: readonly string[]) {
+  let container: Record<string, unknown> | undefined = root
   for (const key of scopePath) {
     const next: unknown = container?.[key]
     container = isScope(kind, next) ? next : undefined
@@ -73,15 +83,16 @@ function resolveContainer(kind: ScopedKind, state: RootState, scopePath: readonl
   return container
 }
 
-/** What `read` would see against `state` now. */
-function observeNow(read: ResourceRead, state: RootState): unknown {
+/** What `read` would see through `view` now. */
+function observeNow(read: ResourceRead, view: ResourceView): unknown {
   if (read.kind === 'textures') {
-    const map = state.textures
+    const map = view('textures')
     if (read.op === 'keys') return [...map.keys()]
     return read.op === 'has' ? map.has(read.path[0]) : map.get(read.path[0])
   }
-  if (read.op === 'keys') return Object.keys(resolveContainer(read.kind, state, read.path) ?? {})
-  const container = resolveContainer(read.kind, state, read.path.slice(0, -1))
+  const root = view(read.kind)
+  if (read.op === 'keys') return Object.keys(resolveContainer(read.kind, root, read.path) ?? {})
+  const container = resolveContainer(read.kind, root, read.path.slice(0, -1))
   const key = read.path[read.path.length - 1]
   if (read.op === 'has') return !!container && key in container
   return classify(read.kind, container?.[key])
@@ -91,8 +102,8 @@ function sameKeys(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((key, i) => key === b[i])
 }
 
-function hasChanged(read: ResourceRead, state: RootState): boolean {
-  const now = observeNow(read, state)
+function hasChanged(read: ResourceRead, view: ResourceView): boolean {
+  const now = observeNow(read, view)
   return read.op === 'keys' ? !sameKeys(read.seen, now as string[]) : !Object.is(read.seen, now)
 }
 
@@ -140,11 +151,11 @@ export function createReadTracker(hookName: string): ReadTracker {
 }
 
 /**
- * Whether any read the tracker recorded would see something else against `state`. Sticky: once a
+ * Whether any read the tracker recorded would see something else through `view`. Sticky: once a
  * tracker is found stale it stays stale, so every caller within one update agrees.
  */
-export function isTrackerStale(tracker: ReadTracker, state: RootState): boolean {
-  if (!tracker.stale) tracker.stale = tracker.reads.some((read) => hasChanged(read, state))
+export function isTrackerStale(tracker: ReadTracker, view: ResourceView): boolean {
+  if (!tracker.stale) tracker.stale = tracker.reads.some((read) => hasChanged(read, view))
   return tracker.stale
 }
 

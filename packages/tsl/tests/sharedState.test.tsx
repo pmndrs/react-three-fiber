@@ -12,11 +12,11 @@
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
-import { float, mix } from 'three/tsl'
+import { float, mix, uniform } from 'three/tsl'
 
 import { createPortal, extend, getScheduler, useFrame, useStore, useThree } from '@react-three/fiber'
 import type { RootStore } from '@react-three/fiber'
-import { useUniforms, useUniform, useNodes } from '../src'
+import { useUniforms, useUniform, useNodes, useLocalNodes } from '../src'
 import { notifyRootExtensionsHmr } from '../../fiber/src/core/extensions'
 import {
   mountIndependent,
@@ -175,6 +175,60 @@ describe('primary + secondary canvas', () => {
     expect(seen[1]).toBe(primary.getState().uniforms.color2)
     expect(result.myNode).toBeDefined()
     expect(primary.getState().nodes.myNode).toBe(result.myNode)
+  })
+
+  it("useLocalNodes on the secondary builds from the primary's uniforms and installs on its OWN scene", async () => {
+    const OnPrimary = () => {
+      useUniforms({ uFog: 0.5 })
+      return null
+    }
+    let seenUniform: unknown = null
+    let installedOn: unknown = null
+    const OnSecondary = () => {
+      useLocalNodes(({ scene, uniforms }) => {
+        seenUniform = uniforms.uFog
+        const fogNode = float(1)
+        return () => {
+          installedOn = scene
+          ;(scene as unknown as { fogNode: unknown }).fogNode = fogNode
+          return () => void ((scene as unknown as { fogNode: unknown }).fogNode = null)
+        }
+      }, [])
+      return null
+    }
+    const { store: primary, id } = await mountPrimary(<OnPrimary />)
+    const { store: secondary } = await mountSecondary(id, <OnSecondary />)
+
+    expect(seenUniform).toBe(primary.getState().uniforms.uFog)
+    expect(installedOn).toBe(secondary.getState().scene)
+    expect(installedOn).not.toBe(primary.getState().scene)
+    expect((primary.getState().scene as unknown as { fogNode?: unknown }).fogNode).toBeUndefined()
+  })
+
+  it('useLocalNodes on the secondary rebuilds when a primary uniform it read is replaced', async () => {
+    const OnPrimary = () => {
+      useUniforms({ uRead: 1 })
+      return null
+    }
+    let runs = 0
+    let seen: unknown = null
+    const OnSecondary = () => {
+      useLocalNodes(({ uniforms }) => {
+        runs++
+        seen = uniforms.uRead
+        return {}
+      }, [])
+      return null
+    }
+    const { store: primary, id } = await mountPrimary(<OnPrimary />)
+    await mountSecondary(id, <OnSecondary />)
+    const runsBefore = runs
+
+    const next = uniform(2)
+    await act(async () => primary.setState((s) => ({ uniforms: { ...s.uniforms, uRead: next } })))
+
+    expect(runs).toBe(runsBefore + 1)
+    expect(seen).toBe(next)
   })
 
   it("useUniforms('scope') on the secondary returns the shared nodes to write to", async () => {

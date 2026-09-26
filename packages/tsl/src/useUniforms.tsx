@@ -195,7 +195,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
       // The store is passed so entries staged by creator hooks earlier in this
       // render pass are visible here too.
-      const wrappedState = createLazyCreatorState(store.getState(), store, warnMissingReads('useUniforms'))
+      const wrappedState = createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useUniforms') })
       raw = creatorOrScope(wrappedState)
     }
 

@@ -185,7 +185,7 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers/storage accessed
       return (creatorOrScope as StorageCreator<T>)(
-        createLazyCreatorState(store.getState(), store, warnMissingReads('useGPUStorage')),
+        createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useGPUStorage') }),
       )
     },
     prepare: (name, storage) => {
