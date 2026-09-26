@@ -236,7 +236,7 @@ If you're using TypeScript, you'll also need to [extend the JSX namespace](/tuto
 
 ## Disposal
 
-Freeing resources is a [manual chore in `three.js`](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but React is aware of object-lifecycles, hence React Three Fiber will attempt to free resources for you by calling `object.dispose()`, if present, on all unmounted objects.
+Freeing resources is a [manual chore in `three.js`](https://threejs.org/manual/#en/how-to-dispose-of-objects), but React is aware of object-lifecycles, hence React Three Fiber will attempt to free resources for you by calling `object.dispose()`, if present, on all unmounted objects.
 
 If you manage assets by yourself, globally or in a cache, this may _not_ be what you want. You can switch it off by placing `dispose={null}` onto meshes, materials, etc, or even on parent containers like groups, it is now valid for the entire tree.
 
@@ -249,3 +249,50 @@ function Mesh() {
     <group dispose={null}>
       <mesh geometry={globalGeometry} material={globalMaterial} />
 ```
+
+## Shader material uniforms
+
+`ShaderMaterial`, `RawShaderMaterial` and subclasses keep the material's [`uniforms` object](https://threejs.org/docs/#ShaderMaterial.uniforms) stable. When you pass a new `uniforms` object, React Three Fiber merges the incoming uniforms into the existing target instead of replacing it.
+
+This preserves three.js internal uniform caching, even if your component creates a fresh `uniforms` object on each render. Existing uniform entries are updated in place and new entries are added as needed.
+
+```jsx
+<shaderMaterial
+  uniforms={{
+    time: { value: time },
+    color: { value: color },
+  }}
+/>
+```
+
+To get a stable reference to the material's `uniforms`, use the React ref.
+
+```jsx
+function Component() {
+  const ref = useRef()
+
+  // This object is merged into the material, so mutating this reference
+  // later will not update the shader.
+  const uniforms = useMemo(
+    () => ({
+      time: { value: 0 },
+      color: { value: color },
+    }),
+    [color],
+  )
+
+  useFrame(({ elapsed }) => {
+    // The material ref's uniforms object is stable and should be mutated instead.
+    ref.current.uniforms.time.value = elapsed
+  })
+
+  return (
+    <mesh>
+      <shaderMaterial ref={ref} uniforms={uniforms} />
+    </mesh>
+  )
+}
+```
+
+> [!NOTE]
+> This applies to GLSL `ShaderMaterial` on the WebGL backend. TSL node materials on WebGPU declare their uniforms with `useUniform`/`useUniforms` from `@react-three/tsl` instead (see [TSL hooks](/webgpu/tsl-hooks)).
