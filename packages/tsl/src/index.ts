@@ -65,6 +65,8 @@ export {
   type TSLNodeLike,
   type NodeCreator,
   type LocalNodeCreator,
+  type LocalNodeInstall,
+  type LocalNodeInstaller,
   type RemoveNodesFn,
   type ClearNodesFn,
   type RebuildNodesFn,

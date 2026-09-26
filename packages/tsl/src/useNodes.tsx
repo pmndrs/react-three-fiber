@@ -3,7 +3,13 @@ import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
-import { createReadTracker, isTrackerStale, warnMissingReads, type ReadTracker } from './internal/readTracking'
+import {
+  createReadTracker,
+  isTrackerStale,
+  warnMissingReads,
+  warnOnce,
+  type ReadTracker,
+} from './internal/readTracking'
 import { useIsomorphicLayoutEffect } from './internal/react'
 import { isTSLNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
@@ -210,6 +216,15 @@ export default useNodes
 /** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
 export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
 
+/**
+ * The install step an install-form creator returns: it runs after commit (as a layout effect) and
+ * may return a cleanup, which runs before the next install and on unmount.
+ */
+export type LocalNodeInstall = () => void | (() => void)
+
+/** A creator that builds during render and returns an install step instead of a record. */
+export type LocalNodeInstaller = (state: CreatorState) => LocalNodeInstall
+
 /** `Object.is` over two dependency lists of equal length. Never deep: closures cannot be inferred. */
 function areDepsEqual(next: React.DependencyList, prev: React.DependencyList): boolean {
   if (next.length !== prev.length) return false
@@ -301,6 +316,22 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  * dependency. Declare only inputs that decide the graph's structure and cannot be uniforms: which
  * node to use, a loop count, whether a branch exists.
  *
+ * **Install form.** To put a node onto a Three object (`scene.fogNode`, `scene.backgroundNode`),
+ * return a function instead of a record. The creator still builds during render; the returned
+ * function runs after commit and may return a cleanup, which runs before the next install and on
+ * unmount. Mutating a Three object inside the creator itself is unsafe: React can discard a
+ * render, and StrictMode renders twice. The hook returns nothing in this form.
+ *
+ * ```tsx
+ * useLocalNodes(({ scene, uniforms }) => {
+ *   const fogNode = fog(uniforms.fogColor, rangeFogFactor(uniforms.near, uniforms.far))
+ *   return () => {
+ *     scene.fogNode = fogNode
+ *     return () => { scene.fogNode = null }
+ *   }
+ * }, [])
+ * ```
+ *
  * @example
  * ```tsx
  * // Resource-driven composition: no surrounding JS inputs.
@@ -321,10 +352,15 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  * }, [])
  * ```
  */
+export function useLocalNodes(creator: LocalNodeInstaller, deps?: React.DependencyList): void
 export function useLocalNodes<T extends Record<string, unknown>>(
   creator: LocalNodeCreator<T>,
   deps?: React.DependencyList,
-): T {
+): T
+export function useLocalNodes<T extends Record<string, unknown>>(
+  creator: LocalNodeCreator<T> | LocalNodeInstaller,
+  deps?: React.DependencyList,
+): T | void {
   const store = usePrimaryStore()
 
   // Deliberate invalidation (HMR / rebuild*) re-runs every creator, whatever it read.
@@ -361,9 +397,48 @@ export function useLocalNodes<T extends Record<string, unknown>>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, hmrVersion, depsToken, resourceVersion])
 
+  const { value, tracker } = evaluation
+  const installing = typeof value === 'function'
+  useModeDiagnostics(value, installing)
+
   useIsomorphicLayoutEffect(() => {
-    committedReads.current = evaluation.tracker
+    committedReads.current = tracker
+    if (!installing) return
+
+    // Reads the install step makes are tracked like the creator's: reopen the evaluation for it.
+    tracker.closed = false
+    let cleanup: void | (() => void)
+    try {
+      cleanup = (value as LocalNodeInstall)()
+    } finally {
+      tracker.closed = true
+    }
+    return typeof cleanup === 'function' ? cleanup : undefined
   }, [evaluation])
 
-  return evaluation.value
+  return installing ? undefined : (value as T)
+}
+
+/**
+ * Development diagnostics for the creator's return: nothing at all (a mutation made during render),
+ * and a switch between the record and install forms on a mounted component.
+ */
+function useModeDiagnostics(value: unknown, installing: boolean): void {
+  const previous = useRef<boolean | null>(null)
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return
+
+  if (value === undefined || value === null) {
+    warnOnce(
+      '[useLocalNodes] The creator returned nothing. To put a node onto a Three object (scene.fogNode = ...), ' +
+        'build it in the creator and return a function that assigns it: that function runs after commit and may ' +
+        'return a cleanup. Assigning inside the creator runs during render, which React may discard or repeat.',
+    )
+  }
+  if (previous.current !== null && previous.current !== installing) {
+    warnOnce(
+      '[useLocalNodes] The creator switched between returning a record and returning an install function. ' +
+        'Keep one form for a mounted component.',
+    )
+  }
+  previous.current = installing
 }

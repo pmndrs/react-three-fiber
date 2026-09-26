@@ -84,6 +84,14 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   creators warn in development when they read an entry that does not exist yet, since they will not
   re-run when it appears ([#3919](https://github.com/pmndrs/react-three-fiber/issues/3919), part 2
   of [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
+- `@react-three/tsl`: `useLocalNodes` install form. A creator can return a function instead of a
+  record: the creator builds during render, and the function runs after commit (a layout effect)
+  to put the nodes onto a Three object, returning a cleanup that runs before the next install and
+  on unmount. This replaces returning a placeholder record plus a separate `useThree` and
+  `useEffect` for `scene.fogNode` and similar, and never mutates a Three object during render. The
+  hook returns nothing in this form; a creator that returns nothing is a type error and warns in
+  development ([#3890](https://github.com/pmndrs/react-three-fiber/issues/3890),
+  [#3893](https://github.com/pmndrs/react-three-fiber/issues/3893)).
 
 ### Changes
 

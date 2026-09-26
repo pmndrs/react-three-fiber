@@ -415,6 +415,33 @@ The same applies to a value captured from **outside** the creator, such as a nod
 
 Neither this hook nor React guarantees exactly one creator invocation: StrictMode, an initial suspension, or a discarded render can run it again. Keep creators pure apart from node construction.
 
+### Installing Nodes on Three Objects
+
+Some nodes are not returned to anyone: they go straight onto a Three object, like `scene.fogNode` or `scene.backgroundNode`. For those, return a **function** instead of a record. The creator still builds the nodes during render; the function you return runs after commit, and whatever **it** returns is the cleanup:
+
+```tsx
+useLocalNodes(({ scene, uniforms }) => {
+  // render: build only
+  const fogNode = fog(uniforms.fogColor, rangeFogFactor(uniforms.near, uniforms.far))
+
+  // after commit: install, and say how to undo it
+  return () => {
+    scene.fogNode = fogNode
+    return () => {
+      scene.fogNode = null
+    }
+  }
+}, [])
+```
+
+- The install step runs as a layout effect, so the node is in place before the first frame.
+- Everything that rebuilds a record (`deps`, a resource the creator read, a hot update or `rebuild*`) rebuilds here too: the previous cleanup runs, then the new install.
+- The cleanup also runs on unmount, and StrictMode's mount, cleanup, mount leaves the last install in place.
+- Resources read inside the install step are tracked like reads in the creator.
+- The hook returns nothing in this form.
+
+Don't assign inside the creator itself (`useLocalNodes(({ scene }) => { scene.fogNode = ... })`): that runs during render, which React can discard or repeat, and nothing would ever undo it. A creator that returns nothing is a type error and warns in development.
+
 ### Use For
 
 - Component-specific compositions of shared nodes

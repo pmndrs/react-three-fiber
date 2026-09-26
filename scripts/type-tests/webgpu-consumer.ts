@@ -63,6 +63,20 @@ function uniformTypeAssertions() {
   withDeps.scaled.mul(2)
   const label: 'x' = withDeps.label
   void label
+
+  // Install form: a creator that returns a function installs after commit; the hook returns void.
+  const installed = useLocalNodes(({ scene }) => {
+    const fogNode = float(1)
+    return () => {
+      void scene
+      void fogNode
+      return () => {}
+    }
+  }, [])
+  const nothing: void = installed
+  void nothing
+  // @ts-expect-error a creator must return a record or an install function, not nothing
+  useLocalNodes(() => {}, [])
 }
 
 type Assert<T extends true> = T

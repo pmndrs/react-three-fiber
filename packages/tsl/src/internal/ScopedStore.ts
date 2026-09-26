@@ -322,8 +322,11 @@ export function createLazyCreatorState(state: RootState, store?: RootStore, read
 
   // The overlay is a plain `Record<string, unknown>`: which entries are leaves and which are
   // nested scopes is decided at access time by the guard each wrapper is given, not by the type.
+  // Read from the store when a wrapper is first accessed, not from `state`: during render they are the
+  // same, but an install step (see useLocalNodes) first touches a wrapper after commit, when entries
+  // staged during render have been flushed onto the store and are no longer in the overlay.
   const view = <TLeaf>(kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'): ScopedStoreData<TLeaf> =>
-    (store ? withStagedOverlay(store, kind, state[kind]) : state[kind]) as ScopedStoreData<TLeaf>
+    (store ? withStagedOverlay(store, kind, store.getState()[kind]) : state[kind]) as ScopedStoreData<TLeaf>
 
   const wrap = <TLeaf>(kind: ReadContext['kind'], isLeaf: ResourceLeafGuard<TLeaf>) =>
     new ScopedStore(
@@ -357,7 +360,7 @@ export function createLazyCreatorState(state: RootState, store?: RootStore, read
   if (reads) {
     properties.textures = {
       get() {
-        return (_textures ??= observeTextures(state.textures, reads.observe))
+        return (_textures ??= observeTextures((store ?? { getState: () => state }).getState().textures, reads.observe))
       },
     }
   }
