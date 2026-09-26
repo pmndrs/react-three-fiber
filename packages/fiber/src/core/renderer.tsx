@@ -998,7 +998,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
 
     attempt(() => state.events.disconnect?.())
     // Secondary canvases share the primary's renderer and its XR session
-    if (!internal.isSecondary && internal.actualRenderer?.xr) attempt(() => state.xr.disconnect())
+    // A root whose configure() stopped before setting up XR has no XR manager
+    if (!internal.isSecondary && internal.actualRenderer?.xr && state.xr) attempt(() => state.xr.disconnect())
     // Clean up occlusion system and helper group
     attempt(() => cleanupHelperGroup(root!.store))
     // A root that never finished configuring has no scene
