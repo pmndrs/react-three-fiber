@@ -125,16 +125,25 @@ To add a specialized bundle (e.g., a new rendering backend):
 
 ## Publishing `@react-three/tsl` for the first time
 
-`@react-three/tsl` builds and tests with the rest of the monorepo, but it is deliberately **not** in `scripts/release.js` or `.github/workflows/canary.yml` yet. The canary publishes with npm trusted publishing (OIDC, no token), which can only be configured for a package that already exists on npm. Adding tsl to the canary before that would fail every push to `v10` after fiber and test-renderer had already published.
+`@react-three/tsl` is in `scripts/release.js` and `.github/workflows/canary.yml`. The canary publishes with npm trusted publishing (OIDC, no token), which can only be configured for a package that already exists on npm, so the very first version is published by hand, as a canary, **before** the change that adds tsl to the canary workflow is merged. Otherwise the first canary run after that merge fails at tsl, after fiber and test-renderer have already published.
 
-1. **Build and check** from the repo root: `pnpm build && pnpm verify-bundles && pnpm verify-types`.
-2. **Publish the first version by hand**, logged in to npm as a `@react-three` maintainer:
-   `pnpm --filter @react-three/tsl publish --tag alpha --access public`.
-   The version must match fiber's (the release script refuses mixed channels).
+1. **Check out the branch that adds tsl to the canary workflow** (not `v10`) and build from a clean install: `pnpm install && pnpm build && pnpm verify-bundles && pnpm verify-types`.
+2. **Publish the first version by hand**, logged in to npm as a `@react-three` maintainer, stamped like the workflow stamps canaries:
+
+   ```bash
+   cd packages/tsl
+   npm version "10.0.0-canary.$(git rev-parse --short HEAD)" --no-git-tag-version
+   pnpm publish --tag canary --access public --no-git-checks --dry-run   # check name, version, files
+   pnpm publish --tag canary --access public --no-git-checks
+   git checkout package.json
+   ```
+
+   `--no-git-checks` skips pnpm's publish-branch check (it expects `master`/`main`; the canary workflow passes the same flag). On a brand-new package npm also points `latest` at this first version; fix that later with `npm dist-tag add` once there is a real release.
+
 3. **Configure trusted publishing** on npmjs.com → `@react-three/tsl` → Settings: GitHub Actions, repository `pmndrs/react-three-fiber`, workflow `canary.yml`.
-4. **Add tsl to the automation**:
-   - `scripts/release.js`: add `'tsl'` to `PACKAGES`, after `'fiber'` (it declares a peer on fiber).
-   - `.github/workflows/canary.yml`: add `tsl` to the `for pkg in ...` version loop, and a `pnpm --filter @react-three/tsl publish --tag canary --no-git-checks --provenance` line after fiber's.
+4. **Merge the branch.** From then on every push to `v10` publishes a tsl canary next to fiber's, and `pnpm release` publishes it with the other packages (its version is bumped by hand with theirs).
+
+tsl's peer range, `^10.0.0-alpha.6`, accepts every fiber canary and every release after `10.0.0-alpha.5`, the last version without the `@react-three/fiber/extension` entry tsl needs.
 
 To check the package as npm will see it without publishing: `cd packages/tsl && pnpm pack`, then install the tarball (next to a packed fiber) into a fresh app.
 

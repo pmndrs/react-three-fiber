@@ -54,7 +54,7 @@ jobs:
       - name: Set canary versions
         run: |
           SHA="$(git rev-parse --short HEAD)"
-          for pkg in fiber test-renderer eslint-plugin; do
+          for pkg in fiber tsl test-renderer eslint-plugin; do
             MAJOR="$(node -p "require('./packages/$pkg/package.json').version.split('.')[0]")"
             VERSION="$MAJOR.0.0-canary.$SHA"
             echo "Publishing @react-three/$pkg as $VERSION"
@@ -64,6 +64,7 @@ jobs:
       - name: Publish to npm
         run: |
           pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/tsl publish --tag canary --no-git-checks --provenance
           pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks --provenance
           pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks --provenance
         env:
