@@ -1,4 +1,4 @@
-import { useThree } from '@react-three/fiber/webgpu'
+import { useThree } from '@react-three/fiber'
 import { useEffect } from 'react'
 import { useControls } from 'leva'
 import { uniform, fog, color, float, positionView, triNoise3D, positionWorld, normalWorld } from 'three/tsl'

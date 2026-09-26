@@ -219,14 +219,10 @@ Roots have the same options and properties as `Canvas`, but you are responsible 
 Creates a root targeting a canvas, rendering JSX.
 
 ```jsx
-import * as THREE from 'three'
-import { extend, createRoot, events } from '@react-three/fiber'
+import { createRoot, events } from '@react-three/fiber'
 
-// Register the THREE namespace as native JSX elements.
-// See below for notes on tree-shaking
-extend(THREE)
-
-// Create a react root
+// Create a react root. Three's classes are JSX elements on it without any extend() call:
+// the root resolves element names against the namespace of the renderer it loads.
 const root = createRoot(document.querySelector('canvas'))
 
 async function app() {
@@ -254,18 +250,19 @@ app()
 
 ## Tree-shaking
 
-New with v8, the underlying reconciler no longer pulls in the THREE namespace automatically.
+What a bundle carries is decided by the renderer, not by which elements you use. Fiber's core imports nothing from three; a root loads one renderer's support module (`three` for WebGL, `three/webgpu` for WebGPU) when it mounts, and that module carries the whole namespace of its flavour. So an app on `@react-three/fiber` ships no three code eagerly, downloads only the renderer its Canvas asks for, and never both. Three's own classes are not tree-shaken below that: `<mesh>` and `<boxGeometry>` resolve against the loaded namespace, and an `extend({ Mesh, BoxGeometry })` call does not remove anything from it.
 
-This enables a granular catalogue which also enables tree-shaking via the `extend` API:
+`extend` is for classes three does not ship, such as addons and your own subclasses:
 
 ```jsx
 import { extend, createRoot } from '@react-three/fiber'
-import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
-extend({ Mesh, BoxGeometry, MeshStandardMaterial })
+extend({ OrbitControls })
 
 createRoot(canvas).render(
   <>
+    <orbitControls args={[camera, domElement]} />
     <mesh>
       <boxGeometry />
       <meshStandardMaterial />
@@ -274,35 +271,4 @@ createRoot(canvas).render(
 )
 ```
 
-There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
-
-```jsx
-// In:
-
-import { createRoot } from '@react-three/fiber'
-
-createRoot(canvasNode).render(
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>,
-)
-
-// Out:
-
-import { createRoot, extend } from '@react-three/fiber'
-import { Mesh as _Mesh, BoxGeometry as _BoxGeometry, MeshStandardMaterial as _MeshStandardMaterial } from 'three'
-
-extend({
-  Mesh: _Mesh,
-  BoxGeometry: _BoxGeometry,
-  MeshStandardMaterial: _MeshStandardMaterial,
-})
-
-createRoot(canvasNode).render(
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>,
-)
-```
+The `/legacy` and `/webgpu` entries import their renderer statically instead, for apps that would rather skip the extra request. See [Entry Points](../webgpu/overview#entry-points) for the comparison.

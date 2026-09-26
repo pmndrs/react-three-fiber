@@ -51,7 +51,7 @@ vi.mock('../src/support/webgpu', async (importOriginal) => {
   return { webgpuSupport: { ...actual.webgpuSupport, Renderer: webgpu.MockWebGPURenderer } }
 })
 
-import { createRoot } from '../src'
+import { advance, createRoot, useFrame } from '../src'
 import { _roots, unmountComponentAtNode } from '../src/core/renderer'
 
 describe('root teardown', () => {
@@ -114,6 +114,47 @@ describe('root teardown', () => {
     await configuring
     expect(_roots.has(canvas)).toBe(false)
     expect(store.getState().internal.unregisterRoot).toBeUndefined()
+  })
+
+  it('keeps running frame jobs for a root rendered again before its teardown', async () => {
+    const canvas = document.createElement('canvas')
+    const root = createRoot(canvas)
+    const frames: number[] = []
+    function Ticker() {
+      useFrame(() => void frames.push(1))
+      return null
+    }
+    let store!: ReturnType<typeof root.render>
+    await act(async () => {
+      store = (await root.configure({ renderer: {}, frameloop: 'never' })).render(null)
+    })
+
+    await act(async () => {
+      root.unmount()
+      root.render(<Ticker />)
+    })
+
+    expect(store.getState().internal.active).toBe(true)
+    // configure() skips scheduler registration while the root has an id, so a cancelled teardown
+    // must leave the registration in place
+    await act(async () => advance(1000, true, store.getState()))
+    expect(frames).toHaveLength(1)
+
+    await act(async () => root.unmount())
+    expect(_roots.has(canvas)).toBe(false)
+  })
+
+  it('tears down a root whose configure failed before creating its scene', async () => {
+    const canvas = document.createElement('canvas')
+    const root = createRoot(canvas)
+    // The renderer is built, then the camera props throw (zoom is a number and cannot be pierced),
+    // before the scene or the XR manager exist
+    await expect(root.configure({ renderer: {}, camera: { 'zoom-x': 1 } as any, frameloop: 'never' })).rejects.toThrow()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await act(async () => root.unmount())
+    expect(_roots.has(canvas)).toBe(false)
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('teardown may be incomplete'), expect.anything())
   })
 
   it('does not revive an unmounted root through its old handle', async () => {
