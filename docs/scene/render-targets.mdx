@@ -66,16 +66,16 @@ const fbo = useRenderTarget(512, 256, { samples: 4 })
 
 ```ts
 // canvas size (defaults to canvas dimensions)
-useRenderTarget(options?: RenderTargetOptions): RenderTargetCompat
+useRenderTarget(options?: RenderTargetOptions): R3FRenderTarget
 
 // square render target
-useRenderTarget(size: number, options?: RenderTargetOptions): RenderTargetCompat
+useRenderTarget(size: number, options?: RenderTargetOptions): R3FRenderTarget
 
 // explicit dimensions
-useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTargetCompat
+useRenderTarget(width: number, height: number, options?: RenderTargetOptions): R3FRenderTarget
 ```
 
-The return type `RenderTargetCompat` resolves to `WebGLRenderTarget` or `RenderTarget` depending on the renderer (see [Per-renderer type](#per-renderer-type) below).
+The return type `R3FRenderTarget` is `WebGLRenderTarget | RenderTarget` on `@react-three/fiber`, and narrows to the one class once the app registers its renderer or imports from a single-renderer entry (see [Per-renderer type](#per-renderer-type) below).
 
 ## Options
 
@@ -95,8 +95,17 @@ The return type `RenderTargetCompat` resolves to `WebGLRenderTarget` or `RenderT
 
 The class you get back follows the renderer the Canvas loaded: a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU. The hook constructs the target class carried by the root's renderer support (`state.internal.support.RenderTarget`), so it is always valid for the renderer in use without branching yourself.
 
-The entries only differ in the declared type:
+Only the declared type differs:
 
-- **`@react-three/fiber`**: `WebGLRenderTarget | RenderTarget` (either renderer can be running).
+- **`@react-three/fiber`**: `WebGLRenderTarget | RenderTarget` (either renderer can be running). Register the renderer once and it narrows, with no cast, along with `state.renderer` and the rest (see [Typing the renderer](../API/typescript#typing-the-renderer)):
+
+  ```ts
+  declare module '@react-three/fiber' {
+    interface Register {
+      renderer: 'webgpu' // or 'webgl'
+    }
+  }
+  ```
+
 - **`@react-three/fiber/legacy`**: `WebGLRenderTarget`.
 - **`@react-three/fiber/webgpu`**: `RenderTarget`.

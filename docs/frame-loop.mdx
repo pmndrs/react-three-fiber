@@ -13,7 +13,7 @@ useFrame((state, delta) => {
 })
 ```
 
-## The shared RAF loop {#shared-raf}
+## The shared RAF loop
 
 A single global singleton `Scheduler` drives one `requestAnimationFrame` loop for the **entire application**. Every `<Canvas>` (root) registers with this shared loop, so multiple canvases stay frame-synced instead of each spinning their own RAF. Each frame the scheduler walks its registered roots and executes their jobs in order.
 
@@ -33,7 +33,7 @@ interface FrameState extends RootState {
 
 The `delta` passed as the second callback argument is the same value as `state.delta`.
 
-## Ordering Canvas roots {#root-ordering}
+## Ordering Canvas roots
 
 When canvases share a renderer, order the complete Canvas roots through `renderer.scheduler`. Root ordering keeps every job owned by a Canvas together instead of ordering only its final render:
 
@@ -53,7 +53,7 @@ When canvases share a renderer, order the complete Canvas roots through `rendere
 
 `fps` is intentionally different: it throttles only that Canvas's default render job. Other jobs on the root, including `useFrame` updates, can continue each frame.
 
-## Phases {#phases}
+## Phases
 
 Jobs run inside named **phases** that execute in a fixed sequence each frame. The six default phases are:
 
@@ -87,7 +87,7 @@ useFrame(renderEffects, { phase: 'render' })
 useFrame(recordStats, { phase: 'finish' })
 ```
 
-### Custom phases {#custom-phases}
+### Custom phases
 
 Add your own phases relative to existing ones with `scheduler.addPhase(name, { before, after })`:
 
@@ -104,7 +104,7 @@ useFrame(aiSystemUpdate, { phase: 'ai' })
 
 Adding a phase with no position appends it to the end. Duplicate phase names are ignored with a warning. Inspect the current order with the `scheduler.phases` getter and check existence with `scheduler.hasPhase(name)`.
 
-## Ordering jobs {#ordering}
+## Ordering jobs
 
 Within a phase, jobs are sorted by `priority` (higher `priority` runs earlier, default `0`); jobs with equal priority run in registration order. `before` / `after` constraints between jobs take precedence over `priority`.
 
@@ -130,11 +130,11 @@ useFrame(prepRenderTargets, { before: 'render' })
 
 When you use `before`/`after` without an explicit `phase`, the scheduler auto-resolves placement (creating implicit ordering around the target), keeping any default job in that phase intact — your work happens around it, not instead of it.
 
-> **Migrating from priority numbers.** v9's numeric priority is still accepted for backwards compatibility, but it is deprecated for controlling order or render takeover. Prefer phases or `before`/`after`. Note that a numeric `priority > 0` retains its v9 meaning of "I am taking over rendering" and emits a deprecation notice — see [render takeover](#render-takeover). The sort direction is also reversed: v9 ran lower numbers first, while v10 maps the number to `{ priority }` and runs higher numbers first, so ordering-only values such as `-1, 0` run in the opposite order. A negative number emits a deprecation notice for this reason; migrate it to `before`/`after`, or to `{ priority }` with the v10 direction.
+> **Migrating from priority numbers.** v9's numeric priority is still accepted for backwards compatibility, but it is deprecated for controlling order or render takeover. Prefer phases or `before`/`after`. Note that a numeric `priority > 0` retains its v9 meaning of "I am taking over rendering" and emits a deprecation notice — see [render takeover](#render-phase-takeover). The sort direction is also reversed: v9 ran lower numbers first, while v10 maps the number to `{ priority }` and runs higher numbers first, so ordering-only values such as `-1, 0` run in the opposite order. A negative number emits a deprecation notice for this reason; migrate it to `before`/`after`, or to `{ priority }` with the v10 direction.
 >
 > **Why the change.** A single number can't compose across packages. Two libraries that both pick `0` have no defined order between them, and there is no way for you to reorder a job you don't own — the number is baked into someone else's source. Naming the dependency instead (`after: 'physics'`) states the constraint you actually care about, so the scheduler can resolve a correct order no matter what else is registered. Numeric priority survives only as a tie-breaker and a v9 shim.
 
-## FPS throttling {#fps}
+## FPS throttling
 
 Not all work needs to run every frame. Set `fps` to cap how often a job runs:
 
@@ -159,7 +159,7 @@ useFrame(updateUI, { fps: 30, drop: true })
 useFrame(physicsStep, { fps: 60, drop: false })
 ```
 
-## Pause, resume & enabled {#pause-resume}
+## Pause, resume & enabled
 
 `useFrame` returns a controls object for managing the job:
 
@@ -211,7 +211,7 @@ const isActive = useGameState()
 useFrame(doWork, { enabled: isActive })
 ```
 
-## Render-phase takeover {#render-takeover}
+## Render-phase takeover
 
 By default R3F registers an internal **system** render job in the `render` phase that draws your scene each frame. When you register **any** `useFrame` job in the `render` phase, the default render is automatically skipped for that root — you have taken over rendering.
 
@@ -247,11 +247,11 @@ useFrame(
 
 > The legacy v9 mechanism — a numeric `priority > 0` on `useFrame` — still disables the default render for backwards compatibility, but is deprecated. Migrate to `{ phase: 'render' }`.
 
-## Frameloop modes {#frameloop-modes}
+## Frameloop modes
 
 The Canvas `frameloop` prop controls that Canvas's scheduler root. Every Canvas keeps its own mode and pending-frame count while sharing one RAF driver with the rest of the application.
 
-### `frameloop="always"` (default) {#always}
+### `frameloop="always"` (default)
 
 Continuous rendering — jobs run every RAF.
 
@@ -261,7 +261,7 @@ Continuous rendering — jobs run every RAF.
 </Canvas>
 ```
 
-### `frameloop="demand"` {#demand}
+### `frameloop="demand"`
 
 Render only when explicitly requested via `invalidate()`. Ideal for static scenes that change occasionally.
 
@@ -281,7 +281,7 @@ function StaticScene() {
 }
 ```
 
-### `frameloop="never"` {#never}
+### `frameloop="never"`
 
 The loop never runs on its own. Advance frames manually with the controls returned by `useFrame`, the standalone `advance()` util, or `scheduler.step()` — useful for tests, debugging, and non-realtime rendering.
 
@@ -294,7 +294,7 @@ function ManualScene() {
 }
 ```
 
-### Changing modes at runtime {#set-frameloop}
+### Changing modes at runtime
 
 ```tsx
 const { setFrameloop } = useThree()
@@ -303,11 +303,11 @@ setFrameloop('demand') // store action — sets Canvas frameloop
 
 `setFrameloop` updates only the owning Canvas. The scheduler starts the shared driver while any root has automatic work and stops it when every root is idle. `scheduler.frameloop` remains a legacy bulk/default control; use `scheduler.setRootFrameloop(rootId, mode)` when working with scheduler roots directly.
 
-## Demand mode: invalidate, onIdle & addTail {#demand-mode}
+## Demand mode: invalidate, onIdle & addTail
 
 Demand and manual modes use a small set of utilities. **`onIdle` and `addTail` callbacks fire when the shared driver has no automatic work left.** An `always` root keeps the driver active even when every demand root is idle.
 
-### `invalidate(frames?, stackFrames?)` {#invalidate}
+### `invalidate(frames?, stackFrames?)`
 
 Requests rendering in demand mode. Available as both a standalone export and from `useThree()`.
 
@@ -326,7 +326,7 @@ The standalone export's signature is `invalidate(state?, frames = 1, stackFrames
 - The shared loop stops when no root has automatic work left.
 - `stackFrames: true` adds to the existing pending count instead of replacing it.
 
-### `advance(timestamp)` {#advance}
+### `advance(timestamp)`
 
 Standalone util that manually runs one frame for all roots through `scheduler.step(timestamp)`. The full signature is `advance(timestamp, runGlobalEffects?, state?)`; passing a root state targets only that root through `scheduler.stepRoot`. Use it in `frameloop="never"` mode and in tests.
 
@@ -336,7 +336,7 @@ import { advance } from '@react-three/fiber'
 advance(performance.now())
 ```
 
-### `onIdle(callback)` {#on-idle}
+### `onIdle(callback)`
 
 Register a callback that fires when the demand-mode loop goes idle (pending frames hit 0). Returns an unsubscribe function.
 
@@ -348,7 +348,7 @@ function IdleHandler() {
 }
 ```
 
-### Deprecated globals: addEffect / addAfterEffect / addTail {#deprecated-globals}
+### Deprecated globals: addEffect / addAfterEffect / addTail
 
 The v9 global hooks still work but are deprecated. They run once per frame (not per-root) and only receive the raw RAF timestamp — no `gl`/`scene`/`camera` and no seconds-based `delta`. Prefer phased `useFrame`:
 
@@ -360,7 +360,7 @@ The v9 global hooks still work but are deprecated. They run once per frame (not 
 | `invalidate()`         | unchanged ✅                                  |
 | `advance(timestamp)`   | unchanged ✅                                  |
 
-## Accessing the scheduler {#scheduler-access}
+## Accessing the scheduler
 
 ```tsx
 // From useThree
@@ -379,7 +379,7 @@ const scheduler = getScheduler()
 
 Calling `useFrame()` with **no callback** is a valid way to get scheduler access without registering a job.
 
-### Using useFrame outside Canvas {#outside-canvas}
+### Using useFrame outside Canvas
 
 `useFrame` does not throw when used outside `<Canvas>`. The scheduler runs with **no setup required**: the first `useFrame` (or `getScheduler().register`) lazily creates an internal **ambient root**, so frame-based logic works in non-R3F apps out of the box. On the ambient root, callbacks receive a timing-only state (`{ time, delta, elapsed, frame }`, with no `gl`/`scene`/`camera`). If a `<Canvas>` mounts later, it **adopts** those jobs and they begin receiving the full `RootState`.
 
@@ -395,7 +395,7 @@ function GameLoop() {
 
 > The scheduler itself lives in [`@pmndrs/scheduler`](https://www.npmjs.com/package/@pmndrs/scheduler) and is consumed by R3F; you still reach it through `getScheduler()` / `useThree().scheduler`.
 
-## Scheduler API reference {#scheduler-api}
+## Scheduler API reference
 
 `getScheduler()` (or `useThree().scheduler`) returns the singleton. Key members:
 
@@ -429,7 +429,7 @@ interface JobOptions {
 
 `updateJob` can mutate `priority`, `fps`, `drop`, and `enabled` without a rebuild; changing `phase`, `before`, or `after` triggers a rebuild of the sorted job list.
 
-## Example: a full game loop {#example-game-loop}
+## Example: a full game loop
 
 ```tsx
 function GameLoop() {
