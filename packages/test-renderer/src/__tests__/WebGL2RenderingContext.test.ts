@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import * as THREE from 'three'
 import { WebGL2RenderingContext } from '../WebGL2RenderingContext'
 
 /**
@@ -9,7 +10,8 @@ import { WebGL2RenderingContext } from '../WebGL2RenderingContext'
  * `TypeError: Invalid value used as weak map key` the first time anything bound a
  * framebuffer-backed render target (#3820). The symptom appeared as a flaky, unrelated-looking
  * failure in the PMREM background test, so the useful thing to pin here is the *contract* rather
- * than that one test's outcome.
+ * than that one test's outcome. The last case then renders an equirect background for real, which
+ * is the same path from the other end: it fails if a handle is unusable, whatever the reason.
  */
 describe('WebGL2RenderingContext mock', () => {
   const createContext = () => new WebGL2RenderingContext(document.createElement('canvas'))
@@ -60,5 +62,27 @@ describe('WebGL2RenderingContext mock', () => {
     // "create" in a later position must not be caught by it.
     expect(gl.bindFramebuffer()).toBeUndefined()
     expect(gl.drawBuffers()).toBeUndefined()
+  })
+
+  it('lets three render an equirectangular background', () => {
+    // Every assertion above pokes the mock directly. This one drives the path that actually broke:
+    // an equirect background is resolved through PMREMGenerator, which binds a framebuffer-backed
+    // render target, so three reaches WebGLState.drawBuffers() with a handle the mock produced.
+    // It is the end-to-end counterpart to the contract -- if the mock regresses in some way the
+    // direct assertions do not anticipate, three still has to be able to render.
+    const canvas = document.createElement('canvas')
+    canvas.width = 1280
+    canvas.height = 800
+
+    const renderer = new THREE.WebGLRenderer({ canvas })
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera()
+
+    const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1)
+    texture.mapping = THREE.EquirectangularReflectionMapping
+    texture.needsUpdate = true
+    scene.background = texture
+
+    expect(() => renderer.render(scene, camera)).not.toThrow()
   })
 })
