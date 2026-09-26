@@ -7,8 +7,10 @@ nav: 18
 v10 supports sharing a single `WebGPURenderer` across multiple `Canvas` components. This enables HUD overlays, picture-in-picture views, and multi-viewport rendering without the overhead of multiple GPU contexts.
 
 ```tsx
-import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 ```
+
+Every Canvas here takes the `renderer` prop, which is what asks for the WebGPU renderer. On `@react-three/fiber/webgpu` the prop is implied and `state.renderer` is typed as a `WebGPURenderer`; everything below works the same on either import.
 
 ## Basic Setup
 
@@ -53,7 +55,7 @@ Control render timing on a secondary canvas with the `scheduler` option:
 A secondary canvas can render the primary's scene from a different viewpoint using `primaryStore` from R3F state. This is the basis for HUDs and picture-in-picture.
 
 ```tsx
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three/webgpu'
 

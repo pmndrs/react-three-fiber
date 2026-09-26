@@ -1,4 +1,4 @@
-import { Canvas, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Canvas, type ThreeElements } from '@react-three/fiber'
 import { Leva, useControls } from 'leva'
 import { getLevaSeaConfig, makeSeaNodes, TerrainGeometry } from './seaNodes'
 import { CameraControls, Environment } from '@react-three/drei'

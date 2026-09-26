@@ -239,7 +239,7 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 
 ### Parity & CI
 
-- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
+- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-treeshake` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
 - [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
 
 ### Coverage (soft now → hard at stable)
