@@ -30,17 +30,17 @@ function Soda(props: ThreeElements['group']) {
 }
 
 function Hud({ priority = 1, children }: { priority?: number; children: React.ReactNode }) {
-  const { gl, scene: defaultScene, camera: defaultCamera } = useThree()
+  const { renderer, scene: defaultScene, camera: defaultCamera } = useThree()
   const [scene] = useState(() => new THREE.Scene())
 
   useFrame(() => {
     if (priority === 1) {
-      gl.autoClear = true
-      gl.render(defaultScene, defaultCamera)
-      gl.autoClear = false
+      renderer.autoClear = true
+      renderer.render(defaultScene, defaultCamera)
+      renderer.autoClear = false
     }
-    gl.clearDepth()
-    gl.render(scene, defaultCamera)
+    renderer.clearDepth()
+    renderer.render(scene, defaultCamera)
   }, priority)
 
   return <>{createPortal(children, scene, { events: { priority: priority + 1 } })}</>

@@ -5,7 +5,7 @@ const colors = ['orange', 'hotpink', 'cyan', 'lime', 'yellow', 'red', 'blue', 'p
 
 function Capture() {
   const [color, setColor] = useState(colors[0])
-  const { gl } = useThree()
+  const { renderer } = useThree()
   const wantToCapture = useRef(false)
 
   const handleClick = useCallback(() => {
@@ -20,11 +20,11 @@ function Capture() {
 
       // Takes a screenshot of the canvas and downloads it
       const link = document.createElement('a')
-      link.href = gl.domElement.toDataURL()
+      link.href = renderer.domElement.toDataURL()
       link.download = 'screenshot.png'
       link.click()
     }
-  }, [gl])
+  }, [renderer])
 
   return (
     <mesh onClick={handleClick} onAfterRender={captureScreenshot}>
