@@ -238,7 +238,8 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
   const previous = useRef<DependencyRecord | null>(null)
   const record = previous.current
 
-  if (process.env.NODE_ENV !== 'production' && record) {
+  // Guarded like fiber's notices: this package is not bundled with anything that defines `process`.
+  if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' && record) {
     const hadDeps = record.deps !== undefined
     const hasDeps = deps !== undefined
     if (hadDeps !== hasDeps) {
@@ -286,9 +287,10 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  * rebuild". Whenever it re-runs, the creator from the CURRENT render is used; creator identity
  * itself is never a rebuild trigger once an array is supplied.
  *
- * List the JavaScript values the creator reads while building the graph (props, state, module
- * constants that change) — not live TSL values. A `UniformNode` is referenced by the graph, so
- * mutating its `.value` needs no rebuild and must not be a dependency.
+ * `[]` is the normal case. A value that changes (a color prop, a slider) belongs in a uniform: the
+ * graph references the `UniformNode`, so updating its `.value` needs no rebuild and must not be a
+ * dependency. Declare only inputs that decide the graph's structure and cannot be uniforms: which
+ * node to use, a loop count, whether a branch exists.
  *
  * @example
  * ```tsx
@@ -298,10 +300,10 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  *   uTime: uniforms.uTime, // can return uniforms too
  * }), [])
  *
- * // `strength` is a JavaScript construction input captured from this render.
+ * // `pattern` picks which node the graph is built from: a structural input.
  * const { result } = useLocalNodes(({ nodes }) => ({
- *   result: nodes.noise.mul(strength),
- * }), [strength])
+ *   result: pattern === 'noise' ? nodes.noise : nodes.stripes,
+ * }), [pattern])
  *
  * // Type-safe uniform access
  * const { colorNode } = useLocalNodes(({ uniforms }) => {

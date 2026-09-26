@@ -210,6 +210,13 @@ const all = useNodes()
 const effectNodes = useNodes('effects')
 ```
 
+### When the creator runs
+
+Once per generation. The first component to register a name wins, and later renders - including renders with different props - reuse the registered node: the creator does **not** re-run when a value it captured changes. This is deliberate. Other components build their own graphs from a shared node, and replacing it would not reach all of them; every replacement would also recompile each material that uses it. So:
+
+- A value that changes goes into a uniform (`useUniforms`), and the node reads the uniform.
+- A structural change goes through `rebuildNodes(scope)` (or a hot update), which starts a new generation: every creator re-runs together and every consumer sees the new nodes.
+
 ### Parameters
 
 | Parameter | Type                    | Description                                    |
@@ -307,6 +314,8 @@ The creator receives a [`CreatorState`](#scopedstore) - **not** a raw `RootState
 
 The second argument works like `useMemo`'s: it declares the **JavaScript construction inputs** the creator reads while building the graph. Whether the array is present selects the mode; its length is up to you.
 
+**`[]` is the normal case.** A value that changes over time - a color from a prop, a slider, a strength - belongs in a uniform (`useUniforms`), whose `.value` updates on the GPU with no rebuild and no shader recompile. Declare a dependency only for an input that decides the graph's **structure** and cannot be a uniform: which node to use, how many octaves a JavaScript loop unrolls, whether a branch exists at all.
+
 | Call                             | Ordinary component renders                                             |
 | -------------------------------- | ---------------------------------------------------------------------- |
 | `useLocalNodes(creator)`         | Re-evaluate on every render, even when the creator is a `useCallback`  |
@@ -319,8 +328,8 @@ Whichever form you use, three triggers rebuild independently of `deps` (see [Reb
 // Resource-driven composition: everything comes from the shared resources.
 const local = useLocalNodes(({ uniforms }) => ({ result: uniforms.strength.mul(2) }), [])
 
-// `strength` is a JavaScript value captured from this render: declare it.
-const local = useLocalNodes(({ nodes }) => ({ result: nodes.noise.mul(strength) }), [strength])
+// `pattern` picks which node the graph is built from: a structural input, so declare it.
+const local = useLocalNodes(({ nodes }) => ({ result: pattern === 'noise' ? nodes.noise : nodes.stripes }), [pattern])
 ```
 
 #### Live TSL values vs JS construction inputs
@@ -349,14 +358,9 @@ useFrame(() => {
 
 #### Stale-closure caveat
 
-An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model. Declare everything the creator reads. The `react-hooks/exhaustive-deps` rule does not check `useLocalNodes` by default, but it does once the hook is listed in `additionalHooks`; the creator's `state` parameter (`uniforms`, `nodes`, ...) is never reported as a dependency:
+An omitted construction input does not trigger a rebuild, and until one happens the result reflects the value from the render that built it. When a legitimate rebuild happens later (resource replacement, HMR, a declared dependency changing) the current render's creator runs, so the omitted input's **latest** value shows up then - the usual `useMemo` model.
 
-```js
-// eslint.config.js
-rules: {
-  'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '(useLocalNodes)' }],
-}
-```
+If you find yourself adding a prop or a piece of state to `deps`, first ask whether it should be a uniform instead. Declaring it rebuilds the graph - and recompiles every material using it - each time it changes; a uniform does neither. For the same reason, don't enable `react-hooks/exhaustive-deps` for `useLocalNodes` through `additionalHooks`: it asks for every captured value to be declared, which steers towards rebuilding on every prop change.
 
 #### Behavior change for stable callbacks
 
@@ -386,7 +390,7 @@ Neither this hook nor React guarantees exactly one creator invocation: StrictMod
 ### Use For
 
 - Component-specific compositions of shared nodes
-- Props-driven node creation
+- Graphs whose structure depends on props (which node, how many octaves) - values from props go into uniforms
 - Combining global uniforms/nodes with local logic
 
 Do not use it for expensive nodes shared across many components (use `useNodes`) or for static nodes that never change (use `useMemo` or direct creation).
@@ -422,7 +426,7 @@ const { colorNode } = useLocalNodes(
 | Storage         | Global store              | Component-local                                    |
 | Sharing         | Shared across components  | Component-specific                                 |
 | Best for        | Expensive, reusable nodes | Component compositions                             |
-| Rebuild trigger | Never (cached)            | Declared deps, resource replacement, store, HMR    |
+| Rebuild trigger | HMR / `rebuildNodes` only | Declared deps, resource replacement, store, HMR    |
 
 ## ScopedStore
 
