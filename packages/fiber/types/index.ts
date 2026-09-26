@@ -14,6 +14,7 @@ export * from './scheduler'
 export * from './three'
 export * from './renderTarget'
 export * from './provider'
+export * from './register'
 
 // JSX element maps are declared per entry (src/index.tsx, src/legacy.tsx, src/webgpu/index.tsx):
 // each augments react's IntrinsicElements with the constructors its renderer can build.

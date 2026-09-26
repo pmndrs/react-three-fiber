@@ -2,14 +2,15 @@ import { useMemo } from 'react'
 import type { RenderTarget, WebGLRenderTarget } from 'three'
 import { useThree } from './index'
 
-import type { RenderTargetOptions } from '#types'
+import type { RenderTargetOptions, R3FRenderTarget } from '#types'
 
 /**
  * Creates a render target compatible with the current renderer.
  *
  * Both classes live in three's shared core; which one you get follows the renderer this root
- * loaded: a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU. The `/legacy` and `/webgpu`
- * entries narrow the return type to the one their renderer produces.
+ * loaded: a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU. The return type is the
+ * union unless the app registered a renderer (`Register`) or the entry decides it (`/legacy`,
+ * `/webgpu`).
  *
  * @example
  * ```tsx
@@ -32,13 +33,9 @@ import type { RenderTargetOptions } from '#types'
  * const fbo = useRenderTarget(512, 256, { samples: 4 })
  * ```
  */
-export function useRenderTarget(options?: RenderTargetOptions): WebGLRenderTarget | RenderTarget
-export function useRenderTarget(size: number, options?: RenderTargetOptions): WebGLRenderTarget | RenderTarget
-export function useRenderTarget(
-  width: number,
-  height: number,
-  options?: RenderTargetOptions,
-): WebGLRenderTarget | RenderTarget
+export function useRenderTarget(options?: RenderTargetOptions): R3FRenderTarget
+export function useRenderTarget(size: number, options?: RenderTargetOptions): R3FRenderTarget
+export function useRenderTarget(width: number, height: number, options?: RenderTargetOptions): R3FRenderTarget
 export function useRenderTarget(
   widthOrOptions?: number | RenderTargetOptions,
   heightOrOptions?: number | RenderTargetOptions,

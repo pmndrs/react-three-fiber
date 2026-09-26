@@ -25,6 +25,14 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   the shared-core build, provider and per-root element resolution follow that stack; the
   three-free core and lazy renderer supports are new. See
   [BUILD.md](./docs/development/BUILD.md).
+- `Register` for the renderer: `declare module '@react-three/fiber' { interface Register { renderer:
+'webgpu' } }` (or `'webgl'`) narrows `state.renderer`, `state.gl`, `state.isLegacy`,
+  `state.internal.support` and `useRenderTarget` app-wide, so `useThree`, `useFrame` and `onCreated`
+  need no cast on the root entry. Nothing registered keeps the union. Same pattern as
+  `@react-three/tsl`'s `Register`. See [TypeScript](./docs/API/typescript.mdx#typing-the-renderer).
+- The Canvas `renderer` prop is typed. It used to be `any`; it now accepts `true`, a renderer
+  instance or factory (structural, like `gl`), or a props bag of `WebGPURendererParameters`,
+  renderer properties and the config keys, with autocomplete and typo checking.
 - `@react-three/tsl`: uniforms typed by name through a `Register` interface. Register your
   uniform objects once (`declare module '@react-three/tsl' { interface Register { uniforms: typeof
 globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.uniforms` (in
