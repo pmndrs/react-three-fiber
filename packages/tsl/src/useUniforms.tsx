@@ -6,6 +6,7 @@ import { vectorize } from './internal/utils'
 import { useCompareMemoize } from './internal/useCompareMemoize'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { warnMissingReads } from './internal/readTracking'
 import { isUniformNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { createUniform } from './internal/createUniform'
@@ -194,7 +195,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
       // The store is passed so entries staged by creator hooks earlier in this
       // render pass are visible here too.
-      const wrappedState = createLazyCreatorState(store.getState(), store)
+      const wrappedState = createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useUniforms') })
       raw = creatorOrScope(wrappedState)
     }
 

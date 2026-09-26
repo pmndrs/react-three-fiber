@@ -11,22 +11,47 @@
  *
  * @example
  * ```tsx
+ * // With uniforms registered (see `Register` and the Typed Uniforms guide), reads are typed by name
  * useLocalNodes(({ uniforms }) => ({
- *   wobble: sin(uniforms.uTime.mul(2)),           // No cast needed!
- *   playerHealth: uniforms.scope('player').uHealth // Explicit scope access
- * }))
+ *   wobble: sin(uniforms.uTime.mul(2)),
+ *   playerHealth: uniforms.scope('player').uHealth, // or uniforms.player.uHealth
+ * }), [])
+ *
+ * // Without registration, give a scope its schema
+ * useLocalNodes(({ uniforms }) => {
+ *   const player = uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')
+ *   return { damage: player.uHealth.mul(2) }
+ * }, [])
  * ```
  */
 
 import { withStagedOverlay } from './resourceRegistry'
-import type { RootState, RootStore } from '@react-three/fiber/extension'
+import { getTextureView, type RootState, type RootStore } from '@react-three/fiber/extension'
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
+import { SCOPE, type ReadObserver, type ResourceView, type TrackedKind } from './readTracking'
 import type { CreatorUniforms } from '../register'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
 const INTERNAL_IS_LEAF = Symbol('ScopedStore.isLeaf')
+const INTERNAL_READS = Symbol('ScopedStore.reads')
+const INTERNAL_CHILDREN = Symbol('ScopedStore.children')
+
+/**
+ * How a wrapper reports the reads it serves (see ./readTracking). `nested` wraps a scope reached by
+ * dot access (`uniforms.player`) so reads inside it are reported too; without it only this level's
+ * reads are.
+ */
+export interface ReadOptions {
+  observe: ReadObserver
+  nested: boolean
+}
+
+interface ReadContext extends ReadOptions {
+  kind: Exclude<TrackedKind, 'textures'>
+  path: readonly string[]
+}
 
 //* Public Types ==============================
 
@@ -57,12 +82,19 @@ interface ScopedStoreData<TLeaf> {
 //* ScopedStore Class ==============================
 
 class ScopedStore<TLeaf> {
-  private [INTERNAL_DATA]: ScopedStoreData<TLeaf>
-  private [INTERNAL_IS_LEAF]: ResourceLeafGuard<TLeaf>
+  /** @internal */
+  [INTERNAL_DATA]: ScopedStoreData<TLeaf>;
+  /** @internal */
+  [INTERNAL_IS_LEAF]: ResourceLeafGuard<TLeaf>;
+  /** @internal */
+  [INTERNAL_READS]: ReadContext | undefined;
+  /** @internal */
+  [INTERNAL_CHILDREN]: Map<string, ScopedStore<TLeaf>> | undefined
 
-  constructor(data: ScopedStoreData<TLeaf>, isLeaf: ResourceLeafGuard<TLeaf>) {
+  constructor(data: ScopedStoreData<TLeaf>, isLeaf: ResourceLeafGuard<TLeaf>, reads?: ReadContext) {
     this[INTERNAL_DATA] = data
     this[INTERNAL_IS_LEAF] = isLeaf
+    this[INTERNAL_READS] = reads
 
     return new Proxy(this, {
       get(target, prop, receiver) {
@@ -73,7 +105,7 @@ class ScopedStore<TLeaf> {
             return Reflect.get(target, prop, receiver)
           }
           // Direct property access returns the value from data
-          return target[INTERNAL_DATA][prop]
+          return readEntry(target, prop)
         }
         // Handle symbols and other property types
         return Reflect.get(target, prop, receiver)
@@ -81,11 +113,12 @@ class ScopedStore<TLeaf> {
 
       has(target, prop) {
         // Support 'key' in uniforms
-        return typeof prop === 'string' ? prop in target[INTERNAL_DATA] : Reflect.has(target, prop)
+        return typeof prop === 'string' ? target.has(prop) : Reflect.has(target, prop)
       },
 
       ownKeys(target) {
         // Support Object.keys(), for...in
+        observeKeys(target)
         return Reflect.ownKeys(target[INTERNAL_DATA])
       },
 
@@ -110,24 +143,58 @@ class ScopedStore<TLeaf> {
   scope<TScope extends Record<string, TLeaf> = Record<string, TLeaf>>(key: string): ScopedStoreType<TLeaf, TScope> {
     const value = this[INTERNAL_DATA][key]
     const isLeaf = this[INTERNAL_IS_LEAF]
+    const reads = this[INTERNAL_READS]
     const scope = value && typeof value === 'object' && !isLeaf(value) ? value : {}
 
-    return new ScopedStore(scope as ScopedStoreData<TLeaf>, isLeaf) as unknown as ScopedStoreType<TLeaf, TScope>
+    // No read of its own: whatever is read inside the scope is reported at its full path, which
+    // also covers the scope appearing, disappearing or turning into a leaf.
+    const child = reads ? { ...reads, path: [...reads.path, key] } : undefined
+    return new ScopedStore(scope as ScopedStoreData<TLeaf>, isLeaf, child) as unknown as ScopedStoreType<TLeaf, TScope>
   }
 
   /**
    * Check if a key exists in the store.
    */
   has(key: string): boolean {
-    return key in this[INTERNAL_DATA]
+    const found = key in this[INTERNAL_DATA]
+    const reads = this[INTERNAL_READS]
+    reads?.observe({ kind: reads.kind, op: 'has', path: [...reads.path, key], seen: found })
+    return found
   }
 
   /**
    * Get all keys in the store.
    */
   keys(): string[] {
+    observeKeys(this)
     return Object.keys(this[INTERNAL_DATA])
   }
+}
+
+/** Serve one property read, reporting it and wrapping a scope reached by dot access when nested. */
+function readEntry<TLeaf>(target: ScopedStore<TLeaf>, key: string): unknown {
+  const value = target[INTERNAL_DATA][key]
+  const reads = target[INTERNAL_READS]
+  if (!reads) return value
+
+  const isLeaf = target[INTERNAL_IS_LEAF]
+  const isScope = !!value && typeof value === 'object' && !isLeaf(value)
+  const path = [...reads.path, key]
+  reads.observe({ kind: reads.kind, op: 'get', path, seen: isScope ? SCOPE : value })
+  if (!isScope || !reads.nested) return value
+
+  const children = (target[INTERNAL_CHILDREN] ??= new Map())
+  let child = children.get(key)
+  if (!child) {
+    child = new ScopedStore(value as ScopedStoreData<TLeaf>, isLeaf, { ...reads, path })
+    children.set(key, child)
+  }
+  return child
+}
+
+function observeKeys<TLeaf>(target: ScopedStore<TLeaf>): void {
+  const reads = target[INTERNAL_READS]
+  reads?.observe({ kind: reads.kind, op: 'keys', path: reads.path, seen: Object.keys(target[INTERNAL_DATA]) })
 }
 
 //* Factory Function ==============================
@@ -161,7 +228,95 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
   gpuStorage: ScopedStoreType<StorageLike>
 }
 
+//* Texture Reads ==============================
+
+type TextureMap = RootState['textures']
+
+/**
+ * The URL-keyed texture Map, reporting each read. A Proxy over the real Map, so `instanceof Map` and
+ * every method keep working; methods run against the Map itself (a Map method throws on any other
+ * receiver). Iteration reports the key list and every entry it hands out.
+ */
+function observeTextures(map: TextureMap, observe: ReadObserver): TextureMap {
+  const observeKeys = () => observe({ kind: 'textures', op: 'keys', path: [], seen: [...map.keys()] })
+  const observeAll = () => {
+    observeKeys()
+    for (const [url, texture] of map) observe({ kind: 'textures', op: 'get', path: [url], seen: texture })
+  }
+
+  return new Proxy(map, {
+    get(target, prop) {
+      switch (prop) {
+        case 'get':
+          return (url: string) => {
+            const texture = target.get(url)
+            observe({ kind: 'textures', op: 'get', path: [url], seen: texture })
+            return texture
+          }
+        case 'has':
+          return (url: string) => {
+            const found = target.has(url)
+            observe({ kind: 'textures', op: 'has', path: [url], seen: found })
+            return found
+          }
+        case 'size':
+          observeKeys()
+          return target.size
+        case 'keys':
+          return () => {
+            observeKeys()
+            return target.keys()
+          }
+        case 'values':
+          return () => {
+            observeAll()
+            return target.values()
+          }
+        case 'entries':
+        case Symbol.iterator:
+          return () => {
+            observeAll()
+            return target.entries()
+          }
+        case 'forEach':
+          return (callback: Parameters<TextureMap['forEach']>[0], thisArg?: unknown) => {
+            observeAll()
+            target.forEach(callback, thisArg)
+          }
+      }
+      const value = Reflect.get(target, prop, target)
+      return typeof value === 'function' ? value.bind(target) : value
+    },
+  })
+}
+
+//* Resource View ==============================
+
+/**
+ * The resource maps as a creator on `local` sees them: the TSL maps from the primary store (where
+ * they are registered and shared) with this render pass's staged entries overlaid, and `textures`
+ * from the component's own canvas (where `useTexture` registers them), including textures a
+ * `useTexture` earlier in this render loaded but has not registered yet. Each call reads the stores
+ * now, so a view used after commit sees what was flushed in that commit.
+ */
+export function createResourceView(primary: RootStore, local: RootStore = primary): ResourceView {
+  return ((kind: TrackedKind) =>
+    kind === 'textures'
+      ? getTextureView(local)
+      : withStagedOverlay(primary, kind, primary.getState()[kind])) as ResourceView
+}
+
 //* Lazy Creator State Factory ==============================
+
+export interface CreatorStateOptions {
+  /** Report every resource read (see ./readTracking). */
+  reads?: ReadOptions
+  /**
+   * Where the resource maps and `textures` come from. Without it the TSL maps come from `store`
+   * (with its staged overlay) and `textures` from `state`.
+   */
+  view?: ResourceView
+}
 
 /**
  * Creates a CreatorState with lazy ScopedStore wrappers.
@@ -176,8 +331,16 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
  * resources a sibling hook created earlier in the same render (e.g. a node
  * deriving from a uniform declared two lines above).
  *
- * @param state - The raw RootState from store.getState()
- * @param store - The (primary-resolved) store, for the staged-entry overlay
+ * The maps are read when a wrapper is first accessed, not taken from `state`: during render they
+ * are the same, but an install step (see useLocalNodes) may first touch a wrapper after commit,
+ * when entries staged during render have been flushed and are no longer in the overlay.
+ *
+ * With `options.reads`, every resource read is reported, `textures` included (see ./readTracking);
+ * this is how `useLocalNodes` knows what its creator depends on.
+ *
+ * @param state - The RootState the creator's other fields (`scene`, `camera`, ...) come from
+ * @param store - The (primary-resolved) store, for the TSL maps and their staged overlay
+ * @param options - Optional read reporting and resource view
  * @returns CreatorState with lazy-initialized ScopedStore wrappers
  *
  * @example
@@ -187,37 +350,62 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
  * // Proxy only created if creatorFn accessed uniforms or nodes
  * ```
  */
-export function createLazyCreatorState(state: RootState, store?: RootStore): CreatorState {
+export function createLazyCreatorState(
+  state: RootState,
+  store?: RootStore,
+  options: CreatorStateOptions = {},
+): CreatorState {
+  const { reads } = options
+  const view = options.view ?? (store ? createResourceView(store) : undefined)
+
   let _uniforms: ScopedStoreType<UniformNode> | null = null
   let _nodes: ScopedStoreType<NodeLike> | null = null
   let _buffers: ScopedStoreType<BufferLike> | null = null
   let _gpuStorage: ScopedStoreType<StorageLike> | null = null
+  let _textures: TextureMap | null = null
 
   // The overlay is a plain `Record<string, unknown>`: which entries are leaves and which are
   // nested scopes is decided at access time by the guard each wrapper is given, not by the type.
-  const view = <TLeaf>(kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'): ScopedStoreData<TLeaf> =>
-    (store ? withStagedOverlay(store, kind, state[kind]) : state[kind]) as ScopedStoreData<TLeaf>
+  const read = <TLeaf>(kind: ReadContext['kind']): ScopedStoreData<TLeaf> =>
+    (view ? view(kind) : state[kind]) as ScopedStoreData<TLeaf>
 
-  return Object.create(state, {
+  const wrap = <TLeaf>(kind: ReadContext['kind'], isLeaf: ResourceLeafGuard<TLeaf>) =>
+    new ScopedStore(
+      read<TLeaf>(kind),
+      isLeaf,
+      reads && { ...reads, kind, path: [] },
+    ) as unknown as ScopedStoreType<TLeaf>
+
+  const properties: PropertyDescriptorMap = {
     uniforms: {
       get() {
-        return (_uniforms ??= createScopedStore<UniformNode>(view<UniformNode>('uniforms'), isUniformNode))
+        return (_uniforms ??= wrap<UniformNode>('uniforms', isUniformNode))
       },
     },
     nodes: {
       get() {
-        return (_nodes ??= createScopedStore<NodeLike>(view<NodeLike>('nodes'), isTSLNode))
+        return (_nodes ??= wrap<NodeLike>('nodes', isTSLNode))
       },
     },
     buffers: {
       get() {
-        return (_buffers ??= createScopedStore<BufferLike>(view<BufferLike>('buffers'), isBufferLike))
+        return (_buffers ??= wrap<BufferLike>('buffers', isBufferLike))
       },
     },
     gpuStorage: {
       get() {
-        return (_gpuStorage ??= createScopedStore<StorageLike>(view<StorageLike>('gpuStorage'), isStorageLike))
+        return (_gpuStorage ??= wrap<StorageLike>('gpuStorage', isStorageLike))
       },
     },
-  }) as CreatorState
+  }
+  if (options.view) {
+    properties.textures = {
+      get() {
+        const textures = options.view!('textures') as TextureMap
+        return (_textures ??= reads ? observeTextures(textures, reads.observe) : textures)
+      },
+    }
+  }
+
+  return Object.create(state, properties) as CreatorState
 }
