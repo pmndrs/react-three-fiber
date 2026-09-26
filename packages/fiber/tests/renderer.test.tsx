@@ -1239,6 +1239,32 @@ describe('renderer', () => {
     expect(store.getState().size.width).toBe(200)
   })
 
+  //* Unmount ==============================
+
+  // Ported from master #3869 (via port/3869-remount-claim-v10): the teardown, and with it the
+  // disposal of a renderer R3F built, waits until the unmounted tree's effect cleanups have run.
+  it('should tear down after the tree has cleaned up', async () => {
+    const order: string[] = []
+    let dispose!: ReturnType<typeof vi.spyOn>
+    function Test() {
+      const renderer = useThree((state) => state.renderer)
+      React.useEffect(
+        () => () => void order.push(`cleanup:${dispose.mock.calls.length ? 'disposed' : 'live'}`),
+        [renderer],
+      )
+      return null
+    }
+
+    let state!: RootState
+    await act(async () => root.configure({ onCreated: (created) => (state = created) }))
+    await act(async () => root.render(<Test />))
+
+    dispose = vi.spyOn(state.renderer, 'dispose').mockImplementation(() => void order.push('teardown'))
+    await act(async () => root.unmount())
+
+    expect(order).toStrictEqual(['cleanup:live', 'teardown'])
+  })
+
   describe('createPortal', () => {
     it('should render portal with direct Object3D', async () => {
       const container = new THREE.Group()
