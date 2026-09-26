@@ -1,13 +1,12 @@
 // Relative imports keep this module out of any entry's dependency graph: it is part of the shared
 // core chunk every entry imports.
-import { useLoader, useThree } from './'
+import { useLoader } from './'
 import { getThree } from '../three'
 import { suspend } from 'suspend-react'
 import { presetsObj, PresetsType } from '../components/Environment/environment-assets'
-import { useLayoutEffect } from 'react'
 
 import type { Texture, Loader, CubeTexture, ColorSpace } from 'three'
-import type { ConstructorRepresentation, LoaderLike, RendererSupport } from '#types'
+import type { ConstructorRepresentation, LoaderLike } from '#types'
 
 const CUBEMAP_ROOT = 'https://raw.githack.com/pmndrs/drei-assets/456060a26bbeb8fdf79326f224b6d99b8bcce736/hdri/'
 const isArray = (arr: any): arr is string[] => Array.isArray(arr)
@@ -23,22 +22,19 @@ export type EnvironmentLoaderProps = {
 const defaultFiles = ['/px.png', '/nx.png', '/py.png', '/ny.png', '/pz.png', '/nz.png']
 
 //* Formats ==============================
-// Every decoder is loaded on demand. The three addon loaders import from `three`, and the gain map
-// decoder renders with a renderer of its own, so none of them may sit in core's eager graph: a
-// `preset` environment is one `.hdr`, and used to ship the EXR and gain map decoders alongside.
+// Every decoder is loaded on demand. The three addon loaders import from `three`, so none of them
+// may sit in core's eager graph: a `preset` environment is one `.hdr`, and used to ship the EXR
+// decoder alongside. All of them decode on the CPU, so none needs the root's renderer; the `.jpg`
+// one is three's own UltraHDRLoader (the single-file Ultra HDR standard).
 
 type EnvironmentLoader = ConstructorRepresentation<LoaderLike>
-type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg' | 'webp'
-
-/** True for the formats whose decoder renders with the root's renderer (and so cannot be preloaded). */
-const isGainMap = (format: EnvironmentFormat) => format === 'jpg' || format === 'webp'
+type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg'
 
 // Loaders already resolved, so `clear` and a second `useEnvironment` need no round trip.
-const loadedLoaders = new Map<string, EnvironmentLoader>()
+const loadedLoaders = new Map<EnvironmentFormat, EnvironmentLoader>()
 
-async function loadLoader(format: EnvironmentFormat, support?: RendererSupport): Promise<EnvironmentLoader> {
-  const key = format === 'webp' ? `webp:${support?.kind}` : format
-  const cached = loadedLoaders.get(key)
+async function loadLoader(format: EnvironmentFormat): Promise<EnvironmentLoader> {
+  const cached = loadedLoaders.get(format)
   if (cached) return cached
 
   let loader: EnvironmentLoader
@@ -58,22 +54,16 @@ async function loadLoader(format: EnvironmentFormat, support?: RendererSupport):
     case 'jpg':
       loader = (await import('three/examples/jsm/loaders/UltraHDRLoader.js')).UltraHDRLoader
       break
-    case 'webp': {
-      // The decoder renders with a renderer of the root's flavour: the support supplies it.
-      if (!support) throw new Error('useEnvironment: gain map (.webp) environments need a mounted Canvas')
-      loader = await support.loadGainMapLoader()
-      break
-    }
   }
-  loadedLoaders.set(key, loader)
+  loadedLoaders.set(format, loader)
   return loader
 }
 
 const LOADER_KEY = Symbol('r3f-environment-loader')
 
 /** Suspend until the decoder for `format` is loaded. */
-function useEnvironmentLoader(format: EnvironmentFormat, support: RendererSupport): EnvironmentLoader {
-  return suspend(() => loadLoader(format, support), [LOADER_KEY, format, format === 'webp' ? support.kind : ''])
+function useEnvironmentLoader(format: EnvironmentFormat): EnvironmentLoader {
+  return suspend(() => loadLoader(format), [LOADER_KEY, format])
 }
 
 /**
@@ -104,41 +94,20 @@ export function useEnvironment({
   const { format, isCubemap } = getFormat(files)
   if (!format) throw new Error('useEnvironment: Unrecognized file extension: ' + files)
 
-  const renderer = useThree((state) => state.renderer)
-  const support = useThree((state) => state.internal.support)
-  const loader = useEnvironmentLoader(format, support)
-
-  useLayoutEffect(() => {
-    // Only required for gainmap
-    if (!isGainMap(format)) return
-
-    function clearGainmapTexture() {
-      useLoader.clear(loader, (multiFile ? [files] : files) as string | string[] | string[][])
-    }
-
-    renderer.domElement.addEventListener('webglcontextlost', clearGainmapTexture, { once: true })
-  }, [format, files, loader, multiFile, renderer.domElement])
+  const loader = useEnvironmentLoader(format)
 
   const loaderResult: Texture | Texture[] = useLoader(
     loader,
     (multiFile ? [files] : files) as string | string[] | string[][],
     (loader) => {
-      // Gainmap requires a renderer
-      if (isGainMap(format)) {
-        ;(loader as any).setRenderer?.(renderer)
-      }
       ;(loader as any).setPath?.(path)
       if (extensions) extensions(loader as any)
     },
   ) as Texture | Texture[]
-  let texture: Texture | CubeTexture = multiFile
+  const texture: Texture | CubeTexture = multiFile
     ? // @ts-ignore
       loaderResult[0]
     : loaderResult
-
-  if (isGainMap(format)) {
-    texture = (texture as any).renderTarget?.texture
-  }
 
   const three = getThree()
   texture.mapping = isCubemap ? three.CubeReflectionMapping : three.EquirectangularReflectionMapping
@@ -182,10 +151,6 @@ useEnvironment.preload = (preloadOptions?: EnvironmentLoaderPreloadOptions) => {
   const { format } = getFormat(files)
   if (!format) throw new Error('useEnvironment: Unrecognized file extension: ' + files)
 
-  if (isGainMap(format)) {
-    throw new Error('useEnvironment: Preloading gainmaps is not supported')
-  }
-
   const input = isArray(files) ? [files] : files
   loadLoader(format).then((loader) => {
     useLoader.preload(loader, input, (loader) => {
@@ -214,11 +179,9 @@ useEnvironment.clear = (clearOptions?: EnvironmentLoaderClearOptions) => {
   const { format } = getFormat(files)
   if (!format) throw new Error('useEnvironment: Unrecognized file extension: ' + files)
 
-  // A decoder that never loaded has nothing cached under it. Gain maps are keyed per renderer.
-  const input = isArray(files) ? [files] : files
-  for (const [key, loader] of loadedLoaders) {
-    if (key === format || key.startsWith(`${format}:`)) useLoader.clear(loader, input)
-  }
+  // A decoder that never loaded has nothing cached under it
+  const loader = loadedLoaders.get(format)
+  if (loader) useLoader.clear(loader, isArray(files) ? [files] : files)
 }
 
 function validatePreset(preset: string) {
@@ -227,7 +190,6 @@ function validatePreset(preset: string) {
 
 function getFormat(files: string | string[]): { format: EnvironmentFormat | undefined; isCubemap: boolean } {
   const isCubemap = isArray(files) && files.length === 6
-  const isGainmap = isArray(files) && files.length === 3 && files.some((file) => file.endsWith('json'))
   const firstEntry = isArray(files) ? files[0] : files
   const firstExtension = firstEntry.split('.').pop()?.split('?')?.shift()?.toLowerCase()
 
@@ -235,11 +197,10 @@ function getFormat(files: string | string[]): { format: EnvironmentFormat | unde
   // HDRCubeTextureLoader, everything else goes through the plain CubeTextureLoader.
   let format: EnvironmentFormat | undefined
   if (isCubemap) format = firstExtension === 'hdr' ? 'hdr-cube' : 'cube'
-  else if (isGainmap) format = 'webp'
   else if (firstEntry.startsWith('data:application/exr')) format = 'exr'
   else if (firstEntry.startsWith('data:application/hdr')) format = 'hdr'
   else if (firstEntry.startsWith('data:image/jpeg')) format = 'jpg'
-  else if (firstExtension === 'hdr' || firstExtension === 'exr' || firstExtension === 'webp') format = firstExtension
+  else if (firstExtension === 'hdr' || firstExtension === 'exr') format = firstExtension
   else if (firstExtension === 'jpg' || firstExtension === 'jpeg') format = 'jpg'
 
   return { format, isCubemap }

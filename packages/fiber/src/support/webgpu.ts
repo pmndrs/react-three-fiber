@@ -28,6 +28,4 @@ export const webgpuSupport: WebGPUSupport = {
     uniform,
     nodeObject,
   },
-  // The WebGPU gain map decoder renders with the root's WebGPURenderer
-  loadGainMapLoader: () => import('@monogrid/gainmap-js/webgpu').then((m) => m.GainMapLoader),
 }

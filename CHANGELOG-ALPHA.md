@@ -6,6 +6,15 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ## Unreleased
 
+### Breaking Changes
+
+- `@monogrid/gainmap-js` is no longer a dependency. `<Environment>` / `useEnvironment` drop the
+  split gain map format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`), which only that package
+  reads. `.hdr`, `.exr`, six-face cube sets and single-file Ultra HDR `.jpg` (three's own
+  `UltraHDRLoader`, the Android / ISO 21496-1 standard) stay. Every decoder is now three's own and
+  decodes on the CPU, so `.jpg` environments can be preloaded like the others. Apps that need the
+  split format keep it through drei's `<Environment>`.
+
 ### Features
 
 - One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
@@ -19,8 +28,8 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   renderer, so a WebGL root no longer advertises node materials it cannot build; each entry
   declares its own `ThreeElements` (`ThreeElementsOf<T>`) and `ReactThreeFiber` namespace. Core
   code reaches three's shared core through `getThree()` / `whenThree()` / `hasThree()` and the
-  renderer-specific classes through `state.internal.support`. The environment decoders, the gain
-  map decoder (now the WebGPU one under a WebGPU renderer) and `GroundedSkybox` load on demand.
+  renderer-specific classes through `state.internal.support`. The environment decoders and
+  `GroundedSkybox` load on demand.
   `pnpm verify-treeshake` (Vite and esbuild) replaces `verify-bundles`. Supersedes #3950-#3952:
   the shared-core build, provider and per-root element resolution follow that stack; the
   three-free core and lazy renderer supports are new. See

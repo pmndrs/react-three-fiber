@@ -1,7 +1,6 @@
 import type * as ThreeLegacy from 'three'
 import type * as ThreeWebGPU from 'three/webgpu'
 import type { uniform, nodeObject } from 'three/tsl'
-import type { LoaderLike } from './loader'
 
 //* Renderer Support ==============================
 // Core has no static imports from `three` or `three/webgpu`. Both are separate bundles built on one
@@ -19,9 +18,6 @@ export type ThreeNamespace = typeof ThreeLegacy | typeof ThreeWebGPU
  * exports are reached through the flavour's support object, never by name from here.
  */
 export type ThreeCore = Pick<typeof ThreeLegacy, Extract<keyof typeof ThreeLegacy, keyof typeof ThreeWebGPU>>
-
-/** Gain map decoder constructor. Structural, so the decoder package's declarations stay out of the public types. */
-export type GainMapLoaderClass = new (...args: any[]) => LoaderLike
 
 /** Node classes and TSL functions the occlusion observer is built from (WebGPU only). */
 export interface OcclusionSupport {
@@ -42,8 +38,6 @@ export interface WebGLSupport {
   RenderTarget: typeof ThreeLegacy.WebGLRenderTarget
   /** Cube render target for `<Environment>`. */
   CubeRenderTarget: typeof ThreeLegacy.WebGLCubeRenderTarget
-  /** Load the gain map decoder that renders with a WebGLRenderer, on demand. */
-  loadGainMapLoader: () => Promise<GainMapLoaderClass>
 }
 
 /** WebGPU renderer support: the `three/webgpu` namespace and the classes only it exports. */
@@ -59,8 +53,6 @@ export interface WebGPUSupport {
   /** Canvas target for secondary canvases sharing a primary's renderer. */
   CanvasTarget: typeof ThreeWebGPU.CanvasTarget
   occlusion: OcclusionSupport
-  /** Load the gain map decoder that renders with a WebGPURenderer, on demand. */
-  loadGainMapLoader: () => Promise<GainMapLoaderClass>
 }
 
 /** Support for the renderer a root ended up with. Selected by `configure()`, kept on `state.internal.support`. */

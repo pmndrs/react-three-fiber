@@ -18,6 +18,4 @@ export const webglSupport: WebGLSupport = {
   Renderer: THREE.WebGLRenderer,
   RenderTarget: THREE.WebGLRenderTarget,
   CubeRenderTarget: THREE.WebGLCubeRenderTarget,
-  // The WebGL gain map decoder renders with a WebGLRenderer of its own
-  loadGainMapLoader: () => import('@monogrid/gainmap-js').then((m) => m.GainMapLoader),
 }

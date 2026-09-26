@@ -42,7 +42,7 @@ import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironme
  *   - scale: Scale of backside projected sphere (default: 1000)
  *
  * Additional loader props:
- * @property files - File path(s) for environment. Supports .hdr, .exr, gainmap .jpg/.webp, or array of 6 cube faces
+ * @property files - File path(s) for environment. Supports .hdr, .exr, Ultra HDR .jpg, or array of 6 cube faces
  * @property path - Base path for file loading
  * @property extensions - Texture extensions override
  */
@@ -159,8 +159,8 @@ export function EnvironmentMap({ scene, background = false, map, ...config }: En
 
 /**
  * Internal component that loads environment textures from files or presets.
- * Uses HDRLoader for .hdr, EXRLoader for .exr, UltraHDRLoader for .jpg/.jpeg HDR,
- * GainMapLoader for gainmap .webp, or CubeTextureLoader for arrays of images.
+ * Uses HDRLoader for .hdr, EXRLoader for .exr, UltraHDRLoader for .jpg/.jpeg Ultra HDR,
+ * or CubeTextureLoader for arrays of images.
  *
  * @example With preset
  * ```jsx
@@ -172,9 +172,9 @@ export function EnvironmentMap({ scene, background = false, map, ...config }: En
  * <EnvironmentCube files="environment.hdr" />
  * ```
  *
- * @example From gainmap (smallest footprint)
+ * @example From an Ultra HDR JPEG (smallest footprint)
  * ```jsx
- * <EnvironmentCube files={['file.webp', 'file-gainmap.webp', 'file.json']} />
+ * <EnvironmentCube files="file.jpg" />
  * ```
  *
  * @example From cube faces
@@ -461,14 +461,14 @@ function EnvironmentDualSource(props: EnvironmentProps) {
  *
  * Supports multiple input methods:
  * - **Presets**: Selection of HDRI Haven assets (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
- * - **Files**: HDR (.hdr), EXR (.exr), gainmap JPEG (.jpg), gainmap WebP (.webp), or cube faces (array of 6 images)
+ * - **Files**: HDR (.hdr), EXR (.exr), Ultra HDR JPEG (.jpg), or cube faces (array of 6 images)
  * - **Texture**: Pre-existing cube texture via `map` prop
  * - **Custom Scene**: Render children into environment using portal and cube camera
  * - **Ground Projection**: Project environment onto ground plane
  *
  * @remarks
  * - Preset property is NOT meant for production and may fail (relies on CDNs)
- * - Gainmap format has the smallest file footprint
+ * - Ultra HDR JPEG has the smallest file footprint
  * - Use `frames={Infinity}` for animated environments with low resolution for performance
  * - Ground projection places models on the "ground" within the environment map
  * - Supports self-hosting with @pmndrs/assets using dynamic imports
@@ -483,9 +483,9 @@ function EnvironmentDualSource(props: EnvironmentProps) {
  * <Environment files="/hdr/environment.hdr" />
  * ```
  *
- * @example From gainmap (smallest footprint)
+ * @example From an Ultra HDR JPEG (smallest footprint)
  * ```jsx
- * <Environment files={['file.webp', 'file-gainmap.webp', 'file.json']} />
+ * <Environment files="file.jpg" />
  * ```
  *
  * @example With self-hosted assets

@@ -77,7 +77,5 @@ export default defineBuildConfig({
     'three',
     'three/webgpu',
     'three/tsl',
-    '@monogrid/gainmap-js',
-    '@monogrid/gainmap-js/webgpu',
   ],
 })
