@@ -505,7 +505,7 @@ Creator functions for `useUniforms`, `useNodes`, `useLocalNodes`, `useBuffers`, 
 
 ```typescript
 type CreatorState = RootState & {
-  uniforms: ScopedStoreType<UniformNode>
+  uniforms: CreatorUniforms // typed by name once you register your uniforms
   nodes: ScopedStoreType<NodeLike>
   buffers: ScopedStoreType<BufferLike>
   gpuStorage: ScopedStoreType<StorageLike>
@@ -514,22 +514,34 @@ type CreatorState = RootState & {
 
 The runtime structure of these stores is `Record<string, Leaf | Record<string, Leaf>>` (a leaf node, or a nested scope). The ScopedStore wrapper lets you:
 
-1. Access a leaf directly by property - `uniforms.uTime` returns a `UniformNode` with no cast needed.
+1. Access a leaf directly by property - `uniforms.uTime`, or `uniforms.player.uHealth` inside a scope.
 2. Access a nested scope explicitly with `.scope(key)` - returns an empty wrapper if the scope does not exist, so it is safe.
 3. Iterate with `has(key)`, `keys()`, `Object.keys()`, spread, and `for...in`.
+
+How precisely the leaves are typed depends on registration. With your uniforms [registered](./typed-uniforms), every read is typed by name and TSL operators work on it directly:
 
 ```tsx
 useLocalNodes(
   ({ uniforms, nodes }) => ({
-    // Direct leaf access - no cast
     wobble: sin(uniforms.uTime.mul(2)),
-    // Explicit nested scope access
-    playerHealth: uniforms.scope('player').uHealth,
+    playerHealth: uniforms.scope('player').uHealth, // or uniforms.player.uHealth
     glow: nodes.scope('effects').rimLightFn(),
   }),
   [],
 )
 ```
+
+Without registration a leaf is a loose `UniformNode`, which TSL operators don't accept. Give the scope its schema, or cast the leaf:
+
+```tsx
+useLocalNodes(({ uniforms }) => {
+  const player = uniforms.scope<{ uHealth: UniformNode<number> }>('player')
+  const uTime = uniforms.uTime as UniformNode<number>
+  return { damage: player.uHealth.mul(2), wobble: sin(uTime.mul(2)) }
+}, [])
+```
+
+Nodes, buffers and GPU storage are not covered by registration yet: a read is typed as the broad `NodeLike`, `BufferLike` or `StorageLike`.
 
 The wrappers are created lazily - the underlying Proxy is only built when you actually access `uniforms`, `nodes`, `buffers`, or `gpuStorage`, so creators that don't touch them pay no cost.
 

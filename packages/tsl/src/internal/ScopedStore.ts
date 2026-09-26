@@ -11,10 +11,17 @@
  *
  * @example
  * ```tsx
+ * // With uniforms registered (see `Register` and the Typed Uniforms guide), reads are typed by name
  * useLocalNodes(({ uniforms }) => ({
- *   wobble: sin(uniforms.uTime.mul(2)),           // No cast needed!
- *   playerHealth: uniforms.scope('player').uHealth // Explicit scope access
- * }))
+ *   wobble: sin(uniforms.uTime.mul(2)),
+ *   playerHealth: uniforms.scope('player').uHealth, // or uniforms.player.uHealth
+ * }), [])
+ *
+ * // Without registration, give a scope its schema
+ * useLocalNodes(({ uniforms }) => {
+ *   const player = uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')
+ *   return { damage: player.uHealth.mul(2) }
+ * }, [])
  * ```
  */
 

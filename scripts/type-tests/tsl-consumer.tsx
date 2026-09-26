@@ -2,9 +2,9 @@
 // declarations with skipLibCheck off. The fiber entries resolve through tsl's own dependency
 // (a workspace link), which is also where its RootState augmentation points.
 import type { UniformNode, RenderPipeline } from 'three/webgpu'
-import { useUniforms, useUniform, useNodes, useRenderPipeline } from '../../packages/tsl/dist/index'
+import { useUniforms, useUniform, useNodes, useLocalNodes, useRenderPipeline } from '../../packages/tsl/dist/index'
 import { useFrame, useStore, useThree } from '../../packages/fiber/dist/webgpu/index'
-import { float } from 'three/tsl'
+import { float, mix, color, sin } from 'three/tsl'
 
 export function Consumer() {
   // Creator inference survives the package boundary.
@@ -30,4 +30,36 @@ export function Consumer() {
 
   void [typed, single, n, uniforms, pipeline, ready]
   return null
+}
+
+// The documented useLocalNodes examples (the hook's and ScopedStore's docblocks), unregistered.
+export function LocalNodesDocs({ pattern }: { pattern: 'noise' | 'stripes' }) {
+  // A scope read with its schema
+  const { damage } = useLocalNodes(({ uniforms }) => {
+    const player = uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')
+    return { damage: player.uHealth.mul(2) }
+  }, [])
+
+  // A structural input declared in deps
+  const { result } = useLocalNodes(
+    ({ nodes }) => ({ result: pattern === 'noise' ? nodes.noise : nodes.stripes }),
+    [pattern],
+  )
+
+  // A cast leaf
+  const { colorNode } = useLocalNodes(({ uniforms }) => {
+    const uValue = uniforms.myUniform as UniformNode<'float', number>
+    return { colorNode: mix(color('red'), color('blue'), uValue) }
+  }, [])
+
+  // The install form
+  useLocalNodes(({ scene }) => {
+    const fogNode = sin(float(1))
+    return () => {
+      void [scene, fogNode]
+      return () => {}
+    }
+  }, [])
+
+  return { damage, result, colorNode }
 }

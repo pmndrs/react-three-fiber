@@ -334,7 +334,8 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  *
  * @example
  * ```tsx
- * // Resource-driven composition: no surrounding JS inputs.
+ * // Resource-driven composition: no surrounding JS inputs. `uniforms.uTime` is typed when the
+ * // app registers its uniforms (see `Register`); otherwise give a scope its schema or cast.
  * const { wobble, uTime } = useLocalNodes(({ uniforms, nodes }) => ({
  *   wobble: sin(uniforms.uTime.mul(2)),
  *   uTime: uniforms.uTime, // can return uniforms too
@@ -345,9 +346,9 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  *   result: pattern === 'noise' ? nodes.noise : nodes.stripes,
  * }), [pattern])
  *
- * // Type-safe uniform access
+ * // An unregistered uniform, cast to its type
  * const { colorNode } = useLocalNodes(({ uniforms }) => {
- *   const uValue = uniforms.myUniform as UniformNode<number>
+ *   const uValue = uniforms.myUniform as UniformNode<'float', number>
  *   return { colorNode: mix(colorA, colorB, uValue) }
  * }, [])
  * ```
