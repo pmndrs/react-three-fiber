@@ -1614,10 +1614,14 @@ describe('renderer', () => {
       expect(portalState.camera).toBe(portalCamera)
     })
 
-    it('keeps unrelated portal-local values when the parent changes something else', async () => {
+    // What drei's <PerspectiveCamera makeDefault> / <OrbitControls makeDefault> do inside a portal
+    // (Hud, RenderTexture, View): set() on the portal's own store. The portal owns those fields from
+    // then on, even when the parent later changes the same field.
+    it('keeps a camera and controls the portal set itself when the parent changes the same fields', async () => {
       const container = new THREE.Group()
       let portalState: RootState = null!
-      const local = new THREE.PerspectiveCamera()
+      const portalCamera = new THREE.PerspectiveCamera()
+      const portalControls = new THREE.EventDispatcher() as RootState['controls']
 
       function PortalProbe() {
         portalState = useThree()
@@ -1633,12 +1637,47 @@ describe('renderer', () => {
         ),
       )
 
-      // A value set inside the portal survives parent changes to other fields.
-      await act(async () => portalState.set({ camera: local }))
+      await act(async () => portalState.set({ camera: portalCamera, controls: portalControls }))
+
+      // The parent swaps its own default camera and controls afterwards.
+      await act(async () =>
+        rootStore.setState({
+          camera: new THREE.PerspectiveCamera(),
+          controls: new THREE.EventDispatcher() as RootState['controls'],
+        }),
+      )
+      expect(portalState.camera).toBe(portalCamera)
+      expect(portalState.controls).toBe(portalControls)
+
+      // Unrelated parent changes still come through.
       const renderer = {} as RootState['renderer']
       await act(async () => rootStore.setState({ renderer }))
-      expect(portalState.camera).toBe(local)
       expect(portalState.renderer).toBe(renderer)
+      expect(portalState.camera).toBe(portalCamera)
+    })
+
+    it('always keeps its own scene, whatever the parent does', async () => {
+      const container = new THREE.Group()
+      let portalState: RootState = null!
+
+      function PortalProbe() {
+        portalState = useThree()
+        return null
+      }
+
+      const rootStore: RootStore = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalProbe />, container)}
+          </>,
+        ),
+      )
+      const portalScene = portalState.scene
+      expect(portalScene).not.toBe(rootStore.getState().scene)
+
+      await act(async () => rootStore.setState({ scene: new THREE.Scene() }))
+      expect(portalState.scene).toBe(portalScene)
     })
   })
 })

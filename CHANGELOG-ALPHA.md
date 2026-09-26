@@ -23,11 +23,12 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   `state.renderPipeline`. Behaviour is unchanged.
 - `<Canvas>` hot-reload handling notifies registered extensions instead of calling the TSL cache
   refresh directly. The TSL hooks register themselves when their module loads.
-- Portals follow parent state that changes after they mount. A portal's state is a copy of its
-  parent's, and that copy used to win on every later parent change, so everything except `size`,
-  `events` and `viewport` stayed as it was at mount (a later `camera`, `renderer`, or uniform). Fields
-  the portal sets through its `state` prop, and values set inside the portal, are still kept until
-  the parent changes that same field.
+- Portals pick up parent state they inherit when it changes after they mount (a later uniform,
+  `controls` or `renderer`). Before, the portal's copy of the parent state won on every later change,
+  so everything except `size`, `events` and `viewport` stayed as it was at mount. What a portal owns
+  is unchanged: its own scene, fields set through its `state` prop, and fields it sets itself (a
+  camera or controls made default inside it, as drei's `Hud`, `RenderTexture` and `View` do) are
+  never overwritten by the parent.
 
 ### Fixes
 

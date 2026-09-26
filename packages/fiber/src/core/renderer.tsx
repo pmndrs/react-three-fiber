@@ -1062,14 +1062,18 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
     // The portal's state holds a copy of every parent field, so `...injectState` alone would freeze
-    // them at mount. Parent fields that changed since the last sync win -- a later uniform, a new
-    // camera or renderer -- unless the portal overrides that field through its `state` prop.
+    // inherited fields at mount (a later uniform, controls, renderer...). A parent change comes
+    // through only for a field the portal still inherits: not one set through its `state` prop, and
+    // not one it set itself (its value no longer matches what it last got from the parent) -- e.g.
+    // a camera or controls made default inside the portal (drei's Hud, RenderTexture, View).
     const followed: Partial<RootState> = {}
     const lastRoot = lastRootState.current
     if (lastRoot) {
       for (const key in rootState) {
         const field = key as keyof RootState
-        if (rootState[field] !== lastRoot[field] && !(key in rest)) (followed as any)[field] = rootState[field]
+        const changed = rootState[field] !== lastRoot[field]
+        const inherited = !(key in rest) && injectState[field] === lastRoot[field]
+        if (changed && inherited) (followed as any)[field] = rootState[field]
       }
     }
     lastRootState.current = rootState
