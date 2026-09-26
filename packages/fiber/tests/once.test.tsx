@@ -4,8 +4,6 @@ import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, extend, once } from '../src/index'
 import { isOnce } from '../src/core/utils/once'
 
-extend(THREE)
-
 describe('once', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
 

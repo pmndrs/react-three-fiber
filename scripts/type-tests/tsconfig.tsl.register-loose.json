@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["./tsl-register-loose.tsx"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": { "@react-three/tsl": ["../../packages/tsl/dist/index.d.ts"] }
+  }
+}

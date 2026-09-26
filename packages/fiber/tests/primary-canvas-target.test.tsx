@@ -30,8 +30,6 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, extend } from '../src'
 
-extend(THREE)
-
 //* Mock Renderer ==============================
 
 class MockWebGPURenderer {

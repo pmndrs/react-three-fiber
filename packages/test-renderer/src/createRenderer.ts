@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react'
-import * as THREE from 'three'
+import type * as THREE from 'three'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -25,8 +25,6 @@ import type { Instance } from '@react-three/fiber'
  * Dependencies injected by each entry point
  */
 export interface RendererDependencies {
-  /** THREE namespace to extend */
-  THREE: any
   /** createRoot from the appropriate fiber entry */
   createRoot: any
   /** _roots map from fiber */
@@ -35,8 +33,6 @@ export interface RendererDependencies {
   reconciler: any
   /** act from fiber */
   act: any
-  /** extend function from fiber */
-  extend: (objects: object) => void
   /** Renderer mode for canvas context */
   mode: RendererMode
 }
@@ -49,10 +45,10 @@ export interface RendererDependencies {
  * @param deps - Dependencies from the specific entry point
  */
 export function createTestRenderer(deps: RendererDependencies) {
-  const { THREE, createRoot, mockRoots, reconciler, act, extend, mode } = deps
+  const { createRoot, mockRoots, reconciler, act, mode } = deps
 
-  // Extend catalogue for render API in tests
-  extend(THREE)
+  // No extend(THREE) here: a root resolves three's elements from the namespace of the renderer
+  // it loaded, so the entry passed in decides which elements exist, same as in an app.
 
   /**
    * Create a test renderer instance for testing R3F scenes

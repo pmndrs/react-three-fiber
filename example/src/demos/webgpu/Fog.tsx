@@ -1,7 +1,8 @@
-import { useLocalNodes, useThree, useUniforms } from '@react-three/fiber/webgpu'
+import { useThree } from '@react-three/fiber/webgpu'
 import { useEffect } from 'react'
 import { useControls } from 'leva'
 import { uniform, fog, color, float, positionView, triNoise3D, positionWorld, normalWorld } from 'three/tsl'
+import { useLocalNodes, useUniforms } from '@react-three/tsl'
 
 export const Fog = () => {
   const { scene } = useThree()

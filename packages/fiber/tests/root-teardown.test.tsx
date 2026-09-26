@@ -45,10 +45,11 @@ const webgpu = vi.hoisted(() => {
   }
 })
 
-vi.mock('three/webgpu', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('three/webgpu')>()),
-  WebGPURenderer: webgpu.MockWebGPURenderer,
-}))
+// The root entry builds the WebGPU renderer from its support module's `Renderer`
+vi.mock('../src/support/webgpu', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/support/webgpu')>()
+  return { webgpuSupport: { ...actual.webgpuSupport, Renderer: webgpu.MockWebGPURenderer } }
+})
 
 import { createRoot } from '../src'
 import { _roots, unmountComponentAtNode } from '../src/core/renderer'
