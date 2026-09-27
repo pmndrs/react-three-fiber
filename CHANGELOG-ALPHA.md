@@ -84,6 +84,9 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- A `<Canvas>` removed while an `<Activity>` hides it releases its root. Hiding already ran the
+  Canvas' effect cleanups, so removing it while hidden left the root, its frame jobs and its
+  renderer running.
 - Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
   `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
   `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the

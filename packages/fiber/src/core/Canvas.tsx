@@ -2,7 +2,7 @@ import * as React from 'react'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
-import { createRoot, unmountComponentAtNode, _roots } from './renderer'
+import { createRoot, _roots } from './renderer'
 import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
 import { Environment } from './components/Environment/Environment'
@@ -254,6 +254,20 @@ function CanvasImpl({
     }
   })
 
+  // Insertion effects survive Activity hiding and StrictMode effect replay: their cleanup runs only
+  // when the Canvas is finally removed, including removal while an Activity hides it (React 19.2+),
+  // when its passive effects are already gone and the cleanup below never runs again
+  React.useInsertionEffect(() => {
+    return () => {
+      // Through the root handle: a hidden Activity has already detached canvasRef
+      const current = root.current
+      root.current = null!
+      current?.unmount()
+    }
+  }, [])
+
+  // Before 19.2, React skips insertion cleanups in a subtree Suspense has hidden but still runs
+  // passive ones, so this cleanup releases a Canvas that left the document in that case
   React.useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
@@ -278,9 +292,10 @@ function CanvasImpl({
         // suspension must keep the root, and a real unmount must still release it.
         if (canvas.isConnected) return
 
-        unmountComponentAtNode(canvas)
-        // Clear root ref so HMR creates a fresh root
+        // A later setup builds a new root rather than using the released one
+        const current = root.current
         root.current = null!
+        current?.unmount()
       }
     }
   }, [])

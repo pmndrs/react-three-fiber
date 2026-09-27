@@ -1,5 +1,5 @@
 /**
- * Canvas root lifetime vs. suspension — Tier 1 (jsdom).
+ * Canvas root lifetime vs. suspension and <Activity> hiding — Tier 1 (jsdom).
  *
  * Regression for #3850: suspending inside <Canvas> destroyed and re-created the whole renderer
  * root, silently discarding everything created inside it (useGPUStorage buffers included).
@@ -23,6 +23,7 @@ import * as THREE from 'three'
 import { suspend } from 'suspend-react'
 
 import { Canvas, extend, useStore } from '../src'
+import { _roots } from '../src/core/renderer'
 import type { RootStore } from '../src'
 
 /** A child that suspends until the returned `resolve` is called, like useTexture does. */
@@ -120,6 +121,44 @@ describe('suspending inside <Canvas> (#3850)', () => {
     // `internal.active = false` is the first thing unmountComponentAtNode does, and it does it
     // synchronously — the rest of the teardown (including the _roots delete) is deferred behind a
     // 500ms timer, so this is the signal that actually pins "the teardown ran" without racing it.
+    expect(store.getState().internal.active).toBe(false)
+  })
+})
+
+describe('hiding <Canvas> in <Activity>', () => {
+  function App({ mode, show, seen }: { mode: 'visible' | 'hidden'; show: boolean; seen: RootStore[] }) {
+    const Owner = React.useMemo(() => makeOwner(seen), [seen])
+    return show ? (
+      <div style={{ width: 100, height: 100 }}>
+        <React.Activity mode={mode}>
+          <Canvas>
+            <Owner />
+          </Canvas>
+        </React.Activity>
+      </div>
+    ) : null
+  }
+
+  it('keeps the root while hidden and releases it when removed while hidden', async () => {
+    const seen: RootStore[] = []
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      rerender = render(<App mode="visible" show seen={seen} />).rerender
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    const store = seen[seen.length - 1]
+    expect(store.getState().internal.active).toBe(true)
+
+    // Hiding destroys the Canvas' effects but keeps its DOM, so the root must survive
+    await act(async () => rerender(<App mode="hidden" show seen={seen} />))
+    expect(store.getState().internal.active).toBe(true)
+    expect([..._roots.values()].some((root) => root.store === store)).toBe(true)
+
+    // Removed while hidden: its passive effects are already gone, so only final removal can release it
+    await act(async () => {
+      rerender(<App mode="hidden" show={false} seen={seen} />)
+      await new Promise((r) => setTimeout(r, 20))
+    })
     expect(store.getState().internal.active).toBe(false)
   })
 })
