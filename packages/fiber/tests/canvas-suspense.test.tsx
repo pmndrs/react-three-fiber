@@ -125,16 +125,24 @@ describe('suspending inside <Canvas> (#3850)', () => {
   })
 })
 
-describe('hiding <Canvas> in <Activity>', () => {
+// CI also covers React 19.0, which has neither Activity nor its types.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const describeActivity = Activity ? describe : describe.skip
+
+describeActivity('hiding <Canvas> in <Activity>', () => {
   function App({ mode, show, seen }: { mode: 'visible' | 'hidden'; show: boolean; seen: RootStore[] }) {
     const Owner = React.useMemo(() => makeOwner(seen), [seen])
     return show ? (
       <div style={{ width: 100, height: 100 }}>
-        <React.Activity mode={mode}>
+        <Activity mode={mode}>
           <Canvas>
             <Owner />
           </Canvas>
-        </React.Activity>
+        </Activity>
       </div>
     ) : null
   }
