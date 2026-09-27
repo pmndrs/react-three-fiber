@@ -992,9 +992,9 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
 
     // Teardown is best-effort, but one failing step must not skip the rest, least of all the
     // renderer release at the end. Failures are reported rather than swallowed.
-    const attempt = (step: () => void) => {
+    const attempt = <T,>(step: () => T): T | undefined => {
       try {
-        step()
+        return step()
       } catch (error) {
         console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
       }
@@ -1025,10 +1025,17 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
 
     // Last: releasing the final lease disposes a renderer R3F created. A caller's renderer, or one
     // a secondary still draws with, is left alone
-    attempt(() => internal.releaseRenderer?.())
+    const released = attempt(() => internal.releaseRenderer?.())
     internal.releaseRenderer = undefined
 
-    if (callback) callback(canvas)
+    // The callback means the root is gone, so an async dispose() has to settle first
+    if (callback) {
+      if (released) {
+        released.then(() => callback(canvas)).catch((error) => console.warn('[R3F] Error in unmount callback', error))
+      } else {
+        callback(canvas)
+      }
+    }
   }
 }
 

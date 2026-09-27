@@ -265,4 +265,73 @@ describe('renderer lifecycle', () => {
       expect(shared.dispose).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('release', () => {
+    async function mountWebGPU() {
+      const canvas = document.createElement('canvas')
+      const root = createRoot(canvas)
+      await act(async () => (await root.configure({ renderer: {}, frameloop: 'never' })).render(null))
+      return { canvas, renderer: webgpu.instances[0] }
+    }
+
+    it('releases the WebGL context even when dispose() throws', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const root = createRoot(document.createElement('canvas'))
+      let gl!: THREE.WebGLRenderer
+      await act(async () => {
+        gl = (await root.configure({ gl: {}, frameloop: 'never' })).render(null).getState().gl as THREE.WebGLRenderer
+      })
+      const failure = new Error('dispose failed')
+      vi.spyOn(gl, 'dispose').mockImplementation(() => {
+        throw failure
+      })
+      const forceContextLoss = vi.spyOn(gl, 'forceContextLoss')
+
+      await act(async () => root.unmount())
+      expect(forceContextLoss).toHaveBeenCalledTimes(1)
+      expect(warn).toHaveBeenCalledWith('[R3F] Error disposing renderer', failure)
+    })
+
+    it('calls the unmount callback once an async dispose() settles', async () => {
+      const { canvas, renderer } = await mountWebGPU()
+      let settle!: () => void
+      renderer.dispose.mockImplementation(() => new Promise<void>((resolve) => (settle = resolve)))
+      const callback = vi.fn()
+
+      await act(async () => unmountComponentAtNode(canvas, callback))
+      expect(renderer.dispose).toHaveBeenCalledTimes(1)
+      expect(callback).not.toHaveBeenCalled()
+
+      await act(async () => settle())
+      expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls the unmount callback synchronously for a renderer it does not dispose', async () => {
+      const canvas = document.createElement('canvas')
+      const renderer = new webgpu.MockWebGPURenderer({ canvas })
+      // Never settles: a caller's renderer is not disposed, so nothing waits on it
+      renderer.dispose.mockImplementation(() => new Promise<void>(() => {}))
+      const root = createRoot(canvas)
+      await act(async () => (await root.configure({ renderer: renderer as any, frameloop: 'never' })).render(null))
+      const callback = vi.fn()
+
+      await act(async () => unmountComponentAtNode(canvas, callback))
+      expect(renderer.dispose).not.toHaveBeenCalled()
+      expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    it('reports an unmount callback that throws after an async dispose()', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const { canvas, renderer } = await mountWebGPU()
+      renderer.dispose.mockImplementation(async () => {})
+      const failure = new Error('callback failed')
+
+      await act(async () =>
+        unmountComponentAtNode(canvas, () => {
+          throw failure
+        }),
+      )
+      expect(warn).toHaveBeenCalledWith('[R3F] Error in unmount callback', failure)
+    })
+  })
 })
