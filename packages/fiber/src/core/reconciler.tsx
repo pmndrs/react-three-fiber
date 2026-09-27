@@ -339,6 +339,9 @@ function removeChild(
 ) {
   if (!child) return
 
+  // Unlinking clears the parent, which invalidateInstance checks, so remember it
+  const wasLinked = !!child.parent
+
   // Unlink instances
   child.parent = null
   const childIndex = parent.children.indexOf(child)
@@ -376,7 +379,10 @@ function removeChild(
   }
 
   // Tree was updated, request a frame for top-level instance
-  if (dispose === undefined) invalidateInstance(child)
+  if (dispose === undefined && wasLinked) {
+    const state = child.root?.getState?.()
+    if (state && state.internal.frames === 0) state.invalidate()
+  }
 }
 
 function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance']): void {
