@@ -13,10 +13,8 @@ export * from './webgl'
 export * from './scheduler'
 export * from './three'
 export * from './renderTarget'
+export * from './provider'
+export * from './register'
 
-// Side-effect imports for module augmentations
-import './three'
-import './tsl'
-import './renderPipeline'
-
-// Note: webgpu types are exported separately via the /webgpu entry point
+// JSX element maps are declared per entry (src/index.tsx, src/legacy.tsx, src/webgpu/index.tsx):
+// each augments react's IntrinsicElements with the constructors its renderer can build.

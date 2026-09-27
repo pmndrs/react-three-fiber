@@ -1,7 +1,7 @@
 ---
 title: 'v9 Migration Guide'
 description: Changes and new features with v9 and React 19
-nav: 25
+nav: 26
 ---
 
 > [!TIP]
@@ -86,6 +86,8 @@ Further, a callback passed to GL can now return a promise for async constructors
 ````
 
 ## WebGPU
+
+> **v10:** this section describes v9. In v10 the WebGPU renderer is `<Canvas renderer>` on the same `@react-three/fiber` import, with node materials as JSX and no `extend(THREE)` call. See the [WebGPU overview](../webgpu/overview) and the [v10 migration guide](../migration/v10).
 
 Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
 
@@ -279,17 +281,11 @@ console.log(store.getState())
 +import ReactThreeTestRenderer from '@react-three/test-renderer/legacy'
 ```
 
-The WebGPU entry (`/webgpu`) also exports all WebGPU-specific hooks for testing:
+The TSL hooks come from `@react-three/tsl`, in tests as in app code:
 
 ```tsx
-import ReactThreeTestRenderer, {
-  useUniform,
-  useUniforms,
-  useNodes,
-  useLocalNodes,
-  removeUniforms,
-  clearScope,
-} from '@react-three/test-renderer/webgpu'
+import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 
 describe('WebGPU Hooks', () => {
   it('should test uniforms', async () => {

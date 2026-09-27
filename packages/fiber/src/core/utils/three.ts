@@ -1,4 +1,5 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
+import { getThree } from '../three'
 import type { Dpr, Size, ThreeCamera } from '#types'
 import { isOrthographicCamera } from './is'
 
@@ -62,8 +63,9 @@ export function updateCamera(camera: ThreeCamera, size: Size): void {
   camera.updateProjectionMatrix()
 }
 
-// Reusable matrix for frustum calculations (avoids allocation per frame)
-const frustumMatrix = new THREE.Matrix4()
+// Reusable matrix for frustum calculations (avoids allocation per frame). Created on first use:
+// core has no three at module scope, only once a root has loaded a renderer.
+let frustumMatrix: THREE.Matrix4 | undefined
 
 /**
  * Updates a frustum from a camera's projection and world matrices.
@@ -85,7 +87,8 @@ const frustumMatrix = new THREE.Matrix4()
  * if (frustum.intersectsObject(mesh)) { ... }
  */
 export function updateFrustum(camera: ThreeCamera, frustum?: THREE.Frustum): THREE.Frustum {
-  const target = frustum ?? new THREE.Frustum()
+  const target = frustum ?? new (getThree().Frustum)()
+  frustumMatrix ??= camera.projectionMatrix.clone()
   frustumMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
   target.setFromProjectionMatrix(frustumMatrix)
   return target

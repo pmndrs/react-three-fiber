@@ -5,8 +5,6 @@ import * as THREE from 'three'
 import { createRoot, useTexture, useTextures, useThree, extend } from '../src'
 import type { UseTexturesReturn } from '../src'
 
-extend(THREE)
-
 /** Make TextureLoader.load resolve synchronously to a given texture (jsdom has no real image loading). */
 function mockTextureLoad(tex: THREE.Texture) {
   return vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(((

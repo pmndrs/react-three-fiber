@@ -49,14 +49,13 @@ const webgpu = vi.hoisted(() => {
   }
 })
 
-vi.mock('three/webgpu', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('three/webgpu')>()),
-  WebGPURenderer: webgpu.MockWebGPURenderer,
-}))
-
 import { Canvas, createRoot } from '../src'
 import { _roots, unmountComponentAtNode } from '../src/core/renderer'
 import { disposeRenderer } from '../src/core/rendererLease'
+import { webgpuSupport } from '../src/support/webgpu'
+
+// R3F builds its WebGPU renderer from the support module; build the mock instead
+const RealRenderer = webgpuSupport.Renderer
 
 const deferred = () => {
   let resolve!: () => void
@@ -68,6 +67,7 @@ const deferred = () => {
 describe('renderer lifecycle', () => {
   beforeEach(() => {
     webgpu.reset()
+    webgpuSupport.Renderer = webgpu.MockWebGPURenderer as unknown as typeof RealRenderer
   })
 
   afterEach(async () => {
@@ -75,6 +75,7 @@ describe('renderer lifecycle', () => {
       for (const canvas of [..._roots.keys()]) unmountComponentAtNode(canvas)
     })
     vi.restoreAllMocks()
+    webgpuSupport.Renderer = RealRenderer
   })
 
   describe('ownership', () => {

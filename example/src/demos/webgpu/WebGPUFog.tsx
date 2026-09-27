@@ -9,7 +9,7 @@
  */
 
 import { useMemo } from 'react'
-import { Canvas } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { Fog } from './Fog'
 

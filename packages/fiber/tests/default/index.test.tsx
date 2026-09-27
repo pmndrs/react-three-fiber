@@ -20,7 +20,6 @@ import {
   extend,
 } from '../../src/index'
 
-extend(THREE)
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
 const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
 
