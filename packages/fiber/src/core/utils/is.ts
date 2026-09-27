@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
 
 import type { ThreeCamera, EquConfig } from '#types'
 
@@ -62,6 +62,20 @@ export const isColorRepresentation = (value: unknown): value is THREE.ColorRepre
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
 
 export const isTexture = (value: unknown): value is THREE.Texture => !!(value as THREE.Texture | undefined)?.isTexture
+
+// Structural checks for two three classes that carry no `isX` flag. Core does not hold the classes
+// themselves (no static three imports), and these are the only places it needed `instanceof`.
+export const isLayers = (value: unknown): value is THREE.Layers =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as THREE.Layers).mask === 'number' &&
+  'enableAll' in value
+
+export const isUniform = (value: unknown): value is THREE.Uniform =>
+  value !== null &&
+  typeof value === 'object' &&
+  'value' in value &&
+  typeof (value as THREE.Uniform).clone === 'function'
 
 type VectorLike = { set: (...args: any[]) => void; constructor?: Function }
 

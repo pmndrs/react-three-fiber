@@ -31,7 +31,7 @@ import { dirname, join } from 'node:path'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 // fiber first: the others declare a peer on it, so a partial run leaves the tree resolvable.
-const PACKAGES = ['fiber', 'test-renderer', 'eslint-plugin']
+const PACKAGES = ['fiber', 'tsl', 'test-renderer', 'eslint-plugin']
 
 const argv = new Set(process.argv.slice(2))
 const dryRun = argv.has('--dry-run')

@@ -1,4 +1,5 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
+import { getThree } from './three'
 import { getRootState } from './utils'
 import { unregisterVisibility } from './visibility'
 
@@ -328,7 +329,7 @@ export function createEvents(store: RootStore) {
 
         if (state) {
           const { raycaster, pointer, camera, internal } = state
-          const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
+          const unprojectedPoint = new (getThree().Vector3)(pointer.x, pointer.y, 0).unproject(camera)
 
           const hasPointerCapture = (id: number) => {
             const pointerState = internal.pointerMap.get(id)

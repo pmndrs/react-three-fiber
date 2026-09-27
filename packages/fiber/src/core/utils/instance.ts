@@ -1,4 +1,4 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
 import type { RootStore, Instance, ObjectMap, Disposable } from '#types'
 import { getUuidPrefix } from './three'
 
@@ -146,14 +146,12 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 
 /**
  * Triggers an update for an instance.
- * Calls onUpdate callback and invalidates the frame if necessary.
+ * Invalidates the frame if the root is in demand mode.
  *
  * @param instance - Instance to invalidate
  */
 export function invalidateInstance(instance: Instance): void {
   if (!instance.parent) return
-
-  instance.props.onUpdate?.(instance.object)
 
   const state = instance.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()

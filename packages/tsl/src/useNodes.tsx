@@ -1,0 +1,253 @@
+import { useCallback, useMemo } from 'react'
+import { useStore } from '@react-three/fiber/extension'
+import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
+import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
+import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
+import { isTSLNode } from './internal/resourceGuards'
+import { useScopedResource } from './internal/useScopedResource'
+import { scopedNodeName } from './internal/utils'
+import type { NodeLike, NodeRecord, NodeStore } from '../types'
+
+//* Types ==============================
+
+/**
+ * Every node representation a creator may return. The definition lives with the store types as
+ * `NodeLike`, so the shape creators return and the shape `state.nodes` holds are one type by
+ * construction: three's real `Node`, the callable proxy `Fn()` returns, or the legacy structural
+ * `{ uuid, nodeType }` shape.
+ */
+export type TSLNodeLike = NodeLike
+
+// `NodeRecord` and `NodeStore` are the store's own types, re-exported for hook consumers.
+export type { NodeRecord, NodeStore }
+
+/** Backward-compatible alias covering every accepted node representation. */
+export type TSLNode = TSLNodeLike
+
+/**
+ * Creator function that returns a record of nodes.
+ * Exact creator return inference is preserved within the compatible node constraint.
+ */
+export type NodeCreator<T extends Record<string, TSLNodeLike>> = (state: CreatorState) => T
+
+/** Function signature for removeNodes util */
+export type RemoveNodesFn = (names: string | string[], scope?: string) => void
+
+/** Function signature for clearNodes util */
+export type ClearNodesFn = (scope?: string) => void
+
+/** Function signature for rebuildNodes util */
+export type RebuildNodesFn = (scope?: string) => void
+
+/** Return type with utils included */
+export type NodesWithUtils<T extends Record<string, unknown> = NodeRecord> = T & {
+  removeNodes: RemoveNodesFn
+  clearNodes: ClearNodesFn
+  rebuildNodes: RebuildNodesFn
+}
+
+//* Hook Overloads ==============================
+
+// Get all nodes (returns full structure with root nodes and scopes + utils)
+export function useNodes(): NodesWithUtils<NodeStore>
+
+// Get nodes from a specific scope (+ utils)
+export function useNodes(scope: string): NodesWithUtils<NodeRecord>
+
+// Read existing nodes against an explicit schema, at root (no scope) or within a scope.
+// A reader cannot infer types from a runtime string; supply the shape the creator returned.
+export function useNodes<T extends NodeRecord>(scope?: string): NodesWithUtils<T>
+
+// Create/get nodes at root level (no scope) (+ utils)
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
+
+// Create/get nodes within a scope (+ utils)
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
+
+// Broad implementation overload keeps utility-only consumers assignable while the
+// preceding call-site overloads preserve exact creator and reader inference.
+export function useNodes(
+  creatorOrScope?: NodeCreator<NodeRecord> | string,
+  scope?: string,
+): NodesWithUtils<Record<string, unknown>>
+
+//* Hook Implementation ==============================
+
+/**
+ * Hook for managing global TSL nodes with create-if-not-exists pattern.
+ *
+ * Nodes at root level are stored directly on state.nodes.
+ * Scoped nodes are stored under state.nodes[scope].
+ * Accepts Three nodes, callable Fn nodes, and legacy uuid/nodeType structural nodes.
+ *
+ * @example
+ * ```tsx
+ * import { attribute, varying, vec3, sin, cos, time, positionLocal } from 'three/tsl'
+ *
+ * // Create root-level nodes (stored at state.nodes.wobble, etc.)
+ * const { wobble, vWorldPos } = useNodes(() => ({
+ *   wobble: sin(time.mul(2)),
+ *   vWorldPos: varying(vec3()),
+ * }))
+ *
+ * // Create scoped nodes (stored at state.nodes.player.playerOffset)
+ * const { playerOffset } = useNodes(() => ({
+ *   playerOffset: attribute('offset', 'vec3'),
+ * }), 'player')
+ *
+ * // Access existing nodes from a specific scope
+ * const playerNodes = useNodes('player')
+ *
+ * // Get all nodes (root + scopes)
+ * const allNodes = useNodes()
+ * // allNodes = { wobble, vWorldPos, player: { playerOffset } }
+ *
+ * // Use in material
+ * material.positionNode = positionLocal.add(normal.mul(wobble))
+ * ```
+ */
+export function useNodes<T extends NodeRecord>(
+  creatorOrScope?: NodeCreator<T> | string,
+  scope?: string,
+): NodesWithUtils<T> | NodesWithUtils<NodeRecord> | NodesWithUtils<NodeStore> {
+  const store = usePrimaryStore()
+
+  //* Utils ==============================
+  // Memoized util functions that capture store reference
+
+  /** Remove nodes by name from root or a scope */
+  const removeNodes = useCallback<RemoveNodesFn>(
+    (names, targetScope) =>
+      removeResourceEntries(store, 'nodes', Array.isArray(names) ? names : [names], targetScope, isTSLNode),
+    [store],
+  )
+
+  /** Clear nodes - scope name, 'root' for root only, or undefined for all */
+  const clearNodes = useCallback<ClearNodesFn>(
+    (targetScope) => clearResourceEntries(store, 'nodes', targetScope, isTSLNode),
+    [store],
+  )
+
+  /** Rebuild nodes - invalidates the cache and increments HMR version to trigger re-creation */
+  const rebuildNodes = useCallback<RebuildNodesFn>(
+    (targetScope) => rebuildResource(store, 'nodes', targetScope),
+    [store],
+  )
+
+  //* Main Logic ==============================
+
+  // Determine if we're in reader mode (no creator function)
+  const isReader = creatorOrScope === undefined || typeof creatorOrScope === 'string'
+
+  // Subscribe to nodes changes for reader modes
+  // This ensures useNodes() and useNodes('scope') reactively update when store changes
+  // For creator mode, we intentionally don't use this value to avoid re-running the creator
+  const storeNodes = usePrimaryThree((s) => s.nodes)
+
+  // Creator mode: run the creator and register the result through the shared
+  // staged-registration mechanism (render-phase creation, commit-phase store
+  // write). In reader mode this stages nothing and returns {}.
+  const created = useScopedResource<TSLNodeLike>({
+    store,
+    kind: 'nodes',
+    scope: isReader ? undefined : scope,
+    isLeaf: isTSLNode,
+    create: () => {
+      if (isReader) return {}
+      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
+      return (creatorOrScope as NodeCreator<T>)(createLazyCreatorState(store.getState(), store))
+    },
+    prepare: (name, node) => {
+      // Apply label for debugging
+      const setName = Reflect.get(node, 'setName')
+      if (typeof setName === 'function') setName.call(node, scopedNodeName(scope, name))
+      return node
+    },
+  })
+
+  // Case 1: No arguments - all nodes (root + scopes), reactive via storeNodes
+  // Case 2: String argument - that scope's nodes (guard against a TSL node
+  //         stored under the same name), reactive via storeNodes
+  // Case 3: Creator function - the entries registered above
+  let nodes: NodeRecord | NodeStore = created
+  if (creatorOrScope === undefined) {
+    nodes = storeNodes as NodeStore
+  } else if (typeof creatorOrScope === 'string') {
+    const scopeData = storeNodes[creatorOrScope]
+    nodes = scopeData && !isTSLNode(scopeData) ? (scopeData as NodeRecord) : {}
+  }
+
+  // Return nodes with utils
+  return { ...nodes, removeNodes, clearNodes, rebuildNodes } as NodesWithUtils<T>
+}
+
+//* Standalone rebuildNodes ==============================
+// Global function for HMR integration - can be called from Canvas or module-level code
+
+/**
+ * Global rebuildNodes function for HMR integration.
+ * Invalidates cached nodes and increments _hmrVersion to trigger re-creation.
+ * Call this when HMR is detected to refresh all node creators.
+ *
+ * Resolves to the primary store so shared TSL resources rebuild on the
+ * authoritative store.
+ *
+ * @param store - The R3F store (from useStore or context)
+ * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
+ */
+export function rebuildAllNodes(store: ReturnType<typeof useStore>, scope?: string) {
+  rebuildResource(store, 'nodes', scope)
+}
+
+export default useNodes
+
+//* useLocalNodes ==============================
+
+/** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
+export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
+
+/**
+ * Creates local values that rebuild when uniforms, nodes, or textures change.
+ *
+ * Unlike `useNodes`, this does NOT register to the global store.
+ * Use for component-specific nodes/values that depend on shared resources.
+ *
+ * @example
+ * ```tsx
+ * // Destructure what you need from state
+ * const { wobble, uTime } = useLocalNodes(({ uniforms, nodes }) => ({
+ *   wobble: sin(uniforms.uTime.mul(2)),
+ *   uTime: uniforms.uTime,  // can return uniforms too
+ * }))
+ *
+ * // Or access anything else from RootState
+ * const { scaled } = useLocalNodes(({ camera, nodes }) => ({
+ *   scaled: nodes.basePos.mul(camera.zoom),
+ * }))
+ *
+ * // Type-safe uniform access
+ * const { colorNode } = useLocalNodes(({ uniforms }) => {
+ *   const uValue = uniforms.myUniform as UniformNode<number>
+ *   return { colorNode: mix(colorA, colorB, uValue) }
+ * })
+ * ```
+ */
+export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalNodeCreator<T>): T {
+  const store = usePrimaryStore()
+
+  // Subscribe to trigger recreation when these change
+  const uniforms = usePrimaryThree((s) => s.uniforms)
+  const nodes = usePrimaryThree((s) => s.nodes)
+  const textures = usePrimaryThree((s) => s.textures)
+  // Subscribe to HMR version to rebuild on hot reload
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
+
+  return useMemo(() => {
+    // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
+    // The store is passed so entries staged (not yet committed) by creator hooks
+    // earlier in this render pass are visible here too.
+    const wrappedState = createLazyCreatorState(store.getState(), store)
+    return creator(wrappedState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, creator, uniforms, nodes, textures, hmrVersion]) // hmrVersion triggers rebuild on HMR
+}

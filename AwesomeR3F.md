@@ -135,6 +135,16 @@ A selection of companies and projects using React Three Fiber.
 - [Luma AI Genie](https://lumalabs.ai/genie) - AI models
 - [Skybox by Blockade Labs](https://skybox.blockadelabs.com) - AI environment maps
 
+### Games
+
+- [Mana Blade](https://manablade.com/) - MMORPG
+- [Horizon Drive](https://www.shopify.com/editions/summer2025/drive) – Racing
+- [Space Pizza](https://spacepizza.gg/) - Tower defense
+- [Zoo Drop](https://zoodrop.io/) - Suika game
+- [Dungeons & Ducks](https://dungeons-n-ducks.vercel.app/) - Puzzle
+- [Cube Slide](https://cubeslide.vercel.app/) – Puzzle
+- [Lord of the Harvest](https://petertalisman.quest) – Idle game
+
 ### Other
 
 - [Zillow](https://www.zillow.com) - Real estate

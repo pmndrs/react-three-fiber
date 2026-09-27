@@ -1,14 +1,16 @@
 ---
 title: Multi-Canvas
 description: Share a single WebGPURenderer across multiple Canvas components for HUD overlays, picture-in-picture, and multi-viewport rendering.
-nav: 18
+nav: 19
 ---
 
 v10 supports sharing a single `WebGPURenderer` across multiple `Canvas` components. This enables HUD overlays, picture-in-picture views, and multi-viewport rendering without the overhead of multiple GPU contexts.
 
 ```tsx
-import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 ```
+
+Every Canvas here takes the `renderer` prop, which is what asks for the WebGPU renderer. On `@react-three/fiber/webgpu` the prop is implied and `state.renderer` is typed as a `WebGPURenderer`; everything below works the same on either import.
 
 ## Basic Setup
 
@@ -53,7 +55,7 @@ Control render timing on a secondary canvas with the `scheduler` option:
 A secondary canvas can render the primary's scene from a different viewpoint using `primaryStore` from R3F state. This is the basis for HUDs and picture-in-picture.
 
 ```tsx
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three/webgpu'
 
@@ -110,7 +112,7 @@ Each canvas maintains its own scene graph and camera, event handling, and state 
 
 Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context.
 
-The `primaryStore` on each canvas's state provides access to the primary's shared TSL resources (uniforms, nodes) and its scene/camera, enabling advanced patterns like HUDs.
+The `primaryStore` on each canvas's state provides access to the primary's scene/camera, enabling advanced patterns like HUDs. TSL resources (uniforms, nodes, buffers, GPU storage) are shared automatically: they live on the primary's `RootState`, each secondary holds the same map objects, and portals inherit them from their parent, so `state.uniforms` (and the `@react-three/tsl` hooks) read the same set on every canvas and portal.
 
 R3F automatically manages `CanvasTarget` switching across canvases. A job in the scheduler's `start` phase sets the correct canvas target before any other jobs run for that root, so user render callbacks render to the right canvas automatically.
 

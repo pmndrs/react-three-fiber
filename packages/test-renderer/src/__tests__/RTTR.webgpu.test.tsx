@@ -13,24 +13,15 @@ import ReactThreeTestRenderer, {
   create,
   act,
   waitFor,
-  // WebGPU hooks
-  useUniform,
-  useUniforms,
-  useNodes,
-  useLocalNodes,
-  // Cleanup utilities
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  removeNodes,
-  clearNodeScope,
-  clearRootNodes,
   // Mock utilities
   mockWebGPU,
   unmockWebGPU,
 } from '../webgpu'
+import * as webgpuEntry from '../webgpu'
 
 import { useThree } from '@react-three/fiber/webgpu'
+// The TSL hooks live in their own package; test-renderer no longer re-exports them.
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 
 //* Test Setup ==============================
 
@@ -56,20 +47,11 @@ describe('ReactThreeTestRenderer WebGPU Entry', () => {
       expect(typeof ReactThreeTestRenderer.waitFor).toBe('function')
     })
 
-    it('should export WebGPU hooks', () => {
-      expect(typeof useUniform).toBe('function')
-      expect(typeof useUniforms).toBe('function')
-      expect(typeof useNodes).toBe('function')
-      expect(typeof useLocalNodes).toBe('function')
-    })
-
-    it('should export cleanup utilities', () => {
-      expect(typeof removeUniforms).toBe('function')
-      expect(typeof clearScope).toBe('function')
-      expect(typeof clearRootUniforms).toBe('function')
-      expect(typeof removeNodes).toBe('function')
-      expect(typeof clearNodeScope).toBe('function')
-      expect(typeof clearRootNodes).toBe('function')
+    it('no longer re-exports the TSL hooks (they live in @react-three/tsl)', () => {
+      const entry = webgpuEntry as Record<string, unknown>
+      for (const name of ['useUniform', 'useUniforms', 'useNodes', 'useLocalNodes']) {
+        expect(entry[name]).toBeUndefined()
+      }
     })
 
     it('should export mock utilities', () => {
@@ -326,60 +308,6 @@ describe('ReactThreeTestRenderer WebGPU Entry', () => {
       const renderer = await create(<TestMesh />)
 
       expect(renderer.scene.children[0].type).toBe('Mesh')
-      await renderer.unmount()
-    })
-  })
-
-  //* Cleanup Utilities ==============================
-
-  describe('cleanup utilities', () => {
-    it('should remove uniforms', async () => {
-      let store: any = null
-      let setState: any = null
-
-      function TestComponent() {
-        useUniforms({ uToRemove: 1, uToKeep: 2 })
-        const s = useThree()
-        store = s
-        setState = s.set
-        return null
-      }
-
-      const renderer = await create(<TestComponent />)
-
-      expect(store.uniforms.uToRemove).toBeDefined()
-      expect(store.uniforms.uToKeep).toBeDefined()
-
-      await act(async () => {
-        removeUniforms(setState, ['uToRemove'])
-      })
-
-      expect(store.uniforms.uToRemove).toBeUndefined()
-      expect(store.uniforms.uToKeep).toBeDefined()
-      await renderer.unmount()
-    })
-
-    it('should clear scope', async () => {
-      let store: any = null
-      let setState: any = null
-
-      function TestComponent() {
-        useUniforms({ uA: 1, uB: 2 }, 'testScope')
-        const s = useThree()
-        store = s
-        setState = s.set
-        return null
-      }
-
-      const renderer = await create(<TestComponent />)
-
-      expect(store.uniforms.testScope).toBeDefined()
-
-      await act(async () => {
-        clearScope(setState, 'testScope')
-      })
-
-      expect(store.uniforms.testScope).toBeUndefined()
       await renderer.unmount()
     })
   })

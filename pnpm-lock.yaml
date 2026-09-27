@@ -64,6 +64,9 @@ importers:
       babel-plugin-module-resolver:
         specifier: ^5.0.2
         version: 5.0.2
+      esbuild:
+        specifier: ^0.27.0
+        version: 0.27.2
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -151,6 +154,9 @@ importers:
       '@react-three/fiber':
         specifier: workspace:*
         version: link:../packages/fiber
+      '@react-three/tsl':
+        specifier: workspace:*
+        version: link:../packages/tsl
       '@use-gesture/react':
         specifier: ^10.3.1
         version: 10.3.1(react@19.2.3)
@@ -246,9 +252,6 @@ importers:
       '@babel/runtime':
         specifier: ^7.28.6
         version: 7.28.6
-      '@monogrid/gainmap-js':
-        specifier: ^3.4.0
-        version: 3.4.0(three@0.185.1)
       '@pmndrs/scheduler':
         specifier: ^0.2.0
         version: 0.2.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -305,6 +308,34 @@ importers:
       '@react-three/fiber':
         specifier: workspace:*
         version: link:../fiber
+      '@react-three/tsl':
+        specifier: workspace:*
+        version: link:../tsl
+      '@webgpu/types':
+        specifier: ^0.1.64
+        version: 0.1.71
+      three:
+        specifier: '>=0.185.0'
+        version: 0.185.1
+
+  packages/tsl:
+    dependencies:
+      dequal:
+        specifier: ^2.0.3
+        version: 2.0.3
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.10(@types/react@19.2.8)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
+    devDependencies:
+      '@react-three/fiber':
+        specifier: workspace:*
+        version: link:../fiber
+      '@types/three':
+        specifier: ^0.185.0
+        version: 0.185.1
       '@webgpu/types':
         specifier: ^0.1.64
         version: 0.1.71
@@ -3029,6 +3060,7 @@ packages:
   eslint@9.39.2:
     resolution: {integrity: sha512-LEyamqS7W5HB3ujJyvi0HQK/dtVINZvd5mAAp9eT5S/ujByGjiZLCzPcHVzuXbpJDJF/cxwHlfceVUDZ2lnSTw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
