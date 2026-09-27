@@ -116,6 +116,12 @@ The `primaryStore` on each canvas's state provides access to the primary's scene
 
 R3F automatically manages `CanvasTarget` switching across canvases. A job in the scheduler's `start` phase sets the correct canvas target before any other jobs run for that root, so user render callbacks render to the right canvas automatically.
 
+## WebGL2 Fallback
+
+When `navigator.gpu` is unavailable, three's `WebGPURenderer` silently falls back to its WebGL2 backend. A WebGL context is bound to the canvas element it was created on, so a renderer cannot be shared across canvases in that environment. A secondary whose primary fell back therefore creates its own renderer (which takes the same fallback) and renders independently: scenes stay correct, at the cost of one GPU context per canvas instead of one shared.
+
+Because GPU resources cannot cross GL contexts, TSL resources stay local to each fallback canvas (`primaryStore` self-references), and a fallback secondary is never registered as a shareable primary for further canvases.
+
 ## API Reference
 
 **Primary canvas props:**

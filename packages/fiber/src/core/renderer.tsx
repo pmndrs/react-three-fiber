@@ -308,32 +308,75 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Wait for primary canvas to be registered (handles async init timing)
               const primary = await waitForPrimary(primaryCanvas)
 
-              // Use the primary's renderer
-              renderer = primary.renderer
-              state.internal.actualRenderer = renderer
+              // #3965: the primary's renderer may have fallen back to its WebGL2 backend
+              // (no navigator.gpu). A WebGL context is bound to the canvas element it was
+              // created on, so setCanvasTarget cannot redirect it onto this canvas: sharing
+              // it would draw this canvas's scene into the primary's element and leave this
+              // one blank. A fallback primary cannot be shared -- the secondary creates its
+              // own renderer (which takes the same fallback) and renders independently.
+              if (primary.store.getState().webGPUSupported) {
+                // Use the primary's renderer
+                renderer = primary.renderer
+                state.internal.actualRenderer = renderer
 
-              // Create a CanvasTarget for this secondary canvas
-              const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
+                // Create a CanvasTarget for this secondary canvas
+                const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
 
-              // Enable multi-canvas mode on the primary canvas
-              primary.store.setState((prev) => ({
-                internal: { ...prev.internal, isMultiCanvas: true },
-              }))
+                // Enable multi-canvas mode on the primary canvas
+                primary.store.setState((prev) => ({
+                  internal: { ...prev.internal, isMultiCanvas: true },
+                }))
 
-              // Store secondary canvas info in internal state
-              // primaryStore points to the primary canvas's store for shared TSL resources
-              state.set((prev) => ({
-                webGPUSupported: primary.store.getState().webGPUSupported,
-                renderer: renderer,
-                primaryStore: primary.store,
-                internal: {
-                  ...prev.internal,
-                  canvasTarget,
-                  isMultiCanvas: true,
-                  isSecondary: true,
-                  targetId: primaryCanvas,
-                },
-              }))
+                // Store secondary canvas info in internal state
+                // primaryStore points to the primary canvas's store for shared TSL resources
+                state.set((prev) => ({
+                  webGPUSupported: primary.store.getState().webGPUSupported,
+                  renderer: renderer,
+                  primaryStore: primary.store,
+                  internal: {
+                    ...prev.internal,
+                    canvasTarget,
+                    isMultiCanvas: true,
+                    isSecondary: true,
+                    targetId: primaryCanvas,
+                  },
+                }))
+              } else {
+                //* WebGL2 fallback: own renderer (#3965) ---
+                // Same construction as a primary, including the pre-init sizing pass: three
+                // allocates the depth/stencil and MSAA colour buffers from the renderer's own
+                // canvas target at init, so it must measure this canvas's size first.
+                renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, support.Renderer)) as WebGPURenderer
+
+                if (!renderer.hasInitialized?.()) {
+                  const size = computeInitialSize(canvas, propsSize)
+                  if (size.width > 0 && size.height > 0) {
+                    renderer.setPixelRatio(calculateDpr(dpr))
+                    renderer.setSize(size.width, size.height, false)
+                  }
+                  await renderer.init()
+                }
+
+                const backend = renderer.backend
+                const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
+
+                state.internal.actualRenderer = renderer
+                // GPU resources cannot cross GL contexts, so TSL resources stay local:
+                // primaryStore self-references, as on any single canvas. isSecondary stays
+                // true so this renderer is never offered to a further canvas as a
+                // shareable primary (it is not one).
+                state.set((prev) => ({
+                  webGPUSupported: isWebGPUBackend,
+                  renderer: renderer,
+                  primaryStore: store,
+                  internal: {
+                    ...prev.internal,
+                    canvasTarget: (renderer as WebGPURenderer).getCanvasTarget?.(),
+                    isSecondary: true,
+                    targetId: primaryCanvas,
+                  },
+                }))
+              }
             } else {
               //* WebGPU path ---
               // This path is taken when:
