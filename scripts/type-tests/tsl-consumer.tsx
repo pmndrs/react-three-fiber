@@ -1,15 +1,22 @@
 // An app's view of @react-three/tsl next to the fiber entries, compiled against the built
 // declarations with skipLibCheck off. The fiber entries resolve through tsl's own dependency
 // (a workspace link), which is also where its RootState augmentation points.
-import type { UniformNode, RenderPipeline } from 'three/webgpu'
+import type { Color, UniformNode, RenderPipeline, Vector2 } from 'three/webgpu'
 import { useUniforms, useUniform, useNodes, useLocalNodes, useRenderPipeline } from '../../packages/tsl/dist/index'
 import { useFrame, useStore, useThree } from '../../packages/fiber/dist/webgpu/index'
-import { float, mix, color, sin } from 'three/tsl'
+import { float, mix, color, sin, int, vec2 } from 'three/tsl'
 
 export function Consumer() {
   // Creator inference survives the package boundary.
   const { uTime } = useUniforms({ uTime: 0 })
   const typed: UniformNode<'float', number> = uTime
+  // TSL constant inputs unwrap to three's exact uniform node (#3769).
+  const tsl = useUniforms({ uMode: int(1), uOffset: vec2(0, 1), uTint: color('#88ccff') })
+  const tslTyped: [UniformNode<'int', number>, UniformNode<'vec2', Vector2>, UniformNode<'color', Color>] = [
+    tsl.uMode,
+    tsl.uOffset,
+    tsl.uTint,
+  ]
   const single = useUniform('uSpeed', 1)
   const { n } = useNodes(() => ({ n: float(1) }))
 
@@ -28,7 +35,7 @@ export function Consumer() {
   const api = useRenderPipeline()
   const ready: boolean = api.isReady
 
-  void [typed, single, n, uniforms, pipeline, ready]
+  void [typed, tslTyped, single, n, uniforms, pipeline, ready]
   return null
 }
 

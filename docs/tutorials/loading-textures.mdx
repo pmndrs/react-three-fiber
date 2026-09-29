@@ -110,10 +110,10 @@ function Scene() {
 
 ## Using `useTexture`
 
-Another way to import these is using `useTexture` from [`@react-three/drei`](https://github.com/pmndrs/drei), that will make it slightly easier and there is no need to import the `TextureLoader`, our code would look like:
+In v10, `useTexture` is built into `@react-three/fiber`, so there is no need to import `TextureLoader` or install drei for this hook. The same textures can be loaded with:
 
 ```js
-import { useTexture } from "@react-three/drei"
+import { useTexture } from '@react-three/fiber'
 
 ...
 
@@ -125,6 +125,8 @@ const [colorMap, displacementMap, normalMap, roughnessMap, aoMap] = useTexture([
   'PavingStones092_1K_AmbientOcclusion.jpg',
 ])
 ```
+
+The `useTexture` hook from [`@react-three/drei`](https://github.com/pmndrs/drei) still works, but is not required for v10.
 
 You can also use object-notation which is the most convenient:
 
