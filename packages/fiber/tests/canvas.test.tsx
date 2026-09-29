@@ -19,7 +19,14 @@ describe('web Canvas', () => {
       ),
     )
 
-    expect(renderer.container).toMatchSnapshot()
+    // three stamps its own version onto the canvas (`data-engine="three.js rNNN"`). Assert it against the
+    // installed REVISION, then drop it from the snapshot so a three bump doesn't churn it.
+    const canvas = renderer.container.querySelector('canvas')!
+    expect(canvas.getAttribute('data-engine')).toBe(`three.js r${THREE.REVISION}`)
+
+    const container = renderer.container.cloneNode(true) as HTMLElement
+    container.querySelector('canvas')!.removeAttribute('data-engine')
+    expect(container).toMatchSnapshot()
   })
 
   it('should forward ref', async () => {

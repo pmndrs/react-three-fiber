@@ -203,7 +203,48 @@ describe('entries', () => {
         ),
       )
       errSpy.mockRestore()
-      expect(caught!.message).toMatch(/MeshBasicNodeMaterial is not part of the THREE namespace/)
+      expect(caught!.message).toMatch(/MeshBasicNodeMaterial requires WebGPURenderer/)
+      expect(caught!.message).toContain('Pass `renderer` to <Canvas>')
+    })
+
+    it('throws the same hint for node material instances on a WebGL root', async () => {
+      const cases = [
+        (m: MeshBasicNodeMaterial) => <primitive object={m} attach="material" />,
+        (m: MeshBasicNodeMaterial) => <mesh material={m} />,
+        (m: MeshBasicNodeMaterial) => <mesh material={[new MeshBasicNodeMaterial(), m]} />,
+      ]
+      for (const element of cases) {
+        let caught: Error | null = null
+        class Boundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+          state = { hasError: false }
+          static getDerivedStateFromError() {
+            return { hasError: true }
+          }
+          componentDidCatch(error: Error) {
+            caught = error
+          }
+          render() {
+            return this.state.hasError ? null : this.props.children
+          }
+        }
+        await configure(legacy)
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        await act(async () =>
+          roots[roots.length - 1].render(
+            <Boundary>
+              <mesh>{element(new MeshBasicNodeMaterial())}</mesh>
+            </Boundary>,
+          ),
+        )
+        errSpy.mockRestore()
+        expect(caught!.message).toMatch(/MeshBasicNodeMaterial requires WebGPURenderer/)
+      }
+
+      // A WebGPU root takes the same instance without complaint
+      const state = await configure(webgpu, 'webgpu')
+      const material = new MeshBasicNodeMaterial()
+      await act(async () => roots[roots.length - 1].render(<mesh name="node" material={material} />))
+      expect((state.scene.getObjectByName('node') as Mesh).material).toBe(material)
     })
 
     it('root entry: a WebGPU root gets node materials, a WebGL root does not', async () => {
