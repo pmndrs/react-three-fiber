@@ -40,7 +40,7 @@
   },
   "peerDependencies": {
     "@react-three/fiber": ">=10.0.0-alpha.0",
-    "react": ">=19.0 <19.3",
+    "react": ">=19.0 <19.4",
     "three": ">=0.185.0"
   },
   "peerDependenciesMeta": {
