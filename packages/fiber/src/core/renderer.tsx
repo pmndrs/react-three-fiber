@@ -954,6 +954,12 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
+/**
+ * Unmount the root on `canvas`. The teardown runs once React has committed the unmount, and waits
+ * for a renderer that is still being created. `callback` runs when the root is gone: after the
+ * teardown, and when it disposed a renderer R3F created whose `dispose()` is async (WebGPURenderer
+ * from three r186), after that dispose has settled.
+ */
 export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
   callback?: (canvas: TCanvas) => void,
