@@ -14,6 +14,7 @@
  */
 
 import { useRef, useEffect, useState, useMemo } from 'react'
+// The /webgpu entry types `state.renderer` as a WebGPURenderer, which this demo needs for `renderer.backend`
 import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber/webgpu'
 import { useControls } from 'leva'
 import { OrbitControls } from '@react-three/drei'

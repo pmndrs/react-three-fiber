@@ -1,9 +1,9 @@
 // An app that registers its uniforms (strict, the default). Compiled on its own: `Register` is
 // global to a program, so it cannot share one with the unregistered fixtures.
 import { Color, Vector3 } from 'three/webgpu'
-import { useUniforms, useUniform, useNodes, configureTSL } from '@react-three/tsl'
+import { useUniforms, useUniform, useNodes, useLocalNodes, configureTSL } from '@react-three/tsl'
 import { useFrame, useStore, useThree } from '../../packages/fiber/dist/webgpu/index'
-import { mix } from 'three/tsl'
+import { mix, sin } from 'three/tsl'
 
 export const globalUniforms = { uTime: 0, uColor: new Color('hotpink') }
 export const playerUniforms = { uHealth: 1, uTint: new Color('white') }
@@ -73,4 +73,19 @@ export function Registered() {
 
   void [time, color, health, wrong, hp, t, uColor, viaStore, viaGet]
   return null
+}
+
+// The documented useLocalNodes example with registered uniforms: typed by name, no cast.
+export function RegisteredLocalNodes() {
+  const { wobble, playerHealth, viaDot } = useLocalNodes(
+    ({ uniforms }) => ({
+      wobble: sin(uniforms.uTime.mul(2)),
+      playerHealth: uniforms.scope('player').uHealth,
+      viaDot: uniforms.player.uHealth,
+    }),
+    [],
+  )
+  const health: number = playerHealth.value
+  const dot: number = viaDot.value
+  return { wobble, health, dot }
 }

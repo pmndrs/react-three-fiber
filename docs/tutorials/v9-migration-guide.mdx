@@ -1,7 +1,7 @@
 ---
 title: 'v9 Migration Guide'
 description: Changes and new features with v9 and React 19
-nav: 25
+nav: 26
 ---
 
 > [!TIP]
@@ -87,6 +87,8 @@ Further, a callback passed to GL can now return a promise for async constructors
 
 ## WebGPU
 
+> **v10:** this section describes v9. In v10 the WebGPU renderer is `<Canvas renderer>` on the same `@react-three/fiber` import, with node materials as JSX and no `extend(THREE)` call. See the [WebGPU overview](../webgpu/overview) and the [v10 migration guide](../migration/v10).
+
 Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
 
 ```tsx
@@ -121,7 +123,7 @@ export default () => (
 
 Automatic sRGB conversion of texture props has been removed. Color textures are now handled automatically for built-in materials, aligning with vanilla Three.js behavior. This prevents issues where data textures (e.g., normals or displacement) become corrupted or non-linear. For custom materials or shaders, annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace` or `texture-colorSpace={THREE.SRGBColorSpace}` in JSX.
 
-For more details, see https://threejs.org/docs/#manual/en/introduction/Color-management.
+For more details, see https://threejs.org/manual/#en/color-management.
 
 ### Suspense and Side-Effects
 

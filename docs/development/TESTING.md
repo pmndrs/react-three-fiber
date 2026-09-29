@@ -239,7 +239,7 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 
 ### Parity & CI
 
-- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
+- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-treeshake` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
 - [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
 
 ### Coverage (soft now → hard at stable)
@@ -252,5 +252,3 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 - [~] **Invest in the `WebGPUContext` mock** — done for the TSL hook lifecycle (`useUniforms`/`useNodes`/`useBuffers`/`useGPUStorage`/`useRenderPipeline` now 62–90% via the mock). Extend further as new GPU paths become mockable.
 - [ ] **Stand up the Tier-2 Playwright harness** (`pnpm test:gpu`, Chromium + WebGPU, pointed at the example app) so the [Tier-2 checklist](#what-tier-2-must-prove-the-checklist) is a runnable suite, not a manual list. _(task C0)_
 - [ ] **Spike Tier 3** — headless WebGPU via SwiftShader/Dawn; if it runs our paths, add a non-blocking CI job. _(task D8)_
-      </content>
-      </invoke>

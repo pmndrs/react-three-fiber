@@ -1,7 +1,7 @@
 ---
 title: 'v10 Migration Guide'
 description: Upgrading to v10 - WebGPU support, new scheduler, and what changes for you
-nav: 31
+nav: 32
 ---
 
 # v10 Migration Guide
@@ -58,13 +58,14 @@ accepted.
 | Peer      | v9        | v10            |
 | --------- | --------- | -------------- |
 | `three`   | `>=0.156` | `>=0.185.0`    |
-| `react`   | `>=19.0`  | `>=19.0 <19.3` |
+| `react`   | `>=19.0`  | `>=19.0 <19.4` |
 
 The three floor moved because v10 uses three's own `RenderPipeline` (renamed from `PostProcessing`
 in r183), `CubeRenderTarget`, and the real `UniformNode` types, rather than shadowing them. **If you
 are on r181–r184 you cannot install v10** — upgrade three alongside R3F.
 
-The React ceiling states the versions we have tested, and moves when a newer one is verified.
+The React ceiling states the versions we have tested (19.0 through 19.3), and moves when a newer one
+is verified.
 
 ### React Native moved to its own package
 
@@ -165,6 +166,8 @@ useFrame(() => physicsStep(), { phase: 'physics' })
 useFrame(() => updateGame(), { phase: 'update' })
 useFrame(() => updateAI(), { after: 'update', before: 'render' })
 ```
+
+> **Ordering direction is reversed.** A bare number is mapped to `{ priority: n }`, and v10 runs higher priority first (v9 ran lower first). Left unmigrated, the v9 example above runs `updateAI` first and `physicsStep` last on v10. Only `priority > 0` (render takeover) and negative values (reversed ordering) emit a deprecation notice; a bare `0` is the default and is silent. Migrate to `before`/`after`, or to `{ priority }` written for the v10 direction (higher runs earlier).
 
 ---
 
@@ -372,9 +375,7 @@ function GlobalEffects() {
 function WobblyMesh() {
   const { uIntensity } = useUniforms({ uIntensity: 0.5 })
 
-  const { displacement } = useLocalNodes(({ nodes }) => ({
-    displacement: nodes.wobble.mul(uIntensity),
-  }))
+  const { displacement } = useLocalNodes(({ nodes }) => ({ displacement: nodes.wobble.mul(uIntensity) }), [uIntensity])
 
   return (
     <mesh>
@@ -389,10 +390,10 @@ function WobblyMesh() {
 
 - **`useUniforms`** - Create and share uniforms across components. Scoping prevents naming conflicts. Auto-converts Leva controls.
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
-- **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
+- **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state. The second argument is a `useMemo`-style dependency array: `[]` reuses the result across renders, `[a, b]` rebuilds when a declared JavaScript input changes, and no array re-evaluates every render (a `useCallback` creator no longer opts out of that - pass `[]` instead).
 - **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
 
-#### TSL hooks moved to `@react-three/tsl` {#tsl-hooks-moved}
+#### TSL hooks moved to `@react-three/tsl`
 
 The TSL resource hooks live in their own package. Install it and change the import; nothing else changes. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
 
@@ -411,7 +412,7 @@ import { useUniforms, useNodes } from '@react-three/tsl'
 
 This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`, and the `rebuildAll*` helpers. In tests, import them from `@react-three/tsl` too: `@react-three/test-renderer/webgpu` no longer re-exports them.
 
-#### Deprecated standalone TSL utilities removed {#tsl-standalone-utils-removed}
+#### Deprecated standalone TSL utilities removed
 
 `removeUniforms(set, ...)`, `clearScope`, `clearRootUniforms`, `removeNodes(set, ...)`, `clearNodeScope` and `clearRootNodes` are removed. Use the utilities the hooks return instead: `const { removeUniforms, clearUniforms } = useUniforms()` and `const { removeNodes, clearNodes } = useNodes()`.
 

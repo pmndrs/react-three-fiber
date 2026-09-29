@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 //* Symbol keys used by the singleton pattern ==============================
 const CONTEXT_KEY = Symbol.for('@react-three/fiber.context')
 const CATALOGUE_KEY = Symbol.for('@react-three/fiber.catalogue')
+const EXTEND_ID_KEY = Symbol.for('@react-three/fiber.extendId')
 
 describe('Cross-bundle singleton sharing', () => {
   //* Setup: Clear global singletons before each test ==============================
@@ -27,6 +28,7 @@ describe('Cross-bundle singleton sharing', () => {
     // Clear any existing global singletons
     delete (globalThis as any)[CONTEXT_KEY]
     delete (globalThis as any)[CATALOGUE_KEY]
+    delete (globalThis as any)[EXTEND_ID_KEY]
   })
 
   //* Context Tests ==============================
@@ -56,7 +58,7 @@ describe('Cross-bundle singleton sharing', () => {
     it('catalogue should be shared across module reloads', async () => {
       // First "bundle" load - extend with a test component
       vi.resetModules()
-      const reconcilerA = await import('../src/core/reconciler')
+      const reconcilerA = await import('../src/core/extend')
 
       // Create a test class to extend
       class TestComponent {}
@@ -64,7 +66,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // Second "bundle" load - should see the extended component
       vi.resetModules()
-      const reconcilerB = await import('../src/core/reconciler')
+      const reconcilerB = await import('../src/core/extend')
 
       // Try extending with another component to verify catalogue is accessible
       class AnotherComponent {}
@@ -72,7 +74,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // Load a third time to verify both components are present
       vi.resetModules()
-      const reconcilerC = await import('../src/core/reconciler')
+      const reconcilerC = await import('../src/core/extend')
 
       // If catalogue is shared, extending from any bundle should work globally
       // We can't directly access catalogue (it's not exported), but we can verify
@@ -89,7 +91,7 @@ describe('Cross-bundle singleton sharing', () => {
 
       // First "bundle" load - extend with a test component
       vi.resetModules()
-      const reconcilerA = await import('../src/core/reconciler')
+      const reconcilerA = await import('../src/core/extend')
 
       class UniqueTestClass {}
       reconcilerA.extend({ UniqueTestClass })
@@ -102,10 +104,26 @@ describe('Cross-bundle singleton sharing', () => {
       if (catalogue) {
         expect(catalogue.UniqueTestClass).toBe(UniqueTestClass)
       } else {
-        // If catalogue is not global, this test should fail
-        // This is expected before the fix is applied
         expect(catalogue).toBeDefined()
       }
+    })
+
+    it('factory extend() ids never collide across bundles', async () => {
+      // Generated element IDs must remain unique across module instances.
+      vi.resetModules()
+      const reconcilerA = await import('../src/core/extend')
+      class FromBundleA {}
+      const idA = reconcilerA.extend(FromBundleA) as unknown as string
+
+      vi.resetModules()
+      const reconcilerB = await import('../src/core/extend')
+      class FromBundleB {}
+      const idB = reconcilerB.extend(FromBundleB) as unknown as string
+
+      expect(idA).not.toBe(idB)
+      const catalogue = (globalThis as any)[CATALOGUE_KEY]
+      expect(catalogue[idA]).toBe(FromBundleA)
+      expect(catalogue[idB]).toBe(FromBundleB)
     })
   })
 })

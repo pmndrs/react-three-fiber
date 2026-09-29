@@ -32,11 +32,29 @@ type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg'
 
 // Loaders already resolved, so `clear` and a second `useEnvironment` need no round trip.
 const loadedLoaders = new Map<EnvironmentFormat, EnvironmentLoader>()
+// One import per format, shared by every caller, so `clear` can queue behind a pending `preload`.
+const pendingLoaders = new Map<EnvironmentFormat, Promise<EnvironmentLoader>>()
 
-async function loadLoader(format: EnvironmentFormat): Promise<EnvironmentLoader> {
-  const cached = loadedLoaders.get(format)
-  if (cached) return cached
+function loadLoader(format: EnvironmentFormat): Promise<EnvironmentLoader> {
+  let pending = pendingLoaders.get(format)
+  if (!pending) {
+    pending = importLoader(format).then(
+      (loader) => {
+        loadedLoaders.set(format, loader)
+        return loader
+      },
+      (error) => {
+        // Let a later call retry a failed import
+        pendingLoaders.delete(format)
+        throw error
+      },
+    )
+    pendingLoaders.set(format, pending)
+  }
+  return pending
+}
 
+async function importLoader(format: EnvironmentFormat): Promise<EnvironmentLoader> {
   let loader: EnvironmentLoader
   switch (format) {
     case 'cube':
@@ -55,7 +73,6 @@ async function loadLoader(format: EnvironmentFormat): Promise<EnvironmentLoader>
       loader = (await import('three/examples/jsm/loaders/UltraHDRLoader.js')).UltraHDRLoader
       break
   }
-  loadedLoaders.set(format, loader)
   return loader
 }
 
@@ -179,9 +196,17 @@ useEnvironment.clear = (clearOptions?: EnvironmentLoaderClearOptions) => {
   const { format } = getFormat(files)
   if (!format) throw new Error('useEnvironment: Unrecognized file extension: ' + files)
 
-  // A decoder that never loaded has nothing cached under it
+  const input = isArray(files) ? [files] : files
+  const clear = (loader: EnvironmentLoader) => useLoader.clear(loader, input)
   const loader = loadedLoaders.get(format)
-  if (loader) useLoader.clear(loader, isArray(files) ? [files] : files)
+  if (loader) {
+    clear(loader)
+  } else {
+    // A preload may be waiting for its decoder. Its callback runs first, then this one clears it.
+    // A decoder that never loaded, or failed to, has nothing cached under it.
+    const pending = pendingLoaders.get(format)
+    if (pending) void pending.then(clear, () => {})
+  }
 }
 
 function validatePreset(preset: string) {

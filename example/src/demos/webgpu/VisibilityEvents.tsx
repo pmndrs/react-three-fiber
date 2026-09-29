@@ -1,10 +1,9 @@
 //* Visibility Events ==============================
 
-import { Canvas } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
-import { useFrame } from '@react-three/fiber'
 import { color, mix } from 'three/tsl'
 import { useLocalNodes, useUniform } from '@react-three/tsl'
 
@@ -92,9 +91,10 @@ function OrbitingPanels() {
   })
 
   const uIsOccluded = useUniform<number>('isOccluded')
-  const { colorNode } = useLocalNodes(() => ({
-    colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
-  }))
+  const { colorNode } = useLocalNodes(
+    () => ({ colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded) }),
+    [uIsOccluded],
+  )
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       <mesh position={[0, 0, 1.5]}>
