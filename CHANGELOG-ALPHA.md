@@ -153,7 +153,9 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   its GPU device ([#3926](https://github.com/pmndrs/react-three-fiber/issues/3926)). R3F owns what it
   builds (the default, a config bag, or a factory's result); a renderer instance passed to `renderer`
   or `gl` stays the caller's and is never disposed, nor is a caller's `WebGLRenderer` force-lost any
-  more. A secondary canvas keeps the primary's renderer alive until it unmounts too.
+  more. A secondary canvas keeps the primary's renderer alive until it unmounts too. An owned
+  `WebGLRenderer` loses its context even when `dispose()` throws, and since `WebGPURenderer.dispose()`
+  is async from three r186, the `unmountComponentAtNode` callback runs once that dispose has settled.
 - Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
   rendering the same canvas before that commit cancels the teardown.
 

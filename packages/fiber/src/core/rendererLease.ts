@@ -24,7 +24,10 @@ interface LeaseRecord {
 /** Keyed by renderer: every root sharing a renderer shares its record. */
 const records = new WeakMap<Renderer, LeaseRecord>()
 
-function take(renderer: Renderer, record: LeaseRecord): () => void {
+/** Resolves once an async dispose() settles, so teardown can finish after it */
+type Release = () => void | Promise<void>
+
+function take(renderer: Renderer, record: LeaseRecord): Release {
   record.leases++
   let released = false
   return () => {
@@ -32,7 +35,7 @@ function take(renderer: Renderer, record: LeaseRecord): () => void {
     released = true
     if (--record.leases > 0) return
     records.delete(renderer)
-    if (record.owned) disposeRenderer(renderer)
+    if (record.owned) return disposeRenderer(renderer)
   }
 }
 
@@ -40,7 +43,7 @@ function take(renderer: Renderer, record: LeaseRecord): () => void {
  * Take a lease for the root that obtained `renderer`. Returns its release, which is idempotent.
  * A renderer that is already leased keeps the ownership it was first leased with.
  */
-export function leaseRenderer(renderer: Renderer, owned: boolean): () => void {
+export function leaseRenderer(renderer: Renderer, owned: boolean): Release {
   let record = records.get(renderer)
   if (!record) records.set(renderer, (record = { owned, leases: 0 }))
   return take(renderer, record)
@@ -50,7 +53,7 @@ export function leaseRenderer(renderer: Renderer, owned: boolean): () => void {
  * Take a lease for a root that borrows another root's renderer. Throws when that renderer has no
  * lease left, which means its owner already unmounted and released it.
  */
-export function borrowRenderer(renderer: Renderer): () => void {
+export function borrowRenderer(renderer: Renderer): Release {
   const record = records.get(renderer)
   if (!record) throw new Error('R3F: cannot share a renderer whose canvas has already unmounted')
   return take(renderer, record)
@@ -60,17 +63,34 @@ export function borrowRenderer(renderer: Renderer): () => void {
  * Free an R3F-owned renderer. Only called from committed teardown, after the renderer's init has
  * settled, so disposal never races initialization.
  */
-export function disposeRenderer(renderer: Renderer): void {
+export function disposeRenderer(renderer: Renderer): void | Promise<void> {
   // three's WebGPURenderer.dispose() starts init when init never ran, and rejects unhandled when it
   // failed. Either way there is nothing to free yet
   if ((renderer as WebGPURenderer).hasInitialized?.() === false) return
-  const disposed: unknown = renderer.dispose()
-  // WebGPURenderer.dispose() is async from three r186
-  if (typeof (disposed as PromiseLike<void> | undefined)?.then === 'function') {
-    ;(disposed as PromiseLike<void>).then(undefined, (error) => console.warn('[R3F] Error disposing renderer', error))
-  }
+  const warn = (error: unknown) => console.warn('[R3F] Error disposing renderer', error)
   // WebGLRenderer.dispose() frees programs and caches but keeps the context until garbage
   // collection, and browsers cap how many WebGL contexts may be live. WebGPURenderer has no
-  // forceContextLoss: its backend releases the context inside dispose()
-  ;(renderer as WebGLRenderer).forceContextLoss?.()
+  // forceContextLoss: its backend releases the context inside dispose(). The context is released
+  // even when dispose() fails
+  const loseContext = () => {
+    try {
+      ;(renderer as WebGLRenderer).forceContextLoss?.()
+    } catch (error) {
+      warn(error)
+    }
+  }
+  let disposed: unknown
+  try {
+    disposed = renderer.dispose()
+  } catch (error) {
+    warn(error)
+  }
+  // WebGPURenderer.dispose() is async from three r186
+  if (typeof (disposed as PromiseLike<void> | undefined)?.then === 'function') {
+    return Promise.resolve(disposed as PromiseLike<void>).then(loseContext, (error) => {
+      warn(error)
+      loseContext()
+    })
+  }
+  loseContext()
 }
