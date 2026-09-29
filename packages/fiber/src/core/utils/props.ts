@@ -69,6 +69,25 @@ const MEMOIZED_PROTOTYPES = new Map()
 const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'envMap']
 
 /**
+ * Material props that three compiles into the shader program, so a change after the first render
+ * only shows once `material.needsUpdate` is set. Uniform-backed props (color, opacity, ...) update
+ * live and are not listed. Numeric thresholds such as alphaTest or clearcoat are left out because
+ * three's own setters already bump the material version when they cross zero.
+ * https://threejs.org/manual/#en/how-to-update-things
+ */
+const programProps = new Set(['transparent', 'vertexColors', 'flatShading', 'fog'])
+
+/**
+ * Whether writing `next` over `previous` at `key` on `root` recompiles the material's shader: one of
+ * the program props changing value, or a texture slot (map, normalMap, envMap, ...) gaining or losing
+ * its texture. Swapping one texture for another keeps the program, so it does not count.
+ */
+function changesProgram(root: any, key: string, previous: unknown, next: unknown): boolean {
+  if (!root?.isMaterial || previous === next) return false
+  return programProps.has(key) || isTexture(previous) !== isTexture(next)
+}
+
+/**
  * Resolves a potentially pierced property key (e.g., 'material-color' → material.color).
  * First tries the entire key as a single property, then attempts piercing.
  *
@@ -137,6 +156,7 @@ export function attach(parent: Instance, child: Instance): void {
     const { root, key } = resolve(parent.object, child.props.attach)
     child.previousAttach = root[key]
     root[key] = child.object
+    if (changesProgram(root, key, child.previousAttach, child.object)) root.needsUpdate = true
   } else if (is.fun(child.props.attach)) {
     child.previousAttach = child.props.attach(parent.object, child.object)
   }
@@ -157,6 +177,7 @@ export function detach(parent: Instance, child: Instance): void {
     if (previous === undefined) delete root[key]
     // Otherwise set the previous value
     else root[key] = previous
+    if (changesProgram(root, key, child.object, previous)) root.needsUpdate = true
   } else {
     child.previousAttach?.(parent.object, child.object)
   }
@@ -382,10 +403,15 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Else, just overwrite the value
     else {
+      const previous = root[key]
       root[key] = value
 
       // Trigger shader recompilation when node props change on materials
       if (key.endsWith('Node') && (root as any).isMaterial) {
+        ;(root as any).needsUpdate = true
+      }
+      // ... and when a prop the program is compiled from changes (#3892)
+      else if (changesProgram(root, key, previous, value)) {
         ;(root as any).needsUpdate = true
       }
 
