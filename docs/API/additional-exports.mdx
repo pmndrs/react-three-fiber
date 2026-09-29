@@ -132,5 +132,5 @@ Unlike taking over the `render` phase with `useFrame`, the default job keeps its
 
 Every entry shares one core, and nothing in that core imports three: a library can import hooks from `@react-three/fiber` and add no renderer and no second copy of fiber to an app on any entry.
 
-`@react-three/fiber/extension` is the smallest stable surface for a package that builds on fiber: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension`, `setRenderOverride` and the shared types, and nothing that could ever grow a renderer. It works under a `<Canvas>` from any entry. Apps should keep importing from `@react-three/fiber`, `/webgpu` or `/legacy`.
+`@react-three/fiber/extension` is the smallest stable surface for a package that builds on fiber: `useStore`, `useThree`, `useFrame`, `context`, `registerRootExtension`, `setRenderOverride`, `getTextureView` and the shared types, and nothing that could ever grow a renderer. `getTextureView(store)` is the texture registry as a hook should read it during render: registered textures plus those a `useTexture` earlier in the same render loaded but has not registered yet (registration waits for a layout effect). It works under a `<Canvas>` from any entry. Apps should keep importing from `@react-three/fiber`, `/webgpu` or `/legacy`.
 

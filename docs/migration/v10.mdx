@@ -166,6 +166,8 @@ useFrame(() => updateGame(), { phase: 'update' })
 useFrame(() => updateAI(), { after: 'update', before: 'render' })
 ```
 
+> **Ordering direction is reversed.** A bare number is mapped to `{ priority: n }`, and v10 runs higher priority first (v9 ran lower first). Left unmigrated, the v9 example above runs `updateAI` first and `physicsStep` last on v10. Only `priority > 0` (render takeover) and negative values (reversed ordering) emit a deprecation notice; a bare `0` is the default and is silent. Migrate to `before`/`after`, or to `{ priority }` written for the v10 direction (higher runs earlier).
+
 ---
 
 ## Removed Props
@@ -372,9 +374,7 @@ function GlobalEffects() {
 function WobblyMesh() {
   const { uIntensity } = useUniforms({ uIntensity: 0.5 })
 
-  const { displacement } = useLocalNodes(({ nodes }) => ({
-    displacement: nodes.wobble.mul(uIntensity),
-  }))
+  const { displacement } = useLocalNodes(({ nodes }) => ({ displacement: nodes.wobble.mul(uIntensity) }), [uIntensity])
 
   return (
     <mesh>
@@ -389,7 +389,7 @@ function WobblyMesh() {
 
 - **`useUniforms`** - Create and share uniforms across components. Scoping prevents naming conflicts. Auto-converts Leva controls.
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
-- **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
+- **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state. The second argument is a `useMemo`-style dependency array: `[]` reuses the result across renders, `[a, b]` rebuilds when a declared JavaScript input changes, and no array re-evaluates every render (a `useCallback` creator no longer opts out of that - pass `[]` instead).
 - **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
 
 #### TSL hooks moved to `@react-three/tsl`

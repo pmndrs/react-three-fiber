@@ -708,7 +708,9 @@ describe('useLocalNodes', () => {
   })
 
   it('should receive state with uniforms and nodes', async () => {
-    let receivedState: any = null
+    // Read inside the creator: only reads made before it returns are tracked (a read of a kept
+    // `state` afterwards sees that render's snapshot and warns).
+    let received: { uGlobal: unknown; globalNode: unknown } | null = null
 
     function Setup() {
       useUniforms({ uGlobal: 1 })
@@ -718,7 +720,7 @@ describe('useLocalNodes', () => {
 
     function LocalUser() {
       useLocalNodes((state) => {
-        receivedState = state
+        received = { uGlobal: state.uniforms.uGlobal, globalNode: state.nodes.globalNode }
         return { local: float(0) }
       })
       return null
@@ -733,8 +735,8 @@ describe('useLocalNodes', () => {
       ),
     )
 
-    expect(receivedState.uniforms.uGlobal).toBeDefined()
-    expect(receivedState.nodes.globalNode).toBeDefined()
+    expect(received!.uGlobal).toBeDefined()
+    expect(received!.globalNode).toBeDefined()
   })
 
   it('should mix shared uniforms with local values', async () => {

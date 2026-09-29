@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 function Viewcube() {
-  const { gl, scene: defaultScene, camera: defaultCamera, size, events } = useThree()
+  const { renderer, scene: defaultScene, camera: defaultCamera, size, events } = useThree()
   const scene = useMemo(() => new THREE.Scene(), [])
   const camera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000), [])
 
@@ -24,11 +24,11 @@ function Viewcube() {
   useFrame(() => {
     matrix.copy(defaultCamera.matrix).invert()
     ref.current.quaternion.setFromRotationMatrix(matrix)
-    gl.autoClear = true
-    gl.render(defaultScene, defaultCamera)
-    gl.autoClear = false
-    gl.clearDepth()
-    gl.render(scene, camera)
+    renderer.autoClear = true
+    renderer.render(defaultScene, defaultCamera)
+    renderer.autoClear = false
+    renderer.clearDepth()
+    renderer.render(scene, camera)
   }, 1)
 
   return (
