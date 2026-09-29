@@ -2,7 +2,7 @@
 
 A curated list of awesome resources, libraries, tools, and projects for [React Three Fiber](https://github.com/pmndrs/react-three-fiber).
 
-> **Note:** We're just getting started with this list! If you have a resource, library, or project that should be included, please [open a PR](https://github.com/pmndrs/react-three-fiber/issues/3642) to add it.
+> **Note:** We're just getting started with this list! If you have a resource, library, or project that should be included, please [open a PR](https://github.com/pmndrs/react-three-fiber/edit/v10/AwesomeR3F.md) to add it.
 
 ---
 
@@ -152,7 +152,7 @@ A selection of companies and projects using React Three Fiber.
 
 ## Contributing
 
-Want to add something to the list? [Open a PR](https://github.com/pmndrs/react-three-fiber/issues/3642) with your addition!
+Want to add something to the list? [Open a PR](https://github.com/pmndrs/react-three-fiber/edit/v10/AwesomeR3F.md) with your addition!
 
 Please ensure your submission:
 
