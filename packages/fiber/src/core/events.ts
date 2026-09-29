@@ -145,11 +145,21 @@ export function swapInteractivity(store: RootStore, object: THREE.Object3D, newO
     }
   })
 
+  // A capture is keyed by its eventObject, but it also carries the intersection that is replayed into
+  // every subsequent event. Both must follow the new instance, or the capture resolves to the discarded object.
   internal.capturedMap.forEach((captures) => {
-    const captureData = captures.get(object)
-    if (captureData) {
-      captures.delete(object)
-      captures.set(newObject, captureData)
+    for (const [key, captureData] of Array.from(captures)) {
+      const { intersection } = captureData
+      if (key !== object && intersection.object !== object && intersection.eventObject !== object) continue
+      if (key === object) captures.delete(key)
+      captures.set(key === object ? newObject : key, {
+        ...captureData,
+        intersection: {
+          ...intersection,
+          object: intersection.object === object ? newObject : intersection.object,
+          eventObject: intersection.eventObject === object ? newObject : intersection.eventObject,
+        },
+      })
     }
   })
 }

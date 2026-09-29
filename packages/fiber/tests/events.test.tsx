@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { act } from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, extend } from '../src'
+import { Canvas, extend, type ThreeEvent } from '../src'
 import THREE from 'three'
 
 extend(THREE as any)
@@ -539,6 +539,79 @@ describe('events', () => {
       await act(async () => canvas.dispatchEvent(moveOut))
       expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
+    })
+
+    describe('when the instance is reconstructed mid-capture', () => {
+      const geometry = new THREE.BoxGeometry(2, 2)
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+
+      async function captureThenSwap(App: React.FC<{ material: THREE.Material }>, onMove: jest.Mock) {
+        let result: RenderResult = null!
+        await act(async () => {
+          result = render(<App material={materialA} />)
+        })
+
+        const canvas = getContainer()
+        canvas.setPointerCapture = jest.fn()
+        canvas.releasePointerCapture = jest.fn()
+
+        const down = new PointerEvent('pointerdown', { pointerId })
+        Object.defineProperty(down, 'offsetX', { get: () => 577 })
+        Object.defineProperty(down, 'offsetY', { get: () => 480 })
+        await act(async () => canvas.dispatchEvent(down))
+        expect(canvas.setPointerCapture).toHaveBeenCalledWith(pointerId)
+
+        // Reconstruct the mesh via an args change while the pointer is captured
+        await act(async () => result.rerender(<App material={materialB} />))
+
+        // Moving off the mesh must still reach the capturing handler
+        const moveOut = new PointerEvent('pointermove', { pointerId })
+        Object.defineProperty(moveOut, 'offsetX', { get: () => -10000 })
+        Object.defineProperty(moveOut, 'offsetY', { get: () => -10000 })
+        await act(async () => canvas.dispatchEvent(moveOut))
+
+        expect(onMove).toHaveBeenCalledTimes(1)
+        return onMove.mock.calls[0][0] as ThreeEvent<PointerEvent>
+      }
+
+      it('keeps the capture on the reconstructed instance', async () => {
+        const onMove = jest.fn()
+
+        function App({ material }: { material: THREE.Material }) {
+          return (
+            <Canvas>
+              <mesh
+                args={[geometry, material]}
+                onPointerDown={(e) => (e.target as any).setPointerCapture(e.pointerId)}
+                onPointerMove={onMove}
+              />
+            </Canvas>
+          )
+        }
+
+        const event = await captureThenSwap(App, onMove)
+        expect((event.eventObject as THREE.Mesh).material).toBe(materialB)
+        expect((event.object as THREE.Mesh).material).toBe(materialB)
+      })
+
+      it('keeps the capture when a child of the capturing object is reconstructed', async () => {
+        const onMove = jest.fn()
+
+        function App({ material }: { material: THREE.Material }) {
+          return (
+            <Canvas>
+              <group onPointerDown={(e) => (e.target as any).setPointerCapture(e.pointerId)} onPointerMove={onMove}>
+                <mesh args={[geometry, material]} />
+              </group>
+            </Canvas>
+          )
+        }
+
+        const event = await captureThenSwap(App, onMove)
+        expect(event.eventObject).toBeInstanceOf(THREE.Group)
+        expect((event.object as THREE.Mesh).material).toBe(materialB)
+      })
     })
   })
 
