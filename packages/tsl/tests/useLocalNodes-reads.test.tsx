@@ -450,3 +450,42 @@ describe('useLocalNodes: staged entries that have not committed', () => {
     expect(log.runs).toBeLessThanOrEqual(2)
   })
 })
+
+describe('useNodes: registration', () => {
+  it('registers without the caller keeping the return value', async () => {
+    const store = makeStore()
+    const wobble = float(1)
+    const registerWobble = () => ({ wobble })
+    function GlobalNodes() {
+      useNodes(registerWobble)
+      return null
+    }
+    await act(async () =>
+      render(
+        <context.Provider value={store}>
+          <GlobalNodes />
+        </context.Provider>,
+      ),
+    )
+    expect(store.getState().nodes.wobble).toBe(wobble)
+  })
+
+  it('a creator that returns nothing warns and registers nothing, instead of crashing', async () => {
+    const store = makeStore()
+    function FogInRender() {
+      // @ts-expect-error a useNodes creator must return the nodes it registers
+      useNodes(() => {})
+      return null
+    }
+    await act(async () =>
+      render(
+        <context.Provider value={store}>
+          <FogInRender />
+        </context.Provider>,
+      ),
+    )
+    const messages = warnSpy.mock.calls.map((call: unknown[]) => String(call[0]))
+    expect(messages.some((m: string) => m.includes('[useNodes] The creator returned nothing'))).toBe(true)
+    expect(store.getState().nodes).toEqual({})
+  })
+})

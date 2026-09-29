@@ -232,6 +232,8 @@ const all = useNodes()
 const effectNodes = useNodes('effects')
 ```
 
+The creator's job is registration: whatever it returns is stored, so other components can read it with `useNodes('scope')`, `state.nodes` or a creator's `nodes`. Keeping the return value is optional - `useNodes(registerEffects)` on its own registers them. A creator must return the nodes it registers; to put a node onto a Three object instead (`scene.fogNode`), use `useLocalNodes` and [return an install function](#installing-nodes-on-three-objects).
+
 ### When the creator runs
 
 Once per generation. The first component to register a name wins, and later renders - including renders with different props - reuse the registered node: the creator does **not** re-run when a value it captured changes. This is deliberate. Other components build their own graphs from a shared node, and replacing it would not reach all of them; every replacement would also recompile each material that uses it. So:

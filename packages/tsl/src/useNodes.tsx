@@ -163,9 +163,20 @@ export function useNodes<T extends NodeRecord>(
     create: () => {
       if (isReader) return {}
       // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
-      return (creatorOrScope as NodeCreator<T>)(
+      const nodes: T | null | undefined = (creatorOrScope as NodeCreator<T>)(
         createLazyCreatorState(store.getState(), store, { reads: warnMissingReads('useNodes') }),
       )
+      // A useNodes creator registers what it returns. One that returns nothing is usually assigning
+      // a node to a Three object, which belongs in useLocalNodes' install form, not in render.
+      if (nodes == null) {
+        warnOnce(
+          '[useNodes] The creator returned nothing, so nothing was registered. useNodes registers the nodes its ' +
+            'creator returns. To put a node onto a Three object (scene.fogNode = ...), use useLocalNodes and ' +
+            'return a function that assigns it: it runs after commit and may return a cleanup.',
+        )
+        return {}
+      }
+      return nodes
     },
     prepare: (name, node) => {
       // Apply label for debugging
