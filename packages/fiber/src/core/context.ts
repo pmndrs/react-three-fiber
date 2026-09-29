@@ -12,5 +12,12 @@ import type { RootStore } from '../../types/store'
 // can ship it without pulling in a copy of core. store.ts re-exports it.
 const R3F_CONTEXT = Symbol.for('@react-three/fiber.context')
 
+/**
+ * React context that carries the current root's {@link RootStore}. Each root provides its store and
+ * each portal provides its own scoped one; `useStore`, and every hook built on it, reads it.
+ *
+ * Stored on `globalThis` under `Symbol.for('@react-three/fiber.context')`, so every copy and entry
+ * of fiber shares a single context.
+ */
 export const context: React.Context<RootStore> =
   (globalThis as any)[R3F_CONTEXT] ?? ((globalThis as any)[R3F_CONTEXT] = React.createContext<RootStore>(null!))

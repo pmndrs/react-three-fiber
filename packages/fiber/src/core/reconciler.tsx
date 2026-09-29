@@ -545,6 +545,27 @@ function scheduleMicrotask(callback: () => void): void {
   }
 }
 
+/**
+ * R3F's React reconciler: a mutation-mode host config that turns JSX elements into three.js objects.
+ * Each root's {@link RootStore} is its container, and children attach to `internal.container`
+ * (a portal's target) or else the root's `scene`.
+ *
+ * - **Element names** resolve through `extend()` registrations first, then the three namespace of
+ *   the root's renderer. A `three` prefix (`<threeLine>`) is stripped when no element by the
+ *   prefixed name exists. `<primitive object={...}>` wraps an existing object.
+ * - **Construction is deferred** until an instance is attached to a mounted parent, so a tree that
+ *   Suspense discards never creates three objects.
+ * - **Updates** apply only changed props. Changing `args` (or a primitive's `object`) reconstructs
+ *   the object instead; the swap happens in `resetAfterCommit`, before layout effects, so refs
+ *   already point to the new object.
+ * - **Removal** detaches the object and disposes it (at idle priority, or immediately in an `act`
+ *   test environment), unless it is a primitive, a `Scene`, or it or an ancestor has `dispose={null}`.
+ * - **Priority**: not the primary renderer, so it runs alongside react-dom, and update priority
+ *   follows react-dom's event priorities. View-transition commits are flushed synchronously, since
+ *   three has nothing to animate between commits.
+ *
+ * `createRoot`, `createPortal` and `flushSync` drive it; app code rarely needs it directly.
+ */
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],
