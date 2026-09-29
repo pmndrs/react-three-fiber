@@ -159,11 +159,15 @@ The local full gate and the CI workflow **must run the same checks in the same w
 
 ## Coverage
 
-Coverage uses the v8 provider; reporters are `text`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
+Coverage uses the v8 provider; reporters are `text`, `text-summary`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
 
-### Current policy: report, don't block (yet)
+### Current policy: a ratchet that blocks drops
 
-We **surface** coverage but do **not** fail builds on it during alpha/beta. A hard floor lands at stable (so new surfaces can't regress silently) — see the roadmap. Until then, treat the targets below as expectations, not gates.
+`pnpm test` runs with `--coverage`, and `vitest.config.ts` sets global `coverage.thresholds` (lines, functions, statements, branches). If any total falls below its threshold the run fails, so **CI fails on a coverage drop**.
+
+The thresholds are a **ratchet, not a target**: each sits just under what the suite currently achieves, measured on the lower of the CI React legs (`19.0.0` reads slightly below `latest`) and floored with ~0.5–1% headroom so neither leg flakes. When coverage goes up, raise them; never lower one to make a build pass. `lines` is the meaningful figure for R3F's own code — statements/branches read low because v8 also counts the bundled three.js code the suite touches.
+
+The per-area targets below are **not** enforced by config; treat them as expectations, not gates.
 
 ### Soft targets by area
 
@@ -240,12 +244,13 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 ### Parity & CI
 
 - [x] **Make CI run the same checks as `pnpm run ci`.** `verify-treeshake` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
-- [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
+- [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (from the `latest` React leg).
 
-### Coverage (soft now → hard at stable)
+### Coverage
 
 - [x] Add the highest-value tests listed above — landed: render-phase takeover, fps throttling, Canvas size control, multi-canvas pure-JS, `ScopedStore`, `interactivePriority`, XR pointers, frame-timed events, `textureColorSpace`, `gl` deprecation (+ hardened heuristic, task D1), `useRenderTarget`, and WebGPU hook lifecycle. Overall lines coverage ~78%.
-- [ ] **At stable:** add a coverage floor in `vitest.config.ts` (e.g. ~80% lines on `src/core`, lower on `src/webgpu`). _(task D4)_
+- [x] **Coverage floor** — global `coverage.thresholds` in `vitest.config.ts` fail `pnpm test` (and CI) on a drop; see [Current policy](#current-policy-a-ratchet-that-blocks-drops). _(task D4)_
+- [ ] **Per-area floors** — the soft targets above (e.g. ~80% lines on `src/core`, lower on `src/webgpu`) are not yet enforced per directory.
 
 ### WebGPU tiers
 
