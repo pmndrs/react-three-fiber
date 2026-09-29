@@ -7,9 +7,9 @@
  * element: the shared renderer kept drawing the secondary's scene into the
  * primary's canvas and the secondary stayed blank.
  *
- * A secondary whose primary fell back therefore creates its own renderer (which
- * takes the same fallback) and renders independently, while a WebGPU secondary
- * keeps sharing the primary's renderer through a CanvasTarget.
+ * A secondary whose primary fell back therefore creates its own renderer (forced onto
+ * the same WebGL2 backend) and renders independently as a standalone root, while a
+ * WebGPU secondary keeps sharing the primary's renderer through a CanvasTarget.
  *
  * No GPU: the renderer is a mock, but one that keeps three's real contract
  * (backend identity flags, the own default canvas target, target-implicit
@@ -24,10 +24,15 @@ import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot } from '../src'
+import { createRoot as createRootWithProvider } from '../src/core/renderer'
+
+import type { RendererProvider, WebGPUSupport } from '../types/provider'
 
 //* Mock Renderer ==============================
 
 class MockRenderer {
+  /** Constructor params, as three's Renderer receives them. */
+  receivedParams: Record<string, unknown>
   canvas: HTMLCanvasElement
   /** What the renderer's own target measured at the moment GPU resources would be created. */
   sizeAtInit: { width: number; height: number; dpr: number } | null = null
@@ -46,12 +51,17 @@ class MockRenderer {
   }
   private _initialized = false
   private _canvasTarget: CanvasTarget
-
-  constructor(params: { canvas: HTMLCanvasElement; webgpu?: boolean }) {
+  constructor(params: { canvas: HTMLCanvasElement; webgpu?: boolean; forceWebGL?: boolean } & Record<string, unknown>) {
+    this.receivedParams = params
     this.canvas = params.canvas
     // three sets exactly one identity flag on the backend it picked; r3f detects the
-    // fallback by isWebGPUBackend being absent (renderer.tsx, primary path).
-    this.backend = params.webgpu === false ? { isWebGLBackend: true } : { isWebGPUBackend: true }
+    // fallback by isWebGPUBackend being absent (renderer.tsx, primary path). An explicit
+    // `webgpu: true/false` from the test pins the backend; without it, WebGPU is picked
+    // only when the environment has navigator.gpu or nothing forces WebGL, mirroring
+    // three's WebGPUBackend -> WebGLBackend fallback.
+    const wantsWebGPU =
+      params.webgpu === true || (params.webgpu !== false && !params.forceWebGL && typeof navigator.gpu !== 'undefined')
+    this.backend = wantsWebGPU ? { isWebGPUBackend: true } : { isWebGLBackend: true }
     // As three's Renderer constructor does: one target around the element, flagged as default.
     this._canvasTarget = new CanvasTarget(params.canvas)
     // three's CanvasTarget type lacks the default-target flag the assertions rely on.
@@ -214,8 +224,11 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const state = secondary.store.getState()
     // GPU resources cannot cross GL contexts, so the secondary is its own primary.
     expect(state.primaryStore).toBe(secondary.store)
-    expect(state.internal.isSecondary).toBe(true)
-    expect(state.internal.targetId).toBe(mainId)
+    // It owns its renderer, so it is NOT flagged as a borrowing secondary: teardown
+    // neither disposes the renderer's own default canvas target nor skips XR.
+    expect(state.internal.isSecondary).toBeFalsy()
+    expect(state.internal.targetId).toBeUndefined()
+    expect(state.internal.sharedRendererFallback).toBe(true)
   })
 
   it('a WebGPU secondary still shares the primary\u2019s renderer', async () => {
@@ -233,5 +246,72 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const canvasTarget = state.internal.canvasTarget!
     expect(canvasTarget).not.toBe(primary.renderer.getCanvasTarget())
     expect(canvasTarget.domElement).toBe(secondary.canvas)
+  })
+
+  it('constructs the fallback renderer through the real configure path; teardown never disposes its default target', async () => {
+    const mainId = `${testPrefix}-real`
+    // A provider whose Renderer is the mock: core runs its real construction path
+    // The mock support carries only what the construction path reads (kind, three for JSX
+    // catalogue, Renderer, CanvasTarget); the remaining WebGPUSupport fields are only used
+    // by occlusion/useRenderTarget, which these roots never enable. One unchecked cast.
+    const mockSupport = {
+      kind: 'webgpu',
+      three: THREE,
+      Renderer: MockRenderer,
+      RenderTarget: THREE.WebGLRenderTarget,
+      CubeRenderTarget: THREE.WebGLCubeRenderTarget,
+      CanvasTarget,
+    } as unknown as WebGPUSupport
+    const provider: RendererProvider = { webgpu: async () => mockSupport }
+
+    const primaryCanvas = createCanvas()
+    const primaryRoot = createRootWithProvider(primaryCanvas, provider)
+    roots.push(primaryRoot)
+    const primaryStore = await act(async () =>
+      (await primaryRoot.configure({ id: mainId, size, dpr: 1, frameloop: 'never' })).render(<mesh />),
+    )
+    expect(primaryStore.getState().webGPUSupported).toBe(false)
+
+    const secondaryCanvas = createCanvas()
+
+    const secondaryRoot = createRootWithProvider(secondaryCanvas, provider)
+    roots.push(secondaryRoot)
+    const secondaryStore = await act(async () =>
+      (
+        await secondaryRoot.configure({
+          primaryCanvas: mainId,
+          size: { width: 320, height: 240, top: 0, left: 0 },
+          dpr: 1,
+          frameloop: 'never',
+          scheduler: { after: mainId },
+        })
+      ).render(<mesh />),
+    )
+
+    const state = secondaryStore.getState()
+    const owned = state.internal.actualRenderer as unknown as MockRenderer
+    // Core constructed this renderer itself, forced onto the primary's WebGL2 backend.
+    expect(owned).not.toBe(primaryStore.getState().internal.actualRenderer)
+    expect(owned.receivedParams.forceWebGL).toBe(true)
+    expect(owned.receivedParams.canvas).toBe(secondaryCanvas)
+    expect(state.webGPUSupported).toBe(false)
+    expect(state.internal.sharedRendererFallback).toBe(true)
+    expect(state.internal.isSecondary).toBeFalsy()
+
+    // The renderer's own default target: teardown must NOT dispose it, because this
+    // root owns the renderer (a `isSecondary` root would have it disposed here).
+    const defaultTarget = state.internal.canvasTarget!
+    expect((defaultTarget as CanvasTarget & { isDefaultCanvasTarget?: boolean }).isDefaultCanvasTarget).toBe(true)
+    let targetDisposed = 0
+    const originalDispose = defaultTarget.dispose
+    defaultTarget.dispose = (...args: Parameters<typeof originalDispose>) => {
+      targetDisposed++
+      return originalDispose.apply(defaultTarget, args)
+    }
+
+    await act(async () => secondaryRoot.unmount())
+    // tsconfig's lib predates Promise.withResolvers; executor form until the target moves.
+    await new Promise<void>((resolve) => setTimeout(resolve, 520))
+    expect(targetDisposed).toBe(0)
   })
 })

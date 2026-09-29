@@ -118,9 +118,9 @@ R3F automatically manages `CanvasTarget` switching across canvases. A job in the
 
 ## WebGL2 Fallback
 
-When `navigator.gpu` is unavailable, three's `WebGPURenderer` silently falls back to its WebGL2 backend. A WebGL context is bound to the canvas element it was created on, so a renderer cannot be shared across canvases in that environment. A secondary whose primary fell back therefore creates its own renderer (which takes the same fallback) and renders independently: scenes stay correct, at the cost of one GPU context per canvas instead of one shared.
+When `navigator.gpu` is unavailable, three's `WebGPURenderer` silently falls back to its WebGL2 backend. A WebGL context is bound to the canvas element it was created on, so a renderer cannot be shared across canvases in that environment. A secondary whose primary fell back therefore creates its own renderer, forced onto the same WebGL2 backend (`forceWebGL`), and renders independently: scenes stay correct, at the cost of one GPU context per canvas instead of one shared.
 
-Because GPU resources cannot cross GL contexts, TSL resources stay local to each fallback canvas (`primaryStore` self-references), and a fallback secondary is never registered as a shareable primary for further canvases.
+Such a fallback secondary owns its renderer, so it is a standalone root: it is not flagged `internal.isSecondary` (which marks a canvas borrowing another's renderer) and its renderer's default canvas target is never disposed by teardown. `internal.sharedRendererFallback` records the fallback. GPU resources cannot cross GL contexts, so TSL resources stay local (`primaryStore` self-references), and a fallback secondary is never registered as a shareable primary for further canvases.
 
 ## API Reference
 
@@ -144,7 +144,8 @@ Because GPU resources cannot cross GL contexts, TSL resources stay local to each
 | Property                 | Type        | Description                          |
 | ------------------------ | ----------- | ------------------------------------ |
 | `primaryStore`           | `RootStore` | Zustand store of the primary canvas  |
-| `internal.isSecondary`   | `boolean`   | Whether this is a secondary canvas   |
+| `internal.isSecondary`   | `boolean`   | Whether this canvas borrows another's renderer (not set for a WebGL2-fallback secondary, which owns its renderer)  |
+| `internal.sharedRendererFallback` | `boolean` | Whether this secondary stopped sharing because the primary fell back to WebGL2 |
 | `internal.isMultiCanvas` | `boolean`   | Whether multi-canvas mode is active  |
 
 ## Related

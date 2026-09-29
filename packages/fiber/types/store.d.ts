@@ -166,6 +166,12 @@ export interface InternalState {
    */
   targetId?: string
   /**
+   * This secondary stopped sharing because the primary's renderer fell back to its
+   * WebGL2 backend (#3965): it owns the renderer it constructed, so it is not
+   * `isSecondary` (which marks a canvas borrowing another's renderer).
+   */
+  sharedRendererFallback?: boolean
+  /**
    * Function to unregister this primary canvas from the registry.
    * Only set when this canvas has an `id` prop.
    */
