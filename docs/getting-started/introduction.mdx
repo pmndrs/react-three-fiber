@@ -8,10 +8,13 @@ nav: 0
   Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in [React](https://react.dev)'s ecosystem.
 </Intro>
 
+> [!IMPORTANT]
+> You're reading the docs for **v10, currently in alpha**: APIs can still change before release. For the current stable release, see the [v9 docs](https://docs.pmnd.rs/react-three-fiber). The version picker at the bottom right of every page switches between them.
+
 [![React Three Fiber banner](../banner-r3f.jpg)](/getting-started/examples)
 
 ```bash
-npm install three @types/three @react-three/fiber
+npm install three @types/three @react-three/fiber@alpha
 ```
 > [!WARNING]  
 > Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 and @10 pair with react@19.
@@ -155,7 +158,7 @@ export default function App() {
 
 You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://react.dev/learn), especially [the section about hooks](https://react.dev/reference/react). As for Threejs, make sure you at least glance over the following links:
 
-1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
+1. Make sure you have a [basic grasp of Threejs](https://threejs.org/manual/#en/creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll through our [API](/api/canvas) to see what the various settings and hooks do.
@@ -170,11 +173,11 @@ Some helpful material:
   <img src="../banner-journey.jpg" />
 </a>
 
-## Eco system
+## Ecosystem
 
-There is a vibrant and extensive eco system around three-fiber, full of libraries, helpers and abstractions.
+There is a vibrant and extensive ecosystem around three-fiber, full of libraries, helpers and abstractions.
 
-- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers, this is an eco system in itself
+- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers, this is an ecosystem in itself
 - [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/test-renderer`](https://github.com/pmndrs/react-three-fiber/tree/master/packages/test-renderer) &ndash; for unit tests in node

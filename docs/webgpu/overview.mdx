@@ -141,9 +141,7 @@ function GlobalEffects() {
 
 // Use in components
 function WobblyMesh() {
-  const { colorNode } = useLocalNodes(({ nodes }) => ({
-    colorNode: nodes.wobbleFn.mul(0.5).add(0.5),
-  }))
+  const { colorNode } = useLocalNodes(({ nodes }) => ({ colorNode: nodes.wobbleFn.mul(0.5).add(0.5) }), [])
 
   return (
     <mesh>
@@ -169,7 +167,7 @@ const { colorNode } = useLocalNodes(({ uniforms }) => {
     return { colorNode: vec3(1, 0, 0) }
   }
   return { colorNode: vec3(0, 0, 1) }
-})
+}, [])
 ```
 
 ### Run-Time (GPU)
@@ -188,7 +186,7 @@ const { colorNode } = useLocalNodes(({ uniforms }) => {
     result.assign(vec3(0, 0, 1))
   })
   return { colorNode: result }
-})
+}, [])
 ```
 
 **Quick rule:**
@@ -206,9 +204,7 @@ Before creating uniforms, check whether TSL already has a built-in node.
 import { cameraPosition } from 'three/tsl'
 
 // ✅ Use the TSL built-in
-const { colorNode } = useLocalNodes(() => ({
-  colorNode: length(cameraPosition.sub(positionWorld)),
-}))
+const { colorNode } = useLocalNodes(() => ({ colorNode: length(cameraPosition.sub(positionWorld)) }), [])
 
 // ❌ Don't mirror state.camera into a uniform - redundant
 ```
@@ -221,7 +217,7 @@ Available TSL camera nodes: `cameraPosition`, `cameraViewMatrix`, `cameraProject
 import { time } from 'three/tsl'
 
 // ✅ Use TSL's time node
-const { waveNode } = useLocalNodes(() => ({ waveNode: sin(time.mul(2)) }))
+const { waveNode } = useLocalNodes(() => ({ waveNode: sin(time.mul(2)) }), [])
 
 // ❌ Don't create and drive a uTime uniform manually
 ```
@@ -283,11 +279,12 @@ This means no duplicate GPU allocations, shared state across the component tree,
 - [TSL Hooks](./tsl-hooks) - `useUniform`, `useUniforms`, `useNodes`, `useLocalNodes`, ScopedStore
 - [Render Pipeline](./render-pipeline) - `useRenderPipeline`, MRT, custom passes
 - [Compute (Buffers & Storage)](./compute) - `useBuffers`, `useGPUStorage`
+- [Textures](./textures) - `useTexture`, `useTextures`, the texture registry
 - [Typed Uniforms](./typed-uniforms) - `Register`, `configureTSL`
 - [Multi-Canvas](./multi-canvas) - sharing a renderer across canvases
 - [TSL HMR](./hmr) - what rebuilds on hot reload
 
-> Building GPU pipelines often pairs with the **texture registry** (`useTexture`/`useTextures`). Those are core hooks that work with any renderer — see [Loading Textures → the texture registry](/tutorials/loading-textures#the-texture-registry-with-usetextures-experimental).
+> Building GPU pipelines often pairs with the **texture registry** (`useTexture`/`useTextures`). Those are core hooks that work with any renderer — see [Textures](./textures).
 
 ## External Resources
 

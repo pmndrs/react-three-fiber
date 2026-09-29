@@ -91,9 +91,10 @@ function OrbitingPanels() {
   })
 
   const uIsOccluded = useUniform<number>('isOccluded')
-  const { colorNode } = useLocalNodes(() => ({
-    colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded),
-  }))
+  const { colorNode } = useLocalNodes(
+    () => ({ colorNode: mix(color(palette.panel), color(palette.panelOccluded), uIsOccluded) }),
+    [uIsOccluded],
+  )
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       <mesh position={[0, 0, 1.5]}>

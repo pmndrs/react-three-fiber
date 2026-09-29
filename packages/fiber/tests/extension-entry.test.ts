@@ -12,7 +12,15 @@ import { context as storeContext } from '../src/core/store'
 describe('@react-three/fiber/extension', () => {
   it('exports exactly the extension surface', () => {
     expect(Object.keys(extension).sort()).toEqual(
-      ['context', 'registerRootExtension', 'setRenderOverride', 'useFrame', 'useStore', 'useThree'].sort(),
+      [
+        'context',
+        'getTextureView',
+        'registerRootExtension',
+        'setRenderOverride',
+        'useFrame',
+        'useStore',
+        'useThree',
+      ].sort(),
     )
   })
 

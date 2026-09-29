@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "files": ["./default-consumer.ts"]
+  "files": ["./default-consumer.ts", "./default-element-type.tsx"]
 }
