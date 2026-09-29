@@ -31,6 +31,7 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
+import { assertNodeMaterialSupported } from './utils/nodeMaterial'
 import { removeInteractivity, swapInteractivity } from './events'
 
 //* Type Imports ==============================
@@ -95,6 +96,10 @@ function validateInstance(type: string, props: HostConfig['props'], root: RootSt
 
   // Validate element target
   if (type !== 'primitive' && !target) {
+    // WebGL roots have no node materials; point at the renderer that does
+    if (name.endsWith('NodeMaterial')) {
+      assertNodeMaterialSupported(root.getState(), { isNodeMaterial: true, type: name })
+    }
     throw new Error(
       `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
     )
@@ -102,6 +107,10 @@ function validateInstance(type: string, props: HostConfig['props'], root: RootSt
 
   // Validate primitives
   if (type === 'primitive' && !props.object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
+
+  // Node material instances: <primitive object={m} /> or <mesh material={m} />
+  assertNodeMaterialSupported(root.getState(), props.object)
+  assertNodeMaterialSupported(root.getState(), props.material)
 
   // Throw if an object or literal was passed for args
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
