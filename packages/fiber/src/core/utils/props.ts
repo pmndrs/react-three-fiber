@@ -70,18 +70,43 @@ const MEMOIZED_PROTOTYPES = new Map()
 const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'envMap']
 
 /**
- * Material props that three compiles into the shader program, so a change after the first render
- * only shows once `material.needsUpdate` is set. Uniform-backed props (color, opacity, ...) update
- * live and are not listed. Numeric thresholds such as alphaTest or clearcoat are left out because
- * three's own setters already bump the material version when they cross zero.
+ * Material props three bakes into the compiled program (WebGL) or render object (WebGPU), so a change
+ * after the first render only shows once `material.needsUpdate` is set. Rule: list a prop only when
+ * three does NOT pick the change up on its own, since needsUpdate forces a program/render-object
+ * rebuild. Checked against three r185 on WebGLRenderer and WebGPURenderer (WebGPU + WebGL2 fallback).
+ *
+ * Intentionally excluded because three handles them itself: `wireframe` (draw mode is chosen per
+ * draw; listing it would force a WebGPU render-object rebuild), `toneMapped`, `clippingPlanes` /
+ * `clipIntersection`, `forceSinglePass`, uniform-backed props (color, opacity, ...) and numeric
+ * thresholds (alphaTest, clearcoat, sheen, transmission, ...) whose setters bump the version.
+ * Replacing `defines` is also left out: an inline object is a new reference on every render, and a
+ * pierced `defines-FOO` write resolves to the defines object, not the material.
  * https://threejs.org/manual/#en/how-to-update-things
  */
-const programProps = new Set(['transparent', 'vertexColors', 'flatShading', 'fog'])
+const programProps = new Set([
+  'transparent',
+  'vertexColors',
+  'flatShading',
+  'fog',
+  // Culling is live, but DOUBLE_SIDED / FLIP_SIDED normal flipping is compiled in
+  'side',
+  'alphaHash',
+  'premultipliedAlpha',
+  // Both feed the OPAQUE define when the material is not transparent
+  'blending',
+  'alphaToCoverage',
+  'dithering',
+  'sizeAttenuation',
+  'combine',
+  'normalMapType',
+  'depthPacking',
+])
 
 /**
  * Whether writing `next` over `previous` at `key` on `root` recompiles the material's shader: one of
  * the program props changing value, or a texture slot (map, normalMap, envMap, ...) gaining or losing
- * its texture. Swapping one texture for another keeps the program, so it does not count.
+ * its texture. Swapping one texture for another keeps the program, so it does not count. The texture
+ * rule matters on every renderer: on WebGPU, clearing a texture without needsUpdate throws.
  */
 function changesProgram(root: any, key: string, previous: unknown, next: unknown): boolean {
   if (!root?.isMaterial || previous === next) return false
