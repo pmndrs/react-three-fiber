@@ -82,10 +82,10 @@ function Portal({
     camera.rotation.copy(state.camera.rotation)
     camera.scale.copy(state.camera.scale)
     // Render into a WebGLRenderTarget as a texture (the FBO above)
-    state.gl.clearColor()
-    state.gl.setRenderTarget(fbo)
-    state.gl.render(scene, camera)
-    state.gl.setRenderTarget(null)
+    state.renderer.clearColor()
+    state.renderer.setRenderTarget(fbo)
+    state.renderer.render(scene, camera)
+    state.renderer.setRenderTarget(null)
   })
 
   // This is a custom raycast-compute function, it controls how the raycaster functions.
