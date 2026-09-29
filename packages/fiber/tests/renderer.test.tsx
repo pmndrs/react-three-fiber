@@ -1038,6 +1038,70 @@ describe('renderer', () => {
     expect(dispose).not.toHaveBeenCalled()
   })
 
+  // #3980, test adapted from #3976 (master)
+  it('should request a frame when an object is removed', async () => {
+    const store = await act(async () =>
+      (await root.configure({ frameloop: 'demand' })).render(
+        <group>
+          <mesh />
+        </group>,
+      ),
+    )
+    const invalidate = vi.fn()
+    store.setState({ invalidate })
+
+    // One request for the removed subtree, not one per descendant
+    await act(async () => root.render(null))
+    expect(invalidate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should request a frame when an object is removed from a portal', async () => {
+    const container = new THREE.Group()
+    const Test = ({ show }: { show: boolean }) => (
+      <>
+        <primitive object={container} />
+        {createPortal(show ? <mesh /> : null, container)}
+      </>
+    )
+
+    const store = await act(async () => (await root.configure({ frameloop: 'demand' })).render(<Test show />))
+    const invalidate = vi.fn()
+    store.setState({ invalidate })
+
+    await act(async () => root.render(<Test show={false} />))
+    expect(invalidate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not request a frame for objects removed while the root unmounts', async () => {
+    const container = new THREE.Group()
+    const store = await act(async () =>
+      (await root.configure({ frameloop: 'demand' })).render(
+        <>
+          <group />
+          <primitive object={container} />
+          {createPortal(<mesh />, container)}
+        </>,
+      ),
+    )
+    const invalidate = vi.fn()
+    store.setState({ invalidate })
+
+    await act(async () => root.unmount())
+    expect(invalidate).not.toHaveBeenCalled()
+  })
+
+  it.each(['demand', 'always'] as const)(
+    'should not warn about a missing scheduler root when a %s root unmounts',
+    async (frameloop) => {
+      const warn = vi.spyOn(console, 'warn')
+      await act(async () => (await root.configure({ frameloop })).render(<group />))
+
+      await act(async () => root.unmount())
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('not found; invalidation ignored'))
+      warn.mockRestore()
+    },
+  )
+
   it('should apply args changes when followed by an unchanged memoized sibling', async () => {
     const ref = React.createRef<THREE.Mesh>()
     const Sibling = React.memo(() => <group name="static" />)
