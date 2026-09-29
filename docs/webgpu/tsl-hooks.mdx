@@ -100,7 +100,7 @@ function DisplacedSphere() {
 }
 ```
 
-- **Create mode** (`useUniform('uTime', 0)`): creates if missing; if it exists, returns the existing uniform and updates its value.
+- **Create mode** (`useUniform('uTime', 0)`): creates if missing; if it exists, returns the existing uniform and updates its value. When a later render passes a different value, the uniform's `.value` is updated in place (the node is not recreated). An equal value in a new object, such as an inline `new Color('red')`, is not a change, so an imperative `.value` write survives the re-render.
 - **Get mode** (`useUniform('uTime')`): returns the existing uniform; throws if it does not exist.
 
 Uniforms are shared across components - one component can create a uniform and another can read it by name.
