@@ -1,5 +1,5 @@
 /**
- * Canvas root lifetime vs. suspension — Tier 1 (jsdom).
+ * Canvas root lifetime vs. suspension and <Activity> hiding — Tier 1 (jsdom).
  *
  * Regression for #3850: suspending inside <Canvas> destroyed and re-created the whole renderer
  * root, silently discarding everything created inside it (useGPUStorage buffers included).
@@ -23,7 +23,8 @@ import * as THREE from 'three'
 import { suspend } from 'suspend-react'
 
 import { Canvas, extend, useStore } from '../src'
-import type { RootStore } from '../src'
+import { _roots } from '../src/core/renderer'
+import type { RootState, RootStore } from '../src'
 
 /** A child that suspends until the returned `resolve` is called, like useTexture does. */
 function makeGate(key: string) {
@@ -121,5 +122,109 @@ describe('suspending inside <Canvas> (#3850)', () => {
     // synchronously — the rest of the teardown (including the _roots delete) is deferred behind a
     // 500ms timer, so this is the signal that actually pins "the teardown ran" without racing it.
     expect(store.getState().internal.active).toBe(false)
+  })
+})
+
+// CI also covers React 19.0, which has neither Activity nor its types.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const describeActivity = Activity ? describe : describe.skip
+
+describeActivity('hiding <Canvas> in <Activity>', () => {
+  function App({ mode, show, seen }: { mode: 'visible' | 'hidden'; show: boolean; seen: RootStore[] }) {
+    const Owner = React.useMemo(() => makeOwner(seen), [seen])
+    return show ? (
+      <div style={{ width: 100, height: 100 }}>
+        <Activity mode={mode}>
+          <Canvas>
+            <Owner />
+          </Canvas>
+        </Activity>
+      </div>
+    ) : null
+  }
+
+  it('keeps the root while hidden and releases it when removed while hidden', async () => {
+    const seen: RootStore[] = []
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      rerender = render(<App mode="visible" show seen={seen} />).rerender
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    const store = seen[seen.length - 1]
+    expect(store.getState().internal.active).toBe(true)
+
+    // Hiding destroys the Canvas' effects but keeps its DOM, so the root must survive
+    await act(async () => rerender(<App mode="hidden" show seen={seen} />))
+    expect(store.getState().internal.active).toBe(true)
+    expect([..._roots.values()].some((root) => root.store === store)).toBe(true)
+
+    // Removed while hidden: its passive effects are already gone, so only final removal can release it
+    await act(async () => {
+      rerender(<App mode="hidden" show={false} seen={seen} />)
+      await new Promise((r) => setTimeout(r, 20))
+    })
+    expect(store.getState().internal.active).toBe(false)
+  })
+
+  // Showing again re-runs the Canvas' effects on the root that survived: nothing is rebuilt
+  it.each([
+    ['', React.Fragment],
+    [' under StrictMode', React.StrictMode],
+  ] as const)('hide -> show keeps the same root, renderer and scene%s', async (_, Wrapper) => {
+    const created: RootState[] = []
+    const mesh = new THREE.Mesh()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Scene = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+      <Wrapper>
+        <div style={{ width: 100, height: 100 }}>
+          <Activity mode={mode}>
+            <Canvas onCreated={(state) => created.push(state)}>
+              <primitive object={mesh} />
+            </Canvas>
+          </Activity>
+        </div>
+      </Wrapper>
+    )
+
+    let rerender!: (ui: React.ReactElement) => void
+    let unmount!: () => void
+    await act(async () => {
+      ;({ rerender, unmount } = render(<Scene mode="visible" />))
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    const canvas = created[0].renderer.domElement as HTMLCanvasElement
+    const store = _roots.get(canvas)!.store
+    const renderer = store.getState().renderer
+    const dispose = vi.spyOn(renderer, 'dispose')
+    const forceContextLoss = vi.spyOn(renderer as THREE.WebGLRenderer, 'forceContextLoss')
+    expect(store.getState().scene.children).toContain(mesh)
+
+    await act(async () => rerender(<Scene mode="hidden" />))
+    await act(async () => {
+      rerender(<Scene mode="visible" />)
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    // Past the 500ms deferred teardown a released root would have run
+    await act(async () => new Promise((r) => setTimeout(r, 700)))
+
+    expect(_roots.get(canvas)?.store).toBe(store)
+    expect(store.getState().internal.active).toBe(true)
+    expect(store.getState().renderer).toBe(renderer)
+    expect(store.getState().scene.children).toContain(mesh)
+    expect(created).toHaveLength(1)
+    expect(dispose).not.toHaveBeenCalled()
+    expect(forceContextLoss).not.toHaveBeenCalled()
+    expect(warn.mock.calls.filter((c) => String(c[0]).includes('createRoot'))).toHaveLength(0)
+
+    await act(async () => {
+      unmount()
+      await new Promise((r) => setTimeout(r, 20))
+    })
+    expect(store.getState().internal.active).toBe(false)
+    warn.mockRestore()
   })
 })
