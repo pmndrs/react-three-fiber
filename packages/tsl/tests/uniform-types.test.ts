@@ -1,13 +1,17 @@
 import type {
   Color,
+  ConstNode,
   InputNode as ThreeInputNode,
   Matrix3,
   Matrix4,
   UniformNode as ThreeUniformNode,
+  VarNode,
   Vector2,
   Vector3,
   Vector4,
 } from 'three/webgpu'
+import { bool, color, float, int, uint, vec2, vec3, vec4 } from 'three/tsl'
+import { useUniform, useUniforms } from '../src'
 
 type Equal<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
@@ -30,6 +34,21 @@ type MapsVector3 = Expect<Equal<UniformNodeFor<Vector3>, ThreeUniformNode<'vec3'
 type MapsVector4 = Expect<Equal<UniformNodeFor<Vector4>, ThreeUniformNode<'vec4', Vector4>>>
 type MapsMatrix3 = Expect<Equal<UniformNodeFor<Matrix3>, ThreeUniformNode<'mat3', Matrix3>>>
 type MapsMatrix4 = Expect<Equal<UniformNodeFor<Matrix4>, ThreeUniformNode<'mat4', Matrix4>>>
+
+// TSL constructors (int(1), vec2(0, 1), color('red'), ...) return the constant wrapped in a VarNode,
+// which three's own `uniform()` unwraps to `UniformNode<TNodeType, TValue>` (#3769).
+type ConstVar<TNodeType, TValue> = VarNode<TNodeType, ConstNode<TNodeType, TValue>>
+type MapsIntNode = Expect<Equal<UniformNodeFor<ConstVar<'int', number>>, ThreeUniformNode<'int', number>>>
+type MapsVec2Node = Expect<Equal<UniformNodeFor<ConstVar<'vec2', Vector2>>, ThreeUniformNode<'vec2', Vector2>>>
+type MapsColorNode = Expect<Equal<UniformNodeFor<ConstVar<'color', Color>>, ThreeUniformNode<'color', Color>>>
+
+/** What the constructors actually return for constant arguments (only the types are used). */
+const tslCalls = () => ({ f: float(1), u: uint(1), b: bool(true), v: vec3(0, 1, 0) })
+type TSLCalls = ReturnType<typeof tslCalls>
+type MapsFloatCall = Expect<Equal<UniformNodeFor<TSLCalls['f']>, ThreeUniformNode<'float', number>>>
+type MapsUintCall = Expect<Equal<UniformNodeFor<TSLCalls['u']>, ThreeUniformNode<'uint', number>>>
+type MapsBoolCall = Expect<Equal<UniformNodeFor<TSLCalls['b']>, ThreeUniformNode<'bool', boolean>>>
+type MapsVec3Call = Expect<Equal<UniformNodeFor<TSLCalls['v']>, ThreeUniformNode<'vec3', Vector3>>>
 
 /**
  * Compile-only assertions for the ambient uniform mappings in `types/tsl.d.ts`.
@@ -100,7 +119,65 @@ function extendedRawUniformTypeAssertions(
   void [directColor, rgbInput, vector3, vector4, matrix3, matrix4]
 }
 
+function tslNodeTypeAssertions(
+  intNode: MapsIntNode,
+  vec2Node: MapsVec2Node,
+  colorNode: MapsColorNode,
+  floatCall: MapsFloatCall,
+  uintCall: MapsUintCall,
+  boolCall: MapsBoolCall,
+  vec3Call: MapsVec3Call,
+) {
+  void [intNode, vec2Node, colorNode, floatCall, uintCall, boolCall, vec3Call]
+}
+
+/** The reproduction from #3769, verbatim: every key maps to three's exact uniform node. */
+type ExpectedUniforms = {
+  uOpacity: ThreeUniformNode<'float', number>
+  uEnabled: ThreeUniformNode<'bool', boolean>
+  uTintFromString: ThreeUniformNode<'color', Color>
+  uMode: ThreeUniformNode<'int', number>
+  uOffset: ThreeUniformNode<'vec2', Vector2>
+  uDirection: ThreeUniformNode<'vec3', Vector3>
+  uTint: ThreeUniformNode<'color', Color>
+  uBounds: ThreeUniformNode<'vec4', Vector4>
+}
+
+function acceptsExpectedUniforms(uniforms: ExpectedUniforms) {
+  return uniforms
+}
+
+function Issue3769Component() {
+  const uniforms = useUniforms({
+    uOpacity: 0,
+    uEnabled: true,
+    uTintFromString: '#ff0088',
+    uMode: int(1),
+    uOffset: vec2(0, 1),
+    uDirection: vec3(0, 1, 0),
+    uTint: color('#88ccff'),
+    uBounds: vec4(0, 0, 1, 1),
+  })
+
+  acceptsExpectedUniforms(uniforms)
+
+  // The singular hook shares the mapping.
+  const uMode: ThreeUniformNode<'int', number> = useUniform('uModeSingle', int(1))
+  const uTint: ThreeUniformNode<'color', Color> = useUniform('uTintSingle', color('#88ccff'))
+
+  // @ts-expect-error An int() input must not widen to a float uniform.
+  const wrongMode: ThreeUniformNode<'float', number> = uniforms.uMode
+  // @ts-expect-error A vec2() input must not widen to vec3.
+  const wrongOffset: ThreeUniformNode<'vec3', Vector3> = uniforms.uOffset
+
+  void [uMode, uTint, wrongMode, wrongOffset]
+  return null
+}
+
 void rawUniformTypeAssertions
+void tslNodeTypeAssertions
+void tslCalls
+void Issue3769Component
 void existingNodeTypeAssertions
 void extendedRawUniformTypeAssertions
 

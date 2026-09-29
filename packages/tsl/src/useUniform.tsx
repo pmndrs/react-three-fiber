@@ -6,6 +6,8 @@ import { usePrimaryStore } from './internal/usePrimaryStore'
 import { ROOT_SCOPE, peekStaged } from './internal/resourceRegistry'
 import { isTSLNode, isUniformNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
+import { useCompareMemoize } from './internal/useCompareMemoize'
+import { vectorize } from './internal/utils'
 import type { RegisteredUniform, RegisteredUniforms } from './register'
 
 /**
@@ -65,6 +67,10 @@ export function useUniform<T extends UniformValue>(name: string, value: T): Unif
  * - `useUniform('name', value)` - Creates if not exists, updates value if exists
  * - `useUniform('name')` - Gets existing uniform (throws if not found)
  *
+ * The value is tracked: when a later render passes a different `value` (deep-compared, so an
+ * equal but freshly constructed object does not count), the uniform's `.value` is updated in
+ * place. The node itself is never recreated, so materials using it do not recompile.
+ *
  * @example
  * ```tsx
  * import { useUniform } from '@react-three/tsl'
@@ -97,24 +103,31 @@ export function useUniform<T extends UniformValue = UniformValue>(name: string, 
   // register on the local store, where useUniforms never looked.
   const store = usePrimaryStore()
 
+  // Memo trigger: the name alone in get-only mode, otherwise the name plus the normalized value,
+  // deep-compared like useUniforms. A changed value re-runs the registration memo and reaches
+  // `reconcile`; a value that is only referentially new (an inline `new Color('red')`, a fresh
+  // `color('red')` node) compares equal and leaves the uniform alone, so an imperative
+  // `node.value` write is not clobbered by a re-render whose prop did not change.
+  const memoizedInput = useCompareMemoize(value === undefined ? name : { [name]: normalizeValue(value) }, true)
+
   // Create mode: register through the shared staged mechanism (render-phase
   // creation, commit-phase store write, generation-aware reuse). In get-only
   // mode this stages nothing and returns {}.
-  // Note: `value` is intentionally not a memo trigger - updates happen
-  // imperatively via `node.value`.
   const registered = useScopedResource<UniformValue, UniformNode>({
     store,
     kind: 'uniforms',
     scope: undefined,
     isLeaf: isUniformNode,
-    input: name,
+    input: memoizedInput,
     create: () => (value === undefined ? {} : { [name]: value }),
     prepare: createNamedUniform,
     reconcile: (existing) => {
-      // Update value if provided (but not for TSL nodes - those are immutable)
-      if (value !== undefined && !isTSLNode(value) && !isUniformNode(value)) {
-        existing.value = typeof value === 'string' ? new ThreeColor(value) : value
-      }
+      // An existing UniformNode is registered as-is: there is no value to sync from it.
+      if (value === undefined || isUniformNode(value)) return
+      const next = normalizeValue(value)
+      // A TSL node with no constant to extract (e.g. `positionLocal`) has no value to write.
+      if (isTSLNode(next)) return
+      existing.value = next
     },
   })
   if (registered[name]) return registered[name] as UniformNodeFor<T>
@@ -127,6 +140,15 @@ export function useUniform<T extends UniformValue = UniformValue>(name: string, 
   throw new Error(
     `[useUniform] Uniform "${name}" not found. ` + `Create it first with: useUniform('${name}', initialValue)`,
   )
+}
+
+/**
+ * The JS value a uniform stores for an input: CSS colour strings become a Color (as on creation),
+ * plain `{ x, y, z }` / `{ r, g, b }` objects become vectors / colours, and TSL constant nodes
+ * (`color('red')`, `vec3(0, 1, 0)`, `float(1)`) yield the value they wrap.
+ */
+function normalizeValue(value: UniformValue): unknown {
+  return typeof value === 'string' ? new ThreeColor(value) : vectorize(value)
 }
 
 /** Build the stored UniformNode for a fresh registration (see useUniform cases). */

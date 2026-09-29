@@ -98,8 +98,14 @@ export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
   Overwrite<ElementProps<T>, Omit<InstanceProps<InstanceType<T>, T>, 'object'>>
 >
 
+/**
+ * Every constructor export of a three namespace as an uncapitalized JSX element. Non-constructor
+ * exports (constants, functions, nested namespaces) are dropped from the keys rather than mapped
+ * to `never`: a single `never`-valued key in `JSX.IntrinsicElements` collapses the props of any
+ * tag typed `React.ElementType` (#3898).
+ */
 export type ThreeToJSXElements<T extends Record<string, any>> = {
-  [K in keyof T & string as Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
+  [K in keyof T & string as T[K] extends ConstructorRepresentation ? Uncapitalize<K> : never]: ThreeElement<T[K]>
 }
 
 /** Method names of Object3D, excluded from the `primitive` element's typed props. */
