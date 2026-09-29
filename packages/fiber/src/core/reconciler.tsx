@@ -267,6 +267,9 @@ function removeChild(
 ) {
   if (!child) return
 
+  // Unlinking clears the parent, so note whether the child was in the tree to begin with
+  const wasLinked = !!child.parent
+
   // Unlink instances
   child.parent = null
   const childIndex = parent.children.indexOf(child)
@@ -303,8 +306,13 @@ function removeChild(
     disposeOnIdle(child.object)
   }
 
-  // Tree was updated, request a frame for top-level instance
-  if (dispose === undefined) invalidateInstance(child)
+  // Tree was updated, request a frame for top-level instance (invalidateInstance would skip it, since
+  // unlinking cleared its parent). Ask the initial root, not a portal layer, whose copy of `internal`
+  // does not follow `active`: once the root unmounts it has left the scheduler and nothing is drawn
+  if (dispose === undefined && wasLinked) {
+    const state = findInitialRoot(child).getState()
+    if (state.internal.active && state.internal.frames === 0) state.invalidate()
+  }
 }
 
 function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance']): void {
