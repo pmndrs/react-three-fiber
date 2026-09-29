@@ -418,6 +418,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // The renderer support is loaded: three's shared core is available from here on
       const three = getThree()
 
+      // A secondary that borrows the primary's renderer: renderer-wide settings and XR wiring
+      // belong to the owner alone (#3981). A WebGL2-fallback secondary (#3965) owns its
+      // renderer and is deliberately not `isSecondary`, so it keeps full control.
+      const borrowsRenderer = state.internal.isSecondary === true
+
       //* Default Raycaster Initialization ==============================
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
@@ -602,14 +607,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           },
         }
 
-        // Subscribe to WebXR session events
-        if (typeof renderer.xr?.addEventListener === 'function') xr.connect()
+        // Subscribe to WebXR session events. Wired once by the renderer's owner: a
+        // borrowing secondary must not pile session listeners onto the primary's
+        // renderer (#3981).
+        if (!borrowsRenderer && typeof renderer.xr?.addEventListener === 'function') xr.connect()
         state.set({ xr })
       }
 
       //* Shadow Map ==============================
-      // Only update if the shadows PROP changed (not just if state differs)
-      if (renderer.shadowMap && !is.equ(shadows, lastConfiguredProps.shadows, shallowLoose)) {
+      // Only update if the shadows PROP changed (not just if state differs). The owner's
+      // setting wins on a shared renderer: a borrowing secondary must not turn the
+      // primary's shadows off with its own default (#3981).
+      if (!borrowsRenderer && renderer.shadowMap && !is.equ(shadows, lastConfiguredProps.shadows, shallowLoose)) {
         lastConfiguredProps.shadows = shadows
         const oldEnabled = renderer.shadowMap.enabled
         const oldType = renderer.shadowMap.type
@@ -641,9 +650,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
-      //* Color Management ==============================
-      // Set sensible defaults on first configure only - gl/renderer props can override via applyProps
-      if (!configured) {
+      // Set sensible defaults on first configure only - gl/renderer props can override via
+      // applyProps. Skipped for a borrowing secondary: its defaults would reset the
+      // owner's choices on the shared renderer (#3981).
+      if (!configured && !borrowsRenderer) {
         renderer.outputColorSpace = three.SRGBColorSpace
         renderer.toneMapping = three.ACESFilmicToneMapping
       }
@@ -670,9 +680,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
         applyProps(renderer, glProps as any)
       }
-
-      // Set renderer props (WebGPU) - filter out non-applicable props
-      if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
+      // Set renderer props (WebGPU) - filter out non-applicable props. The owner's props
+      // alone: a borrowing secondary's config must not reach the shared renderer (#3981).
+      if (
+        rendererConfig &&
+        !is.fun(rendererConfig) &&
+        !isRenderer(rendererConfig) &&
+        state.renderer &&
+        !borrowsRenderer
+      ) {
         const currentRenderer = state.renderer
         if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
           const rendererProps: Record<string, any> = {}
