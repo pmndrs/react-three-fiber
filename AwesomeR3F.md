@@ -118,7 +118,6 @@ A selection of companies and projects using React Three Fiber.
 
 ### 3D Tools & Modellers
 
-- [Colorful](https://www.colorful.app) - 3D modeller
 - [Bezi](https://www.bezi.com) - 3D modeller
 - [Ready Player Me](https://readyplayer.me) - Avatar configurator
 
