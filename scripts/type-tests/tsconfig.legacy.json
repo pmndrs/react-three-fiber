@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": []
   },
-  "files": ["./legacy-consumer.ts"]
+  "files": ["./legacy-consumer.ts", "./legacy-element-type.tsx"]
 }
