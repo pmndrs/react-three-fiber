@@ -21,6 +21,7 @@ import {
 import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
 import { notifyDepreciated } from './notices'
+import { assertNodeMaterialSupported } from './nodeMaterial'
 
 //* Property Resolution & Application ==============================
 // Functions for resolving, diffing, attaching, and applying props to instances
@@ -403,6 +404,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Else, just overwrite the value
     else {
+      if (key === 'material') assertNodeMaterialSupported(rootState, value)
       const previous = root[key]
       root[key] = value
 

@@ -21,10 +21,34 @@ export const toPascalCase = (type: string): string => `${type[0].toUpperCase()}$
 
 export const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
 
+/**
+ * Registers constructors so they can be rendered as JSX elements.
+ *
+ * - `extend({ OrbitControls })` makes each constructor available under its camelCased key
+ *   (`<orbitControls />`). Values that are not constructors are skipped, so a whole module
+ *   namespace can be passed.
+ * - `extend(MyClass)` registers one constructor and returns a component to render it with.
+ *
+ * Registrations are global, shared by every copy and entry of fiber, and are checked before the
+ * three namespace of a root's renderer when an element name is resolved.
+ *
+ * @example
+ * import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+ * extend({ OrbitControls })
+ * // <orbitControls args={[camera, gl.domElement]} />
+ *
+ * @example
+ * const Controls = extend(OrbitControls)
+ * // <Controls args={[camera, gl.domElement]} />
+ *
+ * @see https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively
+ */
 export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
+/** Registers each constructor in `objects` under its key; see the first overload. */
 export function extend<T extends Catalogue>(objects: T): void
 // A whole module namespace (`extend(THREE)`) carries functions and constants alongside the
 // classes, so it is not a `Catalogue`. Accept it as-is: only constructors are registered.
+/** Registers every constructor in a module namespace, skipping other exports; see the first overload. */
 export function extend(objects: Record<string, unknown>): void
 export function extend(
   objects: Record<string, unknown> | ConstructorRepresentation,

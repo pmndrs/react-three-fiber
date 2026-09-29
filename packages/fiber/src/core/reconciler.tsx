@@ -31,6 +31,7 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
+import { assertNodeMaterialSupported } from './utils/nodeMaterial'
 import { removeInteractivity, swapInteractivity } from './events'
 
 //* Type Imports ==============================
@@ -95,6 +96,10 @@ function validateInstance(type: string, props: HostConfig['props'], root: RootSt
 
   // Validate element target
   if (type !== 'primitive' && !target) {
+    // WebGL roots have no node materials; point at the renderer that does
+    if (name.endsWith('NodeMaterial')) {
+      assertNodeMaterialSupported(root.getState(), { isNodeMaterial: true, type: name })
+    }
     throw new Error(
       `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
     )
@@ -102,6 +107,10 @@ function validateInstance(type: string, props: HostConfig['props'], root: RootSt
 
   // Validate primitives
   if (type === 'primitive' && !props.object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
+
+  // Node material instances: <primitive object={m} /> or <mesh material={m} />
+  assertNodeMaterialSupported(root.getState(), props.object)
+  assertNodeMaterialSupported(root.getState(), props.material)
 
   // Throw if an object or literal was passed for args
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
@@ -267,6 +276,9 @@ function removeChild(
 ) {
   if (!child) return
 
+  // Unlinking clears the parent, so note whether the child was in the tree to begin with
+  const wasLinked = !!child.parent
+
   // Unlink instances
   child.parent = null
   const childIndex = parent.children.indexOf(child)
@@ -303,8 +315,13 @@ function removeChild(
     disposeOnIdle(child.object)
   }
 
-  // Tree was updated, request a frame for top-level instance
-  if (dispose === undefined) invalidateInstance(child)
+  // Tree was updated, request a frame for top-level instance (invalidateInstance would skip it, since
+  // unlinking cleared its parent). Ask the initial root, not a portal layer, whose copy of `internal`
+  // does not follow `active`: once the root unmounts it has left the scheduler and nothing is drawn
+  if (dispose === undefined && wasLinked) {
+    const state = findInitialRoot(child).getState()
+    if (state.internal.active && state.internal.frames === 0) state.invalidate()
+  }
 }
 
 function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance']): void {
@@ -545,6 +562,27 @@ function scheduleMicrotask(callback: () => void): void {
   }
 }
 
+/**
+ * R3F's React reconciler: a mutation-mode host config that turns JSX elements into three.js objects.
+ * Each root's {@link RootStore} is its container, and children attach to `internal.container`
+ * (a portal's target) or else the root's `scene`.
+ *
+ * - **Element names** resolve through `extend()` registrations first, then the three namespace of
+ *   the root's renderer. A `three` prefix (`<threeLine>`) is stripped when no element by the
+ *   prefixed name exists. `<primitive object={...}>` wraps an existing object.
+ * - **Construction is deferred** until an instance is attached to a mounted parent, so a tree that
+ *   Suspense discards never creates three objects.
+ * - **Updates** apply only changed props. Changing `args` (or a primitive's `object`) reconstructs
+ *   the object instead; the swap happens in `resetAfterCommit`, before layout effects, so refs
+ *   already point to the new object.
+ * - **Removal** detaches the object and disposes it (at idle priority, or immediately in an `act`
+ *   test environment), unless it is a primitive, a `Scene`, or it or an ancestor has `dispose={null}`.
+ * - **Priority**: not the primary renderer, so it runs alongside react-dom, and update priority
+ *   follows react-dom's event priorities. View-transition commits are flushed synchronously, since
+ *   three has nothing to animate between commits.
+ *
+ * `createRoot`, `createPortal` and `flushSync` drive it; app code rarely needs it directly.
+ */
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],

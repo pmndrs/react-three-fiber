@@ -110,7 +110,7 @@ function View({
   return (
     <>
       {createPortal(
-        <Container index={index} clearColor={clearColor} position={position}>
+        <Container clearColor={clearColor} position={position}>
           {children}
         </Container>,
         scene,
@@ -125,28 +125,31 @@ function View({
 
 function Container({
   children,
-  index,
   clearColor,
   position,
 }: {
   children: React.ReactNode
-  index: number
   clearColor: THREE.Color
   position: THREE.Vector2
 }) {
   const { size, camera, scene } = useThree()
 
-  useFrame((state) => {
-    const left = Math.floor(size.width * position.x)
-    const bottom = Math.floor(size.height * position.y)
-    const width = Math.floor(size.width)
-    const height = Math.floor(size.height)
-    state.gl.setViewport(left, bottom, width, height)
-    state.gl.setScissor(left, bottom, width, height)
-    state.gl.setScissorTest(true)
-    if (clearColor) state.gl.setClearColor(clearColor)
-    state.gl.render(scene, camera)
-  }, index)
+  // A job in the 'render' phase takes over rendering from the default render, so each view
+  // draws its own portal scene into its quarter of the canvas
+  useFrame(
+    ({ renderer }) => {
+      const left = Math.floor(size.width * position.x)
+      const bottom = Math.floor(size.height * position.y)
+      const width = Math.floor(size.width)
+      const height = Math.floor(size.height)
+      renderer.setViewport(left, bottom, width, height)
+      renderer.setScissor(left, bottom, width, height)
+      renderer.setScissorTest(true)
+      if (clearColor) renderer.setClearColor(clearColor)
+      renderer.render(scene, camera)
+    },
+    { phase: 'render' },
+  )
 
   return <>{children}</>
 }

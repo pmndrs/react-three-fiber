@@ -9,28 +9,27 @@ type RenderHudProps = {
 }
 
 function RenderHud({ defaultScene, defaultCamera, renderPriority = 1 }: RenderHudProps) {
-  const { gl, scene, camera } = useThree()
+  const { renderer, scene, camera } = useThree()
   let oldClear: boolean
 
   // Register in 'render' phase to take over rendering from the default renderer
   // Priority within the phase controls order when multiple render jobs exist
   useFrame(
     () => {
-      oldClear = gl.autoClear
+      oldClear = renderer.autoClear
 
       if (renderPriority === 1) {
         // Clear scene and render the default scene first
-        //gl.autoClear = true
-        gl.render(defaultScene, defaultCamera)
+        renderer.render(defaultScene, defaultCamera)
       }
 
       // Disable clearing and render the HUD portal with its own camera
-      gl.autoClear = false
-      gl.clearDepth()
-      gl.render(scene, camera)
+      renderer.autoClear = false
+      renderer.clearDepth()
+      renderer.render(scene, camera)
 
       // Restore default
-      gl.autoClear = oldClear
+      renderer.autoClear = oldClear
     },
     { phase: 'render', priority: renderPriority },
   )

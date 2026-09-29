@@ -35,6 +35,30 @@ import { getThree } from './three'
 // existing imports of `context` from the store keep working.
 export { context } from './context'
 
+/**
+ * Creates the Zustand store that holds one root's {@link RootState}.
+ *
+ * The store starts unconfigured: the renderer, `camera`, `scene`, `raycaster`, `frustum` and `pointer`
+ * are `null` placeholders until the root's renderer support has loaded and `configure()` in
+ * `renderer.tsx` fills them in. Only core's part of `RootState` is created here; packages building on
+ * fiber add their own fields through root extensions.
+ *
+ * Besides the initial state, the store wires up:
+ * - `state.gl` and `state.renderer` as accessors over `internal.actualRenderer`. `gl` reports a
+ *   deprecation when user code reads it outside legacy mode.
+ * - `rootScene` following `scene` whenever `scene` is set to a real `THREE.Scene`.
+ * - On a size or DPR change: updating the camera and resizing the root's own canvas target (or the
+ *   renderer when there is none).
+ * - On a camera change: adding an unparented camera to `rootScene`, then refreshing the viewport and
+ *   (when `autoUpdateFrustum` is set) the frustum.
+ * - Calling `invalidate(state)` after every state change.
+ *
+ * `createRoot` calls this once per canvas.
+ *
+ * @param invalidate - Requests frames for a root. Bound into `state.invalidate` and called on every store change.
+ * @param advance - Steps a root manually. Bound into `state.advance`.
+ * @returns The root's store, which is also the reconciler container for that root.
+ */
 export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
