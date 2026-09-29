@@ -31,7 +31,7 @@ All four creator families re-run their creators when the HMR version is bumped:
 | `useGPUStorage`               | Yes             | Re-runs creator                    |
 | `useRenderPipeline`           | **No**          | Skipped on HMR - see below         |
 
-`useLocalNodes` also rebuilds because it subscribes to the HMR version directly, alongside its `uniforms`/`nodes`/`textures` triggers.
+`useLocalNodes` also rebuilds because it subscribes to the HMR version directly, alongside its `uniforms`/`nodes`/`textures` triggers - in every mode, including `useLocalNodes(creator, [])`. The dependency array only governs ordinary component renders (see [TSL Hooks](./tsl-hooks#dependency-array)).
 
 ## Rebuild Guarantees
 

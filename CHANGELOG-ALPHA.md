@@ -65,6 +65,44 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `useThree`, `useFrame`, `context`, the two functions above and the types, imports nothing from
   three, and works under a `<Canvas>` from any entry, so an extension no longer drags a second copy
   of core into apps that use a different entry.
+- `@react-three/tsl`: `useLocalNodes` takes a `useMemo`-style dependency array as its second argument. No array
+  re-evaluates the creator on every component render (including a `useCallback` creator, which
+  previously opted out via identity memoization - pass `[]` instead); `[]` reuses the result across
+  ordinary renders; `[a, b]` rebuilds when a declared JavaScript construction input changes by
+  `Object.is`. Registered-resource replacement, a change of owning store and HMR / `rebuild*`
+  invalidation remain independent triggers in every mode, and always run the current render's
+  creator ([#3918](https://github.com/pmndrs/react-three-fiber/issues/3918), part 1 of
+  [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
+- `@react-three/tsl`: `useLocalNodes` re-runs only when a shared resource its creator read changes.
+  It used to subscribe to the whole `uniforms`, `nodes` and `textures` maps, so registering any
+  uniform anywhere re-rendered every consumer and rebuilt its graph. Now reads through the
+  creator's `state` are tracked by identity (`uniforms.x`, `.scope('s').x`, dot access into a
+  scope, `has`, `keys`, `textures.get(url)`, iteration): an unrelated registration causes neither a
+  render nor a rebuild, and `buffers` and `gpuStorage` reads are tracked too (they were not
+  subscribed at all). Only reads made before the creator returns count; a lookup inside a deferred
+  `Fn` body warns in development. `useNodes`, `useUniforms`, `useBuffers` and `useGPUStorage`
+  creators warn in development when they read an entry that does not exist yet, since they will not
+  re-run when it appears ([#3919](https://github.com/pmndrs/react-three-fiber/issues/3919), part 2
+  of [#3888](https://github.com/pmndrs/react-three-fiber/issues/3888)).
+- `@react-three/tsl`: `useLocalNodes` install form. A creator can return a function instead of a
+  record: the creator builds during render, and the function runs after commit (a layout effect)
+  to put the nodes onto a Three object, returning a cleanup that runs before the next install and
+  on unmount. This replaces returning a placeholder record plus a separate `useThree` and
+  `useEffect` for `scene.fogNode` and similar, and never mutates a Three object during render. The
+  hook returns nothing in this form; a creator that returns nothing is a type error and warns in
+  development ([#3890](https://github.com/pmndrs/react-three-fiber/issues/3890),
+  [#3893](https://github.com/pmndrs/react-three-fiber/issues/3893)).
+- A texture `useTexture` loads is visible to a `useLocalNodes` creator later in the same render:
+  `textures.get(url)` no longer comes back empty on the first render after a fresh load, and the
+  creator does not rebuild when the registration lands. `useTexture` stages what it loaded during
+  render (no store write, no refcount) and registers it in its layout effect as before; a render
+  React discards registers and retains nothing. `@react-three/fiber/extension` exports
+  `getTextureView(store)`, the registry including those staged textures
+  ([#3895](https://github.com/pmndrs/react-three-fiber/issues/3895)).
+- `@react-three/eslint-plugin`: `prefer-local-nodes-deps` (in `recommended`) flags `useLocalNodes`
+  with an inline creator and no dependency array, which rebuilds the graph on every render. When
+  the creator reads values from the component it names them and points to a uniform first, rather
+  than asking for them to be declared; otherwise it offers `[]` as a suggestion.
 
 ### Changes
 
@@ -84,6 +122,10 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- `@react-three/tsl`: on a secondary canvas, a `useLocalNodes` creator's `scene`, `camera` and
+  `textures` are that canvas's own. They were the primary canvas's, so an install step on a
+  secondary would have written the primary's `scene.fogNode`. The TSL maps still come from the
+  primary, where they are shared.
 - Secondary canvases share the primary canvas's TSL maps: `state.uniforms`, `state.nodes`,
   `state.buffers` and `state.gpuStorage` on a secondary are the primary's objects, kept in step. In
   `useFrame`, `useThree(s => s.uniforms)` and handlers on a secondary they used to be empty, since the

@@ -1,12 +1,8 @@
-import { useThree } from '@react-three/fiber'
-import { useEffect } from 'react'
 import { useControls } from 'leva'
 import { uniform, fog, color, float, positionView, triNoise3D, positionWorld, normalWorld } from 'three/tsl'
 import { useLocalNodes, useUniforms } from '@react-three/tsl'
 
 export const Fog = () => {
-  const { scene } = useThree()
-
   //* Leva Controls ==============================
   const levaUniforms = useControls('Fog', {
     // Colors - Sky gradient and fog color
@@ -33,8 +29,9 @@ export const Fog = () => {
   useUniforms(levaUniforms, 'fog')
   type FogUniformSchema = UniformNodesFor<typeof levaUniforms>
 
-  //* Create Fog Nodes ==============================
-  const { fogNode, backgroundNode } = useLocalNodes(({ uniforms }) => {
+  //* Build Fog Nodes, Install on the Scene ==============================
+  // Built during render; the returned function installs them after commit and removes them on unmount.
+  useLocalNodes(({ scene, uniforms }) => {
     const u = uniforms.scope<FogUniformSchema>('fog')
 
     // Timer for animated noise
@@ -74,17 +71,15 @@ export const Fog = () => {
     // Background gradient (horizon to sky)
     const backgroundNode = normalWorld.y.max(0).mix(groundColor, skyColor)
 
-    return {
-      fogNode,
-      backgroundNode,
+    return () => {
+      scene.fogNode = fogNode
+      scene.backgroundNode = backgroundNode
+      return () => {
+        scene.fogNode = null
+        scene.backgroundNode = null
+      }
     }
-  })
-
-  //* Apply to Scene ==============================
-  useEffect(() => {
-    scene.fogNode = fogNode
-    scene.backgroundNode = backgroundNode
-  }, [scene, fogNode, backgroundNode])
+  }, [])
 
   return null
 }
