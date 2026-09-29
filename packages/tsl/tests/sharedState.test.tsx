@@ -263,6 +263,34 @@ describe('primary + secondary canvas', () => {
     expect(secondary.getState().uniforms.uSingle).toBe(single)
   })
 
+  it('useUniform(name) on a secondary and in its portal finds what useUniforms created in the same pass (#3885)', async () => {
+    const read: Record<string, unknown> = {}
+    const Creates = () => {
+      useUniforms({ uSamePass: 2 })
+      return null
+    }
+    const Reads = ({ at }: { at: string }) => {
+      read[at] = useUniform('uSamePass')
+      return null
+    }
+    const { store: primary, id } = await mountPrimary(<group />)
+    await mountSecondary(
+      id,
+      <>
+        <Creates />
+        <Reads at="secondary" />
+        <Portaled>
+          <Reads at="portal" />
+        </Portaled>
+      </>,
+    )
+
+    const created = primary.getState().uniforms.uSamePass
+    expect(created).toBeDefined()
+    expect(read.secondary).toBe(created)
+    expect(read.portal).toBe(created)
+  })
+
   it('two independent canvases share nothing', async () => {
     const A = () => {
       useUniforms({ uOnlyA: 1 })

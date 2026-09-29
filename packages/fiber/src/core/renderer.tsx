@@ -236,11 +236,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   let configured = false
   let pending: Promise<void> | null = null
 
+  // Unmounting stopped the root drawing; if the tree never unmounted, the Provider won't set it again
+  const cancelUnmount = () => {
+    if (!root.unmountClaim) return
+    root.unmountClaim = null
+    store.getState().internal.active = true
+  }
+
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
       if (_roots.get(canvas) !== root) throw new Error('R3F: cannot configure a root after it has unmounted')
       // Configuring the root cancels a teardown waiting on React
-      root.unmountClaim = null
+      cancelUnmount()
 
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
@@ -981,7 +988,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     render(children: ReactNode): RootStore {
       if (_roots.get(canvas) !== root) return store
       // Rendering the root cancels a teardown waiting on React
-      root.unmountClaim = null
+      cancelUnmount()
 
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
@@ -1049,6 +1056,9 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   // set it up again (StrictMode, a fast remount), so unmounting is a request until React has
   // committed it; guessing with a timer tore down roots that had already been remounted.
   const claim = (root.unmountClaim = Symbol('unmount'))
+  // Stop drawing and invalidating while the tree unmounts. A remount before teardown mounts the
+  // Provider again, which sets `active` back
+  root.store.getState().internal.active = false
 
   reconciler.updateContainer(null, root.fiber, null, () => {
     if (root.unmountClaim !== claim) return
