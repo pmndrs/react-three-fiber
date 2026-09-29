@@ -32,7 +32,7 @@ const App = () => (
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
 | background      | Sets the scene background — a CSS color, hex number, `THREE.Color`, a Drei environment preset name, an HDR/EXR/image URL, or a config object. See [Canvas Background](#canvas-background) | `undefined`                            |
-| shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                    |
+| shadows         | Props that go into `renderer.shadowMap`, `true` for `THREE.PCFShadowMap`, or one of: 'basic', 'percentage', 'soft', 'variance'. `'soft'` is kept only as a deprecated alias of `'percentage'`: both use `THREE.PCFShadowMap` (three.js deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft), and `'soft'` logs a deprecation notice | `false` |
 | raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                       |
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
@@ -65,7 +65,7 @@ It will also create the following scene internals:
 
 - A `THREE.Perspective` camera
 - A `THREE.Orthographic` cam if `orthographic` is true
-- A `THREE.PCFSoftShadowMap` if `shadows` is true
+- A `THREE.PCFShadowMap` if `shadows` is true
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
 In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/manual/#en/color-management](https://threejs.org/manual/#en/color-management).
@@ -227,14 +227,18 @@ import { createRoot, events } from '@react-three/fiber'
 // the root resolves element names against the namespace of the renderer it loads.
 const root = createRoot(document.querySelector('canvas'))
 
+// Keep the whole configuration in one object: each configure() call replaces the previous one
+const config = { events, camera: { position: [0, 0, 50] } }
+
 async function app() {
   // Configure the root, inject events optionally, set camera, etc
   // This *must* be called before render, and it must be awaited
-  await root.configure({ events, camera: { position: [0, 0, 50] } })
+  await root.configure(config)
 
-  // createRoot by design is not responsive, you have to take care of resize yourself
+  // createRoot by design is not responsive, you have to take care of resize yourself.
+  // Pass the same config again with the new size, not just the size on its own
   window.addEventListener('resize', () => {
-    root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
+    root.configure({ ...config, size: { width: window.innerWidth, height: window.innerHeight } })
   })
 
   // Trigger resize
@@ -249,6 +253,10 @@ async function app() {
 
 app()
 ```
+
+`configure()` replaces the root's configuration rather than merging into it, the same way `<Canvas>` passes its full set of props every time it renders. A prop left out of a later call goes back to its default: calling `root.configure({ size })` on its own turns `shadows` off and resets `frameloop` to `'always'` and `dpr` to `[1, 2]`. So keep one config object and spread it into every call, changing only what's new.
+
+The camera, the scene and the `events` manager are the exception: the camera and scene are created by the first call, the `events` manager by the first call that passes `events`, and all three are kept after that. Leaving `camera` out of a later call does not reset the camera, and `camera` props passed to a later call are not re-applied. To move the camera after the first `configure()`, change it from inside the tree (`useThree`) or through the store `root.render()` returns.
 
 ## Tree-shaking
 
