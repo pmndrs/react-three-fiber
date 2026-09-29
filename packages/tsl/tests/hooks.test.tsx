@@ -221,11 +221,123 @@ describe('useUniform', () => {
     expect(store.uniforms.uStored).toBeDefined()
     expect(store.uniforms.uStored.value).toBe(123)
   })
+
+  // Value tracking (#3885) ---------------------------------
+
+  it('tracks a changed primitive value without recreating the node', async () => {
+    let node: any = null
+
+    function Test({ height }: { height: number }) {
+      node = useUniform('uTrackedHeight', height)
+      return null
+    }
+
+    await act(async () => root.render(<Test height={1} />))
+    const first = node
+    expect(first.value).toBe(1)
+
+    await act(async () => root.render(<Test height={2} />))
+    expect(node).toBe(first)
+    expect(node.value).toBe(2)
+  })
+
+  it('tracks a changed color string and a new Vector3 object', async () => {
+    let tint: any = null
+    let offset: any = null
+
+    function Test({ color, x }: { color: string; x: number }) {
+      tint = useUniform('uTrackedTint', color)
+      offset = useUniform('uTrackedOffset', new THREE.Vector3(x, 0, 0))
+      return null
+    }
+
+    await act(async () => root.render(<Test color="#ff0000" x={1} />))
+    const [firstTint, firstOffset] = [tint, offset]
+    expect(tint.value.getHexString()).toBe('ff0000')
+    expect(offset.value.x).toBe(1)
+
+    await act(async () => root.render(<Test color="#00ff00" x={5} />))
+    expect(tint).toBe(firstTint)
+    expect(offset).toBe(firstOffset)
+    expect(tint.value.getHexString()).toBe('00ff00')
+    expect(offset.value.x).toBe(5)
+  })
+
+  it('tracks the value wrapped by a TSL constant node', async () => {
+    let node: any = null
+
+    function Test({ hex }: { hex: string }) {
+      node = useUniform('uTrackedNodeColor', color(hex))
+      return null
+    }
+
+    await act(async () => root.render(<Test hex="#ff0000" />))
+    const first = node
+    expect(node.value.getHexString()).toBe('ff0000')
+
+    await act(async () => root.render(<Test hex="#0000ff" />))
+    expect(node).toBe(first)
+    expect(node.value.getHexString()).toBe('0000ff')
+  })
+
+  it('keeps an imperative .value write when a re-render passes an equal value', async () => {
+    let tint: any = null
+    let height: any = null
+    let nodeTint: any = null
+
+    // The object props are referentially new each render but deep-equal to the last one.
+    function Test({ tick }: { tick: number }) {
+      void tick
+      height = useUniform('uImperativeHeight', 1)
+      tint = useUniform('uImperativeTint', new THREE.Color('#ff0000'))
+      nodeTint = useUniform('uImperativeNodeTint', color('#ff0000'))
+      return null
+    }
+
+    await act(async () => root.render(<Test tick={0} />))
+    height.value = 42
+    tint.value = new THREE.Color('#123456')
+    nodeTint.value = new THREE.Color('#654321')
+
+    await act(async () => root.render(<Test tick={1} />))
+    expect(height.value).toBe(42)
+    expect(tint.value.getHexString()).toBe('123456')
+    expect(nodeTint.value.getHexString()).toBe('654321')
+  })
 })
 
 //* useUniforms Hook ==============================
 
 describe('useUniforms', () => {
+  // TSL constant inputs ---------------------------------
+  // color(), vec3(), float() return a VarNode wrapping the ConstNode that holds the value; the value
+  // must be read through that wrapper, both for the deep-compare and for the value written.
+
+  it('reads the value through the VarNode that TSL constructors return', async () => {
+    let uniforms: any = null
+
+    function Test({ hex }: { hex: string }) {
+      uniforms = useUniforms({ uTSLTint: color(hex), uTSLOffset: vec3(1, 2, 3) })
+      return null
+    }
+
+    await act(async () => root.render(<Test hex="#ff0000" />))
+    const { uTSLTint, uTSLOffset } = uniforms
+    expect(uTSLTint.value).toBeInstanceOf(THREE.Color)
+
+    // Same inputs, fresh node instances: nothing may be written.
+    await act(async () => root.render(<Test hex="#ff0000" />))
+    expect(uniforms.uTSLTint).toBe(uTSLTint)
+    expect(uTSLTint.value).toBeInstanceOf(THREE.Color)
+    expect(uTSLTint.value.getHexString()).toBe('ff0000')
+    expect(uTSLOffset.value).toBeInstanceOf(THREE.Vector3)
+
+    await act(async () => root.render(<Test hex="#00ff00" />))
+    expect(uniforms.uTSLTint).toBe(uTSLTint)
+    expect(uTSLTint.value).toBeInstanceOf(THREE.Color)
+    expect(uTSLTint.value.getHexString()).toBe('00ff00')
+  })
+
   // Object Syntax ---------------------------------
 
   describe('object syntax', () => {
