@@ -257,12 +257,20 @@ function CanvasImpl({
   // Insertion effects survive Activity hiding and StrictMode effect replay: their cleanup runs only
   // when the Canvas is finally removed, including removal while an Activity hides it (React 19.2+),
   // when its passive effects are already gone and the cleanup below never runs again
+  const insertionMounted = React.useRef(false)
   React.useInsertionEffect(() => {
+    insertionMounted.current = true
     return () => {
-      // Through the root handle: a hidden Activity has already detached canvasRef
-      const current = root.current
-      root.current = null!
-      current?.unmount()
+      insertionMounted.current = false
+      // Fast Refresh replays this effect when Canvas.tsx is edited, running the setup right after
+      // this cleanup in the same commit. Only a cleanup nothing re-armed is a real removal
+      queueMicrotask(() => {
+        if (insertionMounted.current) return
+        // Through the root handle: a hidden Activity has already detached canvasRef
+        const current = root.current
+        root.current = null!
+        current?.unmount()
+      })
     }
   }, [])
 
