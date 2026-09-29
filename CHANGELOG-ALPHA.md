@@ -128,6 +128,9 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- A `<Canvas>` removed while an `<Activity>` hides it releases its root. Hiding already ran the
+  Canvas' effect cleanups, so removing it while hidden left the root, its frame jobs and its
+  renderer running ([#3978](https://github.com/pmndrs/react-three-fiber/issues/3978)).
 - Importing any entry no longer breaks JSX whose tag is typed `React.ElementType`
   (`<IconComponent size={size} />` failed with "Type 'number' is not assignable to type 'never'").
   `ThreeToJSXElements` drops three's non-constructor exports (constants, functions, namespaces)
@@ -143,6 +146,17 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   hooks wrote to the primary.
 - `useUniform` on a secondary canvas registers on the primary, where `useUniforms` looks. It used to
   register on the secondary's own store.
+- `@react-three/tsl`: `useUniform(name, value)` tracks `value`. A later render with a different value
+  (deep-compared, so an equal but freshly built object does not count) updates the uniform's `.value`
+  in place; it used to keep the first value forever
+  ([#3885](https://github.com/pmndrs/react-three-fiber/issues/3885)).
+- `@react-three/tsl`: TSL constant inputs (`color('red')`, `vec3(0, 1, 0)`, `float(1)`) are read
+  through the `VarNode` three's constructors wrap them in. `useUniforms` saw a changed input on
+  every render and wrote the `VarNode` itself into the uniform's `.value`.
+- `@react-three/tsl`: `useUniforms` and `useUniform` type TSL constant inputs as three's exact
+  uniform node: `{ a: int(1), b: vec2(0, 1), c: color('red') }` gives `UniformNode<'int', number>`,
+  `UniformNode<'vec2', Vector2>` and `UniformNode<'color', Color>`
+  ([#3769](https://github.com/pmndrs/react-three-fiber/issues/3769)).
 - `@react-three/fiber/extension`'s type declarations no longer include the global JSX element
   augmentation, which conflicted with `/legacy`'s for any package built on the extension entry.
 - `@react-three/fiber/legacy`: `useThree`, `useFrame` and `Canvas`'s `onCreated` are typed against

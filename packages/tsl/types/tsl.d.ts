@@ -20,6 +20,16 @@ declare global {
   type TSLNodeType = import('three/webgpu').Node | CallableTSLNode
 
   /**
+   * What TSL's constant constructors return: `int(1)`, `vec2(0, 1)`, `color('red')` and friends
+   * wrap a ConstNode in a VarNode. three's `uniform()` unwraps exactly this shape to
+   * `UniformNode<TNodeType, TValue>`, and so do the mappings below.
+   */
+  type TSLConstNode<TNodeType, TValue> = import('three/webgpu').VarNode<
+    TNodeType,
+    import('three/webgpu').ConstNode<TNodeType, TValue>
+  >
+
+  /**
    * Derive Three's shader node type from an existing node or a supported raw input.
    * Existing InputNode generics take precedence over structural value normalization.
    * Both generics must be inferred because Three's UniformNode intersects an unknown-typed
@@ -29,44 +39,48 @@ declare global {
     ? TNodeType
     : T extends import('three/webgpu').InputNode<infer TNodeType, infer _TValue>
       ? TNodeType
-      : T extends number
-        ? 'float'
-        : T extends boolean
-          ? 'bool'
-          : T extends string | import('three/webgpu').Color | { r: number; g: number; b: number }
-            ? 'color'
-            : T extends import('three/webgpu').Vector4 | { x: number; y: number; z: number; w: number }
-              ? 'vec4'
-              : T extends import('three/webgpu').Vector3 | { x: number; y: number; z: number }
-                ? 'vec3'
-                : T extends import('three/webgpu').Vector2 | { x: number; y: number }
-                  ? 'vec2'
-                  : T extends import('three/webgpu').Matrix4
-                    ? 'mat4'
-                    : T extends import('three/webgpu').Matrix3
-                      ? 'mat3'
-                      : T extends import('three/webgpu').Matrix2
-                        ? 'mat2'
-                        : unknown
+      : T extends TSLConstNode<infer TNodeType, infer _TValue>
+        ? TNodeType
+        : T extends number
+          ? 'float'
+          : T extends boolean
+            ? 'bool'
+            : T extends string | import('three/webgpu').Color | { r: number; g: number; b: number }
+              ? 'color'
+              : T extends import('three/webgpu').Vector4 | { x: number; y: number; z: number; w: number }
+                ? 'vec4'
+                : T extends import('three/webgpu').Vector3 | { x: number; y: number; z: number }
+                  ? 'vec3'
+                  : T extends import('three/webgpu').Vector2 | { x: number; y: number }
+                    ? 'vec2'
+                    : T extends import('three/webgpu').Matrix4
+                      ? 'mat4'
+                      : T extends import('three/webgpu').Matrix3
+                        ? 'mat3'
+                        : T extends import('three/webgpu').Matrix2
+                          ? 'mat2'
+                          : unknown
 
   /** Derive the normalized JavaScript value stored by a uniform node. */
   type UniformNodeValue<T> = T extends import('three/webgpu').UniformNode<infer _TNodeType, infer TValue>
     ? TValue
     : T extends import('three/webgpu').InputNode<infer _TNodeType, infer TValue>
       ? TValue
-      : T extends string | { r: number; g: number; b: number }
-        ? import('three/webgpu').Color
-        : T extends { x: number; y: number; z: number; w: number }
-          ? import('three/webgpu').Vector4
-          : T extends { x: number; y: number; z: number }
-            ? import('three/webgpu').Vector3
-            : T extends { x: number; y: number }
-              ? import('three/webgpu').Vector2
-              : T extends number
-                ? number
-                : T extends boolean
-                  ? boolean
-                  : T
+      : T extends TSLConstNode<infer _TNodeType, infer TValue>
+        ? TValue
+        : T extends string | { r: number; g: number; b: number }
+          ? import('three/webgpu').Color
+          : T extends { x: number; y: number; z: number; w: number }
+            ? import('three/webgpu').Vector4
+            : T extends { x: number; y: number; z: number }
+              ? import('three/webgpu').Vector3
+              : T extends { x: number; y: number }
+                ? import('three/webgpu').Vector2
+                : T extends number
+                  ? number
+                  : T extends boolean
+                    ? boolean
+                    : T
 
   /** Three's exact UniformNode with shader and value generics derived from an input. */
   type UniformNodeFor<T> = import('three/webgpu').UniformNode<UniformNodeType<T>, UniformNodeValue<T>>

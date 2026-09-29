@@ -155,8 +155,11 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
   /**
-   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
-   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
+   * Enables shadows (`true` uses `THREE.PCFShadowMap`). Can accept `renderer.shadowMap` options for
+   * fine-tuning, but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
+   *
+   * `'soft'` is a deprecated alias of `'percentage'`: both map to `THREE.PCFShadowMap`, because three.js
+   * deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft. Using `'soft'` logs a deprecation notice.
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
   shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>

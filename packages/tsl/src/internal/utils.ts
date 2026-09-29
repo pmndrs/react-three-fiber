@@ -49,7 +49,7 @@ export function scopedNodeName(scope: string | undefined, name: string): string 
  * @returns The extracted value if it's a TSL ConstNode, otherwise the original value
  *
  * @example
- * extractTSLValue(color('red')) // => THREE.Color
+ * extractTSLValue(color('red')) // => THREE.Color (read through the VarNode wrapping the ConstNode)
  * extractTSLValue(vec3(1, 2, 3)) // => THREE.Vector3
  * extractTSLValue(float(1.5)) // => 1.5
  * extractTSLValue(new THREE.Color('red')) // => THREE.Color (unchanged)
@@ -67,6 +67,14 @@ export function extractTSLValue(value: unknown): unknown {
   // For ConstNodes, extract the value directly
   if (node.isConstNode) {
     return node.value
+  }
+
+  // TSL constructors (color(), vec3(), float(), ...) return a VarNode wrapping the ConstNode, and a
+  // VarNode carries no `value` of its own: read through it. A wrapper around a node with no
+  // extractable value (e.g. vec2(float(a), 1)) is returned unchanged.
+  if (node.isVarNode && node.node) {
+    const inner = extractTSLValue(node.node)
+    return inner === node.node ? value : inner
   }
 
   // For other nodes with a value, try to traverse like Three.js uniform() does
