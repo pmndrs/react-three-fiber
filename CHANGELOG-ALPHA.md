@@ -128,6 +128,22 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
 
 ### Fixes
 
+- Multi-canvas works under the WebGL2 fallback. When the primary's `WebGPURenderer` fell back to
+  WebGL2 (no `navigator.gpu`), a secondary drew its scene into the primary's canvas and stayed
+  blank, since a WebGL context is bound to the element it was created on. A secondary whose primary
+  fell back now builds its own renderer, forced onto the same backend, and is a standalone root that
+  owns it (`internal.sharedRendererFallback`, not `isSecondary`): it keeps its own TSL state, wires
+  and removes its own XR listeners, and its renderer is disposed when it unmounts, independently of
+  the primary. Thanks @rubenmarcus
+  ([#3965](https://github.com/pmndrs/react-three-fiber/issues/3965),
+  [#3977](https://github.com/pmndrs/react-three-fiber/pull/3977)).
+- A secondary canvas sharing the primary's renderer no longer applies its own `shadows`, sRGB /
+  ACES defaults or `renderer` props to it, which turned the primary's shadows off and reset its
+  tone mapping, and no longer adds XR session listeners to it that were never removed. Thanks
+  @rubenmarcus ([#3981](https://github.com/pmndrs/react-three-fiber/issues/3981),
+  [#3983](https://github.com/pmndrs/react-three-fiber/pull/3983)).
+- `renderer={{ primaryCanvas }}` or `renderer={{ scheduler }}` with no other options no longer sets
+  `primaryCanvas` / `scheduler` properties on the renderer.
 - A `<Canvas>` removed while an `<Activity>` hides it releases its root. Hiding already ran the
   Canvas' effect cleanups, so removing it while hidden left the root, its frame jobs and its
   renderer running ([#3978](https://github.com/pmndrs/react-three-fiber/issues/3978)).
