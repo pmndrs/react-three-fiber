@@ -162,6 +162,44 @@ export function calculateDpr(dpr: Dpr): number {
 }
 
 /**
+ * Calls `onChange` whenever window.devicePixelRatio changes: moving to another display or zooming.
+ * Neither resizes the canvas, so resize observers won't see it. A resolution query only matches the
+ * current ratio, so it is re-created after every change. Returns the unsubscribe function.
+ */
+export function watchDpr(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function' || !window.devicePixelRatio) {
+    return () => {}
+  }
+
+  // Partial matchMedia polyfills (test setups, older environments) may return no listener methods,
+  // or throw on a query they can't parse. Following the ratio is best-effort: it runs inside
+  // configuration, which must not fail because of it
+  let query: Partial<MediaQueryList> | undefined
+  const listen = () => {
+    try {
+      query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+      if (typeof query?.addEventListener === 'function') query.addEventListener('change', handleChange)
+      else query?.addListener?.(handleChange)
+    } catch {
+      query = undefined
+    }
+  }
+  const unlisten = () => {
+    if (typeof query?.removeEventListener === 'function') query.removeEventListener('change', handleChange)
+    else query?.removeListener?.(handleChange)
+    query = undefined
+  }
+  const handleChange = () => {
+    unlisten()
+    listen()
+    onChange()
+  }
+
+  listen()
+  return unlisten
+}
+
+/**
  * Returns instance root state
  */
 export function getRootState<T extends THREE.Object3D = THREE.Object3D>(obj: T) {
