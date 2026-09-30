@@ -1469,6 +1469,18 @@ describe('renderer', () => {
     expect(dispose).not.toHaveBeenCalled()
   })
 
+  it('should request a frame when an object is removed', async () => {
+    const store = await act(async () => (await root.configure({ frameloop: 'demand' })).render(<group />))
+    const invalidate = jest.fn()
+    store.setState({ invalidate })
+    // let the pending frame render, so that the next change has to request one
+    await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+    expect(store.getState().internal.frames).toBe(0)
+
+    await act(async () => root.render(null))
+    expect(invalidate).toHaveBeenCalled()
+  })
+
   it('should apply args changes when followed by an unchanged memoized sibling', async () => {
     const ref = React.createRef<THREE.Mesh>()
     const Sibling = React.memo(() => <group name="static" />)
