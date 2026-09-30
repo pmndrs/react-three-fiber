@@ -460,6 +460,21 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     expect(primary.renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
   })
 
+  it('keeps the multi-canvas config keys off the fallback secondary\u2019s renderer', async () => {
+    const id = `${testPrefix}-bag`
+    // As <Canvas renderer={{ primaryCanvas, scheduler }}> arrives after parseRendererConfig: with
+    // nothing else in the bag, the bag itself is forwarded as the renderer config
+    const { secondary } = await mountRealPair(id, {
+      secondaryProps: { renderer: { primaryCanvas: id, scheduler: { after: id } } as any },
+    })
+
+    expect(secondary.store.getState().internal.sharedRendererFallback).toBe(true)
+    expect(secondary.renderer).not.toHaveProperty('primaryCanvas')
+    expect(secondary.renderer).not.toHaveProperty('scheduler')
+    // Nor were they handed to the renderer's constructor
+    expect(secondary.renderer.receivedParams).not.toHaveProperty('primaryCanvas')
+  })
+
   it('a shared WebGPU secondary leaves the primary\u2019s renderer settings alone (#3981)', async () => {
     const { primary, secondary } = await mountRealPair(`${testPrefix}-shared-settings`, {
       fallback: false,

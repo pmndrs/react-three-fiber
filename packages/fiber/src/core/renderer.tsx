@@ -860,8 +860,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         lastConfiguredProps.textureColorSpace = textureColorSpace
       }
 
-      // R3F-specific props that aren't real renderer properties (handled separately by R3F)
-      const r3fProps = ['textureColorSpace']
+      // R3F-specific props that aren't real renderer properties (handled separately by R3F).
+      // `primaryCanvas` / `scheduler` arrive here when a `renderer` config bag held nothing else
+      // (parseRendererConfig then forwards the bag as-is); they must not land on the renderer.
+      const r3fProps = ['textureColorSpace', 'primaryCanvas', 'scheduler']
       // Three.js renderer constructor-only props that are read-only on the live instance
       const constructorOnlyProps = ['samples', 'antialias', 'alpha', 'canvas', 'powerPreference']
       const nonApplyProps = [...r3fProps, ...constructorOnlyProps]
