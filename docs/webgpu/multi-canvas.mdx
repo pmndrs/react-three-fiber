@@ -10,45 +10,93 @@ v10 supports sharing a single `WebGPURenderer` across multiple `Canvas` componen
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 ```
 
-Every Canvas here takes the `renderer` prop, which is what asks for the WebGPU renderer. On `@react-three/fiber/webgpu` the prop is implied and `state.renderer` is typed as a `WebGPURenderer`; everything below works the same on either import.
+Renderer sharing is WebGPU-only. On `@react-three/fiber`, `primary` asks for the WebGPU renderer the way the `renderer` prop does; on `@react-three/fiber/webgpu` every Canvas is WebGPU and `state.renderer` is typed as a `WebGPURenderer`. Everything below works the same on either import. `@react-three/fiber/legacy` has no `primary` or `share`.
 
 ## Basic Setup
 
-A **primary canvas** creates and owns the renderer. Give it an `id` so it can be referenced.
+Mark the canvas that owns the renderer `primary`. Every other canvas shares its renderer automatically:
 
 ```tsx
-<Canvas id="main" renderer>
+<Canvas primary renderer={{ shadows: 'soft', toneMapping: THREE.AgXToneMapping }}>
   <Scene />
 </Canvas>
-```
 
-A **secondary canvas** shares the primary's renderer by referencing its `id`:
-
-```tsx
-<Canvas renderer={{ primaryCanvas: 'main' }}>
+<Canvas>
   <SecondaryScene />
 </Canvas>
 ```
 
-## Scheduler Options
+The primary creates the `WebGPURenderer`; each other canvas borrows it and draws into its own `<canvas>` element through a three.js `CanvasTarget`. Renderer-wide settings (everything in `renderer`: shadows, tone mapping, output color space, constructor options such as `antialias`) belong on the primary.
 
-Control render timing on a secondary canvas with the `scheduler` option:
+With no canvas marked `primary`, nothing changes: every canvas creates its own renderer, as without multi-canvas.
+
+## Who Owns, Who Shares
+
+When a canvas creates its renderer, it shares a primary's if:
+
+- it names one with `share="id"`, or
+- exactly one `<Canvas primary>` is mounted (or mounting in the same commit), and the canvas did not opt out.
+
+A canvas owns its renderer instead when:
+
+- it is the `primary`
+- it passes `share={false}`
+- it passes its own renderer **instance or factory** (`renderer={myRenderer}`, `renderer={(defaults) => ...}`)
+- it uses the `gl` prop (WebGL can't share)
+- no primary is mounted
+
+A `renderer` **props bag** does not opt out: a canvas sharing the primary's renderer ignores its bag (and warns once in development, _"renderer settings on a sharing canvas are ignored; set them on the &lt;Canvas primary&gt;"_), because settings on a shared renderer would change every canvas drawing with it. Pass `share={false}` if that canvas should have its own renderer with those settings. `textureColorSpace` is the one exception: it is per-canvas texture-loading state, not a renderer setting, so a sharing canvas keeps its own.
+
+`primary` and `share` are read when the canvas creates its renderer. Changing them on a mounted canvas has no effect until it remounts.
+
+### Several primaries
+
+Give each primary an `id`, and point the other canvases at one with `share`:
 
 ```tsx
-// Render after the primary canvas completes
-<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+<Canvas id="left" primary>...</Canvas>
+<Canvas id="right" primary>...</Canvas>
 
-// Limit to 30fps (useful for HUDs that don't need full framerate)
-<Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
-
-// Both together
-<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main', fps: 30 } }}>
+<Canvas share="left">...</Canvas>
+<Canvas share="right">...</Canvas>
 ```
 
-| Option  | Type     | Description                            |
-| ------- | -------- | -------------------------------------- |
-| `after` | `string` | Render after another canvas (by `id`)  |
-| `fps`   | `number` | Limit this canvas's render rate        |
+Automatic sharing only works with a single primary: with several mounted, a canvas without `share` throws, asking you to pick one. Two canvases marked `primary` without distinct ids throw too; the first keeps the renderer.
+
+`share="id"` waits for that primary to mount, so it can appear anywhere in the tree or in a later commit. It times out after 5 seconds with an error naming the missing `<Canvas id="..." primary>`.
+
+## Timing
+
+Sharing is decided once, when a canvas creates its renderer, so it matters what is mounted by then:
+
+- **Same commit, any order.** A primary announces itself as soon as it mounts, before any canvas in that commit creates a renderer. A canvas placed before its primary in the tree still waits for it and shares.
+- **Primary first.** A canvas mounting later shares it straight away.
+- **Primary later.** Canvases that already created their own renderer keep it: they are not adopted after the fact. The primary logs one development warning when this happens. Mount the primary with or before the canvases that share it, or give them `share="id"` so they wait for it.
+
+StrictMode, Fast Refresh (of your components or of R3F itself) and HMR keep the same renderer and the same sharing; they don't create a second renderer or leave canvases waiting.
+
+When the primary unmounts first, its sharing canvases keep rendering: each holds a lease on the renderer, which is disposed with the last canvas using it. A remounted primary creates a new renderer; canvases that were sharing the old one keep it until they remount, and canvases mounting afterwards share the new one.
+
+## Scheduling
+
+A sharing canvas renders after its primary by default. Order it yourself, or cap its frame rate, with the `scheduler` Canvas prop:
+
+```tsx
+// Limit to 30fps (useful for HUDs that don't need full framerate); still after the primary
+<Canvas scheduler={{ fps: 30 }}>
+
+// Render before the primary instead
+<Canvas scheduler={{ before: 'main' }}>
+```
+
+`before` / `after` take Canvas `id`s and replace the default ordering. `scheduler` is a Canvas prop on every entry, not only for multi-canvas; see [Frame Loop](../frame-loop#ordering-canvas-roots).
+
+| Option   | Type                 | Description                                           |
+| -------- | -------------------- | ----------------------------------------------------- |
+| `after`  | `string \| string[]` | Render after other canvases (by `id`)                 |
+| `before` | `string \| string[]` | Render before other canvases (by `id`)                |
+| `order`  | `number`             | Numeric root order; lower runs first                  |
+| `fps`    | `number`             | Limit this canvas's default render rate               |
 
 ## Accessing the Primary Scene (HUD Pattern)
 
@@ -77,7 +125,7 @@ function HudScene() {
       const primaryState = primaryStore.getState()
       renderer.render(primaryState.scene, orthoCamera.current)
     },
-    { phase: 'render', after: 'main' },
+    { phase: 'render' },
   )
 
   return null
@@ -86,8 +134,8 @@ function HudScene() {
 function App() {
   return (
     <>
-      {/* Main 3D scene */}
-      <Canvas id="main" renderer>
+      {/* Main 3D scene: owns the renderer */}
+      <Canvas id="main" primary>
         <ambientLight />
         <mesh>
           <boxGeometry />
@@ -95,9 +143,9 @@ function App() {
         </mesh>
       </Canvas>
 
-      {/* HUD overlay - top-down view of the same scene */}
+      {/* HUD overlay - top-down view of the same scene, sharing the renderer */}
       <div style={{ position: 'absolute', top: 10, left: 10, width: 200, height: 200 }}>
-        <Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+        <Canvas scheduler={{ fps: 30 }}>
           <HudScene />
         </Canvas>
       </div>
@@ -110,7 +158,7 @@ function App() {
 
 Each canvas maintains its own scene graph and camera, event handling, and state (its own Zustand store).
 
-Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context. Renderer-wide settings (`shadows`, tone mapping, output color space and other `renderer` options) come from the primary, which owns the renderer: a secondary sharing it does not apply its own, so it cannot reset the primary's.
+Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context. Renderer-wide settings come from the primary, which owns the renderer: a secondary sharing it does not apply its own, so it cannot reset the primary's.
 
 The `primaryStore` on each canvas's state provides access to the primary's scene/camera, enabling advanced patterns like HUDs. TSL resources (uniforms, nodes, buffers, GPU storage) are shared automatically: they live on the primary's `RootState`, each secondary holds the same map objects, and portals inherit them from their parent, so `state.uniforms` (and the `@react-three/tsl` hooks) read the same set on every canvas and portal.
 
@@ -120,24 +168,19 @@ R3F automatically manages `CanvasTarget` switching across canvases. A job in the
 
 When `navigator.gpu` is unavailable, three's `WebGPURenderer` silently falls back to its WebGL2 backend. A WebGL context is bound to the canvas element it was created on, so a renderer cannot be shared across canvases in that environment. A secondary whose primary fell back therefore creates its own renderer, forced onto the same WebGL2 backend (`forceWebGL`), and renders independently: scenes stay correct, at the cost of one GPU context per canvas instead of one shared.
 
-Such a fallback secondary owns its renderer, so it is a standalone root: it is not flagged `internal.isSecondary` (which marks a canvas borrowing another's renderer), it applies its own `shadows` and `renderer` options, and unmounting it disposes the renderer R3F built for it (a renderer instance you pass stays yours), whether or not the primary is still mounted. `internal.sharedRendererFallback` records the fallback. GPU resources cannot cross GL contexts, so TSL resources stay local (`primaryStore` self-references, so the HUD pattern above sees the secondary's own scene), and a fallback secondary is never registered as a shareable primary for further canvases.
+Such a fallback secondary owns its renderer, so it is a standalone root: it is not flagged `internal.isSecondary` (which marks a canvas borrowing another's renderer), it applies its own `renderer` settings (shadows included), and unmounting it disposes the renderer R3F built for it, whether or not the primary is still mounted. It does not inherit the primary's settings: set them on it too if they should match. `internal.sharedRendererFallback` records the fallback. GPU resources cannot cross GL contexts, so TSL resources stay local (`primaryStore` self-references, so the HUD pattern above sees the secondary's own scene), and a fallback secondary is never registered as a shareable primary for further canvases.
 
 ## API Reference
 
-**Primary canvas props:**
+**Canvas props:**
 
-| Prop       | Type      | Description                                            |
-| ---------- | --------- | ------------------------------------------------------ |
-| `id`       | `string`  | Unique identifier; makes the canvas targetable         |
-| `renderer` | `boolean` | Enable the WebGPU renderer (shorthand for `renderer={{}}`) |
-
-**Secondary canvas props:**
-
-| Prop                       | Type     | Description                        |
-| -------------------------- | -------- | --------------------------------- |
-| `renderer.primaryCanvas`   | `string` | `id` of the primary canvas to share |
-| `renderer.scheduler.after` | `string` | Render after another canvas       |
-| `renderer.scheduler.fps`   | `number` | Limit render rate                 |
+| Prop        | Type                   | Description                                                                                          |
+| ----------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `primary`   | `boolean`              | Own the renderer other canvases share. Implies WebGPU on `@react-three/fiber`                        |
+| `id`        | `string`               | Canvas id; the name `share="id"` and `scheduler` `before`/`after` refer to                           |
+| `share`     | `string \| false`      | `"id"`: share that primary's renderer. `false`: own a renderer even while a primary is mounted        |
+| `scheduler` | `{ before, after, order, fps }` | Ordering and fps cap; a sharing canvas renders after its primary unless `before`/`after` is set |
+| `renderer`  | props bag, instance or factory | Renderer settings, honored by the canvas that owns its renderer. An instance or factory opts out of sharing |
 
 **State properties:**
 
@@ -151,4 +194,5 @@ Such a fallback secondary owns its renderer, so it is a standalone root: it is n
 ## Related
 
 - [WebGPU Overview](./overview) - the `renderer` prop and entry points
+- [Frame Loop](../frame-loop) - the `scheduler` prop and root ordering
 - [Render Pipeline](./render-pipeline) - post-processing per canvas

@@ -41,6 +41,31 @@ export interface ColorManagementConfig {
   textureColorSpace?: THREE.ColorSpace
 }
 
+//* Renderer Settings ==============================
+
+/**
+ * Shadow map setting: `true` uses `THREE.PCFShadowMap`, a string picks a type, an object is assigned
+ * to `renderer.shadowMap`.
+ *
+ * `'soft'` is a deprecated alias of `'percentage'`: both map to `THREE.PCFShadowMap`, because three.js
+ * deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft. Using `'soft'` logs a deprecation notice.
+ * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
+ */
+export type ShadowsConfig = boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
+
+/**
+ * Renderer-wide settings R3F reads from the `renderer` / `gl` props bag. They are not renderer
+ * properties: R3F applies them itself, and only on the canvas that owns its renderer.
+ */
+export interface RendererSettingsConfig extends ColorManagementConfig {
+  /**
+   * Enables shadows. Only on a renderer R3F builds from a props bag: a renderer instance or factory
+   * keeps the `shadowMap` you give it.
+   * @example <Canvas renderer={{ shadows: 'variance' }} />
+   */
+  shadows?: ShadowsConfig
+}
+
 //* WebGL Renderer Props ==============================
 
 export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
@@ -51,7 +76,7 @@ export type GLProps =
   | Renderer
   | ((defaultProps: DefaultGLProps) => Renderer)
   | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | (Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters> & ColorManagementConfig)
+  | (Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters> & RendererSettingsConfig)
 
 //* WebGPU Renderer Props ==============================
 
@@ -84,22 +109,21 @@ export interface CanvasSchedulerConfig {
 }
 
 /**
- * Extended renderer configuration for multi-canvas support and color management.
+ * The config keys the `renderer` props bag accepts besides the renderer's own parameters and
+ * properties. Multi-canvas and scheduling are Canvas props (`primary`, `share`, `scheduler`).
  */
-export interface RendererConfigExtended extends ColorManagementConfig {
-  /** Share renderer from another canvas (WebGPU only) */
-  primaryCanvas?: string
-  /** Canvas-level scheduler options */
-  scheduler?: CanvasSchedulerConfig
-}
+export type RendererConfigExtended = RendererSettingsConfig
 
 /**
  * The `renderer` prop: opt into three's WebGPU renderer.
  * - `true` (the `<Canvas renderer>` shorthand) or `{}`: a default `WebGPURenderer`
  * - a props bag: constructor parameters (`antialias`, `forceWebGL`, ...) and renderer properties
- *   (`toneMapping`, ...), plus `textureColorSpace`, `primaryCanvas` and `scheduler`
+ *   (`toneMapping`, ...), plus `shadows` and `textureColorSpace`
  * - a renderer instance, or a sync/async factory receiving the default props. Structural, like
  *   the `gl` prop: anything with `render()`, so a wrapped or mocked renderer is accepted.
+ *
+ * Everything here configures a renderer this canvas owns. A canvas sharing a primary's renderer
+ * ignores a props bag (with a dev warning): renderer-wide settings come from the `<Canvas primary>`.
  */
 export type RendererProps =
   | boolean
@@ -126,26 +150,40 @@ export type CameraProps = (
 
 export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   /**
-   * Unique identifier for multi-canvas renderer sharing.
-   * Makes this canvas targetable by other canvases using the `primaryCanvas` prop.
-   * Also sets the HTML `id` attribute on the canvas element.
+   * Canvas id. Sets the HTML `id` attribute on the canvas element and the canvas's scheduler root
+   * id (so `scheduler={{ after: 'main' }}` can order against it). On a `<Canvas primary>` it is the
+   * name other canvases pass to `share="id"`.
    * @example <Canvas id="main-viewer">...</Canvas>
    */
   id?: string
   /**
-   * Share the renderer from another canvas instead of creating a new one.
-   * Pass the `id` of the primary canvas to share its WebGPURenderer.
-   * Only available with WebGPU (not legacy WebGL).
+   * Make this canvas the owner of a WebGPU renderer that other canvases share. Every other WebGPU
+   * canvas mounted with or after it borrows its renderer (drawing into its own element through a
+   * `CanvasTarget`) unless it passes `share={false}` or its own renderer instance/factory.
+   * Renderer-wide settings (`renderer={{ shadows, toneMapping, ... }}`) belong on the primary.
    *
-   * Note: This is extracted from `renderer={{ primaryCanvas: "id" }}` by Canvas.
-   * @internal
+   * WebGPU only: on the root entry `primary` selects WebGPU like the `renderer` prop does. Several
+   * primaries need distinct `id`s, and the other canvases then pick one with `share="id"`.
+   * Read when the renderer is created; changing it later needs a remount.
+   * @example <Canvas primary renderer={{ shadows: true }}>...</Canvas>
    */
-  primaryCanvas?: string
+  primary?: boolean
   /**
-   * Canvas-level scheduler options. Controls render timing relative to other canvases.
+   * Renderer sharing for a non-primary canvas (WebGPU only).
+   * - omitted: share the primary's renderer when exactly one `<Canvas primary>` is mounted, else
+   *   own a renderer as usual
+   * - `"id"`: share the renderer of `<Canvas id="id" primary>`, waiting for it to mount
+   * - `false`: always own a renderer, even while a primary exists
    *
-   * Note: This is extracted from `renderer={{ scheduler: {...} }}` by Canvas.
-   * @internal
+   * Read when the renderer is created; changing it later needs a remount.
+   * @example <Canvas share="main">...</Canvas>
+   */
+  share?: string | false
+  /**
+   * Canvas-level scheduler options: this canvas's order relative to other canvases, and an fps cap
+   * for its default render. A canvas sharing a primary's renderer runs after the primary unless
+   * `before`/`after` are given here.
+   * @example <Canvas scheduler={{ after: 'main', fps: 30 }}>...</Canvas>
    */
   scheduler?: CanvasSchedulerConfig
   /** A threejs renderer instance or props that go into the default renderer */
@@ -154,15 +192,6 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   renderer?: RendererProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
-  /**
-   * Enables shadows (`true` uses `THREE.PCFShadowMap`). Can accept `renderer.shadowMap` options for
-   * fine-tuning, but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
-   *
-   * `'soft'` is a deprecated alias of `'percentage'`: both map to `THREE.PCFShadowMap`, because three.js
-   * deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft. Using `'soft'` logs a deprecation notice.
-   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
-   */
-  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
   /** Creates an orthographic camera */
   orthographic?: boolean
   /**
@@ -206,6 +235,12 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   occlusion?: boolean
   /** Internal: stored size props from Canvas for reset functionality */
   _sizeProps?: { width?: number; height?: number } | null
+  /**
+   * Internal: the token a Canvas announced `primary` with before this root existed, so configure
+   * continues that announcement instead of starting a second one.
+   * @internal
+   */
+  _primaryToken?: object
   /** Force canvas dimensions to even numbers (fixes Safari rendering issues with odd/fractional sizes) */
   forceEven?: boolean
 }

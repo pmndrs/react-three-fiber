@@ -123,7 +123,9 @@ export default function useFramePhases() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Canvas renderer shadows camera={{ position: [ORBIT_RADIUS, CAMERA_HEIGHT, -CAMERA_DISTANCE], fov: 50 }}>
+      <Canvas
+        renderer={{ shadows: true }}
+        camera={{ position: [ORBIT_RADIUS, CAMERA_HEIGHT, -CAMERA_DISTANCE], fov: 50 }}>
         <color attach="background" args={['#f3f0f7']} />
         <fog attach="fog" args={['#f3f0f7', 8, 18]} />
         <ambientLight intensity={Math.PI * 0.65} />

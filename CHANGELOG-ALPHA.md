@@ -8,6 +8,31 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ### Breaking Changes
 
+- Multi-canvas is configured on the Canvas, not in the `renderer` bag. Mark the canvas that owns the
+  renderer `<Canvas primary>`; every other WebGPU canvas shares its renderer automatically, renders
+  after it by default, and ignores its own `renderer` settings (one development warning), since
+  renderer-wide settings belong to the owner. `share="id"` picks one of several primaries (which
+  need distinct ids), and `share={false}`, a renderer instance or factory, or the `gl` prop keep a
+  canvas on its own renderer. The primary announces itself synchronously on mount, so a canvas in
+  the same commit shares it whatever its place in the tree; a primary mounting after canvases that
+  already built their own renderer adopts none of them and warns once. With no `primary`, nothing
+  changes. `primary` implies WebGPU on the root entry and is not available on `/legacy`.
+  No deprecation path: `renderer={{ primaryCanvas }}` (and a top-level `primaryCanvas`) throws,
+  pointing at `<Canvas primary>` / `share`. See [Multi-Canvas](./docs/webgpu/multi-canvas.mdx).
+
+  ```diff
+  - <Canvas id="main" renderer>
+  - <Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
+  + <Canvas id="main" primary>
+  + <Canvas scheduler={{ fps: 30 }}>
+  ```
+
+- `scheduler` is a Canvas prop (and a `configure()` option) on every entry, `/legacy` included:
+  `<Canvas scheduler={{ before, after, order, fps }}>`. `renderer={{ scheduler }}` throws, pointing
+  at `<Canvas scheduler>`. It also no longer turns a root-entry Canvas into a WebGPU one.
+- `shadows` moved into the renderer settings: `renderer={{ shadows }}` (WebGPU) or `gl={{ shadows }}`
+  (WebGL, `/legacy`), same values. The top-level prop throws, naming the new place. It applies to a
+  renderer R3F builds; a renderer instance or factory keeps the `shadowMap` its creator set.
 - `@monogrid/gainmap-js` is no longer a dependency. `<Environment>` / `useEnvironment` drop the
   split gain map format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`), which only that package
   reads. `.hdr`, `.exr`, six-face cube sets and single-file Ultra HDR `.jpg` (three's own
@@ -142,8 +167,11 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   tone mapping, and no longer adds XR session listeners to it that were never removed. Thanks
   @rubenmarcus ([#3981](https://github.com/pmndrs/react-three-fiber/issues/3981),
   [#3983](https://github.com/pmndrs/react-three-fiber/pull/3983)).
-- `renderer={{ primaryCanvas }}` or `renderer={{ scheduler }}` with no other options no longer sets
-  `primaryCanvas` / `scheduler` properties on the renderer.
+- Constructor-only `renderer` options (`forceWebGL`, `depth`, `stencil`, `logarithmicDepthBuffer`,
+  `reversedDepthBuffer`, `outputBufferType`, `multiview`, `getFallback`, `trackTimestamp`, besides
+  `antialias`, `alpha`, `samples`, `powerPreference`) are passed to the constructor only and no
+  longer re-applied to the live renderer as stray properties. R3F's own settings (`shadows`,
+  `textureColorSpace`) are no longer passed to the constructor.
 - A `<Canvas>` removed while an `<Activity>` hides it releases its root. Hiding already ran the
   Canvas' effect cleanups, so removing it while hidden left the root, its frame jobs and its
   renderer running ([#3978](https://github.com/pmndrs/react-three-fiber/issues/3978)).

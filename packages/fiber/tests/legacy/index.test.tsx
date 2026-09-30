@@ -31,7 +31,7 @@ afterEach(async () => {
 
 describe('Legacy WebGL Renderer', () => {
   it('should set PCFShadowMap as the default shadow map', async () => {
-    const store = await act(async () => (await root.configure({ shadows: true })).render(<group />))
+    const store = await act(async () => (await root.configure({ gl: { shadows: true } })).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.shadowMap.type).toBe(THREE.PCFShadowMap)

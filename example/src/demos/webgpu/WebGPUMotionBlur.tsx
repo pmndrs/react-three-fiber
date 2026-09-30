@@ -362,7 +362,7 @@ function Experience() {
 
 export default function WebGPUMotionBlur() {
   return (
-    <Canvas renderer camera={{ fov: 50, position: [0, 1.5, 4.5], near: 0.25, far: 30 }} shadows>
+    <Canvas renderer={{ shadows: true }} camera={{ fov: 50, position: [0, 1.5, 4.5], near: 0.25, far: 30 }}>
       <fog attach="fog" args={['#0487e2', 7, 25]} />
       <Experience />
     </Canvas>

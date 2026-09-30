@@ -90,7 +90,7 @@ These are the real-GPU behaviors no jsdom/mock test can reach. Each should becom
 
 1. **Basic WebGPU render** — `<Canvas renderer>` inits without a manual `renderer.init()`; first frame draws; no depth mismatch.
 2. **WebGPU-only entry** — `@react-three/fiber/webgpu` runs with no WebGL renderer loaded; node materials resolve from the root's namespace.
-3. **Multi-canvas shared renderer** — a primary canvas + a secondary with `renderer={{ primaryCanvas: 'main' }}` share one renderer, switch targets correctly, clean up, honor scheduler `after`/`fps`, **and share state via `primaryStore`**.
+3. **Multi-canvas shared renderer** — a `<Canvas primary>` + a plain secondary `<Canvas>` (auto-sharing) and one with `share="main"` share one renderer, switch targets correctly, clean up, render after the primary by default, honor `scheduler={{ after, fps }}`, **and share state via `primaryStore`**. jsdom covers the sharing rules and timing (`tests/multi-canvas-primary.test.tsx`); this checks the pixels.
 4. **Occlusion** — `onOccluded` / `onVisible` fire only on state change; clean up on unmount.
 5. **Render pipeline** — `useRenderPipeline` makes the default render delegate to `renderPipeline.render()`.
 6. **TSL HMR** — editing a TSL node in Vite rebuilds without a full reload and leaves no stale nodes/uniforms.

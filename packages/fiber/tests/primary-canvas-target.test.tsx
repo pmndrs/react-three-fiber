@@ -133,28 +133,23 @@ describe('a primary canvas owns the renderer default target', () => {
     const root = createRoot(canvas)
     roots.push(root)
     const store = await act(async () =>
-      (await root.configure({ id, renderer, size, dpr: 2, frameloop: 'never' })).render(<mesh />),
+      (await root.configure({ id, primary: true, renderer, size, dpr: 2, frameloop: 'never' })).render(<mesh />),
     )
     return { canvas, renderer, root, store }
   }
 
-  async function mountSecondary(primaryCanvas: string, id: string) {
+  async function mountSecondary(primaryId: string, id: string) {
     const canvas = createCanvas()
     const root = createRoot(canvas)
     roots.push(root)
-    // As <Canvas renderer={{ primaryCanvas }}> arrives after parseRendererConfig: the bag is
-    // peeled, and the original prop stays as the (truthy, unused) renderer config.
-    const rendererProp = { primaryCanvas }
     const store = await act(async () =>
       (
         await root.configure({
           id,
-          primaryCanvas,
-          renderer: rendererProp as any,
+          share: primaryId,
           size: { width: 320, height: 240, top: 0, left: 0 },
           dpr: 1,
           frameloop: 'never',
-          scheduler: { after: primaryCanvas },
         })
       ).render(<mesh />),
     )

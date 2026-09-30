@@ -35,19 +35,15 @@ The `delta` passed as the second callback argument is the same value as `state.d
 
 ## Ordering Canvas roots
 
-When canvases share a renderer, order the complete Canvas roots through `renderer.scheduler`. Root ordering keeps every job owned by a Canvas together instead of ordering only its final render:
+Order complete Canvas roots with the `scheduler` Canvas prop. Root ordering keeps every job owned by a Canvas together instead of ordering only its final render. It works on every entry, `@react-three/fiber/legacy` included:
 
 ```tsx
-<Canvas id="main" renderer />
+<Canvas id="main" />
 
-<Canvas
-  id="secondary"
-  renderer={{
-    primaryCanvas: 'main',
-    scheduler: { after: 'main', order: 1, fps: 40 },
-  }}
-/>
+<Canvas id="secondary" scheduler={{ after: 'main', order: 1, fps: 40 }} />
 ```
+
+The same options go to `createRoot(canvas).configure({ scheduler })`. A canvas sharing a `<Canvas primary>`'s renderer (see [Multi-Canvas](./webgpu/multi-canvas)) renders after its primary unless you set `before` or `after` yourself.
 
 `before` and `after` accept a Canvas `id` or an array of ids. References can mount in either order; an unresolved reference remains dormant and becomes active when that root registers. `order` provides numeric root ordering, with lower values running first.
 

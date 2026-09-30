@@ -234,8 +234,8 @@ describe('renderer lifecycle', () => {
       const secondaryCanvas = document.createElement('canvas')
       const secondary = createRoot(secondaryCanvas)
       await act(async () => {
-        ;(await primary.configure({ id, renderer: {}, frameloop: 'never' })).render(null)
-        ;(await secondary.configure({ primaryCanvas: id, renderer: {}, frameloop: 'never' })).render(null)
+        ;(await primary.configure({ id, primary: true, renderer: {}, frameloop: 'never' })).render(null)
+        ;(await secondary.configure({ share: id, renderer: {}, frameloop: 'never' })).render(null)
       })
       return { primary, secondary, secondaryCanvas, shared: webgpu.instances[0] }
     }

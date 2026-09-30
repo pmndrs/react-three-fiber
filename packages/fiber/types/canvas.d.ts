@@ -72,9 +72,7 @@ export type BackgroundProp =
 //* Canvas Types ==============================
 
 export interface CanvasProps
-  extends
-    Omit<RenderProps<HTMLCanvasElement>, 'size' | 'primaryCanvas' | 'scheduler'>,
-    React.HTMLAttributes<HTMLDivElement> {
+  extends Omit<RenderProps<HTMLCanvasElement>, 'size' | '_primaryToken'>, React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode
   ref?: React.Ref<HTMLCanvasElement>
   /** Canvas fallback content, similar to img's alt prop */

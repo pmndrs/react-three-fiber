@@ -107,7 +107,7 @@ export default function WebGPUMultiCanvas() {
           gridRow: '1 / 3',
           overflow: 'hidden',
         }}>
-        <Canvas id="main" renderer camera={{ position: [0, 0, 4], fov: 45 }}>
+        <Canvas id="main" primary camera={{ position: [0, 0, 4], fov: 45 }}>
           <color attach="background" args={['#211813']} />
           <ambientLight intensity={0.7} />
           <directionalLight position={[5, 5, 5]} intensity={2} />
@@ -127,7 +127,7 @@ export default function WebGPUMultiCanvas() {
             overflow: 'hidden',
             border: '1px solid rgba(255, 255, 255, 0.25)',
           }}>
-          <Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
+          <Canvas scheduler={{ fps: 30 }}>
             <HudScene />
           </Canvas>
           <FpsLabel fps={5} color="orange" />
@@ -135,7 +135,7 @@ export default function WebGPUMultiCanvas() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }} camera={{ position: [0, 0, 4] }}>
+        <Canvas camera={{ position: [0, 0, 4] }}>
           <color attach="background" args={['#241522']} />
           <ambientLight intensity={0.7} />
           <directionalLight position={[-5, 5, 5]} intensity={2} />
@@ -145,7 +145,7 @@ export default function WebGPUMultiCanvas() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }} camera={{ position: [0, 0, 4] }}>
+        <Canvas scheduler={{ fps: 30 }} camera={{ position: [0, 0, 4] }}>
           <color attach="background" args={['#102224']} />
           <ambientLight intensity={0.7} />
           <directionalLight position={[0, 5, -5]} intensity={2} />

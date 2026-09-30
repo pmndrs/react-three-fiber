@@ -24,10 +24,21 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { notifyDepreciated } from './utils/notices.js'
+import { isDevelopment, notifyDepreciated } from './utils/notices.js'
 import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
-import { registerPrimary, waitForPrimary } from './canvasRegistry'
+import {
+  DEFAULT_PRIMARY,
+  announcePrimary,
+  describePrimary,
+  livePrimaryKeys,
+  primaryConflict,
+  registerPrimary,
+  trackStandalone,
+  waitForAnnouncedPrimary,
+  waitForPrimary,
+  withdrawPrimary,
+} from './canvasRegistry'
 import { fulfilled, tracked } from './promise'
 import { borrowRenderer, leaseRenderer } from './rendererLease'
 
@@ -46,6 +57,7 @@ import type {
   RendererSupport,
   WebGPUSupport,
   Dpr,
+  ShadowsConfig,
 } from '#types'
 
 export const isRenderer = (def: any) => !!def?.render
@@ -71,9 +83,80 @@ function ensureStoreThreeObjects(store: RootStore): void {
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
+/** R3F settings read from the gl/renderer props bag. Not renderer parameters or properties. */
+const R3F_RENDERER_SETTINGS = ['textureColorSpace', 'shadows']
+
+/**
+ * Keys of the gl/renderer props bag that are never applied to the live renderer: R3F's own settings,
+ * and constructor parameters. Those are read once when the renderer is built and are read-only or
+ * meaningless on the instance, so re-applying them (`depth`, `forceWebGL`, `getFallback`, ...) would
+ * only add stray fields to it.
+ */
+const NON_APPLIED_RENDERER_PROPS = new Set([
+  ...R3F_RENDERER_SETTINGS,
+  'canvas',
+  'antialias',
+  'alpha',
+  'samples',
+  'powerPreference',
+  'depth',
+  'stencil',
+  'logarithmicDepthBuffer',
+  'reversedDepthBuffer',
+  // WebGPURenderer only
+  'forceWebGL',
+  'outputBufferType',
+  'multiview',
+  'getFallback',
+  'trackTimestamp',
+])
+
+/** The gl/renderer prop when it is a props bag, not `true`, a renderer instance or a factory. */
+function settingsBag(config: unknown): Record<string, any> | undefined {
+  return is.obj(config) && !isRenderer(config) ? (config as Record<string, any>) : undefined
+}
+
+/** A renderer instance or factory: the caller builds the renderer, so R3F does not configure it. */
+function isInstanceOrFactory(config: unknown): boolean {
+  return is.fun(config) || isRenderer(config)
+}
+
+/**
+ * Throw for props v10 moved, naming the new API, rather than silently ignoring them. The Canvas
+ * types no longer have them; JS callers and stale code still pass them.
+ */
+function assertNoRemovedConfig(props: Record<string, any>): void {
+  if (props.primaryCanvas !== undefined) {
+    throw new Error(
+      'R3F: `primaryCanvas` was removed: mark the owner <Canvas primary> and other canvases share it ' +
+        'automatically (or use share="id")',
+    )
+  }
+  if (props.shadows !== undefined) {
+    throw new Error(
+      'R3F: the `shadows` Canvas prop moved into the renderer settings: use `renderer={{ shadows }}` ' +
+        '(or `gl={{ shadows }}` for WebGL and @react-three/fiber/legacy)',
+    )
+  }
+  for (const name of ['renderer', 'gl'] as const) {
+    const bag = settingsBag(props[name])
+    if (!bag) continue
+    if ('primaryCanvas' in bag) {
+      throw new Error(
+        `R3F: \`${name}={{ primaryCanvas }}\` was removed: mark the owner <Canvas primary> and other ` +
+          'canvases share it automatically (or use share="id")',
+      )
+    }
+    if ('scheduler' in bag) {
+      throw new Error(`R3F: \`${name}={{ scheduler }}\` moved to <Canvas scheduler>`)
+    }
+  }
+}
+
 // Helper to resolve renderer config (handles: function | instance | props). R3F owns what it
 // builds, a factory's result included, since R3F calls the factory once per root. An instance
-// belongs to the caller.
+// belongs to the caller. R3F's own settings (`shadows`, `textureColorSpace`) stay out of the
+// constructor parameters.
 async function resolveRenderer<T>(
   config: any,
   defaultProps: Record<string, any>,
@@ -81,7 +164,9 @@ async function resolveRenderer<T>(
 ): Promise<{ renderer: T; owned: boolean }> {
   if (typeof config === 'function') return { renderer: await config(defaultProps), owned: true }
   if (isRenderer(config)) return { renderer: config as T, owned: false }
-  return { renderer: new RendererClass({ ...defaultProps, ...config }), owned: true }
+  const params: Record<string, any> = { ...defaultProps }
+  for (const key in settingsBag(config)) if (!R3F_RENDERER_SETTINGS.includes(key)) params[key] = config[key]
+  return { renderer: new RendererClass(params), owned: true }
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -243,7 +328,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     dpr: RenderProps<TCanvas>['dpr']
     frameloop: RenderProps<TCanvas>['frameloop']
     performance: RenderProps<TCanvas>['performance']
-    shadows: RenderProps<TCanvas>['shadows']
+    shadows: ShadowsConfig
     textureColorSpace: THREE.ColorSpace
     schedulerBefore: NonNullable<RenderProps<TCanvas>['scheduler']>['before']
     schedulerAfter: NonNullable<RenderProps<TCanvas>['scheduler']>['after']
@@ -278,6 +363,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   let configured = false
   let pending: Promise<void> | null = null
 
+  // This root's scheduler id, chosen before a primary registers so a sharing canvas can order itself
+  // after it before the primary's configure() has reached the scheduler
+  let schedulerRootId: string | undefined
+  // The primary's scheduler root, when this canvas borrows its renderer: the default `after`
+  let sharedAfter: string | undefined
+  // A sharing canvas warns about its ignored renderer settings once
+  let warnedSharedSettings = false
+
   // Unmounting stopped the root drawing; if the tree never unmounted, the Provider won't set it again
   const cancelUnmount = () => {
     if (!root.unmountClaim) return
@@ -296,7 +389,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       const {
         id: canvasId,
-        primaryCanvas,
+        primary = false,
+        share,
         scheduler: schedulerConfig,
         gl: glConfig,
         renderer: rendererConfig,
@@ -304,7 +398,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         scene: sceneOptions,
         events,
         onCreated: onCreatedCallback,
-        shadows = false,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -317,18 +410,26 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         autoUpdateFrustum = true,
         occlusion = false,
         _sizeProps,
+        _primaryToken,
         forceEven,
       } = props
 
-      // Extract textureColorSpace from gl or renderer config (not a real renderer property).
+      //* Removed Props ==============================
+      assertNoRemovedConfig(props)
+
+      //* Renderer Settings ==============================
+      // R3F's own settings live in the gl/renderer props bag next to the renderer's parameters. They
+      // are not renderer properties: textureColorSpace is this root's loader state, and shadows go
+      // to renderer.shadowMap below.
+      const rendererBag = settingsBag(rendererConfig)
+      const settings = settingsBag(glConfig) ?? rendererBag
       // The sRGB default is applied below, once three's constants are loaded.
-      const requestedTextureColorSpace: THREE.ColorSpace | undefined =
-        (is.obj(glConfig) && !is.fun(glConfig) && !isRenderer(glConfig) && (glConfig as any).textureColorSpace) ||
-        (is.obj(rendererConfig) &&
-          !is.fun(rendererConfig) &&
-          !isRenderer(rendererConfig) &&
-          (rendererConfig as any).textureColorSpace) ||
-        undefined
+      const requestedTextureColorSpace: THREE.ColorSpace | undefined = settings?.textureColorSpace || undefined
+      // Shadows configure a renderer R3F builds (a props bag, `true`, or no prop). A renderer instance
+      // or factory result keeps the shadowMap its creator gave it.
+      const shadows: ShadowsConfig | undefined = isInstanceOrFactory(glConfig ?? rendererConfig)
+        ? undefined
+        : (settings?.shadows ?? false)
 
       let state = store.getState()
       const { webgl, webgpu } = provider
@@ -361,18 +462,94 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
         )
       }
+      if (glConfig && rendererConfig) {
+        throw new Error('Cannot use both gl and renderer props at the same time')
+      }
+
+      //* Multi-Canvas Validation ==============================
+      // A primary owns a WebGPU renderer that other canvases share through CanvasTarget, which WebGL
+      // has no equivalent of
+      if (primary && !webgpu) {
+        throw new Error(
+          'R3F: <Canvas primary> shares a WebGPU renderer and is not available on this entry. ' +
+            'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
+        )
+      }
+      if (primary && glConfig) {
+        throw new Error(
+          'R3F: <Canvas primary> shares a WebGPU renderer and cannot be used with WebGL. ' +
+            'Remove the `gl` prop or use the `renderer` prop.',
+        )
+      }
+      if (primary && is.str(share)) {
+        throw new Error(`R3F: a <Canvas primary> owns its renderer; remove share="${share}" from it.`)
+      }
+      if (is.str(share)) {
+        if (!webgpu || glConfig) {
+          throw new Error(
+            `R3F: share="${share}" borrows a WebGPU renderer and cannot be used with WebGL. ` +
+              'Remove the `gl` prop, or use @react-three/fiber or @react-three/fiber/webgpu.',
+          )
+        }
+        if (isInstanceOrFactory(rendererConfig)) {
+          throw new Error(
+            `R3F: share="${share}" borrows the primary's renderer, so it cannot be combined with a renderer ` +
+              'instance or factory. Remove one of the two.',
+          )
+        }
+      }
+
+      //* Primary Announcement ==============================
+      // Before anything async: a canvas configuring in the same tick must see this primary coming and
+      // wait for it rather than build its own renderer. A Canvas has already announced from its
+      // insertion effect; configure continues that announcement under the same token.
+      const primaryKey = canvasId || DEFAULT_PRIMARY
+      const primaryToken = _primaryToken ?? root
+      if (primary && !state.internal.actualRenderer) {
+        announcePrimary(primaryKey, primaryToken)
+        // Teardown withdraws it: sharing canvases already mounted keep their lease on the renderer
+        state.internal.unregisterPrimary = () => withdrawPrimary(primaryKey, primaryToken)
+        if (primaryConflict(primaryKey, primaryToken)) {
+          throw new Error(
+            primaryKey === DEFAULT_PRIMARY
+              ? 'R3F: two <Canvas primary> are mounted without ids. Give each primary a distinct `id`, and ' +
+                  'point the other canvases at one with share="id".'
+              : `R3F: two <Canvas primary> use the id "${primaryKey}". Give each primary a distinct \`id\`.`,
+          )
+        }
+      }
+
+      //* Renderer Sharing ==============================
+      // Decided once, when this canvas creates its renderer. A canvas shares when it names a primary
+      // (share="id"), or when exactly one primary is live and it did not opt out: share={false}, the gl
+      // prop (WebGL), or a renderer instance/factory of its own all mean "my own renderer". A renderer
+      // props bag does not: renderer-wide settings come from the primary, and the bag is ignored.
+      let shareKey: string | undefined
+      if (!state.internal.actualRenderer && webgpu && !primary && !glConfig && !state.isLegacy) {
+        if (is.str(share)) {
+          shareKey = share
+        } else if (share !== false && !isInstanceOrFactory(rendererConfig)) {
+          const live = livePrimaryKeys()
+          if (live.length > 1) {
+            throw new Error(
+              `R3F: ${live.length} primaries are mounted (${live.map(describePrimary).join(', ')}), so this ` +
+                'canvas cannot pick one to share. Pass share="id" to name one, or share={false} for its own renderer.',
+            )
+          }
+          shareKey = live[0]
+        }
+      }
+      const explicitShare = is.str(share)
 
       //* Determine which renderer to use ==============================
       // Entry-specific defaults:
       // - @react-three/fiber/webgpu: always WebGPU, no renderer prop needed (no webgl loader)
       // - @react-three/fiber/legacy: always WebGL (no webgpu loader)
-      // - @react-three/fiber: WebGL unless the renderer prop is provided; only the chosen
-      //   renderer's support is downloaded (both loaders are dynamic imports)
-      const wantsGL = !!webgl && (state.isLegacy || !!glConfig || !webgpu || !rendererConfig)
-
-      if (glConfig && rendererConfig) {
-        throw new Error('Cannot use both gl and renderer props at the same time')
-      }
+      // - @react-three/fiber: WebGL unless the renderer prop, `primary`, or a primary to share asks
+      //   for WebGPU; only the chosen renderer's support is downloaded (both loaders are dynamic
+      //   imports)
+      const wantsGL =
+        !!webgl && (state.isLegacy || !!glConfig || !webgpu || (!rendererConfig && !primary && shareKey === undefined))
 
       // Deprecation warning for WebGL usage (only on the entry that offers both)
       if (webgl && webgpu && !state.isLegacy && wantsGL) {
@@ -384,21 +561,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
-
-      //* Multi-Canvas Target Validation ==============================
-      // Validate primaryCanvas prop is only used with WebGPU
-      if (primaryCanvas && !webgpu) {
-        throw new Error(
-          'The `primaryCanvas` prop for multi-canvas rendering is only available with WebGPU. ' +
-            'Use @react-three/fiber/webgpu instead.',
-        )
-      }
-      if (primaryCanvas && wantsGL) {
-        throw new Error(
-          'The `primaryCanvas` prop for multi-canvas rendering cannot be used with WebGL. ' +
-            'Remove the `gl` prop or use WebGPU.',
-        )
-      }
 
       //* Create Renderer (one time only) ==============================
       // Serialize concurrent configure() calls. Renderer creation is async — the gl/renderer
@@ -432,112 +594,71 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Set both gl and renderer to the WebGLRenderer for backwards compatibility
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
-            } else if (primaryCanvas) {
+              return
+            }
+
+            //* Find the primary to share ---
+            // share="id" waits for that primary, however long it takes to mount (up to the timeout).
+            // Automatic sharing waits only for a primary that has announced itself; null means it
+            // unmounted before creating its renderer, and this canvas owns one instead.
+            const primaryEntry =
+              shareKey === undefined
+                ? null
+                : explicitShare
+                  ? await waitForPrimary(shareKey)
+                  : await waitForAnnouncedPrimary(shareKey)
+
+            if (primaryEntry && primaryEntry.store.getState().webGPUSupported) {
               //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
-              // Wait for primary canvas to be registered (handles async init timing)
-              const primary = await waitForPrimary(primaryCanvas)
+              // Use the primary's renderer. The lease keeps it alive while this canvas draws
+              // with it, even if the primary unmounts first
+              renderer = primaryEntry.renderer
+              state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = borrowRenderer(renderer)
+              // Render after the primary unless this canvas's scheduler orders it itself
+              sharedAfter = primaryEntry.rootId
 
-              // #3965: the primary's renderer may have fallen back to its WebGL2 backend
-              // (no navigator.gpu). A WebGL context is bound to the canvas element it was
-              // created on, so setCanvasTarget cannot redirect it onto this canvas: sharing
-              // it would draw this canvas's scene into the primary's element and leave this
-              // one blank. A fallback primary cannot be shared -- the secondary creates its
-              // own renderer (forced onto the same WebGL2 backend, see below) and renders
-              // independently.
-              if (primary.store.getState().webGPUSupported) {
-                // Use the primary's renderer. The lease keeps it alive while this canvas draws
-                // with it, even if the primary unmounts first
-                renderer = primary.renderer
-                state.internal.actualRenderer = renderer
-                state.internal.releaseRenderer = borrowRenderer(renderer)
+              // Create a CanvasTarget for this secondary canvas
+              const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
 
-                // Create a CanvasTarget for this secondary canvas
-                const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
+              // Enable multi-canvas mode on the primary canvas
+              primaryEntry.store.setState((prev) => ({
+                internal: { ...prev.internal, isMultiCanvas: true },
+              }))
 
-                // Enable multi-canvas mode on the primary canvas
-                primary.store.setState((prev) => ({
-                  internal: { ...prev.internal, isMultiCanvas: true },
-                }))
+              // Store secondary canvas info in internal state
+              // primaryStore points to the primary canvas's store for shared TSL resources
+              state.set((prev) => ({
+                webGPUSupported: primaryEntry.store.getState().webGPUSupported,
+                renderer: renderer,
+                primaryStore: primaryEntry.store,
+                internal: {
+                  ...prev.internal,
+                  canvasTarget,
+                  isMultiCanvas: true,
+                  isSecondary: true,
+                  targetId: shareKey === DEFAULT_PRIMARY ? undefined : shareKey,
+                },
+              }))
+              return
+            }
 
-                // Store secondary canvas info in internal state
-                // primaryStore points to the primary canvas's store for shared TSL resources
-                state.set((prev) => ({
-                  webGPUSupported: primary.store.getState().webGPUSupported,
-                  renderer: renderer,
-                  primaryStore: primary.store,
-                  internal: {
-                    ...prev.internal,
-                    canvasTarget,
-                    isMultiCanvas: true,
-                    isSecondary: true,
-                    targetId: primaryCanvas,
-                  },
-                }))
-              } else {
-                //* WebGL2 fallback: own renderer (#3965) ---
-                // The primary fell back to its WebGL2 backend. This root constructs its
-                // own renderer, exactly like a primary, with two differences:
-                // - forceWebGL: the primary already answered the "is WebGPU available"
-                //   question. Forcing the same backend guarantees parity (a primary forced
-                //   onto WebGL2 must not leave this canvas on real WebGPU) and skips a
-                //   second adapter probe.
-                // - it never registers as a primary: a WebGL context is bound to the
-                //   canvas it was created on, so this renderer is as unshareable as the
-                //   primary's.
-                // A renderer instance or factory passed as `renderer` still wins as-is;
-                // its backend is the user's choice.
-                const isPlainConfig = is.obj(rendererConfig) && !is.fun(rendererConfig) && !isRenderer(rendererConfig)
-                const { primaryCanvas: _peeled, ...rendererOptions } = isPlainConfig
-                  ? (rendererConfig as Record<string, unknown>)
-                  : {}
-                const fallbackConfig =
-                  is.fun(rendererConfig) || isRenderer(rendererConfig)
-                    ? rendererConfig
-                    : { ...rendererOptions, forceWebGL: true }
-
-                const resolved = await createOwnedWebGPURenderer(
-                  fallbackConfig,
-                  defaultGPUProps,
-                  canvas,
-                  propsSize,
-                  dpr,
-                  support,
-                )
-                renderer = resolved.renderer
-
-                const backend = renderer.backend
-                const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
-
-                // Its own lease, exactly as a primary takes one: teardown releases it, and the
-                // last release disposes a renderer R3F built. Nothing else borrows it
-                state.internal.actualRenderer = renderer
-                state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
-                // This root owns its renderer, so it is a standalone root: no `isSecondary`
-                // (that flag tells teardown the renderer and its default canvas target are
-                // borrowed, and to skip XR teardown) and no `targetId`.
-                // `sharedRendererFallback` records why this secondary stopped sharing.
-                // GPU resources cannot cross GL contexts, so TSL resources stay local:
-                // primaryStore self-references, as on any single canvas.
-                state.set((prev) => ({
-                  webGPUSupported: isWebGPUBackend,
-                  renderer: renderer,
-                  primaryStore: store,
-                  internal: {
-                    ...prev.internal,
-                    canvasTarget: (renderer as WebGPURenderer).getCanvasTarget?.(),
-                    sharedRendererFallback: true,
-                  },
-                }))
-              }
-            } else {
-              //* WebGPU path ---
-              // This path is taken when:
-              // 1. @react-three/fiber/webgpu - always, even without the renderer prop
-              // 2. @react-three/fiber with the renderer prop
-              // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer;
-              // if it is a pre-initialized external renderer, init is skipped (#3651).
+            if (primaryEntry) {
+              //* WebGL2 fallback: own renderer (#3965) ---
+              // The primary's renderer fell back to its WebGL2 backend (no navigator.gpu). A WebGL
+              // context is bound to the canvas element it was created on, so setCanvasTarget cannot
+              // redirect it onto this canvas: sharing it would draw this canvas's scene into the
+              // primary's element and leave this one blank. This root constructs its own renderer,
+              // exactly like a primary, with two differences:
+              // - forceWebGL: the primary already answered the "is WebGPU available" question.
+              //   Forcing the same backend guarantees parity (a primary forced onto WebGL2 must not
+              //   leave this canvas on real WebGPU) and skips a second adapter probe.
+              // - it never registers as a primary: a WebGL context is bound to the canvas it was
+              //   created on, so this renderer is as unshareable as the primary's.
+              // A sharing canvas has no renderer instance or factory (those opt out of sharing), so
+              // its config is a props bag or nothing. It owns this renderer, so its bag applies.
               const resolved = await createOwnedWebGPURenderer(
-                rendererConfig,
+                { ...rendererBag, forceWebGL: true },
                 defaultGPUProps,
                 canvas,
                 propsSize,
@@ -546,20 +667,61 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               )
               renderer = resolved.renderer
 
-              // temp, stop the inspector
-              //renderer.inspector = new Inspector()
-
               const backend = renderer.backend
               const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
+              // Its own lease, exactly as a primary takes one: teardown releases it, and the
+              // last release disposes a renderer R3F built. Nothing else borrows it
               state.internal.actualRenderer = renderer
               state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
-              // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
-              // Self-reference primaryStore - this canvas is its own primary
-              state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+              // This root owns its renderer, so it is a standalone root: no `isSecondary`
+              // (that flag tells teardown the renderer and its default canvas target are
+              // borrowed, and to skip XR teardown) and no `targetId`.
+              // `sharedRendererFallback` records why this secondary stopped sharing.
+              // GPU resources cannot cross GL contexts, so TSL resources stay local:
+              // primaryStore self-references, as on any single canvas.
+              state.set((prev) => ({
+                webGPUSupported: isWebGPUBackend,
+                renderer: renderer,
+                primaryStore: store,
+                internal: {
+                  ...prev.internal,
+                  canvasTarget: (renderer as WebGPURenderer).getCanvasTarget?.(),
+                  sharedRendererFallback: true,
+                },
+              }))
+              return
+            }
 
+            //* WebGPU path ---
+            // This path is taken when:
+            // 1. @react-three/fiber/webgpu - always, even without the renderer prop
+            // 2. @react-three/fiber with the renderer prop or `primary`
+            // and there is no primary to share (or this canvas is the primary, or opted out).
+            // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer;
+            // if it is a pre-initialized external renderer, init is skipped (#3651).
+            const resolved = await createOwnedWebGPURenderer(
+              rendererConfig,
+              defaultGPUProps,
+              canvas,
+              propsSize,
+              dpr,
+              support,
+            )
+            renderer = resolved.renderer
+
+            const backend = renderer.backend
+            const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
+
+            state.internal.actualRenderer = renderer
+            state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
+            // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
+            // Self-reference primaryStore - this canvas is its own primary
+            state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+
+            if (primary) {
               //* Register as Primary Canvas ==============================
-              // If this canvas has an id, register it so other canvases can target it.
+              // Other canvases can share this renderer from now on.
               //
               // The primary's canvas target is the renderer's *own* default target, not a second
               // CanvasTarget wrapped around the same element. The renderer only ever sizes,
@@ -567,22 +729,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // wrapper shares the element but none of that, so sizing it moved the swap chain
               // while the renderer's depth buffer stayed at its construction size (300x150).
               // Without a secondary to flip `isMultiCanvas`, nothing ever called setCanvasTarget
-              // on the wrapper, so a lone `<Canvas id>` rendered with mismatched attachments on
-              // every frame. One element, one target: whichever canvas is active, the target it
-              // sizes is the one the renderer draws with.
-              if (canvasId && !state.internal.isSecondary) {
-                // Optional-call: a mock or foreign renderer without canvas targets simply has
-                // none, and the store then sizes the renderer directly.
-                const canvasTarget = (renderer as WebGPURenderer).getCanvasTarget?.()
-                const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
-                state.set((prev) => ({
-                  internal: {
-                    ...prev.internal,
-                    canvasTarget,
-                    unregisterPrimary,
-                  },
-                }))
-              }
+              // on the wrapper, so a lone primary rendered with mismatched attachments on every
+              // frame. One element, one target: whichever canvas is active, the target it sizes
+              // is the one the renderer draws with.
+              //
+              // Optional-call: a mock or foreign renderer without canvas targets simply has
+              // none, and the store then sizes the renderer directly.
+              const canvasTarget = (renderer as WebGPURenderer).getCanvasTarget?.()
+              schedulerRootId ??= canvasId || getScheduler().generateRootId()
+              registerPrimary(primaryKey, renderer as WebGPURenderer, store, {
+                token: primaryToken,
+                rootId: schedulerRootId,
+              })
+              state.set((prev) => ({ internal: { ...prev.internal, canvasTarget } }))
+            } else if (share !== false && !isInstanceOrFactory(rendererConfig)) {
+              // This canvas would have shared a primary had one existed: a primary mounting later
+              // warns that it is not adopted
+              state.internal.untrackStandalone = trackStandalone(root)
             }
           })()
           root.ready = tracked(setup)
@@ -604,6 +767,24 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // belong to the owner alone (#3981). A WebGL2-fallback secondary (#3965) owns its
       // renderer and is deliberately not `isSecondary`, so it keeps full control.
       const borrowsRenderer = state.internal.isSecondary === true
+
+      // So a sharing canvas ignores its renderer settings (shadows, tone mapping, constructor
+      // parameters, ...). textureColorSpace stays: it is this root's texture-loading state, not the
+      // renderer's.
+      if (
+        borrowsRenderer &&
+        !warnedSharedSettings &&
+        rendererBag &&
+        Object.keys(rendererBag).some((key) => key !== 'textureColorSpace') &&
+        isDevelopment()
+      ) {
+        warnedSharedSettings = true
+        console.warn(
+          'R3F: renderer settings on a sharing canvas are ignored; set them on the <Canvas primary>. ' +
+            "This canvas borrows the primary's renderer, so renderer-wide settings come from the primary. " +
+            'Pass share={false} to give this canvas its own renderer.',
+        )
+      }
 
       //* Default Raycaster Initialization ==============================
       // Set up raycaster (one time only!)
@@ -809,10 +990,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       //* Shadow Map ==============================
-      // Only update if the shadows PROP changed (not just if state differs). The owner's
+      // `renderer={{ shadows }}` (or `gl`). Only update if the setting changed (not just if state
+      // differs). Left alone for a renderer instance or factory (undefined). The owner's
       // setting wins on a shared renderer: a borrowing secondary must not turn the
       // primary's shadows off with its own default (#3981).
-      if (!borrowsRenderer && renderer.shadowMap && !is.equ(shadows, lastConfiguredProps.shadows, shallowLoose)) {
+      if (
+        !borrowsRenderer &&
+        shadows !== undefined &&
+        renderer.shadowMap &&
+        !is.equ(shadows, lastConfiguredProps.shadows, shallowLoose)
+      ) {
         lastConfiguredProps.shadows = shadows
         const oldEnabled = renderer.shadowMap.enabled
         const oldType = renderer.shadowMap.type
@@ -860,19 +1047,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         lastConfiguredProps.textureColorSpace = textureColorSpace
       }
 
-      // R3F-specific props that aren't real renderer properties (handled separately by R3F).
-      // `primaryCanvas` / `scheduler` arrive here when a `renderer` config bag held nothing else
-      // (parseRendererConfig then forwards the bag as-is); they must not land on the renderer.
-      const r3fProps = ['textureColorSpace', 'primaryCanvas', 'scheduler']
-      // Three.js renderer constructor-only props that are read-only on the live instance
-      const constructorOnlyProps = ['samples', 'antialias', 'alpha', 'canvas', 'powerPreference']
-      const nonApplyProps = [...r3fProps, ...constructorOnlyProps]
-
-      // Set gl props - filter out non-applicable props
+      // Set gl props - filter out R3F settings and constructor parameters (NON_APPLIED_RENDERER_PROPS)
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
         const glProps: Record<string, any> = {}
         for (const key in glConfig as Record<string, any>) {
-          if (!nonApplyProps.includes(key)) glProps[key] = (glConfig as any)[key]
+          if (!NON_APPLIED_RENDERER_PROPS.has(key)) glProps[key] = (glConfig as any)[key]
         }
         applyProps(renderer, glProps as any)
       }
@@ -889,7 +1068,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
           const rendererProps: Record<string, any> = {}
           for (const key in rendererConfig as Record<string, any>) {
-            if (!nonApplyProps.includes(key)) rendererProps[key] = (rendererConfig as any)[key]
+            if (!NON_APPLIED_RENDERER_PROPS.has(key)) rendererProps[key] = (rendererConfig as any)[key]
           }
           applyProps(currentRenderer, rendererProps as any)
         }
@@ -900,15 +1079,22 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       const scheduler = getScheduler()
       const rootId = (state.internal as any).rootId as string | undefined
 
+      // Root ordering. A canvas borrowing a primary's renderer renders after the primary, unless its
+      // scheduler prop orders it itself (either `before` or `after` replaces the default)
+      const ordersItself = schedulerConfig?.before !== undefined || schedulerConfig?.after !== undefined
+      const rootBefore = schedulerConfig?.before
+      const rootAfter = ordersItself ? schedulerConfig?.after : sharedAfter
+
       if (!rootId) {
-        // Generate a unique root ID and register with global scheduler
-        const newRootId = canvasId || scheduler.generateRootId()
+        // A unique root ID (the canvas id, if any; a primary chose it when it registered), registered
+        // with the global scheduler
+        const newRootId = (schedulerRootId ??= canvasId || scheduler.generateRootId())
         const unregisterRoot = scheduler.registerRoot(newRootId, {
           getState: () => store.getState(),
           onError: (err) => store.getState().setError(err),
           frameloop: store.getState().frameloop,
-          before: schedulerConfig?.before,
-          after: schedulerConfig?.after,
+          before: rootBefore,
+          after: rootAfter,
           order: schedulerConfig?.order,
         })
 
@@ -1065,14 +1251,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       } else {
         // Canvas ordering is root-scoped so every job owned by this Canvas moves together.
         const constraintsChanged =
-          !is.equ(schedulerConfig?.before, lastConfiguredProps.schedulerBefore, shallowLoose) ||
-          !is.equ(schedulerConfig?.after, lastConfiguredProps.schedulerAfter, shallowLoose)
+          !is.equ(rootBefore, lastConfiguredProps.schedulerBefore, shallowLoose) ||
+          !is.equ(rootAfter, lastConfiguredProps.schedulerAfter, shallowLoose)
 
         if (constraintsChanged) {
-          scheduler.setRootConstraints(rootId, {
-            before: schedulerConfig?.before,
-            after: schedulerConfig?.after,
-          })
+          scheduler.setRootConstraints(rootId, { before: rootBefore, after: rootAfter })
         }
 
         if (schedulerConfig?.order !== lastConfiguredProps.schedulerOrder) {
@@ -1080,8 +1263,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
-      lastConfiguredProps.schedulerBefore = schedulerConfig?.before
-      lastConfiguredProps.schedulerAfter = schedulerConfig?.after
+      lastConfiguredProps.schedulerBefore = rootBefore
+      lastConfiguredProps.schedulerAfter = rootAfter
       lastConfiguredProps.schedulerOrder = schedulerConfig?.order
 
       // The renderer exists, isLegacy/primaryStore are known, and nothing has rendered or called
@@ -1216,8 +1399,10 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     internal.unregisterRoot = undefined
     // Children have unmounted (their hook cleanups ran); let extensions release per-root state
     attempt(() => detachRootExtensions(root!.store))
-    // Unregister primary canvas from registry (if it was registered)
+    // Withdraw a primary from the registry (sharing canvases keep their lease on its renderer), and
+    // stop counting a standalone canvas for the late-primary warning
     attempt(() => internal.unregisterPrimary?.())
+    attempt(() => internal.untrackStandalone?.())
 
     attempt(() => state.events.disconnect?.())
     // Secondary canvases share the primary's renderer and its XR session. A WebGL2-fallback

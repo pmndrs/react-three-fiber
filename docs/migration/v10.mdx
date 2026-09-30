@@ -22,6 +22,7 @@ For most apps, nothing will change. For those that access the renderer using `us
 
 - [ ] Replace `state.gl` with `state.renderer`
 - [ ] Replace any `onUpdate` prop with an effect, `useFrame` or a ref callback (see [`onUpdate` Removed](#onupdate-removed))
+- [ ] Move `<Canvas shadows>` into the renderer settings: `gl={{ shadows }}` / `renderer={{ shadows }}` (see [`shadows` Moved](#shadows-moved-into-the-renderer-settings))
 - [ ] That's it!
 
 If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
@@ -216,6 +217,44 @@ config bag rather than at the top level:
 + <Canvas gl={{ textureColorSpace: 'srgb' }} />
 + <Canvas renderer={{ textureColorSpace: 'srgb' }} />
 ```
+
+### `shadows` Moved into the Renderer Settings
+
+Shadows are a renderer-wide setting, so `shadows` moved from the Canvas into the `gl` / `renderer`
+props bag, next to `toneMapping` and the other renderer settings. It accepts the same values. The
+old prop throws an error naming the new place.
+
+```diff
+- <Canvas shadows="variance" />
++ <Canvas gl={{ shadows: 'variance' }} />       // WebGL, @react-three/fiber/legacy
++ <Canvas renderer={{ shadows: 'variance' }} /> // WebGPU
+```
+
+R3F applies it to a renderer it builds. A renderer instance or factory you pass keeps the
+`shadowMap` you configured on it.
+
+### Multi-Canvas Props (alpha upgraders)
+
+Earlier v10 alphas configured renderer sharing inside the `renderer` bag. It is now a pair of Canvas
+props, and scheduling is its own Canvas prop on every entry. There is no deprecation path: the old
+keys throw, naming the new API.
+
+```diff
+- <Canvas id="main" renderer>
+- <Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
++ <Canvas id="main" primary>
++ <Canvas scheduler={{ fps: 30 }}>     // shares the primary automatically, renders after it
+```
+
+- `renderer={{ primaryCanvas }}` → mark the owner `<Canvas primary>`; other WebGPU canvases share it
+  automatically. With several primaries, pick one with `share="id"`; opt out with `share={false}`.
+- `renderer={{ scheduler }}` → `<Canvas scheduler>` (also `createRoot().configure({ scheduler })`,
+  and now available on `/legacy`).
+- `renderer` means only `true`, a props bag, an instance or a factory, and a props bag configures a
+  renderer the canvas owns: a canvas sharing the primary's renderer ignores it (with a development
+  warning). Renderer-wide settings belong on the primary.
+
+See [Multi-Canvas](../webgpu/multi-canvas).
 
 ### `onUpdate` Removed
 
