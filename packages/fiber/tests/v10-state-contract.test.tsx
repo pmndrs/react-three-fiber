@@ -4,8 +4,6 @@ import * as THREE from 'three'
 
 import { createRoot, useThree, useFrame, extend } from '../src'
 
-extend(THREE as any)
-
 /**
  * v10 removed-API contract (regression guard).
  *

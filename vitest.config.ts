@@ -6,9 +6,10 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'three', 'use-sync-external-store'],
     alias: {
       '@react-three/fiber/legacy': path.resolve(__dirname, './packages/fiber/src/legacy.tsx'),
+      '@react-three/tsl': path.resolve(__dirname, './packages/tsl/src/index.ts'),
+      '@react-three/fiber/extension': path.resolve(__dirname, './packages/fiber/src/extension.tsx'),
       '@react-three/fiber/webgpu': path.resolve(__dirname, './packages/fiber/src/webgpu/index.tsx'),
       '@react-three/fiber': path.resolve(__dirname, './packages/fiber/src/index.tsx'),
-      '#three': path.resolve(__dirname, './packages/fiber/src/three'),
       '#types': path.resolve(__dirname, './packages/fiber/src/types.ts'),
       '#utils': path.resolve(__dirname, './packages/fiber/src/core/utils.ts'),
       'three/addons': path.resolve(__dirname, './node_modules/three/examples/jsm'),
@@ -30,19 +31,22 @@ export default defineConfig({
        * A ratchet, not a target. Each value sits just under what the suite currently achieves, so
        * the build fails if coverage *drops* — it does not assert that coverage is good.
        *
-       * Raise these as coverage improves; never lower one to make a build pass. The 80% goal for
-       * `src/core` in the release plan is a beta.1 objective and is not reachable by config: the
-       * gap is concentrated in `Environment.tsx`, `useEnvironment.tsx` and `visibility.ts`, all of
+       * Take the figures from the lower of the CI React legs (`19.0.0` reads slightly below `latest`)
+       * and floor them with ~0.5–1% headroom so neither leg flakes.
+       *
+       * Raise these as coverage improves; never lower one to make a build pass. These are
+       * global totals; the ~80% lines goal for `src/core` is met at the directory level, but the
+       * weakest files there are `Environment.tsx`, `visibility.ts` and `useEnvironment.tsx`, all of
        * which ship stable and need real tests.
        *
        * Statements/branches read low because v8 counts every bundled three.js expression that the
        * suite touches; `lines` is the meaningful figure for R3F's own code.
        */
       thresholds: {
-        lines: 78,
-        functions: 50,
-        statements: 41,
-        branches: 30,
+        lines: 85,
+        functions: 54,
+        statements: 44,
+        branches: 31,
       },
     },
     testTimeout: 30000,

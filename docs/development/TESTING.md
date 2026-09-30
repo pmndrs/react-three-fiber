@@ -89,7 +89,7 @@ It is **not** a per-PR CI gate (it needs a physical GPU + display). Treat it as 
 These are the real-GPU behaviors no jsdom/mock test can reach. Each should become a scripted Playwright check against the example app:
 
 1. **Basic WebGPU render** — `<Canvas renderer>` inits without a manual `renderer.init()`; first frame draws; no depth mismatch.
-2. **WebGPU-only entry** — `@react-three/fiber/webgpu` runs with no plain `three` WebGL imports; node materials auto-extend.
+2. **WebGPU-only entry** — `@react-three/fiber/webgpu` runs with no WebGL renderer loaded; node materials resolve from the root's namespace.
 3. **Multi-canvas shared renderer** — a primary canvas + a secondary with `renderer={{ primaryCanvas: 'main' }}` share one renderer, switch targets correctly, clean up, honor scheduler `after`/`fps`, **and share state via `primaryStore`**.
 4. **Occlusion** — `onOccluded` / `onVisible` fire only on state change; clean up on unmount.
 5. **Render pipeline** — `useRenderPipeline` makes the default render delegate to `renderPipeline.render()`.
@@ -118,10 +118,10 @@ Time-boxed and exploratory — **do not block any release on it.** If the spike 
 
 The local full gate and the CI workflow **must run the same checks in the same way**, or they drift and "passes locally" stops meaning anything.
 
-- **Local full gate:** `pnpm run ci` → `build → verify-bundles → verify-types → typecheck → eslint → dev → test → format`.
+- **Local full gate:** `pnpm run ci` → `build → verify-treeshake → verify-types → typecheck → eslint → dev → test → format`.
 - **CI workflow:** [`.github/workflows/test.yml`](../../.github/workflows/test.yml) — runs on PRs and `master`, across a React version matrix (19.0.0 + latest).
 
-> **Known gap (tracked in the roadmap below):** CI currently does **not** run `verify-bundles` / `verify-types`, so `pnpm run ci` locally is stricter than CI. The fix is to have CI invoke the same script set (ideally `pnpm run ci` directly, or a shared composite step) so the two cannot diverge.
+> CI runs `verify-treeshake` and `verify-types` right after the build, matching the local order.
 
 **Rule for new checks:** if you add a verification step, add it to _both_ the `ci` script and the workflow — or, better, add it to the shared script the workflow calls.
 
@@ -143,7 +143,7 @@ The local full gate and the CI workflow **must run the same checks in the same w
 ### Conventions
 
 - **One area per file.** Match the source file/feature you're testing (`events.ts` → `events.test.tsx`).
-- **Co-locate WebGPU hook tests** under a `tests/webgpu/` area and drive them against `WebGPUContext`. Note in the file which assertions are mock-validated vs Tier-2-only.
+- **Co-locate TSL hook tests** in `packages/tsl/tests/` (fiber's own WebGPU-entry tests stay in `packages/fiber/tests/webgpu/`) and drive them against `WebGPUContext`. Note in the file which assertions are mock-validated vs Tier-2-only.
 - **Keep Tier-2 out of Vitest.** Browser specs use a distinct extension (`*.gpu.spec.ts`) and live outside the Vitest `include` glob so they can never run (and fail) in jsdom.
 - **Label the irreducible.** If a behavior genuinely needs a GPU, leave an `it.todo('covered by Tier 2: <check>')` rather than a hollow jsdom assertion — that keeps the gap visible.
 - **Tests run against source**, not `dist`. Bundle/type correctness is verified separately (below).
@@ -151,7 +151,7 @@ The local full gate and the CI workflow **must run the same checks in the same w
 ### How to add a test
 
 - **Pure-JS / React behavior** → add a `*.test.tsx` in `packages/fiber/tests/`, run `pnpm test:watch`.
-- **A WebGPU hook's lifecycle** → add a test under `tests/webgpu/` driven by `WebGPUContext`; cover create/update/dispose/rebuild. If a path needs a real device, stop and add it to the Tier-2 checklist instead.
+- **A TSL hook's lifecycle** → add a test under `packages/tsl/tests/` driven by `WebGPUContext`; cover create/update/dispose/rebuild. If a path needs a real device, stop and add it to the Tier-2 checklist instead.
 - **A new export** → add/extend the parity test in `tests/{default,legacy,webgpu}/`.
 - **A real-GPU behavior** → add it to the [Tier-2 checklist](#what-tier-2-must-prove-the-checklist); script it once the harness exists.
 
@@ -159,11 +159,15 @@ The local full gate and the CI workflow **must run the same checks in the same w
 
 ## Coverage
 
-Coverage uses the v8 provider; reporters are `text`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
+Coverage uses the v8 provider; reporters are `text`, `text-summary`, `json`, and `html` (configured in [`vitest.config.ts`](../../vitest.config.ts)). Open `coverage/index.html` after `pnpm test` for the line-by-line view.
 
-### Current policy: report, don't block (yet)
+### Current policy: a ratchet that blocks drops
 
-We **surface** coverage but do **not** fail builds on it during alpha/beta. A hard floor lands at stable (so new surfaces can't regress silently) — see the roadmap. Until then, treat the targets below as expectations, not gates.
+`pnpm test` runs with `--coverage`, and `vitest.config.ts` sets global `coverage.thresholds` (lines, functions, statements, branches). If any total falls below its threshold the run fails, so **CI fails on a coverage drop**.
+
+The thresholds are a **ratchet, not a target**: each sits just under what the suite currently achieves, measured on the lower of the CI React legs (`19.0.0` reads slightly below `latest`) and floored with ~0.5–1% headroom so neither leg flakes. When coverage goes up, raise them; never lower one to make a build pass. `lines` is the meaningful figure for R3F's own code — statements/branches read low because v8 also counts the bundled three.js code the suite touches.
+
+The per-area targets below are **not** enforced by config; treat them as expectations, not gates.
 
 ### Soft targets by area
 
@@ -191,21 +195,23 @@ These are the v10-_changed_ surfaces with little or no dedicated coverage — th
 
 ## Bundle & type verification (built output)
 
-Separate from the test suite: these check the **built `dist`**, not source. They guarantee each entry point bundles the correct THREE.js imports and ships standalone.
+Separate from the test suite: these check the **built `dist`**, not source. What matters is what an app downloads, and that depends on transitive imports, chunk assignment and the bundler -- none of which a grep over `dist` can see. So `verify-treeshake` writes small consumer apps, bundles each with Vite (Rollup) and with esbuild, and checks the output.
 
 ```bash
-pnpm build && pnpm verify-bundles   # correct three / three/webgpu imports per entry, standalone
-pnpm verify-types                   # per-entry type declarations resolve
-pnpm analyze-fiber                  # dry-run @react-three/fiber package contents
-pnpm analyze-test                   # dry-run @react-three/test-renderer package contents
+pnpm build && pnpm verify-treeshake   # consumer bundles carry exactly the expected renderer(s)
+pnpm verify-types                     # per-entry declarations: ThreeExports, JSX augmentation, hygiene, consumers
+pnpm analyze-fiber                    # dry-run @react-three/fiber package contents
+pnpm analyze-test                     # dry-run @react-three/test-renderer package contents
 ```
 
-What `verify-bundles` checks:
+What `verify-treeshake` checks, per bundler:
 
-- Default bundle contains both `from 'three'` and `from 'three/webgpu'`.
-- Legacy bundle contains `from 'three'` but **not** `from 'three/webgpu'` or `from 'three/tsl'`.
-- WebGPU bundle contains `from 'three/webgpu'` but **not** plain `from 'three'`.
-- All bundles are standalone (no shared chunks).
+- **Root app** (`Canvas` from `@react-three/fiber`): the eager output carries neither renderer; the two lazy chunks carry exactly one each.
+- **`/webgpu` app**: the WebGPU renderer and never the WebGL one. **`/legacy` app**: the reverse.
+- **A library importing hooks** from the root or `/extension` entry adds no renderer, next to any app, and core is bundled once.
+- **Root app with `<Environment>`**: the decoders stay lazy.
+
+`R3F_TREESHAKE_DUMP=1` keeps every case's output under `node_modules/.cache/r3f-verify-treeshake`; `R3F_TREESHAKE_VERBOSE=1` prints every check.
 
 These belong in CI as well as locally — see the parity note above.
 
@@ -223,7 +229,9 @@ These belong in CI as well as locally — see the parity note above.
 
 **"Cannot find module" errors?** Ensure `pnpm install` ran; if the error references `dist`, run `pnpm stub`.
 
-**`verify-bundles` fails?** You must `pnpm build` first. If a bundle contains a forbidden import, check `#three` alias resolution in `build.config.ts`.
+**`verify-treeshake` fails?** You must `pnpm build` first (`pnpm install` re-stubs `dist`). A renderer in the eager output means something in `src/core/` imports a value from `three`/`three/webgpu`, or a module that does (a three addon) is imported statically; see [BUILD.md](./BUILD.md).
+
+**Tests rendering on the root entry time out or find `scene` null?** The root entry loads a renderer support with a dynamic import. `setupTests.ts` imports both supports so that import is cached and resolves inside `act()`; a test that builds a bare store with `createStore` must `registerThree(...)` itself (see `webgpu/useRenderTarget.test.tsx`).
 
 **Package too small in `analyze-*` dry-run?** If it shows ~100–200 KB instead of the expected ~MB, `dist/` is being excluded — ensure the package's `files` field includes `dist`.
 
@@ -235,18 +243,17 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 
 ### Parity & CI
 
-- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
-- [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
+- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-treeshake` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
+- [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (from the `latest` React leg).
 
-### Coverage (soft now → hard at stable)
+### Coverage
 
 - [x] Add the highest-value tests listed above — landed: render-phase takeover, fps throttling, Canvas size control, multi-canvas pure-JS, `ScopedStore`, `interactivePriority`, XR pointers, frame-timed events, `textureColorSpace`, `gl` deprecation (+ hardened heuristic, task D1), `useRenderTarget`, and WebGPU hook lifecycle. Overall lines coverage ~78%.
-- [ ] **At stable:** add a coverage floor in `vitest.config.ts` (e.g. ~80% lines on `src/core`, lower on `src/webgpu`). _(task D4)_
+- [x] **Coverage floor** — global `coverage.thresholds` in `vitest.config.ts` fail `pnpm test` (and CI) on a drop; see [Current policy](#current-policy-a-ratchet-that-blocks-drops). _(task D4)_
+- [ ] **Per-area floors** — the soft targets above (e.g. ~80% lines on `src/core`, lower on `src/webgpu`) are not yet enforced per directory.
 
 ### WebGPU tiers
 
 - [~] **Invest in the `WebGPUContext` mock** — done for the TSL hook lifecycle (`useUniforms`/`useNodes`/`useBuffers`/`useGPUStorage`/`useRenderPipeline` now 62–90% via the mock). Extend further as new GPU paths become mockable.
 - [ ] **Stand up the Tier-2 Playwright harness** (`pnpm test:gpu`, Chromium + WebGPU, pointed at the example app) so the [Tier-2 checklist](#what-tier-2-must-prove-the-checklist) is a runnable suite, not a manual list. _(task C0)_
 - [ ] **Spike Tier 3** — headless WebGPU via SwiftShader/Dawn; if it runs our paths, add a non-blocking CI job. _(task D8)_
-      </content>
-      </invoke>

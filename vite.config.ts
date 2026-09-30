@@ -41,6 +41,12 @@ export default defineConfig({
         if (id.includes('react-reconciler-constants')) {
           return code.replace(/exports\.(\w+)\s*=\s*(.*?);/g, 'export const $1 = $2;').replace(/"use strict";\s*/g, '')
         }
+        // Transitions from React 19.0 to 19.2 have no types field, so the check must accept undefined
+        if (id.includes('/cjs/react-reconciler.') && !id.includes('?')) {
+          const guard = /(\w+) = transition\.types;(\s*)if \(null !== \1\)/g
+          if (code.match(guard)?.length !== 1) throw new Error(`Expected one transition types check in ${id}`)
+          return code.replace(guard, '$1 = transition.types;$2if (null != $1)')
+        }
       },
       generateBundle(_options, bundle) {
         // Copy TypeScript definitions for each entry point

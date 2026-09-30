@@ -16,7 +16,7 @@ describe('reconciler production', () => {
     // @ts-ignore
     expect(typeof React.act === 'undefined')
 
-    R3F.extend(THREE as any)
+    R3F.extend(THREE)
     const canvas = createCanvas()
     const root = R3F.createRoot(canvas)
 

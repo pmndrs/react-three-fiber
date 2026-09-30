@@ -32,7 +32,7 @@ const App = () => (
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
 | background      | Sets the scene background — a CSS color, hex number, `THREE.Color`, a Drei environment preset name, an HDR/EXR/image URL, or a config object. See [Canvas Background](#canvas-background) | `undefined`                            |
-| shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                    |
+| shadows         | Props that go into `renderer.shadowMap`, `true` for `THREE.PCFShadowMap`, or one of: 'basic', 'percentage', 'soft', 'variance'. `'soft'` is kept only as a deprecated alias of `'percentage'`: both use `THREE.PCFShadowMap` (three.js deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft), and `'soft'` logs a deprecation notice | `false` |
 | raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                       |
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
@@ -42,7 +42,7 @@ const App = () => (
 | height          | Fixed drawing-buffer height in pixels. When set, R3F stops auto-sizing to the container height                                                    | container height                                           |
 | forceEven       | Round computed width/height down to even numbers (useful for video encoders)                                                                      | `false`                                                    |
 | events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`              |
-| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.RefObject<HTMLElement>`, `renderer.domElement.parentNode` |
+| eventSource     | The source where events are being subscribed to, any DOM `Element` (an `<svg>` works)                                                             | `React.RefObject<Element>`, `renderer.domElement.parentNode`     |
 | eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                   |
 | autoUpdateFrustum | Enable/disable automatic camera frustum updates each frame                                                                                      | `true`                                                     |
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                            |
@@ -65,10 +65,10 @@ It will also create the following scene internals:
 
 - A `THREE.Perspective` camera
 - A `THREE.Orthographic` cam if `orthographic` is true
-- A `THREE.PCFSoftShadowMap` if `shadows` is true
+- A `THREE.PCFShadowMap` if `shadows` is true
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
-In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
+In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/manual/#en/color-management](https://threejs.org/manual/#en/color-management).
 
 ## Errors and fallbacks
 
@@ -118,6 +118,9 @@ The `background` prop sets the scene background (and, for environment maps, imag
 // URL to an HDR/EXR/image file
 <Canvas background="/env.hdr" />
 <Canvas background="./sky.jpg" />
+
+// Six cube faces (+x, -x, +y, -y, +z, -z); `.hdr` faces load as an HDR cubemap
+<Canvas background={{ files: ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr'], path: '/pisa/' }} />
 ```
 
 When a **string** is given it is resolved in this order: exact **preset** name → **URL** (starts with `/`, `./`, `../`, `http://`, `https://`, or ends in `.hdr`/`.exr`/`.jpg`/`.jpeg`/`.png`/`.webp`/`.gif`) → otherwise a **CSS color**. So `"city"` is a preset, `"./city.jpg"` is a URL, and `"cyan"` is a color.
@@ -203,7 +206,9 @@ export default () => (
 )
 ```
 
-`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. R3F disposes a renderer it built from a config bag or a callback once the last Canvas using it unmounts; an instance you pass in is yours to dispose. Only the renderer a Canvas asks for is downloaded: three's WebGPU renderer is a separate chunk fetched when a `<Canvas renderer>` mounts, and a plain `<Canvas>` fetches only the WebGL one. For the single-renderer entries, node materials as JSX, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+
+Node materials and TSL need `WebGPURenderer`, so pass `renderer` to use them. Browser WebGPU support is not required: `WebGPURenderer` falls back to WebGL2 automatically.
 
 ## Custom Canvas
 
@@ -216,24 +221,24 @@ Roots have the same options and properties as `Canvas`, but you are responsible 
 Creates a root targeting a canvas, rendering JSX.
 
 ```jsx
-import * as THREE from 'three'
-import { extend, createRoot, events } from '@react-three/fiber'
+import { createRoot, events } from '@react-three/fiber'
 
-// Register the THREE namespace as native JSX elements.
-// See below for notes on tree-shaking
-extend(THREE)
-
-// Create a react root
+// Create a react root. Three's classes are JSX elements on it without any extend() call:
+// the root resolves element names against the namespace of the renderer it loads.
 const root = createRoot(document.querySelector('canvas'))
+
+// Keep the whole configuration in one object: each configure() call replaces the previous one
+const config = { events, camera: { position: [0, 0, 50] } }
 
 async function app() {
   // Configure the root, inject events optionally, set camera, etc
   // This *must* be called before render, and it must be awaited
-  await root.configure({ events, camera: { position: [0, 0, 50] } })
+  await root.configure(config)
 
-  // createRoot by design is not responsive, you have to take care of resize yourself
+  // createRoot by design is not responsive, you have to take care of resize yourself.
+  // Pass the same config again with the new size, not just the size on its own
   window.addEventListener('resize', () => {
-    root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
+    root.configure({ ...config, size: { width: window.innerWidth, height: window.innerHeight } })
   })
 
   // Trigger resize
@@ -249,20 +254,25 @@ async function app() {
 app()
 ```
 
+`configure()` replaces the root's configuration rather than merging into it, the same way `<Canvas>` passes its full set of props every time it renders. A prop left out of a later call goes back to its default: calling `root.configure({ size })` on its own turns `shadows` off and resets `frameloop` to `'always'` and `dpr` to `[1, 2]`. So keep one config object and spread it into every call, changing only what's new.
+
+The camera, the scene and the `events` manager are the exception: the camera and scene are created by the first call, the `events` manager by the first call that passes `events`, and all three are kept after that. Leaving `camera` out of a later call does not reset the camera, and `camera` props passed to a later call are not re-applied. To move the camera after the first `configure()`, change it from inside the tree (`useThree`) or through the store `root.render()` returns.
+
 ## Tree-shaking
 
-New with v8, the underlying reconciler no longer pulls in the THREE namespace automatically.
+What a bundle carries is decided by the renderer, not by which elements you use. Fiber's core imports nothing from three; a root loads one renderer's support module (`three` for WebGL, `three/webgpu` for WebGPU) when it mounts, and that module carries the whole namespace of its flavour. So an app on `@react-three/fiber` ships no three code eagerly, downloads only the renderer its Canvas asks for, and never both. Three's own classes are not tree-shaken below that: `<mesh>` and `<boxGeometry>` resolve against the loaded namespace, and an `extend({ Mesh, BoxGeometry })` call does not remove anything from it.
 
-This enables a granular catalogue which also enables tree-shaking via the `extend` API:
+`extend` is for classes three does not ship, such as addons and your own subclasses:
 
 ```jsx
 import { extend, createRoot } from '@react-three/fiber'
-import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
-extend({ Mesh, BoxGeometry, MeshStandardMaterial })
+extend({ OrbitControls })
 
 createRoot(canvas).render(
   <>
+    <orbitControls args={[camera, domElement]} />
     <mesh>
       <boxGeometry />
       <meshStandardMaterial />
@@ -271,35 +281,4 @@ createRoot(canvas).render(
 )
 ```
 
-There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
-
-```jsx
-// In:
-
-import { createRoot } from '@react-three/fiber'
-
-createRoot(canvasNode).render(
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>,
-)
-
-// Out:
-
-import { createRoot, extend } from '@react-three/fiber'
-import { Mesh as _Mesh, BoxGeometry as _BoxGeometry, MeshStandardMaterial as _MeshStandardMaterial } from 'three'
-
-extend({
-  Mesh: _Mesh,
-  BoxGeometry: _BoxGeometry,
-  MeshStandardMaterial: _MeshStandardMaterial,
-})
-
-createRoot(canvasNode).render(
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>,
-)
-```
+The `/legacy` and `/webgpu` entries import their renderer statically instead, for apps that would rather skip the extra request. See [Entry Points](../webgpu/overview#entry-points) for the comparison.

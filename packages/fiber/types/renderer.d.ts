@@ -1,4 +1,5 @@
 import type * as THREE from 'three'
+import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
 import type { ReactNode } from 'react'
 import type { ThreeElement } from './three'
 import type { ComputeFunction, EventManager } from './events'
@@ -92,11 +93,20 @@ export interface RendererConfigExtended extends ColorManagementConfig {
   scheduler?: CanvasSchedulerConfig
 }
 
+/**
+ * The `renderer` prop: opt into three's WebGPU renderer.
+ * - `true` (the `<Canvas renderer>` shorthand) or `{}`: a default `WebGPURenderer`
+ * - a props bag: constructor parameters (`antialias`, `forceWebGL`, ...) and renderer properties
+ *   (`toneMapping`, ...), plus `textureColorSpace`, `primaryCanvas` and `scheduler`
+ * - a renderer instance, or a sync/async factory receiving the default props. Structural, like
+ *   the `gl` prop: anything with `render()`, so a wrapped or mocked renderer is accepted.
+ */
 export type RendererProps =
-  | any // WebGPURenderer
-  | ((defaultProps: DefaultRendererProps) => any)
-  | ((defaultProps: DefaultRendererProps) => Promise<any>)
-  | (Partial<Properties<any> | Record<string, any>> & RendererConfigExtended)
+  | boolean
+  | Renderer
+  | ((defaultProps: DefaultRendererProps) => Renderer)
+  | ((defaultProps: DefaultRendererProps) => Promise<Renderer>)
+  | (Partial<Properties<WebGPURenderer> & WebGPURendererParameters> & RendererConfigExtended)
 
 //* Camera Props ==============================
 
@@ -145,8 +155,11 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
   /**
-   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
-   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
+   * Enables shadows (`true` uses `THREE.PCFShadowMap`). Can accept `renderer.shadowMap` options for
+   * fine-tuning, but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
+   *
+   * `'soft'` is a deprecated alias of `'percentage'`: both map to `THREE.PCFShadowMap`, because three.js
+   * deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft. Using `'soft'` logs a deprecation notice.
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
   shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
@@ -164,14 +177,17 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   performance?: Partial<Omit<Performance, 'regress'>>
   /** Target pixel ratio. Can clamp between a range: `[min, max]` */
   dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
+  /**
+   * Props that go into the default raycaster. `params` is merged into the raycaster's defaults,
+   * so a single threshold can be set: `raycaster={{ params: { Points: { threshold: 0.2 } } }}`.
+   */
+  raycaster?: Partial<Omit<THREE.Raycaster, 'params'>> & { params?: Partial<THREE.RaycasterParameters> }
   /** A `THREE.Scene` instance or props that go into the default scene */
   scene?: THREE.Scene | Partial<THREE.Scene>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: CameraProps
   /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
+  events?: (store: RootStore) => EventManager<Element>
   /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */

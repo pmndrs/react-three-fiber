@@ -7,7 +7,7 @@ nav: 15
 `useRenderPipeline` provides declarative WebGPU render pipeline setup with automatic scene pass creation and MRT (Multiple Render Target) configuration. Calling it creates a render pipeline instance, places it on R3F state, and creates a default scene pass.
 
 ```tsx
-import { useRenderPipeline } from '@react-three/fiber/webgpu'
+import { useRenderPipeline } from '@react-three/tsl'
 ```
 
 > The render pipeline is exposed by Three.js as `PostProcessing` today and is expected to be renamed to `RenderPipeline` in a future release. R3F uses the forward-looking name; internally it instantiates `THREE.PostProcessing`.
@@ -45,7 +45,7 @@ const { renderPipeline, passes } = useRenderPipeline()
 | `mainCB`  | `RenderPipelineMainCallback`  | Configure `outputNode` and create effect passes |
 | `setupCB` | `RenderPipelineSetupCallback` | Optional. Configure MRT on the scene pass     |
 
-Both callbacks receive the full RootState (uniforms, nodes, scene, camera, etc.). Returning an object from either callback registers those passes into `state.passes`. The `scenePass` key is reserved for the hook's own pass and cannot be returned.
+Both callbacks receive the canvas state (scene, camera, size, etc.) plus the pipeline and its passes. Returning an object from either callback registers those passes into `state.passes`. The `scenePass` key is reserved for the hook's own pass and cannot be returned.
 
 ```typescript
 type RegisteredPasses = Record<string, Node> & { scenePass?: never }
@@ -80,7 +80,7 @@ If you change away from the default scene pass, you **must** set `renderPipeline
 ### Simple Bloom
 
 ```tsx
-import { useRenderPipeline } from '@react-three/fiber/webgpu'
+import { useRenderPipeline } from '@react-three/tsl'
 import { bloom } from 'three/tsl'
 
 function Scene() {
@@ -270,7 +270,7 @@ clearPasses() // Remove all passes
 
 ```typescript
 import type { RenderPipeline, PassNode } from 'three/webgpu'
-import type { RootState, PassRecord } from '@react-three/fiber'
+// PassRecord and the callback types are global types that ship with @react-three/tsl
 
 const { passes, renderPipeline, clearPasses, reset, rebuild, isReady } = useRenderPipeline()
 

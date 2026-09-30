@@ -12,6 +12,15 @@
 import { WebGL2RenderingContext } from '../../test-renderer/src/WebGL2RenderingContext'
 import { vi } from 'vitest'
 
+//* Renderer supports ==============================
+// The root entry loads a renderer's support with a dynamic import the first time a root asks for
+// it. Many tests render on a root without awaiting `configure()` first and rely on act() flushing
+// that setup, which holds once the module is cached (the import resolves in a microtask) but not
+// while vite is still transforming it. Importing both here warms the cache; it registers nothing
+// and changes no behaviour under test.
+import '../src/support/webgl'
+import '../src/support/webgpu'
+
 // Mock react-use-measure globally for tests
 vi.mock('react-use-measure', () => ({
   default: vi.fn(() => [() => {}, { width: 1280, height: 800, top: 0, left: 0, bottom: 800, right: 1280, x: 0, y: 0 }]),

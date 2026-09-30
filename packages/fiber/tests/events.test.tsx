@@ -3,10 +3,8 @@ import * as React from 'react'
 import { render, fireEvent, RenderResult, createEvent } from '@testing-library/react'
 import { act } from './utils/act'
 import { Canvas, extend } from '../src'
-import * as THREE from '#three'
+import * as THREE from 'three'
 import type { RootState } from '#types'
-
-extend(THREE as any)
 
 const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
 
@@ -489,6 +487,39 @@ describe('events', () => {
       fireEvent(canvas, createPointerEvent('click'))
 
       expect(handleClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('re-registers events when a primitive object prop is swapped', async () => {
+      const handleClick = vi.fn()
+      const meshA = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial())
+      const meshB = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial())
+
+      function App({ object }: { object: THREE.Object3D }) {
+        return (
+          <Canvas>
+            <primitive object={object} onClick={handleClick} />
+          </Canvas>
+        )
+      }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<App object={meshA} />)
+      })
+
+      // Swapping the underlying THREE object reconstructs the instance the same way an args
+      // change does, so the replacement must inherit the interaction registration.
+      await act(async () => {
+        result.rerender(<App object={meshB} />)
+      })
+
+      const canvas = getContainer()
+      fireEvent(canvas, createPointerEvent('pointerdown'))
+      fireEvent(canvas, createPointerEvent('pointerup'))
+      fireEvent(canvas, createPointerEvent('click'))
+
+      expect(handleClick).toHaveBeenCalledTimes(1)
+      expect(handleClick.mock.calls[0][0].eventObject).toBe(meshB)
     })
 
     it('does not re-enter a hovered object when the instance is swapped underneath it', async () => {

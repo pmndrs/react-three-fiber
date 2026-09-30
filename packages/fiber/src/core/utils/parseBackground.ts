@@ -1,4 +1,4 @@
-import type * as THREE from '#three'
+import type * as THREE from 'three'
 import type { BackgroundProp, BackgroundConfig } from '#types'
 import type { EnvironmentProps } from '../components/Environment/Environment'
 import { presetsObj } from '../components/Environment/environment-assets'

@@ -2,7 +2,7 @@
 
 A curated list of awesome resources, libraries, tools, and projects for [React Three Fiber](https://github.com/pmndrs/react-three-fiber).
 
-> **Note:** We're just getting started with this list! If you have a resource, library, or project that should be included, please [open a PR](https://github.com/pmndrs/react-three-fiber/issues/3642) to add it.
+> **Note:** We're just getting started with this list! If you have a resource, library, or project that should be included, please [open a PR](https://github.com/pmndrs/react-three-fiber/edit/v10/AwesomeR3F.md) to add it.
 
 ---
 
@@ -118,7 +118,6 @@ A selection of companies and projects using React Three Fiber.
 
 ### 3D Tools & Modellers
 
-- [Colorful](https://www.colorful.app) - 3D modeller
 - [Bezi](https://www.bezi.com) - 3D modeller
 - [Ready Player Me](https://readyplayer.me) - Avatar configurator
 
@@ -135,6 +134,16 @@ A selection of companies and projects using React Three Fiber.
 - [Luma AI Genie](https://lumalabs.ai/genie) - AI models
 - [Skybox by Blockade Labs](https://skybox.blockadelabs.com) - AI environment maps
 
+### Games
+
+- [Mana Blade](https://manablade.com/) - MMORPG
+- [Horizon Drive](https://www.shopify.com/editions/summer2025/drive) – Racing
+- [Space Pizza](https://spacepizza.gg/) - Tower defense
+- [Zoo Drop](https://zoodrop.io/) - Suika game
+- [Dungeons & Ducks](https://dungeons-n-ducks.vercel.app/) - Puzzle
+- [Cube Slide](https://cubeslide.vercel.app/) – Puzzle
+- [Lord of the Harvest](https://petertalisman.quest) – Idle game
+
 ### Other
 
 - [Zillow](https://www.zillow.com) - Real estate
@@ -143,7 +152,7 @@ A selection of companies and projects using React Three Fiber.
 
 ## Contributing
 
-Want to add something to the list? [Open a PR](https://github.com/pmndrs/react-three-fiber/issues/3642) with your addition!
+Want to add something to the list? [Open a PR](https://github.com/pmndrs/react-three-fiber/edit/v10/AwesomeR3F.md) with your addition!
 
 Please ensure your submission:
 

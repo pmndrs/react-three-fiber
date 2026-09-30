@@ -3,8 +3,11 @@ import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import * as THREE from 'three'
+import { WebGPURenderer } from 'three/webgpu'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
-import { Canvas, useFrame, useLoader, useThree } from '../src'
+import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
+import { Canvas, useEnvironment, useFrame, useLoader, useThree } from '../src'
+import type { DefaultRendererProps, RootState } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -16,7 +19,14 @@ describe('web Canvas', () => {
       ),
     )
 
-    expect(renderer.container).toMatchSnapshot()
+    // three stamps its own version onto the canvas (`data-engine="three.js rNNN"`). Assert it against the
+    // installed REVISION, then drop it from the snapshot so a three bump doesn't churn it.
+    const canvas = renderer.container.querySelector('canvas')!
+    expect(canvas.getAttribute('data-engine')).toBe(`three.js r${THREE.REVISION}`)
+
+    const container = renderer.container.cloneNode(true) as HTMLElement
+    container.querySelector('canvas')!.removeAttribute('data-engine')
+    expect(container).toMatchSnapshot()
   })
 
   it('should forward ref', async () => {
@@ -65,6 +75,39 @@ describe('web Canvas', () => {
     )
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  // Ported from master #3869 (via port/3869-remount-claim-v10). A StrictMode mount re-runs the
+  // Canvas effects against the same root; that must never dispose the renderer, while a real
+  // unmount still tears down exactly once.
+  it('should survive a StrictMode remount', async () => {
+    let dispose!: ReturnType<typeof vi.spyOn>
+    let state!: RootState
+
+    const renderer = await act(async () =>
+      render(
+        <React.StrictMode>
+          <Canvas
+            renderer={(props: DefaultRendererProps) => {
+              const instance = new WebGPURenderer({ ...props, canvas: props.canvas as HTMLCanvasElement })
+              dispose = vi.spyOn(instance, 'dispose')
+              return instance
+            }}
+            onCreated={(created) => (state = created)}>
+            <group />
+          </Canvas>
+        </React.StrictMode>,
+      ),
+    )
+
+    expect(dispose).not.toHaveBeenCalled()
+    expect(state.get().internal.active).toBe(true)
+    // v10 parents the default camera into the scene, so count the groups
+    expect(state.scene.children.filter((child) => child instanceof THREE.Group)).toHaveLength(1)
+
+    await act(async () => renderer.unmount())
+    expect(dispose).toHaveBeenCalledTimes(1)
+    expect(state.get().internal.active).toBe(false)
   })
 
   // Regression for #3757: the `fallback` prop lives inside <canvas>, which browsers never
@@ -329,6 +372,43 @@ describe('web Canvas', () => {
         // another test that loads the same key.
         useLoader.clear(HDRLoader, 'potsdamer_platz_1k.hdr')
         loadSpy.mockRestore()
+      }
+    })
+
+    it('loads a six-file .hdr cube set through HDRCubeTextureLoader', async () => {
+      // Six files used to short-circuit to the plain CubeTextureLoader before the extension was
+      // looked at, so Radiance .hdr cube faces (three's pisaHDR set) could not load declaratively.
+      const faces = ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr']
+      const cubeSpy = vi.spyOn(THREE.CubeTextureLoader.prototype, 'load')
+      let loaded: THREE.CubeTexture | undefined
+      const hdrCubeSpy = vi.spyOn(HDRCubeTextureLoader.prototype, 'load').mockImplementation(((
+        _urls: string[],
+        onLoad?: (texture: THREE.CubeTexture) => void,
+      ) => {
+        loaded = new THREE.CubeTexture()
+        onLoad?.(loaded)
+        return loaded
+      }) as any)
+
+      try {
+        await act(async () =>
+          render(
+            <Canvas background={{ files: faces }}>
+              <group />
+            </Canvas>,
+          ),
+        )
+
+        expect(hdrCubeSpy).toHaveBeenCalledTimes(1)
+        expect(hdrCubeSpy.mock.calls[0][0]).toEqual(faces)
+        expect(cubeSpy).not.toHaveBeenCalled()
+        // HDR faces carry linear radiance, unlike LDR cube faces which are sRGB images
+        expect(loaded!.mapping).toBe(THREE.CubeReflectionMapping)
+        expect(loaded!.colorSpace).toBe('srgb-linear')
+      } finally {
+        useEnvironment.clear({ files: faces })
+        hdrCubeSpy.mockRestore()
+        cubeSpy.mockRestore()
       }
     })
   })

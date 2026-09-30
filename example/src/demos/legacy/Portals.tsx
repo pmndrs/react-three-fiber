@@ -4,9 +4,10 @@ import {
   ComputeFunction,
   createPortal,
   type ThreeElements,
+  type ThreeEvent,
   useFrame,
   useThree,
-} from '@react-three/fiber/legacy'
+} from '@react-three/fiber'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
@@ -35,7 +36,7 @@ export function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
   const { meshes, materials } = useGLTF('/models/bottle.gltf')
   return (
-    <group {...(spread as any)} {...props} dispose={null}>
+    <group {...spread} {...props} dispose={null}>
       <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} />
       </mesh>
@@ -46,7 +47,11 @@ export function Soda(props: ThreeElements['group']) {
 
 function useHover() {
   const [hovered, hover] = useState(false)
-  return [hovered, { onPointerOver: (e: any) => (e.stopPropagation(), hover(true)), onPointerOut: () => hover(false) }]
+  const bind = {
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => (e.stopPropagation(), hover(true)),
+    onPointerOut: () => hover(false),
+  }
+  return [hovered, bind] as const
 }
 
 function Portal({
@@ -77,10 +82,10 @@ function Portal({
     camera.rotation.copy(state.camera.rotation)
     camera.scale.copy(state.camera.scale)
     // Render into a WebGLRenderTarget as a texture (the FBO above)
-    state.gl.clearColor()
-    state.gl.setRenderTarget(fbo)
-    state.gl.render(scene, camera)
-    state.gl.setRenderTarget(null)
+    state.renderer.clearColor()
+    state.renderer.setRenderTarget(fbo)
+    state.renderer.render(scene, camera)
+    state.renderer.setRenderTarget(null)
   })
 
   // This is a custom raycast-compute function, it controls how the raycaster functions.

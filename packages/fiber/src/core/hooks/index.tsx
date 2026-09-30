@@ -1,39 +1,18 @@
-import { useContext, useRef, useImperativeHandle, useMemo } from 'react'
-import { context } from '../store'
+import { useRef, useImperativeHandle, useMemo } from 'react'
 import { buildGraph } from '../utils'
-import { Object3D } from '#three'
+import type { Object3D } from 'three'
 
 //* Type Imports ==============================
-import type { RootState, RootStore, Instance, ObjectMap } from '#types'
+import type { Instance, ObjectMap } from '#types'
 
 // export other hooks
+export * from './useStore'
 export * from './useLoader'
 export * from './useFrame'
 export * from './useTexture'
 export * from './useTextures'
 export * from './useRenderTarget'
 export * from './useEnvironment'
-
-/**
- * Returns the R3F Canvas' Zustand store. Useful for [transient updates](https://github.com/pmndrs/zustand#transient-updates-for-often-occurring-state-changes).
- * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usestore
- */
-export function useStore(): RootStore {
-  const store = useContext(context)
-  if (!store) throw new Error('R3F: Hooks can only be used within the Canvas component!')
-  return store
-}
-
-/**
- * Accesses R3F's internal state, containing renderer, canvas, scene, etc.
- * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usethree
- */
-export function useThree<T = RootState>(
-  selector: (state: RootState) => T = (state) => state as unknown as T,
-  equalityFn?: <T>(state: T, newState: T) => boolean,
-): T {
-  return useStore()(selector, equalityFn)
-}
 
 /**
  * Exposes an object's {@link Instance}.

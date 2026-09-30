@@ -1,105 +1,18 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
-import type { WebGPURenderer, CanvasTarget, Node, StorageTexture, Data3DTexture } from 'three/webgpu'
+import type { WebGPURenderer, CanvasTarget } from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
-
-//* Buffer Types (useBuffers) ========================================
-
-/**
- * Buffer-like types for GPU compute and storage operations.
- * Includes raw CPU arrays, Three.js buffer attributes, and TSL buffer nodes.
- *
- * @example
- * ```tsx
- * const { positions, velocities } = useBuffers(() => ({
- *   positions: instancedArray(count, 'vec3'),       // StorageBufferNode
- *   velocities: new Float32Array(count * 3),        // TypedArray
- * }), 'particles')
- * ```
- */
-export type BufferLike =
-  | Float32Array
-  | Uint32Array
-  | Int32Array
-  | Float64Array
-  | Uint8Array
-  | Int8Array
-  | Uint16Array
-  | Int16Array
-  | THREE.BufferAttribute // Base class for all buffer attributes
-  | Node // TSL buffer nodes (instancedArray, storage)
-
-/** Flat record of buffer-like values (no nested scopes) */
-export type BufferRecord = Record<string, BufferLike>
-
-/**
- * Buffer store that can contain both root-level buffers and scoped buffer objects.
- * Structure: { positions: Float32Array, particles: { vel: StorageBufferNode } }
- */
-export type BufferStore = Record<string, BufferLike | BufferRecord>
-
-//* Node Types (useNodes) ========================================
-
-/**
- * Structural shape of a TSL node as stored on `state.nodes`.
- *
- * Deliberately minimal rather than three's nominal `Node`: in @types/three several node classes
- * TSL hands back (OperatorNode, ConstNode, ...) do not extend `Node` cleanly, so a `Node` bound
- * would reject values `useNodes` creators legitimately return. This is the same shape
- * `useNodes` already constrains creators to (`TSLNodeLike`).
- */
-export interface NodeLike {
-  uuid?: string
-  nodeType?: string | null
-  /** label method for chaining - sets the node's label and returns self */
-  label?: ((label: string) => NodeLike) | string
-  setName?: (name: string) => this
-}
-
-/** Flat record of TSL nodes (no nested scopes) */
-export type NodeRecord = Record<string, NodeLike>
-
-/**
- * Node store that can contain both root-level nodes and scoped node objects.
- * Structure: { wobble: OperatorNode, fx: { blur: ShaderCallable } }
- */
-export type NodeStore = Record<string, NodeLike | NodeRecord>
-
-//* Storage Types (useGPUStorage) ========================================
-
-/**
- * GPU storage types for texture-based storage operations.
- * Includes Three.js storage textures and TSL storage texture nodes.
- *
- * @example
- * ```tsx
- * const { heightMap } = useGPUStorage(() => ({
- *   heightMap: new StorageTexture(512, 512),
- * }), 'terrain')
- * ```
- */
-export type StorageLike =
-  | StorageTexture // GPU storage texture
-  | Data3DTexture // 3D texture (can be used as storage)
-  | Node // TSL storage texture nodes (storageTexture)
-
-/** Flat record of storage-like values (no nested scopes) */
-export type StorageRecord = Record<string, StorageLike>
-
-/**
- * Storage store that can contain both root-level storage and scoped storage objects.
- * Structure: { heightMap: StorageTexture, terrain: { normal: StorageTextureNode } }
- */
-export type StorageStore = Record<string, StorageLike | StorageRecord>
+import type { ForRegisteredRenderer, R3FRenderer, R3FRendererSupport } from './register'
 
 //* Renderer Types ========================================
 
-/** Default renderer type - union of WebGL and WebGPU renderers */
-export type R3FRenderer = THREE.WebGLRenderer | WebGPURenderer
+// `R3FRenderer` -- the type of `state.renderer` -- is the union of both renderers unless the app
+// registered one (types/register.d.ts). Re-exported here for the many places that import it.
+export type { R3FRenderer }
 
 //* Core Store Types ========================================
 
@@ -193,12 +106,31 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: R3FRenderer
+  /**
+   * The renderer support `configure()` loaded for this root: the three namespace of that flavour
+   * (JSX constructors, core's classes) and the renderer-specific classes core needs by name.
+   * Selected once, from the entry's provider, and copied into portals with the rest of `internal`.
+   */
+  support: R3FRendererSupport
+  /**
+   * Releases this root's lease on its renderer. The last release disposes a renderer R3F created;
+   * a renderer passed in as an instance is never disposed by R3F.
+   */
+  releaseRenderer?: () => void | Promise<void>
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
+  /**
+   * Replaces `renderer.render(scene, camera)` in the default render job when set. Set it with
+   * `setRenderOverride(store, fn)`; the job keeps its fps throttle, error handling and user
+   * render-phase takeover. Used by `useRenderPipeline`.
+   */
+  renderOverride?: (() => void) | null
   /** This root's unique ID in the global scheduler */
   rootId?: string
   /** Function to unregister this root from the global scheduler */
   unregisterRoot?: () => void
+  /** Function to stop following devicePixelRatio changes */
+  unwatchDpr?: () => void
   /** Container for child attachment (scene for root, original container for portals) */
   container?: THREE.Object3D
   /**
@@ -262,17 +194,22 @@ export interface RootState {
   /** Get current state */
   get: StoreApi<RootState>['getState']
   /**
-   * Reference to the authoritative store for shared TSL resources (uniforms, nodes, etc).
+   * The store of the canvas that owns this root's renderer.
    * - For primary/independent canvases: points to its own store (self-reference)
    * - For secondary canvases: points to the primary canvas's store
+   * - Portals copy it from their parent
    *
-   * Hooks like useNodes/useUniforms should read from primaryStore to ensure
-   * consistent shared state across all canvases sharing a renderer.
+   * Anything shared per renderer rather than per canvas (e.g. @react-three/tsl's resources)
+   * resolves through it.
    */
   primaryStore: RootStore
   /** @deprecated Use `renderer` instead. The instance of the renderer (typed as WebGLRenderer for backwards compat) */
-  gl: THREE.WebGLRenderer
-  /** The renderer instance - type depends on entry point (WebGPU, Legacy, or union for default) */
+  gl: ForRegisteredRenderer<WebGPURenderer, THREE.WebGLRenderer, THREE.WebGLRenderer>
+  /**
+   * The renderer instance. Both renderers unless the app registered one
+   * (`declare module '@react-three/fiber' { interface Register { renderer: 'webgpu' } }`), or the
+   * entry decides it (`/webgpu`, `/legacy`).
+   */
   renderer: R3FRenderer
   /** Inspector of the webGPU Renderer. Init in the canvas */
   inspector: any // Inspector type from three/webgpu
@@ -330,24 +267,10 @@ export interface RootState {
   setError: (error: Error | null) => void
   /** Current error state (null when no error) */
   error: Error | null
-  /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
-  uniforms: UniformStore
-  /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
-  nodes: NodeStore
-  /** Global TSL buffer nodes - root-level buffers + scoped sub-objects. Use useBuffers() hook */
-  buffers: BufferStore
-  /** Global GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() hook */
-  gpuStorage: StorageStore
   /** Global Texture registry (key → Texture, usually keyed by URL) - use useTextures() hook for access + lifecycle */
   textures: Map<string, THREE.Texture>
   /** Internal: refcount per texture key, driven by mounted useTexture consumers (registry enrollment is on by default) */
   _textureRefs: Map<string, number>
-  /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
-  renderPipeline: ThreeRenderPipeline | null
-  /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
-  passes: PassRecord
-  /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
-  _hmrVersion: number
   /** Internal: whether setSize() has taken ownership of canvas dimensions */
   _sizeImperative: boolean
   /** Internal: stored size props from Canvas for reset functionality */
@@ -364,7 +287,7 @@ export interface RootState {
   internal: InternalState
   // flags for triggers
   // if we are using the webGl renderer, this will be true
-  isLegacy: boolean
+  isLegacy: ForRegisteredRenderer<false, true, boolean>
   // regardless of renderer, if the system supports webGpu, this will be true
   webGPUSupported: boolean
   //if we are on native

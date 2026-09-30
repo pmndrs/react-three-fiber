@@ -14,8 +14,6 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, extend, useFrame } from '../src'
 
-extend(THREE as any)
-
 //* Mock Renderer ==============================
 
 class MockWebGPURenderer {
@@ -196,7 +194,8 @@ describe('Canvas root ordering (#3877)', () => {
     const replacement = createTestRoot(() => renderOrder.push('main'))
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     await configureRoot(replacement.root, mainId, replacement.renderer)
-    expect(warn).toHaveBeenCalledWith(`Canvas with id="${mainId}" already registered. Overwriting.`)
+    // The unmounted main released its id when its teardown committed, so nothing is overwritten
+    expect(warn).not.toHaveBeenCalledWith(`Canvas with id="${mainId}" already registered. Overwriting.`)
     renderOrder.length = 0
 
     getScheduler().step(1016)

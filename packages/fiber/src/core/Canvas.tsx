@@ -1,18 +1,22 @@
 import * as React from 'react'
-import * as THREE from '#three'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
-import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
+import { createRoot, _roots } from './renderer'
 import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
 import { Environment } from './components/Environment/Environment'
 import { parseBackground } from './utils/parseBackground'
 import { parseRendererConfig } from './utils/parseRendererConfig'
-import { clearHmrCaches } from './utils/hmr'
+import { notifyRootExtensionsHmr } from './extensions'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, RendererProvider } from '#types'
+
+/** The renderer provider of the entry that exported this Canvas. Not part of the public props. */
+export interface CanvasProviderProps {
+  provider: RendererProvider
+}
 
 function CanvasImpl({
   ref,
@@ -45,15 +49,11 @@ function CanvasImpl({
   height,
   background,
   forceEven,
+  provider,
   ...props
-}: CanvasProps) {
+}: CanvasProps & CanvasProviderProps) {
   // Extract nested props (primaryCanvas, scheduler) from renderer object if it's a config bag rather than a renderer instance
   const { primaryCanvas, scheduler, renderer } = parseRendererConfig(rendererProp)
-  // Create a known catalogue of Threejs-native elements
-  // This will include the entire THREE namespace by default, users can extend
-  // their own elements by using the createRoot API instead
-  React.useMemo(() => extend(THREE as any), [])
-
   const Bridge = useBridge()
 
   //* Background Prop Parsing ==============================
@@ -135,7 +135,7 @@ function CanvasImpl({
 
     if (effectiveSize.width > 0 && effectiveSize.height > 0 && canvas) {
       if (!root.current) {
-        root.current = createRoot<HTMLCanvasElement>(canvas)
+        root.current = createRoot<HTMLCanvasElement>(canvas, provider)
 
         // Show alpha warning once per session
         notifyAlpha({
@@ -254,6 +254,28 @@ function CanvasImpl({
     }
   })
 
+  // Insertion effects survive Activity hiding and StrictMode effect replay: their cleanup runs only
+  // when the Canvas is finally removed, including removal while an Activity hides it (React 19.2+),
+  // when its passive effects are already gone and the cleanup below never runs again
+  const insertionMounted = React.useRef(false)
+  React.useInsertionEffect(() => {
+    insertionMounted.current = true
+    return () => {
+      insertionMounted.current = false
+      // Fast Refresh replays this effect when Canvas.tsx is edited, running the setup right after
+      // this cleanup in the same commit. Only a cleanup nothing re-armed is a real removal
+      queueMicrotask(() => {
+        if (insertionMounted.current) return
+        // Through the root handle: a hidden Activity has already detached canvasRef
+        const current = root.current
+        root.current = null!
+        current?.unmount()
+      })
+    }
+  }, [])
+
+  // Before 19.2, React skips insertion cleanups in a subtree Suspense has hidden but still runs
+  // passive ones, so this cleanup releases a Canvas that left the document in that case
   React.useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
@@ -278,16 +300,17 @@ function CanvasImpl({
         // suspension must keep the root, and a real unmount must still release it.
         if (canvas.isConnected) return
 
-        unmountComponentAtNode(canvas)
-        // Clear root ref so HMR creates a fresh root
+        // A later setup builds a new root rather than using the released one
+        const current = root.current
         root.current = null!
+        current?.unmount()
       }
     }
   }, [])
 
-  //* HMR Support for TSL Resources ==============================
-  // Automatically refresh nodes/uniforms/buffers/gpuStorage when HMR is detected (dev mode only)
-  // Can be disabled with hmr={false} prop
+  //* HMR Support ==============================
+  // Forward hot updates to root extensions (e.g. the TSL hooks refresh nodes/uniforms/buffers/
+  // gpuStorage). Dev mode only; can be disabled with hmr={false} prop
   React.useEffect(() => {
     // Skip if explicitly disabled
     if (hmr === false) return
@@ -295,13 +318,13 @@ function CanvasImpl({
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // HMR refresh handler - clears caches and bumps version to trigger re-creation
+    // HMR refresh handler - lets each extension that set this root up refresh its state
     // Uses queueMicrotask to defer setState out of any current render cycle,
     // avoiding "Cannot update a component while rendering" errors
     const handleHMR = () => {
       queueMicrotask(() => {
         const rootEntry = _roots.get(canvas)
-        if (rootEntry?.store) clearHmrCaches(rootEntry.store)
+        if (rootEntry?.store) notifyRootExtensionsHmr(rootEntry.store)
       })
     }
 
@@ -358,10 +381,11 @@ function CanvasImpl({
 }
 
 /**
- * A DOM canvas which accepts threejs elements as children.
+ * A DOM canvas which accepts threejs elements as children. Each public entry exports this bound to
+ * its renderer provider; app code renders `<Canvas>` from `@react-three/fiber` (or `/legacy`, `/webgpu`).
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export function Canvas(props: CanvasProps) {
+export function Canvas(props: CanvasProps & CanvasProviderProps) {
   return (
     <FiberProvider>
       <CanvasImpl {...props} />

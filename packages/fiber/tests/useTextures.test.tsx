@@ -2,10 +2,9 @@ import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 
-import { createRoot, useTexture, useTextures, useThree, extend } from '../src'
+import { createRoot, useTexture, useTextures, useThree, useStore, extend } from '../src'
+import { getTextureView } from '../src/extension'
 import type { UseTexturesReturn } from '../src'
-
-extend(THREE as any)
 
 /** Make TextureLoader.load resolve synchronously to a given texture (jsdom has no real image loading). */
 function mockTextureLoad(tex: THREE.Texture) {
@@ -435,5 +434,147 @@ describe('useTextures (registry)', () => {
     })
 
     expect(seen).toBe(a)
+  })
+})
+
+describe('useTexture onLoad', () => {
+  let root: ReturnType<typeof createRoot> = null!
+
+  beforeEach(() => {
+    root = createRoot(document.createElement('canvas'))
+  })
+
+  afterEach(async () => {
+    await act(async () => root.unmount())
+  })
+
+  it('receives the keyed record for the record input form', async () => {
+    // The callback is declared against the same shape the hook returns. It used to be handed
+    // useLoader's positional array instead, so `textures.map.wrapT` threw at runtime.
+    const spy = mockTextureLoad(new THREE.Texture())
+    const onLoad = vi.fn()
+
+    function Probe() {
+      useTexture({ map: '/onload-map.png', normalMap: '/onload-normal.png' }, { onLoad, cache: false })
+      return null
+    }
+
+    await act(async () => {
+      root.render(
+        <React.Suspense fallback={null}>
+          <Probe />
+        </React.Suspense>,
+      )
+      await new Promise((r) => setTimeout(r, 20))
+    })
+
+    expect(onLoad).toHaveBeenCalledTimes(1)
+    const textures = onLoad.mock.calls[0][0]
+    expect(Array.isArray(textures)).toBe(false)
+    expect(Object.keys(textures)).toEqual(['map', 'normalMap'])
+    expect(textures.map).toBeInstanceOf(THREE.Texture)
+    expect(textures.normalMap).toBeInstanceOf(THREE.Texture)
+    spy.mockRestore()
+  })
+})
+
+describe('useTexture staging (visible to later hooks in the same render)', () => {
+  let root: ReturnType<typeof createRoot> = null!
+
+  beforeEach(() => {
+    root = createRoot(document.createElement('canvas'))
+  })
+
+  afterEach(async () => {
+    await act(async () => root.unmount())
+    vi.restoreAllMocks()
+  })
+
+  /** Mount `children` under Suspense and let the mocked loads resolve. */
+  async function mount(children: React.ReactNode) {
+    return act(async () => {
+      const store = root.render(<React.Suspense fallback={null}>{children}</React.Suspense>)
+      await new Promise((r) => setTimeout(r, 20))
+      return store
+    })
+  }
+
+  it('a fresh load is visible through getTextureView later in the same render, before it is registered', async () => {
+    const tex = new THREE.Texture()
+    mockTextureLoad(tex)
+    const URL = '/staged.png'
+    const seen: Array<{ inView: unknown; registered: boolean }> = []
+
+    function Consumer() {
+      const store = useStore()
+      useTexture(URL)
+      // What a later hook in this render (a TSL creator) would read
+      seen.push({ inView: getTextureView(store).get(URL), registered: store.getState().textures.has(URL) })
+      return null
+    }
+
+    const store = await mount(<Consumer />)
+
+    expect(seen[0]).toEqual({ inView: tex, registered: false })
+    // Registered in the layout effect, after which nothing stays staged
+    expect(store.getState().textures.get(URL)).toBe(tex)
+    expect(getTextureView(store)).toBe(store.getState().textures)
+  })
+
+  it('record and array inputs stage every URL', async () => {
+    const tex = new THREE.Texture()
+    mockTextureLoad(tex)
+    let recordView: ReadonlyMap<string, THREE.Texture> | null = null
+    let arrayView: ReadonlyMap<string, THREE.Texture> | null = null
+
+    function Consumer() {
+      const store = useStore()
+      useTexture({ map: '/r-map.png', normalMap: '/r-normal.png' })
+      recordView ??= getTextureView(store)
+      useTexture(['/a-1.png', '/a-2.png'])
+      arrayView ??= getTextureView(store)
+      return null
+    }
+    await mount(<Consumer />)
+
+    expect([...recordView!.keys()]).toEqual(expect.arrayContaining(['/r-map.png', '/r-normal.png']))
+    expect([...arrayView!.keys()]).toEqual(
+      expect.arrayContaining(['/r-map.png', '/r-normal.png', '/a-1.png', '/a-2.png']),
+    )
+  })
+
+  it('a render that is thrown away registers and retains nothing', async () => {
+    const tex = new THREE.Texture()
+    mockTextureLoad(tex)
+    const URL = '/discarded.png'
+    const never = new Promise<void>(() => {})
+
+    function Consumer() {
+      useTexture(URL)
+      React.use(never) // suspends after staging: this render never commits
+      return null
+    }
+    const store = await mount(<Consumer />)
+
+    expect(store.getState().textures.has(URL)).toBe(false)
+    expect(store.getState()._textureRefs.has(URL)).toBe(false)
+  })
+
+  it('StrictMode keeps the refcount balanced', async () => {
+    const tex = new THREE.Texture()
+    mockTextureLoad(tex)
+    const URL = '/strict.png'
+    function Consumer() {
+      useTexture(URL)
+      return null
+    }
+    const store = await mount(
+      <React.StrictMode>
+        <Consumer />
+      </React.StrictMode>,
+    )
+
+    expect(store.getState()._textureRefs.get(URL)).toBe(1)
+    expect(getTextureView(store)).toBe(store.getState().textures)
   })
 })

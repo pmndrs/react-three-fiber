@@ -1,4 +1,5 @@
-import * as THREE from '#three'
+import type * as THREE from 'three'
+import { getThree } from './three'
 import { getRootState } from './utils'
 import { unregisterVisibility } from './visibility'
 
@@ -328,7 +329,7 @@ export function createEvents(store: RootStore) {
 
         if (state) {
           const { raycaster, pointer, camera, internal } = state
-          const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
+          const unprojectedPoint = new (getThree().Vector3)(pointer.x, pointer.y, 0).unproject(camera)
 
           const hasPointerCapture = (id: number) => {
             const pointerState = internal.pointerMap.get(id)
@@ -752,7 +753,7 @@ const DOM_EVENTS = {
 } as const
 
 /** Default R3F event manager for web */
-export function createPointerEvents(store: RootStore): EventManager<HTMLElement> {
+export function createPointerEvents(store: RootStore): EventManager<Element> {
   const { handlePointer, flushDeferredPointers, processDeferredPointer } = createEvents(store)
 
   // Counter for XR pointer IDs
@@ -816,7 +817,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
       }
     },
 
-    connect: (target: HTMLElement) => {
+    connect: (target: Element) => {
       if (!target) return
       const { set, events } = store.getState()
       events.disconnect?.()

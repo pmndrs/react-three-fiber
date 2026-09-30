@@ -1,7 +1,9 @@
-import * as THREE from '#three'
-import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, type Object3D } from '#three'
+// Types only: core takes three's classes from the renderer support a root loads (see ./three.ts).
+import type * as THREE from 'three'
+import type { Object3D, WebGLRenderer } from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 
-import { useCallback, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
+import { useCallback, useMemo, useRef, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -9,6 +11,8 @@ import { useStore } from './hooks'
 import { advance, invalidate } from './hooks/useFrame/legacy'
 import { reconciler } from './reconciler'
 import { context, createStore } from './store'
+import { getThree, registerThree } from './three'
+import { attachRootExtensions, detachRootExtensions } from './extensions'
 import {
   applyProps,
   calculateDpr,
@@ -24,6 +28,8 @@ import { notifyDepreciated } from './utils/notices.js'
 import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
+import { fulfilled, tracked } from './promise'
+import { borrowRenderer, leaseRenderer } from './rendererLease'
 
 import type {
   RootState,
@@ -36,6 +42,8 @@ import type {
   RenderProps,
   ReconcilerRoot,
   InjectState,
+  RendererProvider,
+  RendererSupport,
 } from '#types'
 
 export const isRenderer = (def: any) => !!def?.render
@@ -46,17 +54,32 @@ interface OffscreenCanvas extends EventTarget {}
 
 export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
+/**
+ * Create the three objects a fresh store carries (`frustum`, `pointer`, `mouse`) once its renderer
+ * support -- and with it three's shared core -- is loaded. Idempotent: a store reused by createRoot
+ * after an unmount already has them.
+ */
+function ensureStoreThreeObjects(store: RootStore): void {
+  const state = store.getState()
+  if (state.pointer) return
+  const { Vector2, Frustum } = getThree()
+  const pointer = new Vector2()
+  state.set({ pointer, mouse: pointer, frustum: new Frustum() })
+}
+
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
-// Helper to resolve renderer config (handles: function | instance | props)
+// Helper to resolve renderer config (handles: function | instance | props). R3F owns what it
+// builds, a factory's result included, since R3F calls the factory once per root. An instance
+// belongs to the caller.
 async function resolveRenderer<T>(
   config: any,
   defaultProps: Record<string, any>,
   RendererClass: new (props: any) => T,
-): Promise<T> {
-  if (typeof config === 'function') return await config(defaultProps)
-  if (isRenderer(config)) return config as T
-  return new RendererClass({ ...defaultProps, ...config })
+): Promise<{ renderer: T; owned: boolean }> {
+  if (typeof config === 'function') return { renderer: await config(defaultProps), owned: true }
+  if (isRenderer(config)) return { renderer: config as T, owned: false }
+  return { renderer: new RendererClass({ ...defaultProps, ...config }), owned: true }
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -80,8 +103,55 @@ function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: 
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
+/**
+ * Calls `onChange` whenever window.devicePixelRatio changes: moving to another display or zooming.
+ * Neither resizes the canvas, so resize observers won't see it. A resolution query only matches the
+ * current ratio, so it is re-created after every change.
+ *
+ * @param onChange - Called after each change
+ * @returns Function that stops watching
+ */
+function watchDpr(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function' || !window.devicePixelRatio) {
+    return () => {}
+  }
+
+  // Partial matchMedia polyfills (test setups, older environments) may return no listener methods,
+  // or throw on a query they can't parse. Following the ratio is best-effort: it runs inside
+  // configure, which must not fail because of it
+  let query: Partial<MediaQueryList> | undefined
+  const listen = () => {
+    try {
+      query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+      if (typeof query?.addEventListener === 'function') query.addEventListener('change', handleChange)
+      else query?.addListener?.(handleChange)
+    } catch {
+      query = undefined
+    }
+  }
+  const unlisten = () => {
+    if (typeof query?.removeEventListener === 'function') query.removeEventListener('change', handleChange)
+    else query?.removeListener?.(handleChange)
+    query = undefined
+  }
+  const handleChange = () => {
+    unlisten()
+    listen()
+    onChange()
+  }
+
+  listen()
+  return unlisten
+}
+
+/**
+ * Create a root on a canvas. `provider` says which renderers this root may construct and how to
+ * load their support; each public entry wraps this with its own provider, so app code calls
+ * `createRoot(canvas)`.
+ */
 export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
+  provider: RendererProvider,
 ): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = _roots.get(canvas)
@@ -118,7 +188,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       null, // transitionCallbacks
     )
   // Map it
-  if (!prevRoot) _roots.set(canvas, { fiber, store })
+  const root: Root = prevRoot || { fiber, store, unmountClaim: null, ready: fulfilled(undefined) }
+  if (!prevRoot) _roots.set(canvas, root)
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
@@ -137,13 +208,47 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     schedulerOrder: NonNullable<RenderProps<TCanvas>['scheduler']>['order']
   }> = {}
 
+  // The pixel ratio last resolved from the dpr prop, and whether a display change waits on XR
+  let resolvedDpr = 0
+  let dprChangedInXR = false
+  let unwatchDpr: (() => void) | undefined
+
+  // A display change doesn't resize the canvas or change the prop, so re-resolve the prop here. A
+  // setDpr() since the last resolve owns the value, the same as across re-configures
+  const resolveDpr = () => {
+    // A configure still awaiting its renderer at unmount can start watching after teardown
+    if (_roots.get(canvas)?.store !== store) return unwatchDpr?.()
+    const state = store.getState()
+    // three doesn't resize during XR and restores its own pixel ratio once the session ends. It holds
+    // the session before it sets isPresenting
+    const xr = state.internal.actualRenderer?.xr as { isPresenting?: boolean; getSession?: () => unknown } | undefined
+    if (xr?.isPresenting || xr?.getSession?.()) {
+      dprChangedInXR = true
+      return
+    }
+    dprChangedInXR = false
+    const dpr = lastConfiguredProps.dpr
+    if (dpr === undefined || state.viewport.dpr !== resolvedDpr || calculateDpr(dpr) === resolvedDpr) return
+    state.setDpr(dpr)
+    resolvedDpr = store.getState().viewport.dpr
+  }
+
   let configured = false
   let pending: Promise<void> | null = null
-  // In-flight renderer creation, shared across overlapping configure() calls (see #3752)
-  let rendererSetup: Promise<void> | null = null
+
+  // Unmounting stopped the root drawing; if the tree never unmounted, the Provider won't set it again
+  const cancelUnmount = () => {
+    if (!root.unmountClaim) return
+    root.unmountClaim = null
+    store.getState().internal.active = true
+  }
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+      if (_roots.get(canvas) !== root) throw new Error('R3F: cannot configure a root after it has unmounted')
+      // Configuring the root cancels a teardown waiting on React
+      cancelUnmount()
+
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
@@ -173,16 +278,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         forceEven,
       } = props
 
-      // Extract textureColorSpace from gl or renderer config (not a real renderer property)
-      const textureColorSpace: THREE.ColorSpace =
+      // Extract textureColorSpace from gl or renderer config (not a real renderer property).
+      // The sRGB default is applied below, once three's constants are loaded.
+      const requestedTextureColorSpace: THREE.ColorSpace | undefined =
         (is.obj(glConfig) && !is.fun(glConfig) && !isRenderer(glConfig) && (glConfig as any).textureColorSpace) ||
         (is.obj(rendererConfig) &&
           !is.fun(rendererConfig) &&
           !isRenderer(rendererConfig) &&
           (rendererConfig as any).textureColorSpace) ||
-        THREE.SRGBColorSpace
+        undefined
 
       let state = store.getState()
+      const { webgl, webgpu } = provider
 
       //* Renderer Initialization ==============================
 
@@ -198,37 +305,35 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         antialias: true,
       }
 
-      //* Build Flag Validation ==============================
-      // Check if the requested renderer is available in this build
-      if (glConfig && !R3F_BUILD_LEGACY) {
+      //* Entry Validation ==============================
+      // Check if the requested renderer is one this entry can construct
+      if (glConfig && !webgl) {
         throw new Error(
-          'WebGLRenderer (gl prop) is not available in this build. ' +
+          'WebGLRenderer (gl prop) is not available on this entry. ' +
             'Use @react-three/fiber or @react-three/fiber/legacy instead.',
         )
       }
-      if (rendererConfig && !R3F_BUILD_WEBGPU) {
+      if (rendererConfig && !webgpu) {
         throw new Error(
-          'WebGPURenderer (renderer prop) is not available in this build. ' +
+          'WebGPURenderer (renderer prop) is not available on this entry. ' +
             'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
         )
       }
 
       //* Determine which renderer to use ==============================
-      // Build-specific defaults:
-      // - WebGPU-only build (@react-three/fiber/webgpu): Always use WebGPU (R3F_BUILD_LEGACY=false)
-      // - Legacy-only build (@react-three/fiber/legacy): Always use WebGL (R3F_BUILD_WEBGPU=false)
-      // - Default build (@react-three/fiber): Use WebGL unless renderer prop is provided
-      //
-      // For WebGPU-only builds, wantsGL is always false because R3F_BUILD_LEGACY=false
-      // This means WebGPU is used automatically without needing the renderer prop
-      const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
+      // Entry-specific defaults:
+      // - @react-three/fiber/webgpu: always WebGPU, no renderer prop needed (no webgl loader)
+      // - @react-three/fiber/legacy: always WebGL (no webgpu loader)
+      // - @react-three/fiber: WebGL unless the renderer prop is provided; only the chosen
+      //   renderer's support is downloaded (both loaders are dynamic imports)
+      const wantsGL = !!webgl && (state.isLegacy || !!glConfig || !webgpu || !rendererConfig)
 
       if (glConfig && rendererConfig) {
         throw new Error('Cannot use both gl and renderer props at the same time')
       }
 
-      // Deprecation warning for WebGL usage (only in builds that support both)
-      if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU && !state.isLegacy && wantsGL) {
+      // Deprecation warning for WebGL usage (only on the entry that offers both)
+      if (webgl && webgpu && !state.isLegacy && wantsGL) {
         notifyDepreciated({
           heading: 'WebGlRenderer Usage',
           body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
@@ -240,7 +345,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       //* Multi-Canvas Target Validation ==============================
       // Validate primaryCanvas prop is only used with WebGPU
-      if (primaryCanvas && !R3F_BUILD_WEBGPU) {
+      if (primaryCanvas && !webgpu) {
         throw new Error(
           'The `primaryCanvas` prop for multi-canvas rendering is only available with WebGPU. ' +
             'Use @react-three/fiber/webgpu instead.',
@@ -260,27 +365,44 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // WebGPU init is in flight) would each pass the `!actualRenderer` guard and invoke the
       // factory multiple times (#3752). The first call owns creation; later overlapping calls
       // await the same promise, then re-read state below and apply their own (latest) size.
+      // The promise lives on the root, where teardown waits for it: a renderer still being
+      // created has to be published, and leased, before it can be released.
+      //
+      // Each path leases the renderer in the same synchronous step that publishes it, after its
+      // last await, so no teardown can run between the two.
       if (!state.internal.actualRenderer) {
-        if (!rendererSetup) {
-          rendererSetup = (async () => {
-            if (R3F_BUILD_LEGACY && wantsGL) {
+        if (root.ready.status !== 'pending') {
+          const setup = (async () => {
+            //* Load the renderer support ---
+            // The root entry's loaders are dynamic imports: this is the moment the chosen renderer,
+            // and three itself, is downloaded. /legacy and /webgpu resolve synchronously.
+            const support: RendererSupport = wantsGL ? await webgl!() : await webgpu!()
+            registerThree(support.three)
+            state.internal.support = support
+            ensureStoreThreeObjects(store)
+
+            if (support.kind === 'webgl') {
               //* WebGL path ---
-              renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+              const resolved = await resolveRenderer(glConfig, defaultGLProps, support.Renderer)
+              renderer = resolved.renderer as WebGLRenderer
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
               // Set both gl and renderer to the WebGLRenderer for backwards compatibility
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
-            } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas) {
+            } else if (primaryCanvas) {
               //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
               // Wait for primary canvas to be registered (handles async init timing)
               const primary = await waitForPrimary(primaryCanvas)
 
-              // Use the primary's renderer
+              // Use the primary's renderer. The lease keeps it alive while this canvas draws with
+              // it, even if the primary unmounts first
               renderer = primary.renderer
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = borrowRenderer(renderer)
 
               // Create a CanvasTarget for this secondary canvas
-              const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+              const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
 
               // Enable multi-canvas mode on the primary canvas
               primary.store.setState((prev) => ({
@@ -301,13 +423,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
                   targetId: primaryCanvas,
                 },
               }))
-            } else if (R3F_BUILD_WEBGPU && !wantsGL) {
+            } else {
               //* WebGPU path ---
               // This path is taken when:
-              // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
-              // 2. Default build with explicit renderer prop
+              // 1. @react-three/fiber/webgpu - always, even without the renderer prop
+              // 2. @react-three/fiber with the renderer prop
               // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+              const resolved = await resolveRenderer(rendererConfig, defaultGPUProps, support.Renderer)
+              renderer = resolved.renderer as WebGPURenderer
 
               // WebGPU-specific setup - only init if not already initialized
               // Allows users to pass pre-initialized external renderers
@@ -337,6 +460,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
               state.internal.actualRenderer = renderer
+              state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
               // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
               // Self-reference primaryStore - this canvas is its own primary
               state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
@@ -367,14 +491,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
                 }))
               }
             }
-          })().catch((err) => {
-            // Reset so a subsequent configure() can retry after a failed setup
-            rendererSetup = null
-            throw err
-          })
+          })()
+          root.ready = tracked(setup)
         }
 
-        await rendererSetup
+        // A rejected setup leaves root.ready rejected, so a later configure() retries it
+        await root.ready
         // Re-read state after the shared async setup so the remainder of configure() (size,
         // dpr, shadows, …) operates on the latest store — this is how the newest configure's
         // size wins even though the renderer was created by an earlier overlapping call.
@@ -382,10 +504,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
       }
 
+      // The renderer support is loaded: three's shared core is available from here on
+      const three = getThree()
+
       //* Default Raycaster Initialization ==============================
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
-      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
+      if (!raycaster) state.set({ raycaster: (raycaster = new three.Raycaster()) })
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
@@ -405,8 +530,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const camera = isCamera
           ? (cameraOptions as ThreeCamera)
           : orthographic
-            ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-            : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
+            ? new three.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+            : new three.PerspectiveCamera(50, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
           if (cameraOptions) {
@@ -442,7 +567,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           scene = sceneOptions as THREE.Scene
           prepare(scene, store, '', {})
         } else {
-          scene = new THREE.Scene()
+          scene = new three.Scene()
           prepare(scene, store, '', {})
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
         }
@@ -501,6 +626,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (dpr !== undefined && !is.equ(dpr, lastConfiguredProps.dpr, shallowLoose)) {
         state.setDpr(dpr)
         lastConfiguredProps.dpr = dpr
+        resolvedDpr = store.getState().viewport.dpr
+      }
+      // Read internal fresh: configure may have replaced it above
+      const internal = store.getState().internal
+      // One watcher per root, bound to the handle configuring it. Only a range follows the display: a
+      // fixed dpr never touches matchMedia
+      if (Array.isArray(dpr) && (!unwatchDpr || internal.unwatchDpr !== unwatchDpr)) {
+        internal.unwatchDpr?.()
+        internal.unwatchDpr = unwatchDpr = watchDpr(resolveDpr)
       }
       // Check frameloop - only update if the PROP changed
       // This preserves imperative setFrameloop() changes across Canvas re-configures
@@ -546,7 +680,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
           // Cast to any - both renderer XR managers have setAnimationLoop but with slightly different types
           ;(renderer.xr as any).setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
-          if (!renderer.xr.isPresenting) invalidate(state)
+          if (!renderer.xr.isPresenting) {
+            if (dprChangedInXR) resolveDpr()
+            invalidate(state)
+          }
         }
 
         // WebXR session manager
@@ -580,7 +717,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         renderer.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          renderer.shadowMap.type = THREE.PCFShadowMap
+          renderer.shadowMap.type = three.PCFShadowMap
         } else if (is.str(shadows)) {
           if (shadows === 'soft') {
             notifyDepreciated({
@@ -590,12 +727,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             })
           }
           const types = {
-            basic: THREE.BasicShadowMap,
-            percentage: THREE.PCFShadowMap,
-            soft: THREE.PCFShadowMap,
-            variance: THREE.VSMShadowMap,
+            basic: three.BasicShadowMap,
+            percentage: three.PCFShadowMap,
+            soft: three.PCFShadowMap,
+            variance: three.VSMShadowMap,
           }
-          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFShadowMap
+          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? three.PCFShadowMap
         } else if (is.obj(shadows)) {
           Object.assign(renderer.shadowMap as any, shadows)
         }
@@ -608,12 +745,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       //* Color Management ==============================
       // Set sensible defaults on first configure only - gl/renderer props can override via applyProps
       if (!configured) {
-        renderer.outputColorSpace = THREE.SRGBColorSpace
-        renderer.toneMapping = THREE.ACESFilmicToneMapping
+        renderer.outputColorSpace = three.SRGBColorSpace
+        renderer.toneMapping = three.ACESFilmicToneMapping
       }
 
       // Update textureColorSpace state (color space for 8-bit input textures)
       // Only update if the PROP changed
+      const textureColorSpace: THREE.ColorSpace = requestedTextureColorSpace ?? three.SRGBColorSpace
       if (textureColorSpace !== lastConfiguredProps.textureColorSpace) {
         if (state.textureColorSpace !== textureColorSpace) state.set(() => ({ textureColorSpace }))
         lastConfiguredProps.textureColorSpace = textureColorSpace
@@ -774,11 +912,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
-            // Use RenderPipeline if available (from useRenderPipeline hook)
-            // Otherwise fall back to standard renderer.render()
+            // A render override (setRenderOverride, e.g. useRenderPipeline) replaces the plain
+            // renderer.render() call; fps throttling, takeover and error handling stay here.
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
-              if (state.renderPipeline?.render) state.renderPipeline.render()
+              const renderOverride = state.internal.renderOverride
+              if (renderOverride) renderOverride()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
               // Propagate render errors to error boundary
@@ -834,6 +973,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       lastConfiguredProps.schedulerAfter = schedulerConfig?.after
       lastConfiguredProps.schedulerOrder = schedulerConfig?.order
 
+      // The renderer exists, isLegacy/primaryStore are known, and nothing has rendered or called
+      // onCreated yet: this is where extensions set up their per-root state. Runs on every
+      // configure() but is idempotent -- a root is set up once per extension -- so it also covers a
+      // store reused by createRoot after an unmount detached it.
+      attachRootExtensions(store)
+
       // Set locals
       onCreated = onCreatedCallback
       configured = true
@@ -841,10 +986,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return this
     },
     render(children: ReactNode): RootStore {
+      if (_roots.get(canvas) !== root) return store
+      // Rendering the root cancels a teardown waiting on React
+      cancelUnmount()
+
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
       pending!.then(() => {
+        // The root may have been unmounted or claimed while it was configuring
+        if (_roots.get(canvas) !== root || root.unmountClaim) return
         reconciler.updateContainer(
           <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
           fiber,
@@ -856,7 +1007,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       return store
     },
     unmount(): void {
-      unmountComponentAtNode(canvas)
+      // A handle to a root that already unmounted must not unmount a newer root on this canvas
+      if (_roots.get(canvas) === root) unmountComponentAtNode(canvas)
     },
   }
 }
@@ -887,65 +1039,103 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
+/**
+ * Unmount the root on `canvas`. The teardown runs once React has committed the unmount, and waits
+ * for a renderer that is still being created. `callback` runs when the root is gone: after the
+ * teardown, and when it disposed a renderer R3F created whose `dispose()` is async (WebGPURenderer
+ * from three r186), after that dispose has settled.
+ */
 export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
   callback?: (canvas: TCanvas) => void,
 ): void {
   const root = _roots.get(canvas)
-  const fiber = root?.fiber
-  if (fiber) {
-    const state = root?.store.getState()
-    if (state) {
-      state.internal.active = false
-      // Stop scheduling this root immediately. Renderer and GPU disposal retain the
-      // existing grace period, but a dead Canvas must not keep running frame jobs.
-      const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
-      if (unregisterRoot) {
-        unregisterRoot()
-        ;(state.internal as any).unregisterRoot = undefined
+  if (!root) return
+
+  // Cleared by configure and render, which cancels the teardown. React may clean a root up and
+  // set it up again (StrictMode, a fast remount), so unmounting is a request until React has
+  // committed it; guessing with a timer tore down roots that had already been remounted.
+  const claim = (root.unmountClaim = Symbol('unmount'))
+  // Stop drawing and invalidating while the tree unmounts. A remount before teardown mounts the
+  // Provider again, which sets `active` back
+  root.store.getState().internal.active = false
+
+  reconciler.updateContainer(null, root.fiber, null, () => {
+    if (root.unmountClaim !== claim) return
+
+    // Effect cleanups flush before the next update
+    reconciler.updateContainer(null, root.fiber, null, () => {
+      if (root.unmountClaim !== claim) return
+
+      // A renderer still being created has to exist, and be leased, before it can be released
+      if (root.ready.status === 'pending') root.ready.then(teardown, teardown)
+      else teardown()
+    })
+  })
+
+  function teardown() {
+    if (root!.unmountClaim !== claim) return
+    root!.unmountClaim = null
+    // Nothing can render or configure this root from here on
+    _roots.delete(canvas)
+
+    // Read the store now, not at unmount: configure may have published a renderer since
+    const state = root!.store.getState()
+    const internal = state.internal
+    internal.active = false
+
+    // Teardown is best-effort, but one failing step must not skip the rest, least of all the
+    // renderer release at the end. Failures are reported rather than swallowed.
+    const attempt = <T,>(step: () => T): T | undefined => {
+      try {
+        return step()
+      } catch (error) {
+        console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
       }
     }
-    reconciler.updateContainer(null, fiber, null, () => {
-      if (state) {
-        setTimeout(() => {
-          try {
-            const renderer = state.internal.actualRenderer
 
-            // Unregister primary canvas from registry (if it was registered)
-            const unregisterPrimary = state.internal.unregisterPrimary
-            if (unregisterPrimary) unregisterPrimary()
+    // A dead Canvas must not follow display changes. Done here rather than when unmount() is
+    // called, so an unmount cancelled by a remount keeps its watcher. A configure that was still
+    // awaiting its renderer at unmount has started watching by now: teardown waits for `ready`.
+    attempt(() => internal.unwatchDpr?.())
+    internal.unwatchDpr = undefined
 
-            // Dispose the CanvasTarget we created. A primary's target is the renderer's own
-            // default target, which the renderer owns and which may outlive this root (an
-            // external renderer reused across mounts), so only secondaries dispose theirs.
-            const canvasTarget = state.internal.canvasTarget
-            if (state.internal.isSecondary && canvasTarget?.dispose) canvasTarget.dispose()
+    // Stop everything that draws with the renderer before releasing it
+    attempt(() => internal.unregisterRoot?.())
+    internal.unregisterRoot = undefined
+    // Children have unmounted (their hook cleanups ran); let extensions release per-root state
+    attempt(() => detachRootExtensions(root!.store))
+    // Unregister primary canvas from registry (if it was registered)
+    attempt(() => internal.unregisterPrimary?.())
 
-            state.events.disconnect?.()
-            // Clean up occlusion system and helper group
-            cleanupHelperGroup(root!.store)
-            // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
-            if (state.isLegacy && renderer) {
-              ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
-              ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
-            }
-            // Only disconnect XR and dispose renderer if this is not a secondary canvas
-            // Secondary canvases share the renderer, so we must not dispose it
-            if (!state.internal.isSecondary) {
-              if (renderer?.xr) state.xr.disconnect()
-            }
-            dispose(state.scene)
-            _roots.delete(canvas)
-            if (callback) callback(canvas)
-          } catch (error) {
-            // Teardown is best-effort — a failure here must not throw out of unmount, or React is
-            // left with a half-torn-down root. But swallowing it silently hid real WebGPU teardown
-            // failures, which is how this surfaces as "dispose appears to do nothing".
-            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
-          }
-        }, 500)
+    attempt(() => state.events.disconnect?.())
+    // Secondary canvases share the primary's renderer and its XR session
+    // A root whose configure() stopped before setting up XR has no XR manager
+    if (!internal.isSecondary && internal.actualRenderer?.xr && state.xr) attempt(() => state.xr.disconnect())
+    // Clean up occlusion system and helper group
+    attempt(() => cleanupHelperGroup(root!.store))
+    // A root that never finished configuring has no scene
+    if (state.scene) attempt(() => dispose(state.scene))
+
+    // Dispose the CanvasTarget we created. A primary's target is the renderer's own
+    // default target, which the renderer owns and which may outlive this root (an
+    // external renderer reused across mounts), so only secondaries dispose theirs.
+    const canvasTarget = internal.canvasTarget
+    if (internal.isSecondary && canvasTarget?.dispose) attempt(() => canvasTarget.dispose())
+
+    // Last: releasing the final lease disposes a renderer R3F created. A caller's renderer, or one
+    // a secondary still draws with, is left alone
+    const released = attempt(() => internal.releaseRenderer?.())
+    internal.releaseRenderer = undefined
+
+    // The callback means the root is gone, so an async dispose() has to settle first
+    if (callback) {
+      if (released) {
+        released.then(() => callback(canvas)).catch((error) => console.warn('[R3F] Error in unmount callback', error))
+      } else {
+        callback(canvas)
       }
-    })
+    }
   }
 }
 
@@ -1015,8 +1205,8 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
    *    {createPortal(...)} */
   const { events, size, injectScene = true, ...rest } = state
   const previousRoot = useStore()
-  const [raycaster] = useState(() => new THREE.Raycaster())
-  const [pointer] = useState(() => new THREE.Vector2())
+  const [raycaster] = useState(() => new (getThree().Raycaster)())
+  const [pointer] = useState(() => new (getThree().Vector2)())
 
   //* Portal Scene Injection ==============================
   // https://github.com/pmndrs/react-three-fiber/issues/2725
@@ -1030,7 +1220,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     // If injection disabled, use container directly (anti-pattern)
     if (!injectScene) return container as THREE.Scene
     // Inject a Scene as child of container
-    const scene = new THREE.Scene()
+    const scene = new (getThree().Scene)()
     container.add(scene)
     return scene
   })
@@ -1047,16 +1237,37 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     }
   }, [portalScene, container, injectScene])
 
+  // The parent state at the last sync, to tell which parent fields have changed since.
+  const lastRootState = useRef<RootState | null>(null)
+
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
+    // The portal's state holds a copy of every parent field, so `...injectState` alone would freeze
+    // inherited fields at mount (a later uniform, controls, renderer...). A parent change comes
+    // through only for a field the portal still inherits: not one set through its `state` prop, and
+    // not one it set itself (its value no longer matches what it last got from the parent) -- e.g.
+    // a camera or controls made default inside the portal (drei's Hud, RenderTexture, View).
+    const followed: Partial<RootState> = {}
+    const lastRoot = lastRootState.current
+    if (lastRoot) {
+      for (const key in rootState) {
+        const field = key as keyof RootState
+        const changed = rootState[field] !== lastRoot[field]
+        const inherited = !(key in rest) && injectState[field] === lastRoot[field]
+        if (changed && inherited) (followed as any)[field] = rootState[field]
+      }
+    }
+    lastRootState.current = rootState
+
     // Resolve size: parent → portal's accumulated state → explicit prop override
     // This ensures portal size persists through parent resize events
     const resolvedSize = { ...rootState.size, ...injectState.size, ...size }
 
     let viewport = undefined
-    if (injectState.camera && (size || injectState.size)) {
-      const camera = injectState.camera
+    const portalCamera = followed.camera ?? injectState.camera
+    if (portalCamera && (size || injectState.size)) {
+      const camera = portalCamera
       // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), resolvedSize)
+      viewport = rootState.viewport.getCurrentViewport(camera, new (getThree().Vector3)(), resolvedSize)
       // Update the portal camera, if it differs from the previous layer
       if (camera !== rootState.camera) updateCamera(camera, resolvedSize)
     }
@@ -1070,6 +1281,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       // The intersect consists of the previous root state
       ...rootState,
       ...injectState,
+      ...followed,
       // Portals have their own scene - always a real THREE.Scene (injected if needed)
       scene: portalScene,
       // rootScene always points to the actual THREE.Scene, even inside portals

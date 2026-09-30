@@ -25,18 +25,18 @@ function RenderToPortal({ targets }: { targets: THREE.Group[] }) {
 }
 
 export default function Group() {
-  const [ref1, set1] = useState<THREE.Group>(null!)
-  const [ref2, set2] = useState<THREE.Group>(null!)
+  const [ref1, set1] = useState<THREE.Group | null>(null)
+  const [ref2, set2] = useState<THREE.Group | null>(null)
 
   return (
     <Canvas onCreated={() => console.log('onCreated')}>
       <group>
-        <group ref={set1 as any} position={[-2, 0, 0]} />
+        <group ref={set1} position={[-2, 0, 0]} />
         <mesh position={[0, 0, 0]}>
           <sphereGeometry args={[0.5, 16, 16]} />
           <meshNormalMaterial />
         </mesh>
-        <group ref={set2 as any} position={[2, 0, 0]} />
+        <group ref={set2} position={[2, 0, 0]} />
         {ref1 && ref2 && <RenderToPortal targets={[ref1, ref2]} />}
       </group>
     </Canvas>

@@ -1,13 +1,21 @@
 //* useFrame Hook ==============================
 
 import * as React from 'react'
-import { context } from '../../store'
-import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
+// Leaf imports (no #three) so useFrame can ship in the three-free @react-three/fiber/extension entry.
+import { context } from '../../context'
+import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils/react'
 import { notifyDepreciated } from '../../utils/notices'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
-import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
+// Direct type-file imports, not the #types barrel: the barrel side-effect-imports the JSX element
+// augmentation (types/three.d.ts), which must not leak into the three-free extension entry.
+import type {
+  FrameNextState,
+  FrameNextCallback,
+  UseFrameNextOptions,
+  FrameNextControls,
+} from '../../../../types/scheduler'
 
 /**
  * Frame hook with phase-based ordering, priority, and FPS throttling.
@@ -97,11 +105,26 @@ export function useFrame(
   // This incremented internal.priority, causing the default renderer to skip
   // We maintain this behavior for backwards compatibility while warning about deprecation
   const isLegacyPriority = typeof priorityOrOptions === 'number' && priorityOrOptions > 0
+  // A negative number only ever meant "run before the default (0) jobs" in v9. v10 maps the
+  // number to { priority } and sorts higher first, so that intent is silently reversed — warn.
+  const isLegacyOrdering = typeof priorityOrOptions === 'number' && priorityOrOptions < 0
 
   // Subscribe on mount, unsubscribe on unmount (only if callback provided)
   useIsomorphicLayoutEffect(() => {
     // Skip registration if no callback - user just wants scheduler access
     if (!callback) return
+
+    if (isLegacyOrdering) {
+      notifyDepreciated({
+        heading: 'useFrame numeric priority order is reversed in v10',
+        body:
+          'useFrame(callback, number) is deprecated and its ordering direction is reversed from v9: ' +
+          'v9 ran lower numbers first, v10 maps the number to { priority } and runs higher numbers first, ' +
+          'so a negative priority now runs after default-priority jobs.\n\n' +
+          'Use { before, after } to name the dependency, or { priority } with the v10 direction (higher = earlier).',
+        link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
+      })
+    }
 
     if (isInsideCanvas) {
       //* ===== INSIDE CANVAS: Full RootState behavior =====
@@ -125,7 +148,7 @@ export function useFrame(
           body:
             'Using useFrame(callback, number) to control render order is deprecated.\n\n' +
             'For custom rendering, use: useFrame(callback, { phase: "render" })\n' +
-            'For execution order within update phase, use: useFrame(callback, { priority: number })',
+            'For execution order within a phase, use: useFrame(callback, { priority: number }) — higher runs first, the reverse of v9',
           link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
         })
       }
@@ -187,7 +210,7 @@ export function useFrame(
       )
     }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
-  }, [store, scheduler, id, optionsKey, isLegacyPriority, isInsideCanvas])
+  }, [store, scheduler, id, optionsKey, isLegacyPriority, isLegacyOrdering, isInsideCanvas])
 
   // Reactive isPaused via useSyncExternalStore --------------------------------
   const isPaused = React.useSyncExternalStore(

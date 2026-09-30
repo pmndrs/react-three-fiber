@@ -4,8 +4,6 @@ import * as THREE from 'three'
 
 import { createRoot, useThree, useGraph, ObjectMap, useInstanceHandle, Instance, extend, useRenderTarget } from '../src'
 
-extend(THREE as any)
-
 describe('hooks', () => {
   let root: ReturnType<typeof createRoot> = null!
 
