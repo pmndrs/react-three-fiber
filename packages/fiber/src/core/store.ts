@@ -25,7 +25,7 @@ import type {
   RendererSupport,
 } from '#types'
 
-import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
+import { calculateDpr, is, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
 import { getThree } from './three'
@@ -34,6 +34,24 @@ import { getThree } from './three'
 // Defined in ./context (three-free, so the extension entry can ship it); re-exported here so
 // existing imports of `context` from the store keep working.
 export { context } from './context'
+
+/** Apply a size and its ownership together, before subscribers observe the change. */
+function updateSize(state: RootState, size: Size, imperative: boolean): void {
+  state.set((current) => ({
+    size,
+    viewport: { ...current.viewport, ...current.viewport.getCurrentViewport(current.camera, undefined, size) },
+    _sizeImperative: imperative,
+  }))
+  // Wake only this root so a demand Canvas renders the resize.
+  state.invalidate()
+}
+
+/** @internal Apply measured/prop dimensions only while the store owns automatic sizing. */
+export function configureSize(store: RootStore, size: Size): void {
+  const state = store.getState()
+  if (state._sizeImperative || is.equ(size, state.size, { objects: 'shallow', strict: false })) return
+  updateSize(state, size, false)
+}
 
 /**
  * Creates the Zustand store that holds one root's {@link RootState}.
@@ -184,7 +202,6 @@ export const createStore = (
 
         // No args = reset to props/container mode
         if (width === undefined) {
-          set({ _sizeImperative: false })
           // If we have stored props, apply them; otherwise size will be updated by next container measurement
           if (state._sizeProps) {
             const { width: propW, height: propH } = state._sizeProps
@@ -197,15 +214,11 @@ export const createStore = (
                 top: currentSize.top,
                 left: currentSize.left,
               }
-              set((s) => ({
-                size: newSize,
-                viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
-              }))
-              // Invalidate this root so a demand Canvas renders its resize without
-              // waking sibling roots.
-              get().invalidate()
+              updateSize(state, newSize, false)
+              return
             }
           }
+          set({ _sizeImperative: false })
           return
         }
 
@@ -216,14 +229,7 @@ export const createStore = (
         const l = left ?? state.size.left
 
         const size = { width: w, height: h, top: t, left: l }
-        set((s) => ({
-          size,
-          viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
-          _sizeImperative: true,
-        }))
-        // Invalidate this root so a demand Canvas renders its resize without
-        // waking sibling roots.
-        get().invalidate()
+        updateSize(state, size, true)
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {

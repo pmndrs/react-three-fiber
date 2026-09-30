@@ -2,6 +2,7 @@ import type * as THREE from 'three'
 import type { WebGLRenderer } from 'three'
 import type { WebGPURenderer } from 'three/webgpu'
 import { getThree } from './three'
+import { configureSize } from './store'
 import { advance, invalidate } from './loop'
 import { applyProps, calculateDpr, is, prepare } from './utils'
 import { isDevelopment, notifyDepreciated } from './utils/notices'
@@ -282,16 +283,8 @@ export function createRootConfiguration<TCanvas extends HTMLCanvasElement | Offs
     if (forceEven !== undefined && state.internal.forceEven !== forceEven) {
       state.set((prev) => ({ internal: { ...prev.internal, forceEven } }))
     }
-    // Check size, allow it to take on container bounds initially
-    // Only apply size from props/container if not in imperative mode
-    const size = computeInitialSize(canvas, propsSize)
-    if (!state._sizeImperative && !is.equ(size, state.size, shallowLoose)) {
-      // Use internal flag to avoid setSize from setting _sizeImperative
-      // This allows configure() to update size without taking imperative ownership
-      const wasImperative = state._sizeImperative
-      state.setSize(size.width, size.height, size.top, size.left)
-      if (!wasImperative) state.set({ _sizeImperative: false })
-    }
+    // Configuration resolves the requested dimensions; the store decides whether they may apply.
+    configureSize(store, computeInitialSize(canvas, propsSize))
     // Check pixelratio - only update if the PROP changed (not if state differs from prop)
     // This preserves imperative setDpr() changes across Canvas re-configures
     if (dpr !== undefined && (!last || !is.equ(dpr, lastConfiguredProps.dpr, shallowLoose))) {

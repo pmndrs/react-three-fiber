@@ -35,6 +35,37 @@ describe('setSize ownership state machine', () => {
     expect(state._sizeImperative).toBe(false)
   })
 
+  it('never publishes imperative ownership while applying a configured size', async () => {
+    const store = await act(async () => (await root.configure({ size: baseSize })).render(null))
+    const observed: boolean[] = []
+    const unsubscribe = store.subscribe((state) => {
+      if (state.size.width === 400) observed.push(state._sizeImperative)
+    })
+    try {
+      await act(async () => root.configure({ size: { ...baseSize, width: 400 } }))
+      expect(observed.length).toBeGreaterThan(0)
+      expect(observed.every((imperative) => imperative === false)).toBe(true)
+    } finally {
+      unsubscribe()
+    }
+  })
+
+  it('preserves imperative ownership claimed by a subscriber during configuration', async () => {
+    const store = await act(async () => (await root.configure({ size: baseSize })).render(null))
+    const unsubscribe = store.subscribe((state) => {
+      if (state.size.width === 400) state.setSize(250)
+    })
+    try {
+      await act(async () => root.configure({ size: { ...baseSize, width: 400 } }))
+      expect(store.getState().size).toMatchObject({ width: 250, height: 250 })
+      expect(store.getState()._sizeImperative).toBe(true)
+      await act(async () => root.configure({ size: { ...baseSize, width: 500 } }))
+      expect(store.getState().size).toMatchObject({ width: 250, height: 250 })
+    } finally {
+      unsubscribe()
+    }
+  })
+
   it('setSize(n) sets a square and takes imperative ownership', async () => {
     const store = await act(async () => (await root.configure({ size: baseSize })).render(null))
     const state = store.getState()
