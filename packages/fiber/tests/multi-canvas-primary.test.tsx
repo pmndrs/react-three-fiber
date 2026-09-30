@@ -21,9 +21,9 @@ import { render } from '@testing-library/react'
 import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
-import { Canvas as CoreCanvas } from '../src/core/Canvas'
-import { createRoot as createCoreRoot, _roots } from '../src/core/renderer'
-import { livePrimaryKeys, resetCanvasRegistry } from '../src/core/canvasRegistry'
+import { Canvas as CoreCanvas } from '../src/web/Canvas'
+import { createRoot as createCoreRoot, _roots } from '../src/core/root'
+import { livePrimaryKeys, resetCanvasRegistry } from '../src/core/renderer'
 import { webgpuSupport } from '../src/support/webgpu'
 import type { CanvasProps, RendererProvider, RootStore, WebGPUSupport } from '../src'
 

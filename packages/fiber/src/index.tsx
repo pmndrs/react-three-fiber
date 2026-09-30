@@ -13,8 +13,8 @@
  *   import { Canvas, useFrame } from '@react-three/fiber'
  */
 
-import { createRoot as createRootImpl } from './core/renderer'
-import { Canvas as CanvasImpl } from './core/Canvas'
+import { createRoot as createRootImpl } from './core/root'
+import { Canvas as CanvasImpl } from './web/Canvas'
 import type * as ReactThreeFiber from '../types/entries/default'
 import type { CanvasProps, ReconcilerRoot, RendererProvider, ThreeElementsOf } from '#types'
 export type { ReactThreeFiber }

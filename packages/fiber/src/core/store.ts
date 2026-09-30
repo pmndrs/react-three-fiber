@@ -1,5 +1,5 @@
 // Types only. Core never imports a three value: the Vector3/Frustum/... a store needs are created
-// once its root has loaded a renderer support (see ./three.ts and configure() in ./renderer.tsx).
+// once its root has loaded a renderer support (see ./three.ts and configure() in ./configuration.ts).
 import type { WebGLRenderer, Scene, Raycaster, Vector2, Vector3, Frustum } from 'three'
 import type { WebGPURenderer } from 'three/webgpu'
 import * as React from 'react'
@@ -40,7 +40,7 @@ export { context } from './context'
  *
  * The store starts unconfigured: the renderer, `camera`, `scene`, `raycaster`, `frustum` and `pointer`
  * are `null` placeholders until the root's renderer support has loaded and `configure()` in
- * `renderer.tsx` fills them in. Only core's part of `RootState` is created here; packages building on
+ * `configuration.ts` fills them in. Only core's part of `RootState` is created here; packages building on
  * fiber add their own fields through root extensions.
  *
  * Besides the initial state, the store wires up:
@@ -304,7 +304,7 @@ export const createStore = (
         // The renderer support configure() loads for this root
         support: null as unknown as RendererSupport,
 
-        // Scheduler for useFrameNext (initialized in renderer.tsx)
+        // Scheduler for useFrameNext (initialized in loop.ts)
         scheduler: null,
 
         // Replaces the default render call when set (see setRenderOverride)
@@ -433,7 +433,7 @@ export const createStore = (
       // forever, which surfaces as a per-frame GPUValidationError about mismatched attachment
       // sizes. updateSize() compounds it by deleting the *active* target rather than the resized
       // one, so it cannot be called safely from here. The flush happens in the canvas-target job
-      // (see renderer.tsx), which runs in the `start` phase where our own target is guaranteed
+      // (see loop.ts), which runs in the `start` phase where our own target is guaranteed
       // active. See #3847.
       //
       // When our target *is* the active one (a lone primary owns the renderer's default target,
@@ -466,7 +466,10 @@ export const createStore = (
   })
 
   // Invalidate on any change
-  rootStore.subscribe((state) => invalidate(state))
+  rootStore.subscribe((state) => {
+    // Configuration and committed teardown can still publish state while the root is inactive.
+    if (state.internal.active) invalidate(state)
+  })
 
   // Return root state
   return rootStore

@@ -19,7 +19,7 @@ import { render } from '@testing-library/react'
 import * as THREE from 'three'
 
 import { Canvas } from '../src'
-import { _roots } from '../src/core/renderer'
+import { _roots } from '../src/core/root'
 import type { RootState } from '../src'
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))

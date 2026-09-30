@@ -10,10 +10,10 @@
  * - Prop markers (fromRef, once)
  */
 
-export * from './react'
+export { useIsomorphicLayoutEffect, useMutableCallback, useBridge, Block, ErrorBoundary } from './react'
 export * from './instance'
 export * from './props'
-export * from './three'
+export { calculateDpr, getUuidPrefix, updateCamera, updateFrustum } from './three'
 export * from './is'
 export * from './fromRef'
 export * from './once'

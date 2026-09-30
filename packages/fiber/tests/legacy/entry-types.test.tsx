@@ -20,7 +20,7 @@ import type { WebGLRenderer } from 'three'
 
 import { useThree, useFrame, Canvas } from '../../src/legacy'
 import { useThree as useThreeCore, useFrame as useFrameCore } from '../../src/core'
-import { Canvas as CanvasCore } from '../../src/core/Canvas'
+import { Canvas as CanvasCore } from '../../src/web/Canvas'
 import type { RootState as LegacyRootState } from '../../src/legacy'
 
 /** Never invoked — this exists so `tsc` checks the bodies. */

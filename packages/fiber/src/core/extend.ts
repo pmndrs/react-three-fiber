@@ -1,15 +1,15 @@
 import type * as React from 'react'
 import type { ThreeElement } from '../../types/three'
-import type { Catalogue, ConstructorRepresentation } from '#types'
+import type { Catalogue, ConstructorRepresentation, RootStore } from '#types'
 
 //* Explicit element registrations ==============================
 // `extend()` is for constructors three does not ship: a user's own class, a drei component, a
 // three addon. The registry is one global, shared through Symbol.for() so a registration made
 // through one copy of fiber is seen by every other (an app on `@react-three/fiber` next to a
 // library on `/legacy`). It is consulted first when an element name is resolved; what is not
-// registered here is looked up in the three namespace of the root's own renderer (see catalogue.ts).
+// registered here is looked up in the three namespace of the root's own renderer (see resolveConstructor below).
 const R3F_CATALOGUE = Symbol.for('@react-three/fiber.catalogue')
-export const catalogue: Catalogue = (globalThis as any)[R3F_CATALOGUE] ?? ((globalThis as any)[R3F_CATALOGUE] = {})
+const catalogue: Catalogue = (globalThis as any)[R3F_CATALOGUE] ?? ((globalThis as any)[R3F_CATALOGUE] = {})
 
 // `extend(SomeClass)` returns a generated element id. The counter behind it has to be shared exactly
 // as widely as the catalogue: two copies of fiber each starting at 0 both write `catalogue['0']`, and
@@ -19,7 +19,7 @@ const ids = globalThis as any as { [R3F_EXTEND_ID]?: number }
 
 export const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
 
-export const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
+const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
 
 /**
  * Registers constructors so they can be rendered as JSX elements.
@@ -66,3 +66,24 @@ export function extend(
     }
   }
 }
+
+//* Element name resolution ==============================
+// An element name (`Mesh`, `MeshBasicNodeMaterial`, a user's `CustomThing`) resolves in two steps:
+//
+// 1. Explicit `extend()` registrations, shared across every copy of fiber. These win whenever they
+//    were made, so `extend({ Mesh: MyMesh })` overrides three's Mesh on every root.
+// 2. The three namespace of the renderer *this root* loaded (`state.internal.support.three`). A
+//    WebGPU root sees node materials; a WebGL root does not, and gets the same "not part of the THREE
+//    namespace" error it always did instead of a class that would fail at render.
+//
+// There is no `extend(THREE)` at import time any more. That call is what forced every entry to carry
+// a whole three namespace in its eager graph, renderer included.
+
+/** Resolve an element name to the constructor this root would instantiate for it, if any. */
+export function resolveConstructor(name: string, root: RootStore): ConstructorRepresentation | undefined {
+  if (Object.prototype.hasOwnProperty.call(catalogue, name)) return catalogue[name]
+  const object = root.getState().internal.support?.three[name as keyof RendererNamespace]
+  return isConstructor(object) ? object : undefined
+}
+
+type RendererNamespace = NonNullable<ReturnType<RootStore['getState']>['internal']['support']>['three']

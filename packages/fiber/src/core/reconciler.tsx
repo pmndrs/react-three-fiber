@@ -36,10 +36,8 @@ import { removeInteractivity, swapInteractivity } from './events'
 
 //* Type Imports ==============================
 import type { RootStore, Instance, HostConfig } from '#types'
-import { extend, toPascalCase } from './extend'
-import { resolveConstructor } from './catalogue'
+import { extend, toPascalCase, resolveConstructor } from './extend'
 
-// `extend` keeps its historical home in the public API; it lives in ./extend with the catalogue.
 export { extend }
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
@@ -133,6 +131,7 @@ function hideInstance(instance: HostConfig['instance']): void {
     if (instance.props.attach && instance.parent?.object) {
       detach(instance.parent, instance)
     } else if (isObject3D(instance.object)) {
+      instance.previousVisible = instance.object.visible
       instance.object.visible = false
     }
 
@@ -145,10 +144,11 @@ function unhideInstance(instance: HostConfig['instance']): void {
   if (instance.isHidden) {
     if (instance.props.attach && instance.parent?.object) {
       attach(instance.parent, instance)
-    } else if (isObject3D(instance.object) && instance.props.visible !== false) {
-      instance.object.visible = true
+    } else if (isObject3D(instance.object)) {
+      instance.object.visible = instance.previousVisible ?? true
     }
 
+    instance.previousVisible = undefined
     instance.isHidden = false
     invalidateInstance(instance)
   }
@@ -869,3 +869,14 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   // https://github.com/facebook/react/pull/34522
   getSuspendedCommitReason: (_state: any, _rootContainer: any) => null,
 })
+
+/**
+ * Force React to flush any updates inside the provided callback synchronously and immediately.
+ * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
+ * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
+ * having to revert to a non-React solution. Note: this will only flush updates within the `Canvas` root.
+ */
+export function flushSync<R>(fn: () => R): R {
+  // @ts-ignore - reconciler types are not maintained
+  return reconciler.flushSyncFromReconciler(fn)
+}

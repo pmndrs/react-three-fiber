@@ -299,6 +299,9 @@ describe('per-canvas frameloop (#3852)', () => {
     expect(renderSpyB).not.toHaveBeenCalled()
 
     await act(async () => {
+      // Return size ownership to configuration before testing the configured resize path.
+      // Otherwise configure correctly preserves the preceding imperative setSize(640, 480).
+      storeA.getState().setSize()
       await rootA.configure({
         renderer: rendererA,
         frameloop: 'demand',
@@ -306,6 +309,7 @@ describe('per-canvas frameloop (#3852)', () => {
       })
       raf.flush(1032)
     })
+    expect(storeA.getState().size).toMatchObject({ width: 800, height: 600 })
     expect(renderSpyA).toHaveBeenCalledTimes(2)
     expect(renderSpyB).not.toHaveBeenCalled()
   })

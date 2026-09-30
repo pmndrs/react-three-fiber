@@ -10,7 +10,7 @@ import { ReconcilerRoot, createRoot, Canvas, useThree } from '../src/index'
  *  - the `setSize` ownership state machine in `src/core/store.ts`
  *    (setSize() reset, setSize(n) square, setSize(w, h) rectangle, and the
  *    imperative-ownership transitions vs. auto/measured sizing during configure)
- *  - the `width` / `height` / `forceEven` Canvas props in `src/core/Canvas.tsx`
+ *  - the `width` / `height` / `forceEven` Canvas props in `src/web/Canvas.tsx`
  *    (props override the measured container size; forceEven rounds up to even).
  *
  * All assertions read the store `size` state directly, so nothing here needs a GPU.
