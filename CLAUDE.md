@@ -55,7 +55,7 @@ How core reaches three at runtime:
 
 - `state.internal.support` — the loaded support: `kind`, `three` (the namespace, also the JSX constructors for this root), `Renderer`, `RenderTarget`, `CubeRenderTarget`, and on WebGPU `CanvasTarget` + `occlusion`.
 - `getThree()` (`src/core/three.ts`) — three's shared core (`Vector3`, `Scene`, constants, ...), registered by the first support that loads. Both flavours export the same objects for these.
-- JSX names resolve explicit `extend()` registrations first, then `support.three` (`src/core/catalogue.ts`). No entry calls `extend(THREE)` at import time.
+- JSX names resolve explicit `extend()` registrations first, then `support.three` (`src/core/extend.ts`). No entry calls `extend(THREE)` at import time.
 
 ### Package Structure
 
@@ -80,7 +80,7 @@ packages/
 - **Reconciler**: `packages/fiber/src/core/reconciler.tsx` - React Reconciler → Three.js mapping
 - **Store**: `packages/fiber/src/core/store.ts` - Zustand state (canvas, renderer, scene, camera)
 - **Events**: `packages/fiber/src/core/events.ts` - Pointer events, raycasting, event bubbling
-- **Canvas**: `packages/fiber/src/core/Canvas.tsx` - Top-level Canvas component
+- **Canvas**: `packages/fiber/src/web/Canvas.tsx` - Top-level Canvas component
 - **Hooks**: `packages/fiber/src/core/hooks/` - useFrame, useThree, useLoader, etc.
 
 ### Adding Features

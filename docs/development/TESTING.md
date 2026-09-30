@@ -49,7 +49,7 @@ pnpm vitest -t "interactivePriority"              # by test name
 
 ### What Tier 1 covers
 
-- **Pure-JS logic** — the multi-canvas `canvasRegistry`, the `renderer` config-bag parser, `ScopedStore` Proxy semantics, prop diffing, background parsing.
+- **Pure-JS logic** — the multi-canvas registry in `renderer.ts`, the `renderer` config-bag parser, `ScopedStore` Proxy semantics, prop diffing, background parsing.
 
 > **The frame scheduler is an external dependency** (`@pmndrs/scheduler`) as of alpha.3 — its internals (phase graph, topo sort, fps rate limiter) are unit-tested **upstream**, not here. This repo tests the **integration**: that `useFrame` drives the scheduler correctly (phase ordering, render-phase takeover, fps throttling end-to-end, pause/resume). Don't re-test scheduler internals in R3F.
 
@@ -184,7 +184,7 @@ These are the v10-_changed_ surfaces with little or no dedicated coverage — th
 - **Render-phase takeover** — default render skipped when a `{ phase: 'render' }` job is registered; resumes on unmount. _(integration with `@pmndrs/scheduler`)_
 - **fps throttling end-to-end** via `useFrame({ fps: N })` (`drop: true/false`). _(integration, not the upstream `shouldRun` predicate)_
 - **Canvas size control** — `width`/`height`/`forceEven`; `setSize()` variants + ownership state machine; DPR.
-- **Multi-canvas pure-JS** — `canvasRegistry` register/wait/unregister; the `renderer` config-bag parser.
+- **Multi-canvas pure-JS** — `renderer.ts` register/wait/unregister; the `renderer` config-bag parser.
 - **`ScopedStore` Proxy** — get / `.scope()` / `.has()` / `.keys()` / `Object.keys()` / spread / `for…in` / missing-scope.
 - **`interactivePriority` sort**, **XR `registerPointer`/`unregisterPointer`**, **frame-timed event edges**, **`textureColorSpace`**, **`gl` deprecation warning path**, **`useRenderTarget` per-entry differences**.
 - **WebGPU hook lifecycle via the mock** — `useUniforms` / `useNodes` / `useBuffers` / `useGPUStorage` / `useRenderPipeline` create/update/dispose/rebuild; `_hmrVersion` rebuild logic.
