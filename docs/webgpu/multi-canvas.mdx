@@ -110,7 +110,7 @@ function App() {
 
 Each canvas maintains its own scene graph and camera, event handling, and state (its own Zustand store).
 
-Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context.
+Secondary canvases share the `WebGPURenderer` instance and its GPU resources/context. Renderer-wide settings (`shadows`, tone mapping, output color space and other `renderer` options) come from the primary, which owns the renderer: a secondary sharing it does not apply its own, so it cannot reset the primary's.
 
 The `primaryStore` on each canvas's state provides access to the primary's scene/camera, enabling advanced patterns like HUDs. TSL resources (uniforms, nodes, buffers, GPU storage) are shared automatically: they live on the primary's `RootState`, each secondary holds the same map objects, and portals inherit them from their parent, so `state.uniforms` (and the `@react-three/tsl` hooks) read the same set on every canvas and portal.
 
@@ -120,7 +120,7 @@ R3F automatically manages `CanvasTarget` switching across canvases. A job in the
 
 When `navigator.gpu` is unavailable, three's `WebGPURenderer` silently falls back to its WebGL2 backend. A WebGL context is bound to the canvas element it was created on, so a renderer cannot be shared across canvases in that environment. A secondary whose primary fell back therefore creates its own renderer, forced onto the same WebGL2 backend (`forceWebGL`), and renders independently: scenes stay correct, at the cost of one GPU context per canvas instead of one shared.
 
-Such a fallback secondary owns its renderer, so it is a standalone root: it is not flagged `internal.isSecondary` (which marks a canvas borrowing another's renderer) and its renderer's default canvas target is never disposed by teardown. `internal.sharedRendererFallback` records the fallback. GPU resources cannot cross GL contexts, so TSL resources stay local (`primaryStore` self-references), and a fallback secondary is never registered as a shareable primary for further canvases.
+Such a fallback secondary owns its renderer, so it is a standalone root: it is not flagged `internal.isSecondary` (which marks a canvas borrowing another's renderer), it applies its own `shadows` and `renderer` options, and unmounting it disposes the renderer R3F built for it (a renderer instance you pass stays yours), whether or not the primary is still mounted. `internal.sharedRendererFallback` records the fallback. GPU resources cannot cross GL contexts, so TSL resources stay local (`primaryStore` self-references, so the HUD pattern above sees the secondary's own scene), and a fallback secondary is never registered as a shareable primary for further canvases.
 
 ## API Reference
 
