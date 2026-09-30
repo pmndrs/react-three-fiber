@@ -64,6 +64,7 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
 type InputLike = string | string[] | string[][] | Readonly<string | string[] | string[][]>
 type LoaderLike = THREE.Loader<any, InputLike>
 type GLTFLike = { scene: THREE.Object3D }
+type CacheKeyLike = InputLike
 
 type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =
   T extends ConstructorRepresentation<LoaderLike> ? InstanceType<T> : T
@@ -139,10 +140,12 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
   input: I,
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
+  cacheKey?: CacheKeyLike,
 ) {
   // Use suspense to load async assets
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
+  const inputs = (Array.isArray(input) ? input : [input]) as string[]
+  const keys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
+  const results = suspend(() => loadingFn(extensions, onProgress)(loader, ...inputs), [loader, ...keys], { equal: is.equ })
   // Return the object(s)
   return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
@@ -154,9 +157,11 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
   loader: L,
   input: I,
   extensions?: Extensions<L>,
+  cacheKey?: CacheKeyLike,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(loadingFn(extensions), [loader, ...keys])
+  const inputs = (Array.isArray(input) ? input : [input]) as string[]
+  const keys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
+  return preload(() => loadingFn(extensions)(loader, ...inputs), [loader, ...keys])
 }
 
 /**
@@ -165,7 +170,8 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
 useLoader.clear = function <I extends InputLike, L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
   loader: L,
   input: I,
+  cacheKey?: CacheKeyLike,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  const keys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
   return clear([loader, ...keys])
 }

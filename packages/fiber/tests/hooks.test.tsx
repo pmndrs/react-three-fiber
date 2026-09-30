@@ -194,6 +194,57 @@ describe('hooks', () => {
     expect(proto).toBeInstanceOf(Loader)
   })
 
+  it('can use a custom cache key with useLoader', async () => {
+    const loadedObjects: THREE.Object3D[] = []
+    const loadMock = jest.fn((url: string, onLoad: (result: THREE.Object3D) => void) => {
+      const object = new THREE.Group()
+      object.name = url
+      loadedObjects.push(object)
+      onLoad(object)
+    })
+
+    class Loader extends THREE.Loader<THREE.Object3D, string> {
+      load = loadMock
+    }
+
+    function Test({ url, cacheKey }: { url: string; cacheKey: string }) {
+      const object = useLoader(Loader, url, undefined, undefined, cacheKey)
+      return <primitive object={object} />
+    }
+
+    await act(async () => root.render(<Test url="/model.glb?token=abc" cacheKey="model-1" />))
+    await act(async () => root.render(<Test url="/model.glb?token=def" cacheKey="model-1" />))
+
+    expect(loadMock).toHaveBeenCalledTimes(1)
+    expect(loadedObjects).toHaveLength(1)
+  })
+
+  it('can clear useLoader cache by custom cache key', async () => {
+    const loadedObjects: THREE.Object3D[] = []
+    const loadMock = jest.fn((url: string, onLoad: (result: THREE.Object3D) => void) => {
+      const object = new THREE.Group()
+      object.name = url
+      loadedObjects.push(object)
+      onLoad(object)
+    })
+
+    class Loader extends THREE.Loader<THREE.Object3D, string> {
+      load = loadMock
+    }
+
+    function Test({ url, cacheKey }: { url: string; cacheKey: string }) {
+      const object = useLoader(Loader, url, undefined, undefined, cacheKey)
+      return <primitive object={object} />
+    }
+
+    await act(async () => root.render(<Test url="/model.glb?token=abc" cacheKey="model-1" />))
+    useLoader.clear(Loader, '/model.glb?token=def', 'model-1')
+    await act(async () => root.render(<Test url="/model.glb?token=def" cacheKey="model-1" />))
+
+    expect(loadMock).toHaveBeenCalledTimes(2)
+    expect(loadedObjects).toHaveLength(2)
+  })
+
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
