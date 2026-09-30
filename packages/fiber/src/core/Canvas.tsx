@@ -7,7 +7,7 @@ import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
 import { Environment } from './components/Environment/Environment'
 import { parseBackground } from './utils/parseBackground'
-import { parseRendererConfig } from './utils/parseRendererConfig'
+import { DEFAULT_PRIMARY, announcePrimary, markWithdrawing, withdrawPrimary } from './canvasRegistry'
 import { notifyRootExtensionsHmr } from './extensions'
 
 //* Type Imports ==============================
@@ -26,11 +26,13 @@ function CanvasImpl({
   style,
   id,
   gl,
-  renderer: rendererProp,
+  renderer,
+  primary,
+  share,
+  scheduler,
   events = createPointerEvents,
   eventSource,
   eventPrefix,
-  shadows,
   orthographic,
   frameloop,
   dpr,
@@ -52,8 +54,15 @@ function CanvasImpl({
   provider,
   ...props
 }: CanvasProps & CanvasProviderProps) {
-  // Extract nested props (primaryCanvas, scheduler) from renderer object if it's a config bag rather than a renderer instance
-  const { primaryCanvas, scheduler, renderer } = parseRendererConfig(rendererProp)
+  // Props v10 removed: kept off the <div> and handed to configure(), which throws naming the new API
+  const {
+    shadows: removedShadows,
+    primaryCanvas: removedPrimaryCanvas,
+    ...divProps
+  } = props as typeof props & {
+    shadows?: unknown
+    primaryCanvas?: unknown
+  }
   const Bridge = useBridge()
 
   //* Background Prop Parsing ==============================
@@ -168,13 +177,13 @@ function CanvasImpl({
         const configured = await root.current
           .configure({
             id,
-            primaryCanvas,
+            primary,
+            share,
             scheduler,
             gl,
             renderer,
             scene,
             events,
-            shadows,
             orthographic,
             frameloop,
             dpr,
@@ -187,6 +196,9 @@ function CanvasImpl({
             // Store size props for reset functionality
             _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
             forceEven,
+            // Continue the announcement made by the insertion effect below
+            _primaryToken: primaryToken,
+            ...({ shadows: removedShadows, primaryCanvas: removedPrimaryCanvas } as {}),
             // Pass mutable reference to onPointerMissed so it's free to update
             onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
             onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
@@ -257,21 +269,37 @@ function CanvasImpl({
   // Insertion effects survive Activity hiding and StrictMode effect replay: their cleanup runs only
   // when the Canvas is finally removed, including removal while an Activity hides it (React 19.2+),
   // when its passive effects are already gone and the cleanup below never runs again
+  //
+  // A `<Canvas primary>` announces itself here, synchronously on mount: insertion effects run for the
+  // whole commit before any layout effect, so a canvas configuring in the same commit (whatever its
+  // place in the tree) already sees the primary coming and waits to share its renderer instead of
+  // building its own. Read once at mount, like the renderer itself; configure() continues the
+  // announcement under the same token.
   const insertionMounted = React.useRef(false)
+  const [primaryToken] = React.useState(() => ({}))
+  const primaryKey = React.useRef<string | null>(null)
   React.useInsertionEffect(() => {
     insertionMounted.current = true
+    if (primary && provider.webgpu) {
+      primaryKey.current ??= id || DEFAULT_PRIMARY
+      announcePrimary(primaryKey.current, primaryToken)
+    }
     return () => {
       insertionMounted.current = false
+      // A primary about to go stops counting for new canvases now, but only withdraws below
+      if (primaryKey.current) markWithdrawing(primaryToken)
       // Fast Refresh replays this effect when Canvas.tsx is edited, running the setup right after
       // this cleanup in the same commit. Only a cleanup nothing re-armed is a real removal
       queueMicrotask(() => {
         if (insertionMounted.current) return
+        if (primaryKey.current) withdrawPrimary(primaryKey.current, primaryToken)
         // Through the root handle: a hidden Activity has already detached canvasRef
         const current = root.current
         root.current = null!
         current?.unmount()
       })
     }
+    // Mount-time values on purpose: a primary is decided when its renderer is created
   }, [])
 
   // Before 19.2, React skips insertion cleanups in a subtree Suspense has hidden but still runs
@@ -360,7 +388,7 @@ function CanvasImpl({
         pointerEvents,
         ...style,
       }}
-      {...props}>
+      {...divProps}>
       {fallbackVisible ? (
         // Renderer setup failed: render the fallback as visible DOM. Inside <canvas> (below)
         // it exists in the tree but browsers never paint it, which is the whole bug (#3757).

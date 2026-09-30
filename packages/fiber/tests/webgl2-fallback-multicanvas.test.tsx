@@ -132,30 +132,28 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const root = createRoot(canvas)
     roots.push(root)
     const store = await act(async () =>
-      (await root.configure({ id, renderer, size, dpr: 1, frameloop: 'never' })).render(<mesh />),
+      (await root.configure({ id, primary: true, renderer, size, dpr: 1, frameloop: 'never' })).render(<mesh />),
     )
     return { canvas, renderer, root, store }
   }
 
-  async function mountSecondary(primaryCanvas: string, { fallback }: { fallback?: boolean } = {}) {
+  async function mountSecondary(primaryId: string) {
     const canvas = createCanvas()
-    // The secondary's own renderer: what r3f must construct when the primary fell
-    // back. Handed over like renderer options; resolveRenderer accepts an instance.
-    const renderer = new MockRenderer({ canvas, webgpu: !fallback })
-    const root = createRoot(canvas)
+    // Core builds the secondary's renderer when the primary fell back (a sharing canvas has no
+    // renderer instance of its own), so its Renderer is the mock
+    const root = createRootWithProvider(canvas, mockProvider())
     roots.push(root)
     const store = await act(async () =>
       (
         await root.configure({
-          primaryCanvas,
-          renderer,
+          share: primaryId,
           size: { width: 320, height: 240, top: 0, left: 0 },
           dpr: 1,
           frameloop: 'never',
-          scheduler: { after: primaryCanvas },
         })
       ).render(<mesh />),
     )
+    const renderer = store.getState().internal.actualRenderer as unknown as MockRenderer
     return { canvas, renderer, root, store }
   }
 
@@ -164,7 +162,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('a fallback secondary renders through its own renderer, not the primary\u2019s', async () => {
     const mainId = `${testPrefix}-main`
     const primary = await mountPrimary(mainId, { fallback: true })
-    const secondary = await mountSecondary(mainId, { fallback: true })
+    const secondary = await mountSecondary(mainId)
 
     expect(primary.store.getState().webGPUSupported).toBe(false)
 
@@ -183,7 +181,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('never re-points the primary\u2019s renderer at a canvas its context cannot draw to', async () => {
     const mainId = `${testPrefix}-main`
     const primary = await mountPrimary(mainId, { fallback: true })
-    const secondary = await mountSecondary(mainId, { fallback: true })
+    const secondary = await mountSecondary(mainId)
 
     getScheduler().step(1000)
     getScheduler().step(1016)
@@ -198,7 +196,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('the fallback secondary owns its renderer\u2019s default target around its own element', async () => {
     const mainId = `${testPrefix}-main`
     const primary = await mountPrimary(mainId, { fallback: true })
-    const secondary = await mountSecondary(mainId, { fallback: true })
+    const secondary = await mountSecondary(mainId)
 
     const canvasTarget = secondary.store.getState().internal.canvasTarget!
     expect(canvasTarget).toBe(secondary.renderer.getCanvasTarget())
@@ -211,7 +209,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('sizes its own renderer to its own canvas before init creates GPU resources', async () => {
     const mainId = `${testPrefix}-main`
     await mountPrimary(mainId, { fallback: true })
-    const secondary = await mountSecondary(mainId, { fallback: true })
+    const secondary = await mountSecondary(mainId)
 
     expect(secondary.renderer.sizeAtInit).toEqual({ width: 320, height: 240, dpr: 1 })
   })
@@ -219,7 +217,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('keeps TSL state local and never offers its renderer as a shareable primary', async () => {
     const mainId = `${testPrefix}-main`
     await mountPrimary(mainId, { fallback: true })
-    const secondary = await mountSecondary(mainId, { fallback: true })
+    const secondary = await mountSecondary(mainId)
 
     const state = secondary.store.getState()
     // GPU resources cannot cross GL contexts, so the secondary is its own primary.
@@ -268,7 +266,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const primaryRoot = createRootWithProvider(primaryCanvas, provider)
     roots.push(primaryRoot)
     const primaryStore = await act(async () =>
-      (await primaryRoot.configure({ id: mainId, size, dpr: 1, frameloop: 'never' })).render(<mesh />),
+      (await primaryRoot.configure({ id: mainId, primary: true, size, dpr: 1, frameloop: 'never' })).render(<mesh />),
     )
     expect(primaryStore.getState().webGPUSupported).toBe(false)
 
@@ -279,11 +277,10 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const secondaryStore = await act(async () =>
       (
         await secondaryRoot.configure({
-          primaryCanvas: mainId,
+          share: mainId,
           size: { width: 320, height: 240, top: 0, left: 0 },
           dpr: 1,
           frameloop: 'never',
-          scheduler: { after: mainId },
         })
       ).render(<mesh />),
     )
@@ -348,6 +345,7 @@ describe('multi-canvas under the WebGL2 fallback', () => {
       (
         await primaryRoot.configure({
           id,
+          primary: true,
           renderer: fallback ? undefined : ({ webgpu: true } as any),
           size,
           dpr: 1,
@@ -362,11 +360,10 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     const secondaryStore = await act(async () =>
       (
         await secondaryRoot.configure({
-          primaryCanvas: id,
+          share: id,
           size: { width: 320, height: 240, top: 0, left: 0 },
           dpr: 1,
           frameloop: 'never',
-          scheduler: { after: id },
           ...secondaryProps,
         })
       ).render(<mesh />),
@@ -443,8 +440,11 @@ describe('multi-canvas under the WebGL2 fallback', () => {
   it('a fallback secondary applies its own shadows and renderer props to the renderer it owns', async () => {
     const { primary, secondary } = await mountRealPair(`${testPrefix}-own-settings`, {
       secondaryProps: {
-        shadows: 'variance',
-        renderer: { toneMapping: THREE.NoToneMapping, outputColorSpace: THREE.LinearSRGBColorSpace } as any,
+        renderer: {
+          shadows: 'variance',
+          toneMapping: THREE.NoToneMapping,
+          outputColorSpace: THREE.LinearSRGBColorSpace,
+        } as any,
       },
     })
 
@@ -460,27 +460,47 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     expect(primary.renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
   })
 
-  it('keeps the multi-canvas config keys off the fallback secondary\u2019s renderer', async () => {
+  it('keeps R3F settings off the fallback secondary\u2019s renderer, and constructor options off the instance', async () => {
     const id = `${testPrefix}-bag`
-    // As <Canvas renderer={{ primaryCanvas, scheduler }}> arrives after parseRendererConfig: with
-    // nothing else in the bag, the bag itself is forwarded as the renderer config
     const { secondary } = await mountRealPair(id, {
-      secondaryProps: { renderer: { primaryCanvas: id, scheduler: { after: id } } as any },
+      secondaryProps: {
+        renderer: {
+          shadows: true,
+          textureColorSpace: THREE.LinearSRGBColorSpace,
+          depth: false,
+          trackTimestamp: true,
+          outputBufferType: THREE.HalfFloatType,
+        } as any,
+      },
     })
 
     expect(secondary.store.getState().internal.sharedRendererFallback).toBe(true)
-    expect(secondary.renderer).not.toHaveProperty('primaryCanvas')
-    expect(secondary.renderer).not.toHaveProperty('scheduler')
-    // Nor were they handed to the renderer's constructor
-    expect(secondary.renderer.receivedParams).not.toHaveProperty('primaryCanvas')
+    // R3F's own settings are neither constructor parameters nor renderer properties
+    expect(secondary.renderer.receivedParams).not.toHaveProperty('shadows')
+    expect(secondary.renderer.receivedParams).not.toHaveProperty('textureColorSpace')
+    expect(secondary.renderer).not.toHaveProperty('shadows')
+    expect(secondary.renderer).not.toHaveProperty('textureColorSpace')
+    // Constructor options reach the constructor, and are not re-applied onto the live instance
+    expect(secondary.renderer.receivedParams).toMatchObject({ depth: false, trackTimestamp: true, forceWebGL: true })
+    expect(secondary.renderer).not.toHaveProperty('depth')
+    expect(secondary.renderer).not.toHaveProperty('trackTimestamp')
+    expect(secondary.renderer).not.toHaveProperty('outputBufferType')
+    expect(secondary.renderer).not.toHaveProperty('forceWebGL')
+    // They are applied as their settings instead
+    expect(secondary.renderer.shadowMap.enabled).toBe(true)
+    expect(secondary.store.getState().textureColorSpace).toBe(THREE.LinearSRGBColorSpace)
   })
 
   it('a shared WebGPU secondary leaves the primary\u2019s renderer settings alone (#3981)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { primary, secondary } = await mountRealPair(`${testPrefix}-shared-settings`, {
       fallback: false,
       secondaryProps: {
-        shadows: 'variance',
-        renderer: { toneMapping: THREE.NoToneMapping, outputColorSpace: THREE.LinearSRGBColorSpace } as any,
+        renderer: {
+          shadows: 'variance',
+          toneMapping: THREE.NoToneMapping,
+          outputColorSpace: THREE.LinearSRGBColorSpace,
+        } as any,
       },
     })
 
@@ -491,5 +511,20 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     expect(primary.renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
     // Only the owner wired XR on the shared renderer
     expect(primary.renderer.xr.addEventListener).toHaveBeenCalledTimes(2)
+    // The ignored bag is reported once, however often the canvas re-configures
+    await act(async () => {
+      await secondary.root.configure({
+        share: primary.store.getState().internal.rootId,
+        renderer: { toneMapping: THREE.NoToneMapping } as any,
+        size: { width: 330, height: 240, top: 0, left: 0 },
+        dpr: 1,
+        frameloop: 'never',
+      })
+    })
+    const ignored = warn.mock.calls.filter(([message]) =>
+      String(message).includes('renderer settings on a sharing canvas are ignored'),
+    )
+    expect(ignored).toHaveLength(1)
+    expect(primary.renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
   })
 })

@@ -90,36 +90,27 @@ export async function mountPrimary(children: React.ReactNode, id = `${current}-m
   const renderer = new MockWebGPURenderer({ canvas })
   let store!: RootStore
   await act(async () => {
-    store = (await root.configure({ id, renderer: renderer as any, size, frameloop: 'never' })).render(children)
+    store = (await root.configure({ id, primary: true, renderer: renderer as any, size, frameloop: 'never' })).render(
+      children,
+    )
   })
   return { root, store, id }
 }
 
 /** Starts configuring a secondary. Returns once it has rendered (it waits for its primary). */
-export function startSecondary(
-  primaryCanvas: string,
-  children: React.ReactNode,
-  id = `${current}-sec-${roots.length}`,
-) {
+export function startSecondary(primaryId: string, children: React.ReactNode, id = `${current}-sec-${roots.length}`) {
   const canvas = createCanvas()
   const root = createRoot(canvas)
   roots.push(root)
   const ready = (async () => {
-    const configured = await root.configure({
-      id,
-      primaryCanvas,
-      renderer: { primaryCanvas } as any,
-      size,
-      frameloop: 'never',
-      scheduler: { after: primaryCanvas },
-    })
+    const configured = await root.configure({ id, share: primaryId, size, frameloop: 'never' })
     return configured.render(children)
   })()
   return { root, ready }
 }
 
-export async function mountSecondary(primaryCanvas: string, children: React.ReactNode) {
-  const { root, ready } = startSecondary(primaryCanvas, children)
+export async function mountSecondary(primaryId: string, children: React.ReactNode) {
+  const { root, ready } = startSecondary(primaryId, children)
   let store!: RootStore
   await act(async () => {
     store = await ready

@@ -77,10 +77,12 @@ describe('a borrowing secondary leaves the shared renderer alone', () => {
   async function mountPrimary() {
     const canvas = createCanvas()
     const renderer = new SharedMockRenderer({ canvas })
+    // A renderer instance keeps the shadow map its creator configured
+    renderer.shadowMap.enabled = true
     const root = createRoot(canvas)
     roots.push(root)
     const store = await act(async () =>
-      (await root.configure({ id: mainId, renderer, size, dpr: 1, frameloop: 'never', shadows: true })).render(
+      (await root.configure({ id: mainId, primary: true, renderer, size, dpr: 1, frameloop: 'never' })).render(
         <mesh />,
       ),
     )
@@ -94,12 +96,10 @@ describe('a borrowing secondary leaves the shared renderer alone', () => {
     const store = await act(async () =>
       (
         await root.configure({
-          primaryCanvas: mainId,
           renderer: rendererProps,
           size: { width: 320, height: 240, top: 0, left: 0 },
           dpr: 1,
           frameloop: 'never',
-          scheduler: { after: mainId },
         })
       ).render(<mesh />),
     )
@@ -118,6 +118,7 @@ describe('a borrowing secondary leaves the shared renderer alone', () => {
   })
 
   it("keeps the owner's tone mapping; neither defaults nor the secondary's renderer props reach the shared instance", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const primary = await mountPrimary()
     // A user-set value, as applyProps would leave it after `<Canvas renderer={{ toneMapping }}>`.
     primary.renderer.toneMapping = THREE.NoToneMapping
@@ -129,6 +130,8 @@ describe('a borrowing secondary leaves the shared renderer alone', () => {
     // defaults, and then applied its renderer props on top.
     expect(primary.renderer.toneMapping).toBe(THREE.NoToneMapping)
     expect(primary.renderer.outputColorSpace).toBe(THREE.LinearSRGBColorSpace)
+    // The ignored bag is reported, pointing at the primary
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('set them on the <Canvas primary>'))
   })
 
   it('wires XR session listeners once, on the renderer owner', async () => {

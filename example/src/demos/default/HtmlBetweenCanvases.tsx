@@ -64,7 +64,7 @@ export default function HtmlBetweenCanvases() {
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Background 3D Layer */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <Canvas id="background" renderer camera={{ near: 5, far: 1000 }}>
+        <Canvas id="background" primary camera={{ near: 5, far: 1000 }}>
           <StandardScene />
         </Canvas>
       </div>
@@ -124,7 +124,7 @@ const TopCanvas = () => {
   // Sync the main canvas with this top canvas.
   return (
     <Canvas
-      renderer={{ primaryCanvas: 'background' }}
+      share="background"
       camera={{ near: 0.1, far: 5 }}
       style={{ background: 'transparent', position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
       <TopScene />

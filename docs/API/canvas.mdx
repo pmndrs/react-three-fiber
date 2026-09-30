@@ -27,12 +27,15 @@ const App = () => (
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | children        | three.js JSX elements or regular components                                                                                                       |                                                            |
 | fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                            |
-| renderer        | Selects/configures the renderer. Omit for WebGL (default). Pass `renderer` (boolean shorthand for `renderer={{}}`), a config bag, a renderer instance, or a sync/async callback to use **WebGPU** — R3F handles `init()` for you. Also accepts a config bag for multi-canvas (`{ primaryCanvas, scheduler }`) and color settings (`{ textureColorSpace }`) | WebGL |
-| gl              | **Deprecated** — WebGL-only renderer props/instance. Prefer `renderer`. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}` | `{}`                                  |
+| renderer        | Selects/configures the renderer. Omit for WebGL (default). Pass `renderer` (boolean shorthand for `renderer={{}}`), a props bag, a renderer instance, or a sync/async callback to use **WebGPU** — R3F handles `init()` for you. The props bag takes constructor parameters, renderer properties and R3F's renderer settings `shadows` and `textureColorSpace`; all of it is honored only by a canvas that owns its renderer (see [Renderer settings](#renderer-settings)) | WebGL |
+| gl              | **Deprecated** — WebGL-only renderer props/instance. Prefer `renderer`. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`, and the same `shadows` / `textureColorSpace` settings as `renderer` | `{}`                                  |
+| id              | Canvas id: sets the `<canvas>` element's `id`, names the canvas for `scheduler` `before`/`after`, and for `share="id"` on a `primary` | `undefined` |
+| primary         | **WebGPU.** This canvas owns the renderer other canvases share: every other WebGPU canvas mounted with or after it borrows its renderer unless it passes `share={false}` or its own renderer instance/factory. Implies WebGPU on `@react-three/fiber`; not on `/legacy`. See [Multi-Canvas](../webgpu/multi-canvas) | `false` |
+| share           | **WebGPU.** `"id"` shares the renderer of `<Canvas id="id" primary>` (needed when several primaries are mounted); `false` owns a renderer even while a primary is mounted. Omitted: share the single primary, if any. Not on `/legacy` | `undefined` |
+| scheduler       | This canvas's place in the frame loop: `{ before, after, order, fps }`. `before`/`after` take canvas ids, `order` sorts numerically (lower first), `fps` caps the default render. A canvas sharing a primary's renderer renders after it unless `before`/`after` is set. See [Frame Loop](../frame-loop#ordering-canvas-roots) | `undefined` |
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
 | background      | Sets the scene background — a CSS color, hex number, `THREE.Color`, a Drei environment preset name, an HDR/EXR/image URL, or a config object. See [Canvas Background](#canvas-background) | `undefined`                            |
-| shadows         | Props that go into `renderer.shadowMap`, `true` for `THREE.PCFShadowMap`, or one of: 'basic', 'percentage', 'soft', 'variance'. `'soft'` is kept only as a deprecated alias of `'percentage'`: both use `THREE.PCFShadowMap` (three.js deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft), and `'soft'` logs a deprecation notice | `false` |
 | raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                       |
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
@@ -65,7 +68,7 @@ It will also create the following scene internals:
 
 - A `THREE.Perspective` camera
 - A `THREE.Orthographic` cam if `orthographic` is true
-- A `THREE.PCFShadowMap` if `shadows` is true
+- A `THREE.PCFShadowMap` if `renderer={{ shadows: true }}` (or `gl={{ shadows: true }}`)
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
 In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/manual/#en/color-management](https://threejs.org/manual/#en/color-management).
@@ -175,9 +178,22 @@ setSize() // reset to props/container
 > [!NOTE]
 > `width`/`height` are logical pixels; DPR multiplies as usual. Set `dpr={1}` for exact pixel dimensions. Use `forceEven` to round dimensions down to even numbers for video encoders.
 
-## Renderer color settings
+## Renderer settings
 
-Renderer color options — `textureColorSpace`, `outputColorSpace`, `toneMapping` — go into the `gl` prop (WebGL) or `renderer` prop (WebGPU):
+Renderer-wide settings go into the `renderer` prop (WebGPU) or `gl` prop (WebGL): constructor parameters (`antialias`, `forceWebGL`, `depth`, ...), renderer properties (`toneMapping`, `outputColorSpace`, ...), and two settings R3F applies itself:
+
+- `shadows`: `true` for `THREE.PCFShadowMap`, one of `'basic'`, `'percentage'`, `'soft'`, `'variance'`, or props assigned to `renderer.shadowMap`. `'soft'` is kept only as a deprecated alias of `'percentage'`: both use `THREE.PCFShadowMap` (three.js deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft), and `'soft'` logs a deprecation notice. Default `false`. Applied to a renderer R3F builds; a renderer instance or factory keeps the `shadowMap` you give it.
+- `textureColorSpace`: the color space of 8-bit input textures loaded in this canvas.
+
+```tsx
+<Canvas renderer={{ shadows: 'variance', toneMapping: THREE.AgXToneMapping }} />
+```
+
+These configure a renderer the canvas owns. A canvas sharing a `<Canvas primary>`'s renderer ignores them (with a development warning) because the primary owns the renderer; `textureColorSpace`, which is per canvas, still applies. Constructor parameters are read once, when the renderer is built: changing them later has no effect.
+
+### Color settings
+
+Renderer color options — `textureColorSpace`, `outputColorSpace`, `toneMapping`:
 
 ```tsx
 // WebGL
@@ -254,7 +270,7 @@ async function app() {
 app()
 ```
 
-`configure()` replaces the root's configuration rather than merging into it, the same way `<Canvas>` passes its full set of props every time it renders. A prop left out of a later call goes back to its default: calling `root.configure({ size })` on its own turns `shadows` off and resets `frameloop` to `'always'` and `dpr` to `[1, 2]`. So keep one config object and spread it into every call, changing only what's new.
+`configure()` replaces the root's configuration rather than merging into it, the same way `<Canvas>` passes its full set of props every time it renders. A prop left out of a later call goes back to its default: calling `root.configure({ size })` on its own drops the `renderer` or `gl` settings (turning shadows off) and resets `frameloop` to `'always'` and `dpr` to `[1, 2]`. So keep one config object and spread it into every call, changing only what's new.
 
 The camera, the scene and the `events` manager are the exception: the camera and scene are created by the first call, the `events` manager by the first call that passes `events`, and all three are kept after that. Leaving `camera` out of a later call does not reset the camera, and `camera` props passed to a later call are not re-applied. To move the camera after the first `configure()`, change it from inside the tree (`useThree`) or through the store `root.render()` returns.
 

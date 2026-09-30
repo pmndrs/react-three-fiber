@@ -92,8 +92,11 @@ export const useRenderTarget = useRenderTargetCore as {
 import type { CanvasProps as CanvasPropsCore } from '../types/canvas'
 import type { JSX } from 'react'
 
-/** Canvas props on the legacy entry: `onCreated` receives `LegacyRootState`. */
-export type LegacyCanvasProps = Omit<CanvasPropsCore, 'onCreated'> & {
+/**
+ * Canvas props on the legacy entry: `onCreated` receives `LegacyRootState`. No `primary` / `share`:
+ * renderer sharing is WebGPU-only. `scheduler` works as on every entry.
+ */
+export type LegacyCanvasProps = Omit<CanvasPropsCore, 'onCreated' | 'primary' | 'share'> & {
   /** Callback after the canvas has rendered (but not yet committed); `state.renderer` is a `WebGLRenderer` */
   onCreated?: (state: LegacyRootState) => void
 }

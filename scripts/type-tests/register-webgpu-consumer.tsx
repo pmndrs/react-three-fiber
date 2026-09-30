@@ -28,12 +28,23 @@ export function Registered() {
   })
 
   createElement(Canvas, { renderer: true, onCreated: (created) => void created.renderer.compute })
-  // The renderer prop is typed: constructor parameters, renderer properties and the config bag
+  // The renderer prop is typed: constructor parameters, renderer properties and R3F's settings
   createElement(Canvas, {
-    renderer: { antialias: true, forceWebGL: true, textureColorSpace: 'srgb', scheduler: { fps: 30 } },
+    renderer: { antialias: true, forceWebGL: true, textureColorSpace: 'srgb', shadows: 'variance' },
   })
   // @ts-expect-error a typo is caught, not swallowed by `any`
   createElement(Canvas, { renderer: { antialis: true } })
+  // Multi-canvas and scheduling are Canvas props
+  createElement(Canvas, { id: 'main', primary: true, renderer: { shadows: true } })
+  createElement(Canvas, { scheduler: { after: 'main', order: 1, fps: 30 } })
+  createElement(Canvas, { share: 'main' })
+  createElement(Canvas, { share: false })
+  // @ts-expect-error scheduler is no longer part of the renderer bag
+  createElement(Canvas, { renderer: { scheduler: { fps: 30 } } })
+  // @ts-expect-error primaryCanvas was removed: <Canvas primary> + share
+  createElement(Canvas, { renderer: { primaryCanvas: 'main' } })
+  // @ts-expect-error shadows moved into the renderer bag
+  createElement(Canvas, { shadows: true })
 
   void [isLegacy, kind, target, gl]
   return null

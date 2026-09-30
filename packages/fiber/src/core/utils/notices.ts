@@ -137,3 +137,15 @@ export function notifyAlpha({ message, link }: AlphaNotice): void {
     console.log(`%cMore info: ${link}`, 'color: #6366f1; font-weight: normal;')
   }
 }
+
+/**
+ * Whether this is a development build. Bundlers replace `process.env.NODE_ENV`; where nothing does
+ * and `process` is missing, warnings stay on.
+ */
+export function isDevelopment(): boolean {
+  try {
+    return process.env.NODE_ENV !== 'production'
+  } catch {
+    return true
+  }
+}

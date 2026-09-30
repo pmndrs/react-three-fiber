@@ -225,6 +225,7 @@ describe('renderer disposal on unmount', () => {
       (
         await root.configure({
           id,
+          primary: true,
           renderer: (props: any) => (renderer = new MockWebGPURenderer(props)),
           size,
           frameloop: 'never',
@@ -234,18 +235,15 @@ describe('renderer disposal on unmount', () => {
     return { canvas, root, store, renderer }
   }
 
-  async function mountSecondary(primaryCanvas: string, id: string) {
+  async function mountSecondary(primaryId: string, id: string) {
     const { canvas, root } = newRoot()
     const store = await act(async () =>
       (
         await root.configure({
           id,
-          primaryCanvas,
-          // As <Canvas renderer={{ primaryCanvas }}> arrives after parseRendererConfig.
-          renderer: { primaryCanvas } as any,
+          share: primaryId,
           size,
           frameloop: 'never',
-          scheduler: { after: primaryCanvas },
         })
       ).render(null),
     )
@@ -281,7 +279,9 @@ describe('renderer disposal on unmount', () => {
     const mainId = `${testPrefix}-main`
     const { canvas, root } = newRoot()
     const renderer = new MockWebGPURenderer({ canvas })
-    await act(async () => (await root.configure({ id: mainId, renderer, size, frameloop: 'never' })).render(null))
+    await act(async () =>
+      (await root.configure({ id: mainId, primary: true, renderer, size, frameloop: 'never' })).render(null),
+    )
     const secondary = await mountSecondary(mainId, `${testPrefix}-sec`)
 
     await unmount(secondary.root)
@@ -385,8 +385,7 @@ describe('renderer disposal on unmount', () => {
     const { root: secondaryRoot } = newRoot()
     // The secondary mounts first and waits for its primary to register.
     const secondaryConfigured = secondaryRoot.configure({
-      primaryCanvas: mainId,
-      renderer: { primaryCanvas: mainId } as any,
+      share: mainId,
       size,
       frameloop: 'never',
     })

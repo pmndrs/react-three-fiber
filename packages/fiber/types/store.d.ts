@@ -140,7 +140,8 @@ export interface InternalState {
    * around the canvas element -- so sizing it is sizing the renderer. A secondary owns a target
    * R3F created for its own element. Either way there is exactly one target per canvas element,
    * and the canvas-target job makes it the renderer's active one before this root renders.
-   * Absent on WebGL and on an id-less WebGPU canvas, where the renderer is sized directly.
+   * Absent on WebGL and on a WebGPU canvas that is neither a primary nor sharing, where the renderer
+   * is sized directly.
    * @see https://threejs.org/docs/#api/en/renderers/common/CanvasTarget
    */
   canvasTarget?: CanvasTarget
@@ -158,18 +159,18 @@ export interface InternalState {
   canvasTargetSizeDirty?: boolean
   /**
    * Whether multi-canvas rendering is active.
-   * True when any canvas uses `renderer={{ primaryCanvas: 'id' }}` to share a renderer.
+   * True on a `<Canvas primary>` once another canvas shares its renderer, and on that canvas.
    * When true, setCanvasTarget is called before each render.
    */
   isMultiCanvas?: boolean
   /**
-   * Whether this canvas is a secondary canvas sharing another's renderer.
-   * True when `target` prop is used.
+   * Whether this canvas is a secondary canvas sharing another's renderer: it found a
+   * `<Canvas primary>` (automatically, or through `share="id"`) and borrows its renderer.
    */
   isSecondary?: boolean
   /**
-   * The id of the primary canvas this secondary canvas targets.
-   * Only set when isSecondary is true.
+   * The id of the primary canvas this secondary canvas shares.
+   * Only set when isSecondary is true and the primary has an `id`.
    */
   targetId?: string
   /**
@@ -179,10 +180,15 @@ export interface InternalState {
    */
   sharedRendererFallback?: boolean
   /**
-   * Function to unregister this primary canvas from the registry.
-   * Only set when this canvas has an `id` prop.
+   * Function to withdraw this primary canvas from the registry.
+   * Only set on a `<Canvas primary>`.
    */
   unregisterPrimary?: () => void
+  /**
+   * Function to stop tracking this canvas as one that built its own WebGPU renderer while no primary
+   * existed (for the late-primary warning).
+   */
+  untrackStandalone?: () => void
   /** Whether canvas dimensions are forced to even numbers */
   forceEven?: boolean
 }
