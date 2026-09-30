@@ -45,8 +45,8 @@ class MockRenderer {
   xr = {
     enabled: false,
     isPresenting: false,
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
     setAnimationLoop: () => {},
   }
   private _initialized = false
@@ -99,7 +99,7 @@ class MockRenderer {
   }
 
   render = vi.fn()
-  dispose() {}
+  dispose = vi.fn()
   forceContextLoss() {}
 }
 
@@ -313,5 +313,168 @@ describe('multi-canvas under the WebGL2 fallback', () => {
     // tsconfig's lib predates Promise.withResolvers; executor form until the target moves.
     await new Promise<void>((resolve) => setTimeout(resolve, 520))
     expect(targetDisposed).toBe(0)
+  })
+
+  //* Real configure path: the fallback secondary's lifetime ==============================
+  // Core constructs every renderer here (a provider whose Renderer is the mock), so each one is
+  // R3F-owned and leased: disposal, XR wiring and renderer-wide settings run as they do in an app.
+
+  function mockProvider(): RendererProvider {
+    const mockSupport = {
+      kind: 'webgpu',
+      three: THREE,
+      Renderer: MockRenderer,
+      RenderTarget: THREE.WebGLRenderTarget,
+      CubeRenderTarget: THREE.WebGLCubeRenderTarget,
+      CanvasTarget,
+    } as unknown as WebGPUSupport
+    return { webgpu: async () => mockSupport }
+  }
+
+  async function mountRealPair(
+    id: string,
+    {
+      fallback = true,
+      secondaryProps = {},
+    }: { fallback?: boolean; secondaryProps?: Partial<Parameters<TestRoot['configure']>[0]> } = {},
+  ) {
+    const provider = mockProvider()
+
+    const primaryRoot = createRootWithProvider(createCanvas(), provider)
+    roots.push(primaryRoot)
+    // Without navigator.gpu the mock picks the WebGL2 backend, as three does; `webgpu: true` pins
+    // the WebGPU backend for the shared case
+    const primaryStore = await act(async () =>
+      (
+        await primaryRoot.configure({
+          id,
+          renderer: fallback ? undefined : ({ webgpu: true } as any),
+          size,
+          dpr: 1,
+          frameloop: 'never',
+        })
+      ).render(<mesh />),
+    )
+
+    const secondaryCanvas = createCanvas()
+    const secondaryRoot = createRootWithProvider(secondaryCanvas, provider)
+    roots.push(secondaryRoot)
+    const secondaryStore = await act(async () =>
+      (
+        await secondaryRoot.configure({
+          primaryCanvas: id,
+          size: { width: 320, height: 240, top: 0, left: 0 },
+          dpr: 1,
+          frameloop: 'never',
+          scheduler: { after: id },
+          ...secondaryProps,
+        })
+      ).render(<mesh />),
+    )
+
+    return {
+      primary: {
+        root: primaryRoot,
+        store: primaryStore,
+        renderer: primaryStore.getState().internal.actualRenderer as unknown as MockRenderer,
+      },
+      secondary: {
+        root: secondaryRoot,
+        store: secondaryStore,
+        canvas: secondaryCanvas,
+        renderer: secondaryStore.getState().internal.actualRenderer as unknown as MockRenderer,
+      },
+    }
+  }
+
+  it('disposes the fallback secondary\u2019s own renderer exactly once on unmount, leaving the primary\u2019s alone', async () => {
+    const { primary, secondary } = await mountRealPair(`${testPrefix}-lease`)
+    expect(secondary.store.getState().internal.sharedRendererFallback).toBe(true)
+    expect(secondary.renderer).not.toBe(primary.renderer)
+
+    await act(async () => secondary.root.unmount())
+    expect(secondary.renderer.dispose).toHaveBeenCalledTimes(1)
+    expect(primary.renderer.dispose).not.toHaveBeenCalled()
+
+    // A second unmount of the same handle must not release the lease again
+    await act(async () => secondary.root.unmount())
+    expect(secondary.renderer.dispose).toHaveBeenCalledTimes(1)
+
+    await act(async () => primary.root.unmount())
+    expect(primary.renderer.dispose).toHaveBeenCalledTimes(1)
+    expect(secondary.renderer.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps a fallback secondary rendering after its primary unmounts', async () => {
+    const { primary, secondary } = await mountRealPair(`${testPrefix}-outlive`)
+
+    await act(async () => primary.root.unmount())
+    expect(primary.renderer.dispose).toHaveBeenCalledTimes(1)
+    // The secondary never borrowed the primary's renderer, so nothing of it goes with the primary
+    expect(secondary.renderer.dispose).not.toHaveBeenCalled()
+
+    secondary.renderer.render.mockClear()
+    getScheduler().step(1000)
+    expect(secondary.renderer.render).toHaveBeenCalledTimes(1)
+
+    await act(async () => secondary.root.unmount())
+    expect(secondary.renderer.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('connects and disconnects the fallback secondary\u2019s XR listeners on its own renderer', async () => {
+    const { primary, secondary } = await mountRealPair(`${testPrefix}-xr`)
+    const xr = secondary.renderer.xr
+
+    expect(xr.addEventListener).toHaveBeenCalledTimes(2)
+    expect(xr.addEventListener.mock.calls.map(([type]) => type).sort()).toEqual(['sessionend', 'sessionstart'])
+    expect(xr.removeEventListener).not.toHaveBeenCalled()
+    // The primary wired its own listeners on its own renderer, once
+    expect(primary.renderer.xr.addEventListener).toHaveBeenCalledTimes(2)
+
+    await act(async () => secondary.root.unmount())
+    expect(xr.removeEventListener).toHaveBeenCalledTimes(2)
+    // The same handlers that were added are the ones removed
+    for (const [type, handler] of xr.addEventListener.mock.calls) {
+      expect(xr.removeEventListener).toHaveBeenCalledWith(type, handler)
+    }
+    expect(primary.renderer.xr.removeEventListener).not.toHaveBeenCalled()
+  })
+
+  it('a fallback secondary applies its own shadows and renderer props to the renderer it owns', async () => {
+    const { primary, secondary } = await mountRealPair(`${testPrefix}-own-settings`, {
+      secondaryProps: {
+        shadows: 'variance',
+        renderer: { toneMapping: THREE.NoToneMapping, outputColorSpace: THREE.LinearSRGBColorSpace } as any,
+      },
+    })
+
+    expect(secondary.store.getState().internal.isSecondary).toBeFalsy()
+    expect(secondary.renderer.shadowMap.enabled).toBe(true)
+    expect(secondary.renderer.shadowMap.type).toBe(THREE.VSMShadowMap)
+    expect(secondary.renderer.toneMapping).toBe(THREE.NoToneMapping)
+    expect(secondary.renderer.outputColorSpace).toBe(THREE.LinearSRGBColorSpace)
+
+    // The primary's renderer keeps the primary's own configuration
+    expect(primary.renderer.shadowMap.enabled).toBe(false)
+    expect(primary.renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(primary.renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
+  })
+
+  it('a shared WebGPU secondary leaves the primary\u2019s renderer settings alone (#3981)', async () => {
+    const { primary, secondary } = await mountRealPair(`${testPrefix}-shared-settings`, {
+      fallback: false,
+      secondaryProps: {
+        shadows: 'variance',
+        renderer: { toneMapping: THREE.NoToneMapping, outputColorSpace: THREE.LinearSRGBColorSpace } as any,
+      },
+    })
+
+    expect(secondary.store.getState().internal.isSecondary).toBe(true)
+    expect(secondary.renderer).toBe(primary.renderer)
+    expect(primary.renderer.shadowMap.enabled).toBe(false)
+    expect(primary.renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(primary.renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
+    // Only the owner wired XR on the shared renderer
+    expect(primary.renderer.xr.addEventListener).toHaveBeenCalledTimes(2)
   })
 })

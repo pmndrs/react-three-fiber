@@ -508,7 +508,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
                 const backend = renderer.backend
                 const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
+                // Its own lease, exactly as a primary takes one: teardown releases it, and the
+                // last release disposes a renderer R3F built. Nothing else borrows it
                 state.internal.actualRenderer = renderer
+                state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
                 // This root owns its renderer, so it is a standalone root: no `isSecondary`
                 // (that flag tells teardown the renderer and its default canvas target are
                 // borrowed, and to skip XR teardown) and no `targetId`.
@@ -1215,7 +1218,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     attempt(() => internal.unregisterPrimary?.())
 
     attempt(() => state.events.disconnect?.())
-    // Secondary canvases share the primary's renderer and its XR session
+    // Secondary canvases share the primary's renderer and its XR session. A WebGL2-fallback
+    // secondary (#3965) owns its renderer and wired its own XR listeners, so it disconnects them.
     // A root whose configure() stopped before setting up XR has no XR manager
     if (!internal.isSecondary && internal.actualRenderer?.xr && state.xr) attempt(() => state.xr.disconnect())
     // Clean up occlusion system and helper group
@@ -1225,7 +1229,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
 
     // Dispose the CanvasTarget we created. A primary's target is the renderer's own
     // default target, which the renderer owns and which may outlive this root (an
-    // external renderer reused across mounts), so only secondaries dispose theirs.
+    // external renderer reused across mounts), so only secondaries dispose theirs. A
+    // WebGL2-fallback secondary holds its own renderer's default target, like a primary.
     const canvasTarget = internal.canvasTarget
     if (internal.isSecondary && canvasTarget?.dispose) attempt(() => canvasTarget.dispose())
 
