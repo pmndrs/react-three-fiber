@@ -127,16 +127,16 @@ export function swapInteractivity(store: RootStore, object: THREE.Object3D, newO
     // every subsequent event, and it holds its own `object`/`eventObject` references — leave those
     // pointing at the discarded object and the replay resolves to a corpse whose `__r3f` link has
     // already been severed, so the drag goes silent even though the capture "survived".
-    const captureData = pointerState.captured.get(object)
-    if (captureData) {
-      pointerState.captured.delete(object)
-      pointerState.captured.set(newObject, {
+    for (const [key, captureData] of Array.from(pointerState.captured)) {
+      const { intersection } = captureData
+      if (key !== object && intersection.object !== object && intersection.eventObject !== object) continue
+      if (key === object) pointerState.captured.delete(key)
+      pointerState.captured.set(key === object ? newObject : key, {
         ...captureData,
         intersection: {
-          ...captureData.intersection,
-          object: captureData.intersection.object === object ? newObject : captureData.intersection.object,
-          eventObject:
-            captureData.intersection.eventObject === object ? newObject : captureData.intersection.eventObject,
+          ...intersection,
+          object: intersection.object === object ? newObject : intersection.object,
+          eventObject: intersection.eventObject === object ? newObject : intersection.eventObject,
         },
       })
     }

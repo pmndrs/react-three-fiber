@@ -621,6 +621,81 @@ describe('events', () => {
 
     const pointerId = 1234
 
+    describe('when the instance is reconstructed mid-capture', () => {
+      const geometry = new THREE.BoxGeometry(2, 2)
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+
+      async function captureThenSwap(App: React.FC<{ material: THREE.Material }>, onMove: ReturnType<typeof vi.fn>) {
+        let result: RenderResult = null!
+        await act(async () => {
+          result = render(<App material={materialA} />)
+        })
+
+        const canvas = getContainer()
+        canvas.setPointerCapture = vi.fn()
+        canvas.releasePointerCapture = vi.fn()
+
+        const down = createPointerEvent('pointerdown', { pointerId })
+        await act(async () => canvas.dispatchEvent(down))
+        expect(canvas.setPointerCapture).toHaveBeenCalledWith(pointerId)
+
+        // Reconstruct the mesh via an args change while the pointer is captured
+        await act(async () => result.rerender(<App material={materialB} />))
+
+        // Moving off the mesh must still reach the capturing handler
+        const moveOut = createPointerEvent('pointermove', {
+          pointerId,
+          offsetX: -10000,
+          offsetY: -10000,
+          clientX: -10000,
+          clientY: -10000,
+        })
+        await act(async () => canvas.dispatchEvent(moveOut))
+
+        expect(onMove).toHaveBeenCalledTimes(1)
+        return onMove.mock.calls[0][0] as any
+      }
+
+      it('keeps the capture on the reconstructed instance', async () => {
+        const onMove = vi.fn()
+
+        function App({ material }: { material: THREE.Material }) {
+          return (
+            <Canvas>
+              <mesh
+                args={[geometry, material]}
+                onPointerDown={(e) => (e.target as any).setPointerCapture(e.pointerId)}
+                onPointerMove={onMove}
+              />
+            </Canvas>
+          )
+        }
+
+        const event = await captureThenSwap(App, onMove)
+        expect((event.eventObject as THREE.Mesh).material).toBe(materialB)
+        expect((event.object as THREE.Mesh).material).toBe(materialB)
+      })
+
+      it('keeps the capture when a child of the capturing object is reconstructed', async () => {
+        const onMove = vi.fn()
+
+        function App({ material }: { material: THREE.Material }) {
+          return (
+            <Canvas>
+              <group onPointerDown={(e) => (e.target as any).setPointerCapture(e.pointerId)} onPointerMove={onMove}>
+                <mesh args={[geometry, material]} />
+              </group>
+            </Canvas>
+          )
+        }
+
+        const event = await captureThenSwap(App, onMove)
+        expect(event.eventObject).toBeInstanceOf(THREE.Group)
+        expect((event.object as THREE.Mesh).material).toBe(materialB)
+      })
+    })
+
     it('should release when the capture target is unmounted', async () => {
       let renderResult: RenderResult = undefined!
       await act(async () => {
