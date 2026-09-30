@@ -44,6 +44,8 @@ import type {
   InjectState,
   RendererProvider,
   RendererSupport,
+  WebGPUSupport,
+  Dpr,
 } from '#types'
 
 export const isRenderer = (def: any) => !!def?.render
@@ -142,6 +144,46 @@ function watchDpr(onChange: () => void): () => void {
 
   listen()
   return unlisten
+}
+
+/**
+ * Resolve, size and init the WebGPURenderer a root renders with itself (not one it borrows).
+ * Returns resolveRenderer's `{ renderer, owned }` unchanged, so the caller leases it with the
+ * right ownership: R3F disposes what it built, never a renderer instance the caller passed in.
+ *
+ * Shared by the primary path and by the multi-canvas WebGL2 fallback (#3965): three
+ * allocates the depth/stencil and MSAA colour buffers from the renderer's *own* canvas
+ * target (`renderer._canvasTarget`, `_width * _pixelRatio`), which reads the canvas
+ * element's width/height once at construction and never again. Writing
+ * canvas.width/height directly therefore only moves the swap chain: the target stays
+ * at 300x150 and so does the depth buffer, and the first frame raises a
+ * GPUValidationError about mismatched attachment sizes. `setSize` goes through the
+ * target, so both stay in step. Before init the resize listener is a no-op, so this
+ * is safe to call here (#3847).
+ */
+async function createOwnedWebGPURenderer<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
+  rendererConfig: RenderProps<TCanvas>['renderer'],
+  defaultGPUProps: Record<string, unknown>,
+  canvas: TCanvas,
+  propsSize: RenderProps<TCanvas>['size'],
+  dpr: Dpr,
+  support: WebGPUSupport,
+): Promise<{ renderer: WebGPURenderer; owned: boolean }> {
+  const resolved = await resolveRenderer(rendererConfig, defaultGPUProps, support.Renderer)
+  const renderer = resolved.renderer as WebGPURenderer
+
+  // Skip init only for pre-initialized external renderers
+  // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+  if (!renderer.hasInitialized?.()) {
+    const size = computeInitialSize(canvas, propsSize)
+    if (size.width > 0 && size.height > 0) {
+      renderer.setPixelRatio(calculateDpr(dpr))
+      renderer.setSize(size.width, size.height, false)
+    }
+    await renderer.init()
+  }
+
+  return { renderer, owned: resolved.owned }
 }
 
 /**
@@ -395,63 +437,111 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
               // Wait for primary canvas to be registered (handles async init timing)
               const primary = await waitForPrimary(primaryCanvas)
 
-              // Use the primary's renderer. The lease keeps it alive while this canvas draws with
-              // it, even if the primary unmounts first
-              renderer = primary.renderer
-              state.internal.actualRenderer = renderer
-              state.internal.releaseRenderer = borrowRenderer(renderer)
+              // #3965: the primary's renderer may have fallen back to its WebGL2 backend
+              // (no navigator.gpu). A WebGL context is bound to the canvas element it was
+              // created on, so setCanvasTarget cannot redirect it onto this canvas: sharing
+              // it would draw this canvas's scene into the primary's element and leave this
+              // one blank. A fallback primary cannot be shared -- the secondary creates its
+              // own renderer (forced onto the same WebGL2 backend, see below) and renders
+              // independently.
+              if (primary.store.getState().webGPUSupported) {
+                // Use the primary's renderer. The lease keeps it alive while this canvas draws
+                // with it, even if the primary unmounts first
+                renderer = primary.renderer
+                state.internal.actualRenderer = renderer
+                state.internal.releaseRenderer = borrowRenderer(renderer)
 
-              // Create a CanvasTarget for this secondary canvas
-              const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
+                // Create a CanvasTarget for this secondary canvas
+                const canvasTarget = new support.CanvasTarget(canvas as HTMLCanvasElement)
 
-              // Enable multi-canvas mode on the primary canvas
-              primary.store.setState((prev) => ({
-                internal: { ...prev.internal, isMultiCanvas: true },
-              }))
+                // Enable multi-canvas mode on the primary canvas
+                primary.store.setState((prev) => ({
+                  internal: { ...prev.internal, isMultiCanvas: true },
+                }))
 
-              // Store secondary canvas info in internal state
-              // primaryStore points to the primary canvas's store for shared TSL resources
-              state.set((prev) => ({
-                webGPUSupported: primary.store.getState().webGPUSupported,
-                renderer: renderer,
-                primaryStore: primary.store,
-                internal: {
-                  ...prev.internal,
-                  canvasTarget,
-                  isMultiCanvas: true,
-                  isSecondary: true,
-                  targetId: primaryCanvas,
-                },
-              }))
+                // Store secondary canvas info in internal state
+                // primaryStore points to the primary canvas's store for shared TSL resources
+                state.set((prev) => ({
+                  webGPUSupported: primary.store.getState().webGPUSupported,
+                  renderer: renderer,
+                  primaryStore: primary.store,
+                  internal: {
+                    ...prev.internal,
+                    canvasTarget,
+                    isMultiCanvas: true,
+                    isSecondary: true,
+                    targetId: primaryCanvas,
+                  },
+                }))
+              } else {
+                //* WebGL2 fallback: own renderer (#3965) ---
+                // The primary fell back to its WebGL2 backend. This root constructs its
+                // own renderer, exactly like a primary, with two differences:
+                // - forceWebGL: the primary already answered the "is WebGPU available"
+                //   question. Forcing the same backend guarantees parity (a primary forced
+                //   onto WebGL2 must not leave this canvas on real WebGPU) and skips a
+                //   second adapter probe.
+                // - it never registers as a primary: a WebGL context is bound to the
+                //   canvas it was created on, so this renderer is as unshareable as the
+                //   primary's.
+                // A renderer instance or factory passed as `renderer` still wins as-is;
+                // its backend is the user's choice.
+                const isPlainConfig = is.obj(rendererConfig) && !is.fun(rendererConfig) && !isRenderer(rendererConfig)
+                const { primaryCanvas: _peeled, ...rendererOptions } = isPlainConfig
+                  ? (rendererConfig as Record<string, unknown>)
+                  : {}
+                const fallbackConfig =
+                  is.fun(rendererConfig) || isRenderer(rendererConfig)
+                    ? rendererConfig
+                    : { ...rendererOptions, forceWebGL: true }
+
+                const resolved = await createOwnedWebGPURenderer(
+                  fallbackConfig,
+                  defaultGPUProps,
+                  canvas,
+                  propsSize,
+                  dpr,
+                  support,
+                )
+                renderer = resolved.renderer
+
+                const backend = renderer.backend
+                const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
+
+                state.internal.actualRenderer = renderer
+                // This root owns its renderer, so it is a standalone root: no `isSecondary`
+                // (that flag tells teardown the renderer and its default canvas target are
+                // borrowed, and to skip XR teardown) and no `targetId`.
+                // `sharedRendererFallback` records why this secondary stopped sharing.
+                // GPU resources cannot cross GL contexts, so TSL resources stay local:
+                // primaryStore self-references, as on any single canvas.
+                state.set((prev) => ({
+                  webGPUSupported: isWebGPUBackend,
+                  renderer: renderer,
+                  primaryStore: store,
+                  internal: {
+                    ...prev.internal,
+                    canvasTarget: (renderer as WebGPURenderer).getCanvasTarget?.(),
+                    sharedRendererFallback: true,
+                  },
+                }))
+              }
             } else {
               //* WebGPU path ---
               // This path is taken when:
               // 1. @react-three/fiber/webgpu - always, even without the renderer prop
               // 2. @react-three/fiber with the renderer prop
-              // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-              const resolved = await resolveRenderer(rendererConfig, defaultGPUProps, support.Renderer)
-              renderer = resolved.renderer as WebGPURenderer
-
-              // WebGPU-specific setup - only init if not already initialized
-              // Allows users to pass pre-initialized external renderers
-              // @see https://github.com/pmndrs/react-three-fiber/issues/3651
-              if (!renderer.hasInitialized?.()) {
-                // Size the renderer before init so its GPU resources are created at the right
-                // size. three sizes the depth/stencil and MSAA colour buffers from its *own*
-                // CanvasTarget (`renderer._canvasTarget`, `_width * _pixelRatio`), which reads the
-                // canvas element's width/height once at construction and never again. Writing
-                // canvas.width/height directly, as this used to, therefore only moved the swap
-                // chain: the target stayed at 300x150 and so did the depth buffer, and the first
-                // frame raised a GPUValidationError about mismatched attachment sizes.
-                // setSize goes through the target, so both stay in step. Before init the resize
-                // listener is a no-op, so this is safe to call here.
-                const size = computeInitialSize(canvas, propsSize)
-                if (size.width > 0 && size.height > 0) {
-                  renderer.setPixelRatio(calculateDpr(dpr))
-                  renderer.setSize(size.width, size.height, false)
-                }
-                await renderer.init()
-              }
+              // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer;
+              // if it is a pre-initialized external renderer, init is skipped (#3651).
+              const resolved = await createOwnedWebGPURenderer(
+                rendererConfig,
+                defaultGPUProps,
+                canvas,
+                propsSize,
+                dpr,
+                support,
+              )
+              renderer = resolved.renderer
 
               // temp, stop the inspector
               //renderer.inspector = new Inspector()
