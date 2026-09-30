@@ -147,7 +147,7 @@ function TakeOver() {
 }
 ```
 
-To order callbacks within a phase, name the dependency with `before`/`after` (by job id). A numeric `{ priority }` is only a tie-breaker (`before`/`after` constraints override it), and a number can't express order against jobs from packages you don't own, so prefer `before`/`after`:
+To order callbacks within a phase, name the dependency with `before`/`after` (by job id or phase name). If one job has to run before or after another, say so explicitly:
 
 ```jsx
 useFrame(() => {}, { id: 'a', phase: 'update' })
@@ -155,7 +155,7 @@ useFrame(() => {}, { phase: 'update', after: 'a' }) // runs after job 'a'
 ```
 
 > [!NOTE]
-> A bare numeric second argument (`useFrame(fn, 1)`) is deprecated and is not an ordering mechanism. A positive number keeps its v9 meaning: it disables the default render (render takeover) and emits a deprecation warning. A negative number also warns, because v10 runs higher numbers first — the reverse of v9. Use `{ phase: 'render' }` for render takeover and `before`/`after` for ordering. See [Frame Loop & Scheduler → Ordering jobs](../frame-loop#ordering-jobs) and [Render-phase takeover](../frame-loop#render-phase-takeover) for details.
+> A bare numeric second argument (`useFrame(fn, 1)`) is deprecated and is not an ordering mechanism. A positive number keeps its v9 meaning: it disables the default render (render takeover) and emits a deprecation warning. A negative number also warns, because v10 runs higher numbers first — the reverse of v9. Use `{ phase: 'render' }` for render takeover and `before`/`after` for ordering. `{ priority }` exists for legacy code and the rare loose tie-break; don't rely on it for order that matters. See [Frame Loop & Scheduler → Ordering jobs](../frame-loop#ordering-jobs) and [Render-phase takeover](../frame-loop#render-phase-takeover) for details.
 
 ## `useLoader`
 
