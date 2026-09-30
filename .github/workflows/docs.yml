@@ -55,12 +55,13 @@ jobs:
     if: github.ref_name == 'master'
     runs-on: ubuntu-latest
 
-    # Everything pmndrs/docs/.github/workflows/build.yml@v3 sets, minus what differs per build.
+    # Everything pmndrs/docs/.github/workflows/build.yml@v4 sets, minus what differs per build.
     env:
-      # Pinned below 3.4.2, whose next-mdx-remote 6 strips JS expressions from MDX by default
-      # (`blockJS`): <Sandpack files={...}> arrives empty and the build fails, and props like
-      # <Grid cols={3}> are silently dropped. Unpin once pmndrs/docs opts back in (`blockJS: false`).
-      DOCS_IMAGE_TAG: '3.4.1'
+      # Pinned exactly: from 3.4.2, next-mdx-remote 6 stripped JS expressions from MDX by default
+      # (`blockJS`), so <Sandpack files={...}> arrived empty and failed the build, and props like
+      # <Grid cols={3}> were silently dropped. That broke in a patch release, so bump deliberately.
+      # TODO: set to the first release that passes `blockJS: false`.
+      DOCS_VERSION: '4.1.3'
       NEXT_PUBLIC_LIBNAME: 'React Three Fiber'
       NEXT_PUBLIC_LIBNAME_SHORT: 'r3f'
       NEXT_PUBLIC_LIBNAME_DOTSUFFIX_LABEL: 'docs'
@@ -88,13 +89,17 @@ jobs:
           ref: ${{ env.NEXT_REF }}
           path: .next-ref
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
       - id: pages
         uses: actions/configure-pages@v6
         with:
           enablement: true
 
       - name: Build stable docs (master)
-        run: .github/docs/build.sh docs
+        run: .github/docs/build.sh docs _build/stable
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}
@@ -107,8 +112,7 @@ jobs:
       - name: Build prerelease docs (${{ env.NEXT_REF }})
         id: next
         continue-on-error: true
-        run: ../.github/docs/build.sh docs
-        working-directory: .next-ref
+        run: .github/docs/build.sh .next-ref/docs _build/next
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}${{ env.NEXT_PATH }}
           NEXT_PUBLIC_URL: ${{ steps.pages.outputs.base_url }}${{ env.NEXT_PATH }}
@@ -119,10 +123,10 @@ jobs:
       - name: Assemble site
         run: |
           mkdir _site
-          cp -r "docs/out$BASE_PATH/." _site/
+          cp -r _build/stable/. _site/
           if [ "$NEXT_BUILT" = "success" ]; then
             mkdir -p "_site$NEXT_PATH"
-            cp -r ".next-ref/docs/out$BASE_PATH$NEXT_PATH/." "_site$NEXT_PATH/"
+            cp -r _build/next/. "_site$NEXT_PATH/"
           else
             echo "::warning::Prerelease docs ($NEXT_REF) failed to build; deploying stable docs only"
           fi
