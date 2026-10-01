@@ -135,6 +135,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       object,
       eventCount: 0,
       handlers: {},
+      previousVisible: undefined,
       isHidden: false,
     }
 

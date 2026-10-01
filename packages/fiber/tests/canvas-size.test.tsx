@@ -10,7 +10,7 @@ import { ReconcilerRoot, createRoot, Canvas, useThree } from '../src/index'
  *  - the `setSize` ownership state machine in `src/core/store.ts`
  *    (setSize() reset, setSize(n) square, setSize(w, h) rectangle, and the
  *    imperative-ownership transitions vs. auto/measured sizing during configure)
- *  - the `width` / `height` / `forceEven` Canvas props in `src/core/Canvas.tsx`
+ *  - the `width` / `height` / `forceEven` Canvas props in `src/web/Canvas.tsx`
  *    (props override the measured container size; forceEven rounds up to even).
  *
  * All assertions read the store `size` state directly, so nothing here needs a GPU.
@@ -33,6 +33,37 @@ describe('setSize ownership state machine', () => {
     expect(state.size).toMatchObject({ width: 100, height: 100 })
     // configure() must leave ownership with auto/measured mode
     expect(state._sizeImperative).toBe(false)
+  })
+
+  it('never publishes imperative ownership while applying a configured size', async () => {
+    const store = await act(async () => (await root.configure({ size: baseSize })).render(null))
+    const observed: boolean[] = []
+    const unsubscribe = store.subscribe((state) => {
+      if (state.size.width === 400) observed.push(state._sizeImperative)
+    })
+    try {
+      await act(async () => root.configure({ size: { ...baseSize, width: 400 } }))
+      expect(observed.length).toBeGreaterThan(0)
+      expect(observed.every((imperative) => imperative === false)).toBe(true)
+    } finally {
+      unsubscribe()
+    }
+  })
+
+  it('preserves imperative ownership claimed by a subscriber during configuration', async () => {
+    const store = await act(async () => (await root.configure({ size: baseSize })).render(null))
+    const unsubscribe = store.subscribe((state) => {
+      if (state.size.width === 400) state.setSize(250)
+    })
+    try {
+      await act(async () => root.configure({ size: { ...baseSize, width: 400 } }))
+      expect(store.getState().size).toMatchObject({ width: 250, height: 250 })
+      expect(store.getState()._sizeImperative).toBe(true)
+      await act(async () => root.configure({ size: { ...baseSize, width: 500 } }))
+      expect(store.getState().size).toMatchObject({ width: 250, height: 250 })
+    } finally {
+      unsubscribe()
+    }
   })
 
   it('setSize(n) sets a square and takes imperative ownership', async () => {

@@ -13,7 +13,7 @@
  *   D3 — cache reuse must not resurrect entries from a previous generation
  *
  * "HMR" here is simulated exactly as the Canvas listener performs it
- * (`core/Canvas.tsx`): `clearHmrCaches(store)` — wipe all four maps and bump
+ * (`web/Canvas.tsx`): `clearHmrCaches(store)` — wipe all four maps and bump
  * `_hmrVersion`. jsdom cannot run Vite, but the store transition is identical,
  * so everything except the vite event plumbing is covered at this tier.
  * The browser protocol in plan §6 covers the rest.

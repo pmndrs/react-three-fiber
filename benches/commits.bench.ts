@@ -3,7 +3,7 @@ import { createElement as h, useState, type ReactNode } from 'react'
 import { Group, Mesh, Scene } from 'three'
 import { ConcurrentRoot } from '../packages/fiber/react-reconciler/constants'
 import { extend, reconciler } from '../packages/fiber/src/core/reconciler'
-import { flushSync } from '../packages/fiber/src/core/renderer'
+import { flushSync } from '../packages/fiber/src/core/reconciler'
 import { createStore } from '../packages/fiber/src/core/store'
 import { prepare } from '../packages/fiber/src/core/utils/instance'
 

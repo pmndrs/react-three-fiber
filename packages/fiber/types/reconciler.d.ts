@@ -2,6 +2,7 @@ import type * as React from 'react'
 import type { Scene, Color, ColorRepresentation } from 'three'
 import type { RootStore } from './store'
 import type { EventHandlers } from './events'
+import type { RenderProps } from './renderer'
 import type { IsAllOptional } from './utils'
 
 //* Reconciler Types ==============================
@@ -17,9 +18,15 @@ export type TrackedPromise<T> = Promise<T> &
 export interface Root {
   fiber: FiberRoot
   store: RootStore
-  /** Set while a teardown waits on React. Configure and render clear it, which cancels the teardown */
-  unmountClaim: symbol | null
-  /** Pending only while a renderer is being created */
+  state:
+    | { status: 'open' }
+    | { status: 'closing'; token: symbol; settled: Promise<void>; settle: () => void }
+    | { status: 'disposed' }
+  configuration: {
+    previous?: RenderProps<HTMLCanvasElement | OffscreenCanvas>
+    apply: (props: RenderProps<HTMLCanvasElement | OffscreenCanvas>) => void
+  }
+  /** Settles once all accepted configuration has been applied */
   ready: TrackedPromise<unknown>
 }
 
@@ -64,6 +71,7 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
+  previousVisible: boolean | undefined
   isHidden: boolean
   /** Set of props that have been applied via once() */
   appliedOnce?: Set<string>

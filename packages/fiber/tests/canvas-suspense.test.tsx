@@ -23,7 +23,7 @@ import * as THREE from 'three'
 import { suspend } from 'suspend-react'
 
 import { Canvas, extend, useStore } from '../src'
-import { _roots } from '../src/core/renderer'
+import { _roots } from '../src/core/root'
 import type { RootState, RootStore } from '../src'
 
 /** A child that suspends until the returned `resolve` is called, like useTexture does. */

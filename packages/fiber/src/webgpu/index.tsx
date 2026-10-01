@@ -13,8 +13,8 @@
  *   import { useUniforms } from '@react-three/tsl'
  */
 
-import { createRoot as createRootImpl } from '../core/renderer'
-import { Canvas as CanvasImpl } from '../core/Canvas'
+import { createRoot as createRootImpl } from '../core/root'
+import { Canvas as CanvasImpl } from '../web/Canvas'
 import { webgpuSupport } from '../support/webgpu'
 import type * as ReactThreeFiber from '../../types/entries/webgpu'
 import type { ReconcilerRoot, RendererProvider, ThreeElementsOf, RenderTargetOptions } from '#types'

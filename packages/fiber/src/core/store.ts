@@ -1,5 +1,5 @@
 // Types only. Core never imports a three value: the Vector3/Frustum/... a store needs are created
-// once its root has loaded a renderer support (see ./three.ts and configure() in ./renderer.tsx).
+// once its root has loaded a renderer support (see ./three.ts and configure() in ./configuration.ts).
 import type { WebGLRenderer, Scene, Raycaster, Vector2, Vector3, Frustum } from 'three'
 import type { WebGPURenderer } from 'three/webgpu'
 import * as React from 'react'
@@ -25,7 +25,7 @@ import type {
   RendererSupport,
 } from '#types'
 
-import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
+import { calculateDpr, is, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
 import { getThree } from './three'
@@ -35,12 +35,30 @@ import { getThree } from './three'
 // existing imports of `context` from the store keep working.
 export { context } from './context'
 
+/** Apply a size and its ownership together, before subscribers observe the change. */
+function updateSize(state: RootState, size: Size, imperative: boolean): void {
+  state.set((current) => ({
+    size,
+    viewport: { ...current.viewport, ...current.viewport.getCurrentViewport(current.camera, undefined, size) },
+    _sizeImperative: imperative,
+  }))
+  // Wake only this root so a demand Canvas renders the resize.
+  state.invalidate()
+}
+
+/** @internal Apply measured/prop dimensions only while the store owns automatic sizing. */
+export function configureSize(store: RootStore, size: Size): void {
+  const state = store.getState()
+  if (state._sizeImperative || is.equ(size, state.size, { objects: 'shallow', strict: false })) return
+  updateSize(state, size, false)
+}
+
 /**
  * Creates the Zustand store that holds one root's {@link RootState}.
  *
  * The store starts unconfigured: the renderer, `camera`, `scene`, `raycaster`, `frustum` and `pointer`
  * are `null` placeholders until the root's renderer support has loaded and `configure()` in
- * `renderer.tsx` fills them in. Only core's part of `RootState` is created here; packages building on
+ * `configuration.ts` fills them in. Only core's part of `RootState` is created here; packages building on
  * fiber add their own fields through root extensions.
  *
  * Besides the initial state, the store wires up:
@@ -184,7 +202,6 @@ export const createStore = (
 
         // No args = reset to props/container mode
         if (width === undefined) {
-          set({ _sizeImperative: false })
           // If we have stored props, apply them; otherwise size will be updated by next container measurement
           if (state._sizeProps) {
             const { width: propW, height: propH } = state._sizeProps
@@ -197,15 +214,11 @@ export const createStore = (
                 top: currentSize.top,
                 left: currentSize.left,
               }
-              set((s) => ({
-                size: newSize,
-                viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
-              }))
-              // Invalidate this root so a demand Canvas renders its resize without
-              // waking sibling roots.
-              get().invalidate()
+              updateSize(state, newSize, false)
+              return
             }
           }
+          set({ _sizeImperative: false })
           return
         }
 
@@ -216,14 +229,7 @@ export const createStore = (
         const l = left ?? state.size.left
 
         const size = { width: w, height: h, top: t, left: l }
-        set((s) => ({
-          size,
-          viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
-          _sizeImperative: true,
-        }))
-        // Invalidate this root so a demand Canvas renders its resize without
-        // waking sibling roots.
-        get().invalidate()
+        updateSize(state, size, true)
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -304,7 +310,7 @@ export const createStore = (
         // The renderer support configure() loads for this root
         support: null as unknown as RendererSupport,
 
-        // Scheduler for useFrameNext (initialized in renderer.tsx)
+        // Scheduler for useFrameNext (initialized in loop.ts)
         scheduler: null,
 
         // Replaces the default render call when set (see setRenderOverride)
@@ -433,7 +439,7 @@ export const createStore = (
       // forever, which surfaces as a per-frame GPUValidationError about mismatched attachment
       // sizes. updateSize() compounds it by deleting the *active* target rather than the resized
       // one, so it cannot be called safely from here. The flush happens in the canvas-target job
-      // (see renderer.tsx), which runs in the `start` phase where our own target is guaranteed
+      // (see loop.ts), which runs in the `start` phase where our own target is guaranteed
       // active. See #3847.
       //
       // When our target *is* the active one (a lone primary owns the renderer's default target,
@@ -466,7 +472,10 @@ export const createStore = (
   })
 
   // Invalidate on any change
-  rootStore.subscribe((state) => invalidate(state))
+  rootStore.subscribe((state) => {
+    // Configuration and committed teardown can still publish state while the root is inactive.
+    if (state.internal.active) invalidate(state)
+  })
 
   // Return root state
   return rootStore

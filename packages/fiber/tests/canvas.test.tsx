@@ -77,9 +77,7 @@ describe('web Canvas', () => {
     expect(() => renderer.unmount()).not.toThrow()
   })
 
-  // Ported from master #3869 (via port/3869-remount-claim-v10). A StrictMode mount re-runs the
-  // Canvas effects against the same root; that must never dispose the renderer, while a real
-  // unmount still tears down exactly once.
+  // StrictMode replays effects without releasing the renderer. Final removal disposes it once.
   it('should survive a StrictMode remount', async () => {
     let dispose!: ReturnType<typeof vi.spyOn>
     let state!: RootState
@@ -88,6 +86,7 @@ describe('web Canvas', () => {
       render(
         <React.StrictMode>
           <Canvas
+            frameloop="never"
             renderer={(props: DefaultRendererProps) => {
               const instance = new WebGPURenderer({ ...props, canvas: props.canvas as HTMLCanvasElement })
               dispose = vi.spyOn(instance, 'dispose')

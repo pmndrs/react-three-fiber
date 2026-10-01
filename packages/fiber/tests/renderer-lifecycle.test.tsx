@@ -56,8 +56,8 @@ vi.mock('../src/support/webgpu', async (importOriginal) => {
 })
 
 import { advance, Canvas, createRoot } from '../src'
-import { _roots, unmountComponentAtNode } from '../src/core/renderer'
-import { disposeRenderer } from '../src/core/rendererLease'
+import { _roots, unmountComponentAtNode } from '../src/core/root'
+import { disposeRenderer } from '../src/core/renderer'
 
 const deferred = () => {
   let resolve!: () => void

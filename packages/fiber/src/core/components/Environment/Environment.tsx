@@ -3,7 +3,7 @@ import { suspend } from 'suspend-react'
 // Relative, never the package name: this component is part of the shared core chunk.
 import { useThree, useFrame } from '../../hooks'
 import { getThree } from '../../three'
-import { createPortal } from '../../renderer'
+import { createPortal } from '../../portal'
 import { extend } from '../../reconciler'
 import { applyProps } from '../../utils'
 // `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),

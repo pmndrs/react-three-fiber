@@ -76,13 +76,10 @@ describe('Cross-bundle singleton sharing', () => {
       vi.resetModules()
       const reconcilerC = await import('../src/core/extend')
 
-      // If catalogue is shared, extending from any bundle should work globally
-      // We can't directly access catalogue (it's not exported), but we can verify
-      // by checking that extend doesn't throw and the module loads correctly
       expect(reconcilerC.extend).toBeDefined()
-
-      // The real test is that if we had JSX rendering, components extended from
-      // bundle A would be available when rendering from bundle B
+      const catalogue = (globalThis as any)[CATALOGUE_KEY]
+      expect(catalogue.TestComponent).toBe(TestComponent)
+      expect(catalogue.AnotherComponent).toBe(AnotherComponent)
     })
 
     it('extend from one bundle should be visible to another bundle', async () => {

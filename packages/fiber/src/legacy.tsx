@@ -9,8 +9,8 @@
  *   import { Canvas, useFrame } from '@react-three/fiber/legacy'
  */
 
-import { createRoot as createRootImpl } from './core/renderer'
-import { Canvas as CanvasImpl } from './core/Canvas'
+import { createRoot as createRootImpl } from './core/root'
+import { Canvas as CanvasImpl } from './web/Canvas'
 import { webglSupport } from './support/webgl'
 import type * as ReactThreeFiber from '../types/entries/legacy'
 import type { ReconcilerRoot, RendererProvider, ThreeElementsOf, RenderTargetOptions } from '#types'

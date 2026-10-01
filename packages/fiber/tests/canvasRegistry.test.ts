@@ -14,7 +14,7 @@ import {
   hasPrimary,
   unregisterPrimary,
   getPrimaryIds,
-} from '../src/core/canvasRegistry'
+} from '../src/core/renderer'
 
 // The registry only stores/returns these objects by reference — it never calls
 // into them — so plain stand-ins are enough for pure-JS coverage.

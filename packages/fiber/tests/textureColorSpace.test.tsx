@@ -9,7 +9,7 @@ import { ReconcilerRoot, createRoot } from '../src/index'
  * The R3F-level `textureColorSpace` config auto-assigns a color space to 8-bit
  * color-map textures (map / emissiveMap / sheenColorMap / specularColorMap / envMap)
  * when the renderer output is sRGB. The value is extracted from the `gl` or `renderer`
- * config bag in `src/core/renderer.tsx` and applied in `src/core/utils/props.ts`.
+ * config bag in `src/core/configuration.ts` and applied in `src/core/utils/props.ts`.
  *
  * These tests drive the WebGL (`gl={{...}}`) path end-to-end, which runs under the
  * jsdom WebGL mock. The `renderer={{...}}` config bag selects WebGPU, which cannot

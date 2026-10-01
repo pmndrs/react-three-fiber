@@ -93,3 +93,24 @@ export function updateFrustum(camera: ThreeCamera, frustum?: THREE.Frustum): THR
   target.setFromProjectionMatrix(frustumMatrix)
   return target
 }
+
+export function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
+  if (
+    !size &&
+    typeof HTMLCanvasElement !== 'undefined' &&
+    canvas instanceof HTMLCanvasElement &&
+    canvas.parentElement
+  ) {
+    const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
+    return { width, height, top, left }
+  } else if (!size && typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      top: 0,
+      left: 0,
+    }
+  }
+
+  return { width: 0, height: 0, top: 0, left: 0, ...size }
+}

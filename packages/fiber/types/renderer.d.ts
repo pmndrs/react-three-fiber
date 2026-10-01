@@ -1,3 +1,4 @@
+import type { TrackedPromise } from './reconciler'
 import type * as THREE from 'three'
 import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
 import type { ReactNode } from 'react'
@@ -248,7 +249,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
 //* Reconciler Root ==============================
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
+  ready: TrackedPromise<unknown>
+  configure: (config?: RenderProps<TCanvas>) => TrackedPromise<ReconcilerRoot<TCanvas>>
   render: (element: ReactNode) => RootStore
   unmount: () => void
 }

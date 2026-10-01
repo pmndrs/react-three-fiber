@@ -1,17 +1,18 @@
 import * as React from 'react'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
-import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
-import { createRoot, _roots } from './renderer'
-import { createPointerEvents } from './events'
-import { notifyAlpha } from './utils/notices'
-import { Environment } from './components/Environment/Environment'
-import { parseBackground } from './utils/parseBackground'
-import { DEFAULT_PRIMARY, announcePrimary, markWithdrawing, withdrawPrimary } from './canvasRegistry'
-import { notifyRootExtensionsHmr } from './extensions'
+import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from '../core/utils'
+import { useGate } from '../core/utils/react'
+import { createRoot, _roots } from '../core/root'
+import { createPointerEvents } from '../core/events'
+import { notifyAlpha } from '../core/utils/notices'
+import { Environment } from '../core/components/Environment/Environment'
+import { parseBackground } from '../core/utils/parseBackground'
+import { DEFAULT_PRIMARY, announcePrimary, markWithdrawing, withdrawPrimary } from '../core/renderer'
+import { notifyRootExtensionsHmr } from '../core/extensions'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, RendererProvider } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, RendererProvider, RootState } from '#types'
 
 /** The renderer provider of the entry that exported this Canvas. Not part of the public props. */
 export interface CanvasProviderProps {
@@ -131,13 +132,23 @@ function CanvasImpl({
   if (error) throw error
 
   const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
-  // Track if the current effect is still active (for async operations during HMR)
-  const effectActiveRef = React.useRef(true)
-  // Store subscription cleanup function
-  const unsubscribeErrorRef = React.useRef<(() => void) | null>(null)
+  const [gate, waitFor] = useGate()
+  const rootState = React.useRef<RootState | null>(null)
+  const eventTarget = () => (eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
+  const pointerMissed = React.useCallback(
+    (...args: Parameters<NonNullable<typeof onPointerMissed>>) => handlePointerMissed.current?.(...args),
+    [handlePointerMissed],
+  )
+  const dragOverMissed = React.useCallback(
+    (...args: Parameters<NonNullable<typeof onDragOverMissed>>) => handleDragOverMissed.current?.(...args),
+    [handleDragOverMissed],
+  )
+  const dropMissed = React.useCallback(
+    (...args: Parameters<NonNullable<typeof onDropMissed>>) => handleDropMissed.current?.(...args),
+    [handleDropMissed],
+  )
 
   useIsomorphicLayoutEffect(() => {
-    effectActiveRef.current = true
     // A prior renderer setup failed and we're showing the fallback DOM; don't re-attempt.
     if (fallbackVisible) return
     const canvas = canvasRef.current
@@ -151,96 +162,65 @@ function CanvasImpl({
           message: 'React Three Fiber v10 is in ALPHA - expect breaking changes',
           link: 'https://github.com/pmndrs/react-three-fiber/discussions',
         })
-
-        //* Set up error subscription immediately after createRoot ==============================
-        // This ensures error propagation is ready BEFORE configure() starts the RAF loop.
-        // If we wait until after configure() and render(), errors in useFrame callbacks
-        // might occur before the subscription is established.
-        // @see https://github.com/pmndrs/react-three-fiber/issues/3651
-        const rootEntry = _roots.get(canvas)
-        if (rootEntry?.store) {
-          // Clean up any previous subscription
-          if (unsubscribeErrorRef.current) unsubscribeErrorRef.current()
-
-          unsubscribeErrorRef.current = rootEntry.store.subscribe((state) => {
-            if (state.error && effectActiveRef.current) {
-              setError(state.error)
-            }
-          })
-        }
       }
 
-      async function run() {
-        // Bail out if effect was cleaned up while awaiting (HMR race condition)
-        if (!effectActiveRef.current || !root.current) return
+      const current = root.current
+      current
+        .configure({
+          id,
+          primary,
+          share,
+          scheduler,
+          gl,
+          renderer,
+          scene,
+          events,
+          _primaryToken: primaryToken,
+          ...({ shadows: removedShadows, primaryCanvas: removedPrimaryCanvas } as {}),
+          orthographic,
+          frameloop,
+          dpr,
+          performance,
+          raycaster,
+          camera,
+          autoUpdateFrustum,
+          occlusion,
+          size: effectiveSize,
+          // Store size props for reset functionality
+          _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
+          forceEven,
+          // Pass mutable reference to onPointerMissed so it's free to update
+          onPointerMissed: pointerMissed,
+          onDragOverMissed: dragOverMissed,
+          onDropMissed: dropMissed,
+          onCreated: (state) => {
+            rootState.current = state
+            // Connect to event source
+            state.events.connect?.(eventTarget() ?? divRef.current)
+            // Set up compute function
+            if (eventPrefix) {
+              state.setEvents({
+                compute: (event, state) => {
+                  const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
+                  const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+                  state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+                  state.raycaster.setFromCamera(state.pointer, state.camera)
+                },
+              })
+            }
+            // Call onCreated callback
+            onCreated?.(state)
+          },
+        })
+        .catch((setupError) => {
+          // Ignore a result belonging to a Canvas that was finally removed.
+          if (root.current !== current) return
+          if (fallback != null) setFallbackVisible(true)
+          else setError(setupError)
+        })
 
-        const configured = await root.current
-          .configure({
-            id,
-            primary,
-            share,
-            scheduler,
-            gl,
-            renderer,
-            scene,
-            events,
-            orthographic,
-            frameloop,
-            dpr,
-            performance,
-            raycaster,
-            camera,
-            autoUpdateFrustum,
-            occlusion,
-            size: effectiveSize,
-            // Store size props for reset functionality
-            _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
-            forceEven,
-            // Continue the announcement made by the insertion effect below
-            _primaryToken: primaryToken,
-            ...({ shadows: removedShadows, primaryCanvas: removedPrimaryCanvas } as {}),
-            // Pass mutable reference to onPointerMissed so it's free to update
-            onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
-            onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
-            onDropMissed: (...args) => handleDropMissed.current?.(...args),
-            onCreated: (state) => {
-              // Connect to event source
-              state.events.connect?.(
-                eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current,
-              )
-              // Set up compute function
-              if (eventPrefix) {
-                state.setEvents({
-                  compute: (event, state) => {
-                    const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
-                    const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
-                    state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
-                    state.raycaster.setFromCamera(state.pointer, state.camera)
-                  },
-                })
-              }
-              // Call onCreated callback
-              onCreated?.(state)
-            },
-          })
-          .then(
-            () => true,
-            // Renderer setup failed (e.g. no WebGL/WebGPU support). The `fallback` prop lives
-            // inside <canvas>, which browsers don't display, so surface it as visible DOM
-            // instead; with no fallback, rethrow to an external error boundary. (#3757)
-            (setupError) => {
-              if (effectActiveRef.current) {
-                if (fallback != null) setFallbackVisible(true)
-                else setError(setupError)
-              }
-              return false
-            },
-          )
-
-        // Bail out if setup failed or the effect was cleaned up while awaiting configure
-        if (!configured || !effectActiveRef.current || !root.current) return
-
-        root.current.render(
+      if (current.ready.status === 'fulfilled') {
+        current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
               <React.Suspense fallback={<Block set={setBlock} />}>
@@ -250,20 +230,29 @@ function CanvasImpl({
             </ErrorBoundary>
           </Bridge>,
         )
-        // Note: Error subscription is set up synchronously in the parent scope
-        // immediately after createRoot() to ensure it's ready before RAF starts.
+      } else if (current.ready.status === 'pending') {
+        waitFor(current.ready)
       }
-      run()
     }
+  })
 
-    // Cleanup: mark effect as inactive to cancel pending async operations
-    return () => {
-      effectActiveRef.current = false
-      if (unsubscribeErrorRef.current) {
-        unsubscribeErrorRef.current()
-        unsubscribeErrorRef.current = null
-      }
+  // Scene errors belong to the root; this subscription follows Canvas effect connectivity.
+  useIsomorphicLayoutEffect(() => {
+    const store = canvasRef.current && _roots.get(canvasRef.current)?.store
+    if (!store) return
+    const report = () => {
+      const error = store.getState().error
+      if (error) setError(error)
     }
+    report()
+    return store.subscribe(report)
+  })
+
+  // Ancestor refs attach after Canvas's layout effect.
+  React.useEffect(() => {
+    const state = rootState.current?.get()
+    const target = eventTarget()
+    if (state && target && state.events.connected !== target) state.events.connect?.(target)
   })
 
   // Insertion effects survive Activity hiding and StrictMode effect replay: their cleanup runs only
@@ -404,6 +393,7 @@ function CanvasImpl({
           </canvas>
         </div>
       )}
+      {gate}
     </div>
   )
 }

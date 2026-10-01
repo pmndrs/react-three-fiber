@@ -24,7 +24,7 @@ import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot } from '../src'
-import { createRoot as createRootWithProvider } from '../src/core/renderer'
+import { createRoot as createRootWithProvider } from '../src/core/root'
 
 import type { RendererProvider, WebGPUSupport } from '../types/provider'
 

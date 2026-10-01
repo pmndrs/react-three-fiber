@@ -20,6 +20,7 @@ import * as THREE from 'three'
 import { WebGPURenderer } from 'three/webgpu'
 import { vi } from 'vitest'
 import { getScheduler, Scheduler } from '@pmndrs/scheduler'
+import { leaseRenderer, borrowRenderer } from '../src/core/renderer'
 
 import { _roots, advance, createRoot, getPrimary, useFrame, type ReconcilerRoot } from '../src'
 
@@ -399,5 +400,60 @@ describe('renderer disposal on unmount', () => {
     // The unmounted secondary must not hold the primary's renderer open.
     await unmount(primary.root)
     expect(primary.renderer.dispose).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Ownership is a resource contract; it does not require a Canvas or React commit.
+describe('renderer ownership independently of roots', () => {
+  function renderer() {
+    const dispose = vi.fn()
+    const forceContextLoss = vi.fn()
+    return { dispose, forceContextLoss } as unknown as THREE.WebGLRenderer & {
+      dispose: ReturnType<typeof vi.fn>
+      forceContextLoss: ReturnType<typeof vi.fn>
+    }
+  }
+
+  it('keeps an owned renderer alive until the final borrower releases it', () => {
+    const gl = renderer()
+    const releaseOwner = leaseRenderer(gl, true)
+    const releaseBorrower = borrowRenderer(gl)
+    releaseOwner()
+    releaseOwner()
+    expect(gl.dispose).not.toHaveBeenCalled()
+    releaseBorrower()
+    releaseBorrower()
+    expect(gl.dispose).toHaveBeenCalledTimes(1)
+    expect(gl.forceContextLoss).toHaveBeenCalledTimes(1)
+    expect(() => borrowRenderer(gl)).toThrow('already unmounted')
+  })
+
+  it('preserves caller ownership across additional leases', () => {
+    const gl = renderer()
+    const releaseCaller = leaseRenderer(gl, false)
+    const releaseOther = leaseRenderer(gl, true)
+    releaseCaller()
+    releaseOther()
+    expect(gl.dispose).not.toHaveBeenCalled()
+    expect(gl.forceContextLoss).not.toHaveBeenCalled()
+    expect(() => borrowRenderer(gl)).toThrow('already unmounted')
+  })
+
+  it('waits for final asynchronous disposal before releasing the context', async () => {
+    const gl = renderer()
+    let finish!: () => void
+    gl.dispose.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+    )
+    const release = leaseRenderer(gl, true)
+    const disposed = release()
+    expect(gl.dispose).toHaveBeenCalledTimes(1)
+    expect(gl.forceContextLoss).not.toHaveBeenCalled()
+    expect(() => borrowRenderer(gl)).toThrow('already unmounted')
+    finish()
+    await disposed
+    expect(gl.forceContextLoss).toHaveBeenCalledTimes(1)
   })
 })

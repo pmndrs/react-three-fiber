@@ -368,6 +368,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       continue
     }
 
+    // A hidden host keeps its intended visibility until Activity/Suspense reveals it.
+    if (prop === 'visible' && instance?.isHidden && instance.previousVisible !== undefined) {
+      instance.previousVisible = value as boolean
+      continue
+    }
+
     let { root, key, target } = resolve(object, prop)
 
     // Throw an error if we attempted to set a pierced prop to a non-object

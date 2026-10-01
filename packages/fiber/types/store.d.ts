@@ -127,6 +127,10 @@ export interface InternalState {
   renderOverride?: (() => void) | null
   /** This root's unique ID in the global scheduler */
   rootId?: string
+  /** Scheduler id reserved when a primary publishes its renderer, before root jobs are installed. */
+  pendingRootId?: string
+  /** Default scheduler predecessor when borrowing a primary renderer. */
+  sharedAfter?: string
   /** Function to unregister this root from the global scheduler */
   unregisterRoot?: () => void
   /** Function to stop following devicePixelRatio changes */

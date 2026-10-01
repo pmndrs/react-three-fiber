@@ -52,7 +52,7 @@ vi.mock('../src/support/webgpu', async (importOriginal) => {
 })
 
 import { advance, createRoot, useFrame } from '../src'
-import { _roots, unmountComponentAtNode } from '../src/core/renderer'
+import { _roots, unmountComponentAtNode } from '../src/core/root'
 
 describe('root teardown', () => {
   beforeEach(() => {
