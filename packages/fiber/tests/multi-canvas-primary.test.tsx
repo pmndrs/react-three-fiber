@@ -454,7 +454,7 @@ describe('<Canvas primary> and renderer sharing', () => {
     expect(shared.dispose).toHaveBeenCalledTimes(1)
   })
 
-  it('a remounted primary builds a new renderer; existing sharers keep theirs until they remount', async () => {
+  it('a remounted primary builds a new renderer while existing sharers keep theirs', async () => {
     const view = await mount(
       <>
         <Box key="v1" name="main" id="main" primary />
@@ -477,8 +477,12 @@ describe('<Canvas primary> and renderer sharing', () => {
     expect(rendererOf('side')).toBe(first)
     expect(first.dispose).not.toHaveBeenCalled()
     expect(rendererOf('fresh')).toBe(second)
-    // No conflict: the old primary stepped aside for its remount
     expect(warnings('already registered')).toHaveLength(0)
+
+    gpu.drawn.length = 0
+    getScheduler().step(1000)
+    expect(gpu.drawn).toHaveLength(3)
+    expect(gpu.drawn).toEqual(expect.arrayContaining([canvasOf('main'), canvasOf('side'), canvasOf('fresh')]))
   })
 
   //* React ==============================

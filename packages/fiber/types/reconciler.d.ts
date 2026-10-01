@@ -18,7 +18,10 @@ export type TrackedPromise<T> = Promise<T> &
 export interface Root {
   fiber: FiberRoot
   store: RootStore
-  state: { status: 'open' } | { status: 'closing'; token: symbol } | { status: 'disposed' }
+  state:
+    | { status: 'open' }
+    | { status: 'closing'; token: symbol; settled: Promise<void>; settle: () => void }
+    | { status: 'disposed' }
   configuration: {
     previous?: RenderProps<HTMLCanvasElement | OffscreenCanvas>
     apply: (props: RenderProps<HTMLCanvasElement | OffscreenCanvas>) => void

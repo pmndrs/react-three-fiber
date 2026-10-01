@@ -29,16 +29,23 @@ function transitionRoot(root: Root, event: RootEvent): boolean {
   switch (event.type) {
     case 'use':
       if (state.status === 'disposed') return false
-      if (state.status === 'closing') root.store.getState().internal.active = true
+      if (state.status === 'closing') {
+        root.store.getState().internal.active = true
+        state.settle()
+      }
       root.state = { status: 'open' }
       return true
-    case 'unmount':
+    case 'unmount': {
       if (state.status === 'disposed') return false
-      root.state = { status: 'closing', token: event.token }
+      if (state.status === 'closing') state.settle()
+      const { promise, resolve } = deferred<void>()
+      root.state = { status: 'closing', token: event.token, settled: promise, settle: resolve }
       return true
+    }
     case 'dispose':
       if (state.status !== 'closing' || state.token !== event.token) return false
       root.state = { status: 'disposed' }
+      state.settle()
       return true
   }
 }
@@ -112,6 +119,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         try {
           const initialized = initializeRenderer(canvas, provider, store, props)
           const apply = () => {
+            // A replacement must wait for the old scene's cleanup before reusing its scheduler id.
+            if (props.id) {
+              for (const other of _roots.values()) {
+                if (
+                  other !== root &&
+                  other.state.status === 'closing' &&
+                  other.store.getState().internal.rootId === props.id
+                ) {
+                  other.state.settled.then(apply).catch(reject)
+                  return
+                }
+              }
+            }
             const previous = root.configuration.previous
             root.configuration.apply(props)
             configureScheduler(store, props.id, props.scheduler, previous?.scheduler)
