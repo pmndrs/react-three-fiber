@@ -31,7 +31,10 @@ import {
 } from './utils'
 import type { RootStore } from './store'
 import { swapInteractivity, removeInteractivity, type EventHandlers } from './events'
-import type { ThreeElement } from '../three-types'
+import { hasConstructor, resolveConstructor, toPascalCase, type ConstructorRepresentation } from './extend'
+
+export { extend } from './extend'
+export type { ConstructorRepresentation, Catalogue } from './extend'
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
@@ -80,12 +83,6 @@ const NoEventPriority = 0
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
 export type AttachType<O = any> = string | AttachFnType<O>
-
-export type ConstructorRepresentation<T = any> = new (...args: any[]) => T
-
-export interface Catalogue {
-  [name: string]: ConstructorRepresentation
-}
 
 // TODO: handle constructor overloads
 // https://github.com/pmndrs/react-three-fiber/pull/2931
@@ -141,34 +138,12 @@ interface HostConfig {
   TransitionStatus: null
 }
 
-const catalogue: Catalogue = {}
-
 const PREFIX_REGEX = /^three(?=[A-Z])/
-
-const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
-
-let i = 0
-
-const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
-
-export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
-export function extend<T extends Catalogue>(objects: T): void
-export function extend<T extends Catalogue | ConstructorRepresentation>(
-  objects: T,
-): React.ExoticComponent<ThreeElement<any>> | void {
-  if (isConstructor(objects)) {
-    const Component = `${i++}`
-    catalogue[Component] = objects
-    return Component as any
-  } else {
-    Object.assign(catalogue, objects)
-  }
-}
 
 function validateInstance(type: string, props: HostConfig['props']): void {
   // Get target from catalogue
   const name = toPascalCase(type)
-  const target = catalogue[name]
+  const target = resolveConstructor(name)
 
   // Validate element target
   if (type !== 'primitive' && !target)
@@ -185,7 +160,7 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Remove three* prefix from elements if native element not present
-  type = toPascalCase(type) in catalogue ? type : type.replace(PREFIX_REGEX, '')
+  type = hasConstructor(toPascalCase(type)) ? type : type.replace(PREFIX_REGEX, '')
 
   validateInstance(type, props)
 
@@ -234,7 +209,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Create & link object on first run
   if (!child.object) {
     // Get target from catalogue
-    const target = catalogue[toPascalCase(child.type)]
+    const target = resolveConstructor(toPascalCase(child.type))!
 
     // Create object
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
@@ -449,7 +424,7 @@ function swapReconstructedInstances(): void {
     const parent = instance.parent
     if (parent) {
       // Get target from catalogue
-      const target = catalogue[toPascalCase(instance.type)]
+      const target = resolveConstructor(toPascalCase(instance.type))!
 
       // Create object
       const prevObject = instance.object

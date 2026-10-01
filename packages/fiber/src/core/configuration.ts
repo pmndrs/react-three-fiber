@@ -10,9 +10,9 @@ import {
   type RootState,
   type RootStore,
   type Size,
-  isRenderer,
 } from './store'
-import { applyProps, calculateDpr, type Camera, is, prepare, type Properties } from './utils'
+import { applyProps, calculateDpr, type Camera, is, prepare, type Properties, watchDpr } from './utils'
+import { isRenderer } from './renderer'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -101,14 +101,6 @@ export interface AppliedConfiguration {
 }
 
 const shallow = { objects: 'shallow' } as const
-
-/** The renderer to configure, or a promise for one from an async factory */
-export function createRenderer(canvas: Canvas, gl?: GLProps): Renderer | PromiseLike<Renderer> {
-  const defaults: DefaultGLProps = { canvas, powerPreference: 'high-performance', antialias: true, alpha: true }
-  if (typeof gl === 'function') return gl(defaults)
-  if (isRenderer(gl)) return gl as Renderer
-  return new THREE.WebGLRenderer({ ...defaults, ...(gl as object) })
-}
 
 function computeInitialSize(canvas: Canvas, size?: Size): Size {
   if (
@@ -321,4 +313,33 @@ export function applyRootConfiguration(
   if (glProps && changed('gl')) applyProps(gl, glProps as any)
 
   configuration.previous = next
+}
+
+/**
+ * Moving to another display or zooming changes window.devicePixelRatio without resizing the canvas,
+ * so nothing configures the root again. Resolves the ratio the way configuration does, from the last
+ * applied dpr. Returns the function that stops following.
+ */
+export function followDpr(root: { store: RootStore; configuration: AppliedConfiguration }): () => void {
+  const xr = () => root.store.getState().gl?.xr
+  const follow = (): void => {
+    const state = root.store.getState()
+    // three doesn't resize during XR and restores its own pixel ratio once the session ends. It holds
+    // the session before it sets isPresenting. Listeners are deduplicated, so this waits once
+    if (xr()?.isPresenting || xr()?.getSession?.()) {
+      xr()!.addEventListener('sessionend', follow)
+      return
+    }
+    xr()?.removeEventListener?.('sessionend', follow)
+    // A failed configuration applies everything on the next one
+    const last = root.configuration.previous
+    if (!last) return
+    const dpr = last.dpr ?? [1, 2]
+    if (state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+  }
+  const unwatch = watchDpr(follow)
+  return () => {
+    unwatch()
+    xr()?.removeEventListener?.('sessionend', follow)
+  }
 }

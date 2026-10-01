@@ -1,13 +1,15 @@
 import * as React from 'react'
-import * as THREE from 'three'
+import type * as THREE from 'three'
 import type Reconciler from '../../react-reconciler/index.js'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
-import { type AppliedConfiguration, type RenderProps, applyRootConfiguration, createRenderer } from './configuration'
+import { type AppliedConfiguration, type RenderProps, applyRootConfiguration, followDpr } from './configuration'
+import { createRenderer, isRenderer, releaseRenderer } from './renderer'
 import { advance, invalidate } from './loop'
-import { deferred, fulfilled, isPromiseLike, rejected, type TrackedPromise } from './promise'
+import { deferred, fulfilled, isPromiseLike, rejected, type TrackedPromise } from './utils/promise'
 import { reconciler } from './reconciler'
-import { context, createStore, isRenderer, type Renderer, type RootState, type RootStore } from './store'
-import { calculateDpr, dispose, noop, useIsomorphicLayoutEffect, watchDpr } from './utils'
+import { context, createStore, type Renderer, type RootState, type RootStore } from './store'
+import { dispose, noop } from './utils'
+import { useIsomorphicLayoutEffect } from './utils/react'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -222,54 +224,6 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-/**
- * Moving to another display or zooming changes window.devicePixelRatio without resizing the canvas,
- * so nothing configures the root again. Resolves the ratio the way configuration does, from the last
- * applied dpr. Returns the function that stops following.
- */
-function followDpr(root: Root): () => void {
-  const xr = () => root.store.getState().gl?.xr
-  const follow = (): void => {
-    const state = root.store.getState()
-    // three doesn't resize during XR and restores its own pixel ratio once the session ends. It holds
-    // the session before it sets isPresenting. Listeners are deduplicated, so this waits once
-    if (xr()?.isPresenting || xr()?.getSession?.()) {
-      xr()!.addEventListener('sessionend', follow)
-      return
-    }
-    xr()?.removeEventListener?.('sessionend', follow)
-    // A failed configuration applies everything on the next one
-    const last = root.configuration.previous
-    if (!last) return
-    const dpr = last.dpr ?? [1, 2]
-    if (state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
-  }
-  const unwatch = watchDpr(follow)
-  return () => {
-    unwatch()
-    xr()?.removeEventListener?.('sessionend', follow)
-  }
-}
-
-/**
- * Frees a renderer R3F built. WebGLRenderer.dispose() releases programs and caches but keeps its
- * context until garbage collection, and browsers cap live WebGL contexts, so the context is lost
- * after it. A WebGPURenderer (from a factory) releases its device and context inside dispose().
- */
-function disposeRenderer(gl: THREE.WebGLRenderer): void | Promise<void> {
-  // Avoid starting initialization through three's dispose(). A factory must await init()
-  // before returning its renderer so readiness includes initialization and teardown can wait.
-  if ((gl as { hasInitialized?: () => boolean }).hasInitialized?.() === false) return
-  const disposed: unknown = attempt(() => (gl.dispose ? gl.dispose() : gl.renderLists?.dispose?.()))
-  // WebGPURenderer.dispose() is async from three r186
-  if (isPromiseLike(disposed)) {
-    return Promise.resolve(disposed)
-      .catch((error) => console.warn('[R3F] Error disposing renderer', error))
-      .then(() => attempt(() => gl.forceContextLoss?.()))
-  }
-  attempt(() => gl.forceContextLoss?.())
-}
-
 function attempt<T>(step: () => T): T | undefined {
   try {
     return step()
@@ -306,15 +260,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     if (state.gl?.xr) attempt(() => state.xr.disconnect())
     if (state.scene) attempt(() => dispose(state.scene))
 
-    const gl = state.gl
-    let disposal: void | Promise<void> = undefined
-    if (gl && root.ownsRenderer) {
-      disposal = attempt(() => disposeRenderer(gl))
-    } else if (gl) {
-      // A renderer passed in keeps its 9.x teardown: its context is lost but it is not disposed
-      attempt(() => gl.renderLists?.dispose?.())
-      attempt(() => gl.forceContextLoss?.())
-    }
+    const disposal = attempt(() => releaseRenderer(state.gl, root.ownsRenderer))
 
     if (isPromiseLike(disposal)) disposal.then(() => callback?.(canvas))
     else callback?.(canvas)

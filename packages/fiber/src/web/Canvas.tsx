@@ -2,8 +2,8 @@ import * as React from 'react'
 import * as THREE from 'three'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
+import { isRef } from '../core/utils'
 import {
-  isRef,
   SetBlock,
   Block,
   ErrorBoundary,
@@ -11,7 +11,7 @@ import {
   useIsomorphicLayoutEffect,
   useBridge,
   useGate,
-} from '../core/utils'
+} from '../core/utils/react'
 import { ReconcilerRoot, extend, createRoot, RenderProps, RootState } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'

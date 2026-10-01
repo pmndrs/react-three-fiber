@@ -18,6 +18,8 @@ yarn dev
 
 ### Development
 
+See [Core responsibilities](docs/development/CORE.md) for source boundaries and the tests that cover them.
+
 Locally run examples against the library with:
 
 ```bash
