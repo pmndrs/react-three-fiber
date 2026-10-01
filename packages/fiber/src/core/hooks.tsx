@@ -2,8 +2,10 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, RootStore } from './store'
-import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
-import type { Instance, ConstructorRepresentation } from './reconciler'
+import { buildGraph, ObjectMap, is, isObject3D } from './utils'
+import { useMutableCallback, useIsomorphicLayoutEffect } from './utils/react'
+import type { Instance } from './reconciler'
+import type { ConstructorRepresentation } from './extend'
 
 /**
  * Exposes an object's {@link Instance}.

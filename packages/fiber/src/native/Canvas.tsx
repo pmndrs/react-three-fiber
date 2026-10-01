@@ -21,7 +21,7 @@ import {
   useMutableCallback,
   useBridge,
   useIsomorphicLayoutEffect,
-} from '../core/utils'
+} from '../core/utils/react'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createPointerEvents } from '../web/events'
 import { RootState, Size } from '../core/store'

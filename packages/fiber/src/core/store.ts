@@ -54,7 +54,7 @@ export interface Performance {
 export interface Renderer {
   render: (scene: THREE.Scene, camera: THREE.Camera) => any
 }
-export const isRenderer = (def: any) => !!def?.render
+export { isRenderer } from './renderer'
 
 export interface InternalState {
   interaction: THREE.Object3D[]

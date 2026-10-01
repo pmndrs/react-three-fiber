@@ -5,7 +5,8 @@ import type { ComputeFunction, EventManager } from './events'
 import { useStore } from './hooks'
 import { reconciler } from './reconciler'
 import { context, type RootState } from './store'
-import { updateCamera, useMutableCallback } from './utils'
+import { updateCamera } from './utils'
+import { useMutableCallback } from './utils/react'
 
 export type InjectState = Partial<
   Omit<RootState, 'events'> & {
