@@ -2,23 +2,25 @@ name: Build documentation and deploy to GitHub Pages
 
 # One Pages site serves two release lines, each built from its own branch:
 #
-#   /      built from `master` (stable)
-#   /v10   built from `v10` (prerelease)
+#   /       built from `master` (stable)
+#   /next   built from NEXT_REF (prerelease, currently `v10`)
 #
-# The version switcher of @pmndrs/docs links them: its URL template sends every branch other than
-# `master` to /<branch>. Another release line is one more checkout and build below, plus its name
-# in `on.push.branches`, the dispatch job and VERSION_BRANCHES_LIST.
+# The version switcher of @pmndrs/docs links them, labelled with their branch names.
 #
 # A repo has a single Pages site and every deploy replaces all of it, so both are always built and
-# deployed together, and only from `master`. A push to `v10` therefore doesn't deploy anything
+# deployed together, and only from `master`. A push to NEXT_REF therefore doesn't deploy anything
 # itself: it dispatches this workflow on `master`, which rebuilds both. Keep this file identical on
 # both branches.
+#
+# When the next prerelease line starts (v11), point NEXT_REF at it, along with the two places that
+# spell it out below (`on.push.branches` and the dispatch job's `if:`, where `env` isn't
+# available). /next stays its URL.
 #
 # Pull requests don't touch Pages: each one gets its own Vercel preview instead (`preview` job).
 
 on:
   push:
-    branches: ['master', 'v10']
+    branches: ['master', 'v10'] # 'v10' is NEXT_REF spelled out
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
@@ -55,15 +57,18 @@ env:
   # Version label in the sidebar footer: the latest vX.Y.Z tag, not the legacy
   # @react-three/fiber@X.Y.Z ones
   TAG_MATCH: 'v*.*.*'
-  # Version switcher: master is served at the root, any other branch at /<branch>
-  VERSION_URL_TEMPLATE: 'https://r3f.docs.pmnd.rs/{branch}'
+  # Version switcher: master is served at the root, and the one prerelease line at /next. No
+  # `{branch}` placeholder: the URL is the same whichever branch it is built from.
+  VERSION_URL_TEMPLATE: 'https://r3f.docs.pmnd.rs/next'
   VERSION_PRODUCTION_BRANCH: 'master'
   VERSION_PRODUCTION_URL: 'https://r3f.docs.pmnd.rs'
+  # The prerelease branch built at /next
+  NEXT_REF: v10
 
 jobs:
   dispatch:
     name: Rebuild from master
-    if: github.event_name == 'push' && github.ref_name == 'v10'
+    if: github.event_name == 'push' && github.ref_name == 'v10' # NEXT_REF spelled out
     runs-on: ubuntu-latest
     permissions:
       actions: write # to dispatch this workflow on master
@@ -86,8 +91,8 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          ref: v10
-          path: v10
+          ref: ${{ env.NEXT_REF }}
+          path: next
           fetch-depth: 0
           filter: blob:none
 
@@ -95,28 +100,28 @@ jobs:
         with:
           node-version: 24
 
-      # Built first, so that master's switcher offers v10 only when it was built: a broken v10
-      # build must never hold back the master docs.
-      - name: Build v10 docs
-        id: v10
+      # Built first, so that master's switcher offers the prerelease line only when it was built:
+      # a broken prerelease build must never hold back the master docs.
+      - name: Build ${{ env.NEXT_REF }} docs
+        id: next
         continue-on-error: true
-        working-directory: v10
+        working-directory: next
         # @pmndrs/docs reads the current branch from GITHUB_REF_NAME, which is `master` in this
         # run. GITHUB_* variables can't be overridden in `env:`, hence on the command line.
-        run: GITHUB_REF_NAME=v10 npx -y @pmndrs/docs@4 build docs ../_site/v10 --format website
+        run: GITHUB_REF_NAME="$NEXT_REF" npx -y @pmndrs/docs@4 build docs ../_site/next --format website
         env:
-          BASE_PATH: /v10
-          NEXT_PUBLIC_URL: https://r3f.docs.pmnd.rs/v10
-          MDX_BASEURL: https://github.com/${{ github.repository }}/raw/v10/docs
-          SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/v10
-          EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/v10/docs
-          VERSION_BRANCHES_LIST: master v10
+          BASE_PATH: /next
+          NEXT_PUBLIC_URL: https://r3f.docs.pmnd.rs/next
+          MDX_BASEURL: https://github.com/${{ github.repository }}/raw/${{ env.NEXT_REF }}/docs
+          SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/${{ env.NEXT_REF }}
+          EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/${{ env.NEXT_REF }}/docs
+          VERSION_BRANCHES_LIST: master ${{ env.NEXT_REF }}
 
-      - name: Deploy without v10 docs
-        if: steps.v10.outcome != 'success'
+      - name: Deploy without ${{ env.NEXT_REF }} docs
+        if: steps.next.outcome != 'success'
         run: |
-          echo "::warning::v10 docs failed to build; deploying master docs only"
-          rm -rf _site/v10
+          echo "::warning::$NEXT_REF docs failed to build; deploying master docs only"
+          rm -rf _site/next
 
       - name: Build master docs
         run: npx -y @pmndrs/docs@4 build docs _site --format website
@@ -125,7 +130,7 @@ jobs:
           MDX_BASEURL: https://github.com/${{ github.repository }}/raw/master/docs
           SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/master
           EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/master/docs
-          VERSION_BRANCHES_LIST: ${{ steps.v10.outcome == 'success' && 'master v10' || 'master' }}
+          VERSION_BRANCHES_LIST: ${{ steps.next.outcome == 'success' && format('master {0}', env.NEXT_REF) || 'master' }}
 
       - uses: actions/upload-pages-artifact@v5
         with:
@@ -212,7 +217,7 @@ jobs:
           MDX_BASEURL: https://github.com/${{ github.repository }}/raw/${{ github.event.pull_request.head.sha }}/docs
           SOURCECODE_BASEURL: https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.sha }}
           EDIT_BASEURL: https://github.com/${{ github.repository }}/edit/${{ github.head_ref }}/docs
-          VERSION_BRANCHES_LIST: master v10
+          VERSION_BRANCHES_LIST: master ${{ env.NEXT_REF }}
 
       - name: Deploy to Vercel
         id: deploy
