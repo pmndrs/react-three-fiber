@@ -217,7 +217,9 @@ jobs:
       - name: Deploy to Vercel
         id: deploy
         if: steps.vercel.outputs.enabled == 'true'
+        # cleanUrls: serve /foo from foo.html, as Pages does
         run: |
+          echo '{ "cleanUrls": true }' > out/vercel.json
           url=$(npx -y vercel deploy out --target=preview --token="$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
         env:
