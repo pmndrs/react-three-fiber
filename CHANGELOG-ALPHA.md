@@ -79,7 +79,8 @@ throw.
   (`useFrame((_, dt) => world.step(dt), { phase: 'physics' })`). A job that should still run once
   per frame belongs in another phase, or the phase can go back to per-frame with
   `getScheduler().setPhaseTimestep('physics', undefined)`. See
-  [Frame Loop](./docs/frame-loop.mdx).
+  [Frame Loop](./docs/frame-loop.mdx)
+  ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
 
 ### Features
 
@@ -322,10 +323,12 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   the id ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
 - `extend(SomeClass)` hands out element ids that are unique across copies of fiber, including a copy
   from an earlier alpha that still counts locally: ids already taken in the shared catalogue are
-  skipped ([#3923](https://github.com/pmndrs/react-three-fiber/pull/3923)).
+  skipped ([#3923](https://github.com/pmndrs/react-three-fiber/pull/3923),
+  [#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
 - `useFrame` job ids are unique across renderers. They were `React.useId()`, which react-dom and
   every copy of fiber's reconciler count from zero on their own, and with scheduler 0.3's global job
-  index, unmounting one of two colliding jobs could leave it running.
+  index, unmounting one of two colliding jobs could leave it running
+  ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
 
 ## 10.0.0-alpha.5
 
