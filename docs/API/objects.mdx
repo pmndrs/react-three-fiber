@@ -250,6 +250,17 @@ function Mesh() {
       <mesh geometry={globalGeometry} material={globalMaterial} />
 ```
 
+## Materials and `needsUpdate`
+
+Some material properties are compiled into the shader, so three.js only picks up a change to them after `material.needsUpdate = true`. React Three Fiber sets it for you when one of these props changes value: `transparent`, `vertexColors`, `flatShading`, `fog`, `side`, `alphaHash`, `premultipliedAlpha`, `blending`, `alphaToCoverage`, `dithering`, `sizeAttenuation`, `combine`, `normalMapType` and `depthPacking`. The same applies when a texture slot (`map`, `normalMap`, `envMap`, ...) gains or loses its texture, whether through a prop or an attached child, and when a `*Node` prop changes on a node material.
+
+```jsx
+// Toggling these recompiles the material automatically
+<meshStandardMaterial transparent={faded} normalMap={showDetail ? normalMap : null} />
+```
+
+Props three.js picks up on its own are left alone, since `needsUpdate` forces a full rebuild: colors, `opacity`, `roughness` and other uniform-backed values, thresholds such as `alphaTest`, `wireframe`, `toneMapped`, clipping planes, and swapping one texture for another. This only covers changes made through props (and `applyProps`); if you mutate a material through a ref, set `needsUpdate` yourself.
+
 ## Shader material uniforms
 
 `ShaderMaterial`, `RawShaderMaterial` and subclasses keep the material's [`uniforms` object](https://threejs.org/docs/#ShaderMaterial.uniforms) stable. When you pass a new `uniforms` object, React Three Fiber merges the incoming uniforms into the existing target instead of replacing it.

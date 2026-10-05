@@ -40,7 +40,7 @@ const App = () => (
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
 | orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                    |
-| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                   |
+| dpr             | Pixel-ratio: a fixed number, or automatic: [min, max], which clamps `window.devicePixelRatio` and follows display changes. See [Pixel ratio](#pixel-ratio) | `[1, 2]`                                                   |
 | width           | Fixed drawing-buffer width in pixels. When set, R3F stops auto-sizing to the container width. See [Canvas Size Control](#canvas-size-control)     | container width                                            |
 | height          | Fixed drawing-buffer height in pixels. When set, R3F stops auto-sizing to the container height                                                    | container height                                           |
 | forceEven       | Round computed width/height down to even numbers (useful for video encoders)                                                                      | `false`                                                    |
@@ -178,6 +178,17 @@ setSize() // reset to props/container
 > [!NOTE]
 > `width`/`height` are logical pixels; DPR multiplies as usual. Set `dpr={1}` for exact pixel dimensions. Use `forceEven` to round dimensions down to even numbers for video encoders.
 
+## Pixel ratio
+
+`dpr` is either a fixed number or a `[min, max]` range (the default is `[1, 2]`). A range clamps `window.devicePixelRatio` into it, and keeps following it: when the window moves to a display with a different pixel ratio, or the user zooms the page, R3F re-resolves the range and resizes the drawing buffer. It listens with `matchMedia`, since neither change resizes the canvas element. A fixed number never follows the display.
+
+```tsx
+<Canvas dpr={[1, 2]} /> // follows the display, clamped between 1 and 2
+<Canvas dpr={1.5} /> // always 1.5
+```
+
+A value set imperatively with `setDpr()` wins until the `dpr` prop itself changes. During a WebXR session the change waits until the session ends, since three.js manages the pixel ratio while presenting.
+
 ## Renderer settings
 
 Renderer-wide settings go into the `renderer` prop (WebGPU) or `gl` prop (WebGL): constructor parameters (`antialias`, `forceWebGL`, `depth`, ...), renderer properties (`toneMapping`, `outputColorSpace`, ...), and two settings R3F applies itself:
@@ -225,6 +236,18 @@ export default () => (
 `renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. R3F disposes a renderer it built from a config bag or a callback once the last Canvas using it unmounts; an instance you pass in is yours to dispose. Only the renderer a Canvas asks for is downloaded: three's WebGPU renderer is a separate chunk fetched when a `<Canvas renderer>` mounts, and a plain `<Canvas>` fetches only the WebGL one. For the single-renderer entries, node materials as JSX, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
 Node materials and TSL need `WebGPURenderer`, so pass `renderer` to use them. Browser WebGPU support is not required: `WebGPURenderer` falls back to WebGL2 automatically.
+
+## View transitions
+
+React 19.3's `<ViewTransition>` can wrap elements inside a Canvas. React hands a commit that touches a `<ViewTransition>` to the renderer, and R3F applies it synchronously, the same way react-dom does in browsers without `document.startViewTransition`. Nothing is animated: the scene is not a DOM snapshot, so `enter`, `exit` and `update` animations don't play on 3D content, but the update commits and effects run as usual. Gesture transitions are not supported.
+
+```tsx
+import { ViewTransition } from 'react'
+
+<Canvas>
+  <ViewTransition enter="fade">{shown && <Model />}</ViewTransition>
+</Canvas>
+```
 
 ## Custom Canvas
 
