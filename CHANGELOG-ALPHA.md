@@ -330,6 +330,17 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   index, unmounting one of two colliding jobs could leave it running
   ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
 
+### Examples
+
+- `FixedTimestep`: one simulation drawn raw and interpolated by `state.overstep`, with the `physics`
+  timestep switchable live.
+- `AutoNeedsUpdate`: toggles shader-shaping material props and a texture slot with no manual
+  `needsUpdate`, on WebGPU or WebGL.
+- `WebGPUShareOptOut`: a primary, an automatically sharing canvas, `share="id"` and `share={false}`,
+  each labelled with the renderer it actually uses.
+- `WebGPUPrimaryOnly` uses `<Canvas primary>`, and `UseFramePhases` sets the fixed `physics` timestep
+  instead of throttling it with `fps`.
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the

@@ -21,10 +21,12 @@ const demo = (load: () => Promise<{ default: ComponentType }>): Demo => ({ Compo
 const defaultDemos = {
   Activity: demo(() => import('./default/Activity')),
   AutoDispose: demo(() => import('./default/AutoDispose')),
+  AutoNeedsUpdate: demo(() => import('./default/AutoNeedsUpdate')),
   ChangeTexture: demo(() => import('./default/ChangeTexture')),
   ClickAndHover: demo(() => import('./default/ClickAndHover')),
   ContextMenuOverride: demo(() => import('./default/ContextMenuOverride')),
   FileDragDrop: demo(() => import('./default/FileDragDrop')),
+  FixedTimestep: demo(() => import('./default/FixedTimestep')),
   FlushSync: demo(() => import('./default/FlushSync')),
   Gestures: demo(() => import('./default/Gestures')),
   Gltf: demo(() => import('./default/Gltf')),
@@ -71,6 +73,7 @@ const webgpuDemos = {
   WebGPURendererRelease: demo(() => import('./webgpu/WebGPURendererRelease')),
   WebGPURagingSea: demo(() => import('./webgpu/WebGPURagingSea')),
   WebGPUSharedUniforms: demo(() => import('./webgpu/WebGPUSharedUniforms')),
+  WebGPUShareOptOut: demo(() => import('./webgpu/WebGPUShareOptOut')),
 }
 
 export const demoGroups: DemoGroup[] = [

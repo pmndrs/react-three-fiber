@@ -22,7 +22,7 @@ function setTargetTransform(target: THREE.Group, angle: number) {
 
 function PhaseDemo({ swapped }: { swapped: boolean }) {
   const target = useRef<THREE.Group>(null!)
-  const physics = useRef({ previous: 0, current: 0, time: 0 })
+  const physics = useRef({ previous: 0, current: 0 })
   const interpolationPhase = swapped ? 'camera' : 'update'
   const cameraPhase = swapped ? 'update' : 'camera'
   const { scheduler } = useFrame()
@@ -31,25 +31,32 @@ function PhaseDemo({ swapped }: { swapped: boolean }) {
     if (!scheduler.hasPhase('camera')) scheduler.addPhase('camera', { after: 'update', before: 'render' })
   }, [scheduler])
 
-  // Physics publishes a raw transform at 15 Hz.
+  // `physics` is a fixed-timestep phase; slow it to 15 Hz so the steps are visible
+  useLayoutEffect(() => {
+    const previous = scheduler.getPhaseTimestep('physics')
+    scheduler.setPhaseTimestep('physics', FIXED_STEP)
+    return () => scheduler.setPhaseTimestep('physics', previous)
+  }, [scheduler])
+
+  // Physics publishes a raw transform once per 15 Hz step. Inside a fixed phase `elapsed` is the
+  // simulated time
   useFrame(
     ({ elapsed }) => {
       const state = physics.current
       state.previous = state.current
       state.current = getAngle(elapsed)
-      state.time = elapsed
 
       setTargetTransform(target.current, state.current)
     },
-    { id: 'phase-demo-physics', phase: 'physics', fps: PHYSICS_FPS },
+    { id: 'phase-demo-physics', phase: 'physics' },
   )
 
-  // Interpolation replaces the stepped transform with the smooth render transform.
+  // Interpolation replaces the stepped transform with the smooth render transform. `overstep` is
+  // how far the loop is into the next physics step
   useFrame(
-    ({ elapsed }) => {
+    ({ overstep }) => {
       const state = physics.current
-      const alpha = THREE.MathUtils.clamp((elapsed - state.time) / FIXED_STEP, 0, 1)
-      const angle = THREE.MathUtils.lerp(state.previous, state.current, alpha)
+      const angle = THREE.MathUtils.lerp(state.previous, state.current, overstep)
 
       setTargetTransform(target.current, angle)
     },
