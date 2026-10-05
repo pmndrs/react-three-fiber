@@ -4,7 +4,17 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
-## Unreleased
+## 10.0.0-alpha.6
+
+Alpha 6 splits the package and reworks the frame loop. The TSL resource hooks move to their own
+package, `@react-three/tsl`, with uniforms typed by name. Multi-canvas is configured on the Canvas
+(`<Canvas primary>`, automatic sharing, `share`), and `scheduler` is a Canvas prop on every entry.
+`@pmndrs/scheduler` 0.3 makes the `physics` phase a fixed timestep with interpolation. The core no
+longer imports three: one entry serves both renderers and downloads only the one a Canvas asks
+for. Around that, the root and Canvas lifecycle was hardened (teardown at React's commit, renderer
+ownership and disposal, `<Activity>`, `root.ready`), and shader-shaping material props set
+`needsUpdate` for you. See the [migration guide](./docs/migration/v10.mdx) for the props that now
+throw.
 
 ### Breaking Changes
 
@@ -39,6 +49,37 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   `UltraHDRLoader`, the Android / ISO 21496-1 standard) stay. Every decoder is now three's own and
   decodes on the CPU, so `.jpg` environments can be preloaded like the others. Apps that need the
   split format keep it through drei's `<Environment>`.
+- The TSL resource hooks moved to a new package, `@react-three/tsl`: `useUniforms`, `useUniform`,
+  `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline` and the
+  `rebuildAll*` helpers. They are no longer exported from `@react-three/fiber/webgpu`, and
+  `@react-three/test-renderer/webgpu` no longer re-exports them. Install `@react-three/tsl` and
+  change the import; the API is the same. See the
+  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved).
+- `state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`, `state.renderPipeline` and
+  `state.passes` are added to `RootState` by `@react-three/tsl` (its root extension sets them up and
+  its types augment `RootState` on the default, `/webgpu` and `/extension` entries). They still read
+  the same in `useFrame`, `useThree` and handlers once the package is imported. Core no longer
+  creates them, and `/legacy` types no longer have them. `renderPipeline` and `passes` are optional:
+  they exist once `useRenderPipeline` creates a pipeline.
+- The deprecated standalone TSL utilities are removed: `removeUniforms(set, …)`, `clearScope`,
+  `clearRootUniforms`, `removeNodes(set, …)`, `clearNodeScope` and `clearRootNodes` (also from
+  `@react-three/test-renderer/webgpu`). Use the utilities `useUniforms()` and `useNodes()` return.
+- The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
+  It hooked into reconciler internals and fired on unrelated updates. Use an effect keyed on the
+  props that change, read the object in `useFrame`, or use a ref callback; see the
+  [migration guide](./docs/migration/v10.mdx#onupdate-removed). `onUpdate` is no longer reserved, so
+  it is assigned to the object by name: `<texture onUpdate={fn} />` now sets three's own
+  `Texture.onUpdate` (fired after a GPU upload, not after prop changes). R3F logs a one-time notice
+  the first time it sees an `onUpdate` prop.
+- `@pmndrs/scheduler` is now `^0.3.0`, which makes the built-in `physics` phase a fixed timestep
+  (1/60 by default). A `useFrame(cb, { phase: 'physics' })` job runs once per whole step banked
+  from the root's clock instead of once per frame: zero times on a frame that banks less than a
+  step, several on a slow one (at most 8, then surplus time is dropped), each time with
+  `delta === 1 / 60`. Step a simulation by the `delta` it is given
+  (`useFrame((_, dt) => world.step(dt), { phase: 'physics' })`). A job that should still run once
+  per frame belongs in another phase, or the phase can go back to per-frame with
+  `getScheduler().setPhaseTimestep('physics', undefined)`. See
+  [Frame Loop](./docs/frame-loop.mdx).
 
 ### Features
 
@@ -47,7 +88,7 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   19.0–19.2 hosts keep working, and a `<ViewTransition>` subtree inside the canvas now commits
   synchronously (three has nothing to animate) instead of leaving the reconciler stuck mid-commit
   ([#3915](https://github.com/pmndrs/react-three-fiber/issues/3915),
-  [#3917](https://github.com/pmndrs/react-three-fiber/pull/3917)).
+  [#3935](https://github.com/pmndrs/react-three-fiber/pull/3935)).
 - One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
   imports `three` or `three/webgpu`: each renderer lives in a support module that the root entry
   loads on demand, so a plain `<Canvas>` downloads only the WebGL renderer and `<Canvas renderer>`
@@ -134,6 +175,38 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   with an inline creator and no dependency array, which rebuilds the graph on every render. When
   the creator reads values from the component it names them and points to a uniform first, rather
   than asking for them to be declared; otherwise it offers `[]` as a suggestion.
+- Fixed-timestep phases from `@pmndrs/scheduler` 0.3. Besides `physics`, any phase can be given a
+  step with `addPhase(name, { timestep, maxSubsteps })` or `setPhaseTimestep(name, step)`.
+  `state.overstep` (in `[0, 1)`) is the fraction of the next step already banked, for interpolating
+  what is rendered between the last two simulated states; in-Canvas `useFrame` callbacks receive it.
+  Each root reports its jobs' errors to its own Canvas, and a driver restarted from inside a frame no
+  longer runs two loops.
+- Changing a material prop that is compiled into the shader sets `material.needsUpdate`, so the new
+  value takes effect without an effect that sets it by hand: `transparent`, `vertexColors`,
+  `flatShading`, `fog`, `side`, `alphaHash`, `premultipliedAlpha`, `blending`, `alphaToCoverage`,
+  `dithering`, `sizeAttenuation`, `combine`, `normalMapType` and `depthPacking`, and a texture slot
+  (`map`, `normalMap`, `envMap`, ...) gaining or losing its texture. Swapping one texture for
+  another, uniform-backed props (`color`, `opacity`, `roughness`, ...) and props three already
+  handles (`wireframe`, `alphaTest`, ...) leave the program alone
+  ([#3892](https://github.com/pmndrs/react-three-fiber/issues/3892),
+  [#3993](https://github.com/pmndrs/react-three-fiber/pull/3993)).
+- `root.configure()` runs synchronously unless the renderer is created asynchronously, and the first
+  `root.render()` mounts within the caller's commit. Every root exposes `ready`, a promise carrying
+  the `status` field React's `use` reads, which is pending only while an async renderer is being
+  created. `<Canvas>` commits its scene in its own layout effect, so `onCreated` runs while the
+  Canvas is mounted and events are connected before paint; with an async renderer it suspends an
+  empty sibling instead of the canvas, and a renderer factory that rejects reaches the nearest error
+  boundary. Port of [#3925](https://github.com/pmndrs/react-three-fiber/pull/3925)
+  ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- `<Activity>` visibility reaches into the Canvas: a scene under a hidden `<Activity>` is hidden
+  along with the DOM around it. Port of
+  [#3946](https://github.com/pmndrs/react-three-fiber/pull/3946)
+  ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- The canvas follows `devicePixelRatio` changes, such as moving to another display or zooming: a
+  `dpr` range is re-resolved against the new ratio, unless `setDpr()` overrode it. Watching is
+  best-effort and never fails configuration, so `matchMedia` stubs in tests keep working. Port of
+  [#3959](https://github.com/pmndrs/react-three-fiber/pull/3959)
+  ([#3975](https://github.com/pmndrs/react-three-fiber/pull/3975)).
 
 ### Changes
 
@@ -150,6 +223,14 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   is unchanged: its own scene, fields set through its `state` prop, and fields it sets itself (a
   camera or controls made default inside it, as drei's `Hud`, `RenderTexture` and `View` do) are
   never overwritten by the parent.
+- `useFrame(callback, negativeNumber)` logs a one-time deprecation notice. v10 maps the number to
+  `{ priority }`, which runs higher numbers first, so a negative number that meant "before the
+  default jobs" in v9 now runs after them. Name the dependency with `{ before, after }` instead
+  ([#3931](https://github.com/pmndrs/react-three-fiber/pull/3931)).
+- A `<Canvas>` re-render re-applies only the inputs that changed, so settings changed at runtime
+  (`setDpr`, `setFrameloop`, `performance`, `gl.shadowMap`, ...) survive it, and an inline
+  `onPointerMissed` no longer counts as a change. Removing a prop applies its default. Port of [#3945](https://github.com/pmndrs/react-three-fiber/pull/3945)
+  ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
 
 ### Fixes
 
@@ -216,31 +297,35 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   is async from three r186, the `unmountComponentAtNode` callback runs once that dispose has settled.
 - Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
   rendering the same canvas before that commit cancels the teardown.
-
-### Breaking Changes
-
-- The TSL resource hooks moved to a new package, `@react-three/tsl`: `useUniforms`, `useUniform`,
-  `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline` and the
-  `rebuildAll*` helpers. They are no longer exported from `@react-three/fiber/webgpu`, and
-  `@react-three/test-renderer/webgpu` no longer re-exports them. Install `@react-three/tsl` and
-  change the import; the API is the same. See the
-  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved).
-- `state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`, `state.renderPipeline` and
-  `state.passes` are added to `RootState` by `@react-three/tsl` (its root extension sets them up and
-  its types augment `RootState` on the default, `/webgpu` and `/extension` entries). They still read
-  the same in `useFrame`, `useThree` and handlers once the package is imported. Core no longer
-  creates them, and `/legacy` types no longer have them. `renderPipeline` and `passes` are optional:
-  they exist once `useRenderPipeline` creates a pipeline.
-- The deprecated standalone TSL utilities are removed: `removeUniforms(set, …)`, `clearScope`,
-  `clearRootUniforms`, `removeNodes(set, …)`, `clearNodeScope` and `clearRootNodes` (also from
-  `@react-three/test-renderer/webgpu`). Use the utilities `useUniforms()` and `useNodes()` return.
-- The `onUpdate` prop is removed ([#3903](https://github.com/pmndrs/react-three-fiber/issues/3903)).
-  It hooked into reconciler internals and fired on unrelated updates. Use an effect keyed on the
-  props that change, read the object in `useFrame`, or use a ref callback; see the
-  [migration guide](./docs/migration/v10.mdx#onupdate-removed). `onUpdate` is no longer reserved, so
-  it is assigned to the object by name: `<texture onUpdate={fn} />` now sets three's own
-  `Texture.onUpdate` (fired after a GPU upload, not after prop changes). R3F logs a one-time notice
-  the first time it sees an `onUpdate` prop.
+- Using a node material on a WebGL canvas throws a clear error naming the fix (pass `renderer` to
+  `<Canvas>`, or import from `/webgpu`), instead of three failing on the first frame with
+  `Cannot read properties of undefined (reading 'replace')`. Covers node material elements,
+  `<primitive>` and the `material` prop
+  ([#3889](https://github.com/pmndrs/react-three-fiber/issues/3889),
+  [#3995](https://github.com/pmndrs/react-three-fiber/pull/3995)).
+- Removing an object with `frameloop="demand"` requests a frame, so it no longer stays on screen
+  until something else invalidates
+  ([#3980](https://github.com/pmndrs/react-three-fiber/issues/3980),
+  [#3989](https://github.com/pmndrs/react-three-fiber/pull/3989)).
+- `useEnvironment.clear()` after `useEnvironment.preload()` waits for the decoder the preload is
+  still importing, so the preloaded entry is actually cleared
+  ([#3972](https://github.com/pmndrs/react-three-fiber/pull/3972)).
+- An object's own `visible` survives being hidden and revealed by `<Activity>` or Suspense, including
+  a `visible` prop that changed while it was hidden. Port of
+  [#3944](https://github.com/pmndrs/react-three-fiber/pull/3944)
+  ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- Pointer capture survives an instance being reconstructed, including a capture held by an ancestor
+  of the reconstructed object ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- Canvas size and viewport are updated together, so a store subscriber never sees one without the
+  other ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- A root remounted on the same `id` waits for the previous root's scheduler cleanup before reusing
+  the id ([#4007](https://github.com/pmndrs/react-three-fiber/pull/4007)).
+- `extend(SomeClass)` hands out element ids that are unique across copies of fiber, including a copy
+  from an earlier alpha that still counts locally: ids already taken in the shared catalogue are
+  skipped ([#3923](https://github.com/pmndrs/react-three-fiber/pull/3923)).
+- `useFrame` job ids are unique across renderers. They were `React.useId()`, which react-dom and
+  every copy of fiber's reconciler count from zero on their own, and with scheduler 0.3's global job
+  index, unmounting one of two colliding jobs could leave it running.
 
 ## 10.0.0-alpha.5
 

@@ -1,5 +1,19 @@
 # @react-three/test-renderer
 
+## 10.0.0-alpha.6
+
+### Major Changes
+
+- `@react-three/test-renderer/webgpu` no longer re-exports the TSL resource hooks (`useUniforms`,
+  `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`,
+  `rebuildAll*`) or the removed standalone TSL utilities. Import the hooks from
+  `@react-three/tsl`.
+
+### Patch Changes
+
+- Tracks `@react-three/fiber@10.0.0-alpha.6`. See [Fiber's changelog](../fiber/CHANGELOG.md) and the
+  [full Alpha 6 notes](../../CHANGELOG-ALPHA.md#1000-alpha6).
+
 ## 10.0.0-alpha.5
 
 ### Patch Changes

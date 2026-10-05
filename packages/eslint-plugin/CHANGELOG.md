@@ -1,5 +1,14 @@
 # @react-three/eslint-plugin
 
+## 1.0.0-alpha.6
+
+### Minor Changes
+
+- New rule `prefer-local-nodes-deps`, in `recommended`. It flags a `useLocalNodes` call with an
+  inline creator and no dependency array, which rebuilds the node graph on every render. When the
+  creator reads values from the component, it names them and points to a uniform first; otherwise
+  it suggests `[]`.
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes

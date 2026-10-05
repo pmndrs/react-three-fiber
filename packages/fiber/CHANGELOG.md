@@ -1,5 +1,46 @@
 # @react-three/fiber
 
+## 10.0.0-alpha.6
+
+Full detail is in
+[`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha6) at the repo root.
+
+### Breaking Changes
+
+- The TSL resource hooks moved to `@react-three/tsl`; the deprecated standalone TSL utilities are
+  removed, and `state.uniforms` and friends are added by that package.
+- Multi-canvas is configured with `<Canvas primary>` and `share`; `renderer={{ primaryCanvas }}`
+  throws.
+- `scheduler` is a Canvas prop on every entry; `renderer={{ scheduler }}` throws.
+- `shadows` moved into `renderer={{ shadows }}` / `gl={{ shadows }}`; the top-level prop throws.
+- The `onUpdate` prop is removed.
+- `<Environment>` / `useEnvironment` drop the split gain map format.
+- `@pmndrs/scheduler` 0.3: the `physics` phase is a fixed 1/60 timestep.
+
+### Features
+
+- One entry, either renderer: the core no longer imports three, and each renderer loads on demand.
+- `Register` narrows the renderer type app-wide; the Canvas `renderer` prop is typed.
+- `registerRootExtension`, `setRenderOverride` and the `@react-three/fiber/extension` entry.
+- Fixed-timestep phases and `state.overstep` from `@pmndrs/scheduler` 0.3.
+- Shader-shaping material props set `material.needsUpdate` (#3993).
+- `root.ready`, synchronous configure and render, and `<Activity>` visibility inside the Canvas
+  (#4007).
+- The canvas follows `devicePixelRatio` changes (#3975).
+- React 19.3 support, including `<ViewTransition>` inside the canvas (#3935).
+
+### Bug Fixes
+
+- Multi-canvas works under the WebGL2 fallback, and sharing canvases no longer change the primary's
+  renderer settings (#3996).
+- R3F disposes the renderers it creates once the last canvas using them unmounts (#3974).
+- Roots tear down at React's unmount commit instead of after a timer (#3973).
+- Removing an object under `frameloop="demand"` requests a frame (#3989).
+- Node materials on a WebGL canvas throw a clear error (#3995).
+- Visibility, pointer capture and runtime settings survive `<Activity>`, reconstruction and Canvas
+  re-renders (#4007).
+- `extend()` and `useFrame` ids are unique across copies of fiber and renderers.
+
 ## 10.0.0-alpha.5
 
 Full detail is in
