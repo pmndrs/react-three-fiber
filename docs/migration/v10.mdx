@@ -14,16 +14,24 @@ nav: 32
 
 ## The Short Version
 
-**Your existing code works.** v10 is designed to be backwards compatible. The default import supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU with `<Canvas renderer>`. Only the renderer your Canvas asks for is downloaded. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
+**Most code works unchanged.** The default import supports both WebGL and WebGPU renderers, and your app keeps using WebGL unless you opt into WebGPU with `<Canvas renderer>`. Only the renderer your Canvas asks for is downloaded. You will get a deprecation warning, and should import from `/legacy` if you plan to stay with the old renderer.
+
+A few things do break, and most of them fail loudly rather than silently: `<Canvas shadows>` throws (the setting moved into `gl` / `renderer`), the `onUpdate` prop is gone, and the dependency ranges moved. Two changes are quieter: a `useFrame` job in the `physics` phase now runs on a fixed timestep, and negative numeric `useFrame` priorities run in the opposite order from v9 (with a warning). The checklist below covers all of them.
 
 ## Quick Checklist
 
-For most apps, nothing will change. For those that access the renderer using `useThree()` or `useFrame()` here's all you need to do:
-
+- [ ] Upgrade `three` to `>=0.185.0` (see [Dependency ranges moved](#dependency-ranges-moved))
 - [ ] Replace `state.gl` with `state.renderer`
 - [ ] Replace any `onUpdate` prop with an effect, `useFrame` or a ref callback (see [`onUpdate` Removed](#onupdate-removed))
 - [ ] Move `<Canvas shadows>` into the renderer settings: `gl={{ shadows }}` / `renderer={{ shadows }}` (see [`shadows` Moved](#shadows-moved-into-the-renderer-settings))
-- [ ] That's it!
+- [ ] Step simulations in the `physics` phase by the `delta` they are given, or move per-frame work out of it (see [`physics` Runs on a Fixed Timestep](#physics-runs-on-a-fixed-timestep))
+- [ ] Replace negative `useFrame` priorities with phases or `before` / `after` (see [Render Phase Takes Over Rendering](#render-phase-takes-over-rendering))
+- [ ] Replace split gain map environments with a single-file `.jpg` (see [Split Gain Map Environments Removed](#split-gain-map-environments-removed))
+
+Upgrading from an earlier v10 alpha? Also:
+
+- [ ] Import the TSL hooks from `@react-three/tsl` (see [TSL hooks moved](#tsl-hooks-moved-to-react-threetsl))
+- [ ] Replace `renderer={{ primaryCanvas }}` and `renderer={{ scheduler }}` with `<Canvas primary>` and `<Canvas scheduler>` (see [Multi-Canvas Props](#multi-canvas-props-alpha-upgraders))
 
 If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
 
@@ -168,7 +176,27 @@ useFrame(() => updateGame(), { phase: 'update' })
 useFrame(() => updateAI(), { after: 'update', before: 'render' })
 ```
 
+In the v10 form, `physicsStep` runs on a fixed timestep: see the next section.
+
 > **Ordering direction is reversed.** A bare number is mapped to `{ priority: n }`, and v10 runs higher priority first (v9 ran lower first). Left unmigrated, the v9 example above runs `updateAI` first and `physicsStep` last on v10. Only `priority > 0` (render takeover) and negative values (reversed ordering) emit a deprecation notice; a bare `0` is the default and is silent. Migrate to phases or `before`/`after` rather than to `{ priority }`: a number is only a loose tie-break and doesn't guarantee order against other jobs.
+
+### `physics` Runs on a Fixed Timestep
+
+The built-in `physics` phase steps at a fixed `1 / 60` of a second (from `@pmndrs/scheduler` 0.3). A
+job in it runs once for every whole step of time that has built up, not once per frame: on a 120 Hz
+display it skips every other frame, on a slow frame it runs several times (at most 8, after which the
+surplus time is dropped), and it always gets `delta === 1 / 60`. This is what a physics engine wants,
+and it makes the simulation run at the same speed on every display.
+
+```diff
+- useFrame(() => world.step(1 / 60), { phase: 'physics', fps: 60, drop: false })
++ useFrame((_, delta) => world.step(delta), { phase: 'physics' })
+```
+
+Work that has to run exactly once per frame belongs in another phase (`update` is the default). To
+interpolate what you render between the last two physics states, read `state.overstep`, and to make
+`physics` run once per frame again, call `getScheduler().setPhaseTimestep('physics', undefined)`.
+See [Frame Loop](../frame-loop).
 
 ---
 
@@ -253,6 +281,9 @@ keys throw, naming the new API.
 - `renderer` means only `true`, a props bag, an instance or a factory, and a props bag configures a
   renderer the canvas owns: a canvas sharing the primary's renderer ignores it (with a development
   warning). Renderer-wide settings belong on the primary.
+- Mind the direction when ordering canvases with numbers: `scheduler={{ order }}` runs **lower**
+  values first, while a `useFrame` job's `priority` runs **higher** values first. Prefer
+  `before` / `after` with canvas ids for both.
 
 See [Multi-Canvas](../webgpu/multi-canvas).
 
@@ -305,6 +336,18 @@ called when props change, so a v9 `onUpdate={(self) => (self.needsUpdate = true)
 new `image` for upload: set `needsUpdate` in an effect keyed on the data instead. On a TSL node the
 prop replaces the `Node.onUpdate()` method, and on anything else (a mesh, a group) the assignment is
 inert. R3F logs a one-time notice the first time it sees an `onUpdate` prop.
+
+### Split Gain Map Environments Removed
+
+`<Environment>`, `useEnvironment` and the Canvas `background` prop no longer read the split gain map
+format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`), and `@monogrid/gainmap-js` is no longer a
+dependency. Use a single-file Ultra HDR `.jpg`, which three's own `UltraHDRLoader` decodes, or keep
+the split format through drei's `<Environment>`. `.hdr`, `.exr` and six-face cube sets are unchanged.
+
+```diff
+- <Canvas background={{ files: ['sdr.webp', 'gainmap.webp', 'metadata.json'] }} />
++ <Canvas background="/environment.jpg" />
+```
 
 ### `<color attach="background">` Pattern Deprecated
 
@@ -359,7 +402,7 @@ v10 completely rewrites the frame loop with a scheduler that gives you **real co
 
 ```tsx
 useFrame(({ delta }) => processInput(), { phase: 'input' })
-useFrame(({ delta }) => physicsWorld.step(delta), { phase: 'physics' })
+useFrame(({ delta }) => physicsWorld.step(delta), { phase: 'physics' }) // fixed 1/60 steps
 useFrame(({ delta }) => updateGame(delta), { phase: 'update' })
 useFrame(({ delta }) => renderEffects(), { phase: 'render' })
 ```
