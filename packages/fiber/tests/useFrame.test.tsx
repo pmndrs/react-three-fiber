@@ -157,6 +157,71 @@ describe('useFrame hook', () => {
     expect(calls.length).toBe(callsBeforeUnmount)
   })
 
+  it('keeps job ids unique across React roots, so unmounting one never leaks its job', async () => {
+    // React.useId() is only unique within one renderer instance: react-dom, and every copy of
+    // fiber's reconciler, count from zero on their own. Jobs registered under those ids used to
+    // collide, and since @pmndrs/scheduler 0.3 tracks job ids globally, unsubscribing one of two
+    // colliding jobs could miss it and leave it running. A fresh copy of fiber stands in for the
+    // second renderer here.
+    const callsA: string[] = []
+    const callsB: string[] = []
+    let controlsA: any
+    let controlsB: any
+
+    vi.resetModules()
+    const bundleA = await import('../src/index')
+    vi.resetModules()
+    const bundleB = await import('../src/index')
+
+    const A = () => {
+      controlsA = bundleA.useFrame(() => callsA.push('a'))
+      return null
+    }
+    const B = () => {
+      controlsB = bundleB.useFrame(() => callsB.push('b'))
+      return null
+    }
+
+    const rootA = bundleA.createRoot(createCanvas())
+    const rootB = bundleB.createRoot(createCanvas())
+    try {
+      await act(async () => (await rootA.configure({ frameloop: 'never' })).render(<A />))
+      await act(async () => (await rootB.configure({ frameloop: 'never' })).render(<B />))
+
+      expect(controlsA.id).not.toBe(controlsB.id)
+
+      // Remove A's job, then drive every root: A must stay silent
+      await act(async () => rootA.render(null))
+      await act(async () => controlsB.stepAll())
+
+      expect(callsA).toHaveLength(0)
+      expect(callsB.length).toBeGreaterThan(0)
+    } finally {
+      await act(async () => rootA.unmount())
+      await act(async () => rootB.unmount())
+    }
+  })
+
+  it('passes the fixed-step overstep through to callbacks inside a Canvas', async () => {
+    const oversteps: unknown[] = []
+    let controls: any
+
+    const Component = () => {
+      controls = useFrame((state) => oversteps.push(state.overstep))
+      return null
+    }
+
+    await act(async () => (await root.configure({ frameloop: 'never' })).render(<Component />))
+    await act(async () => controls.stepAll())
+
+    expect(oversteps.length).toBeGreaterThan(0)
+    for (const overstep of oversteps) {
+      expect(typeof overstep).toBe('number')
+      expect(overstep).toBeGreaterThanOrEqual(0)
+      expect(overstep).toBeLessThan(1)
+    }
+  })
+
   it('provides scheduler via useThree', async () => {
     let scheduler: any
 
@@ -205,13 +270,16 @@ describe('useFrame hook', () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
     })
 
-    // Find first occurrence of each
+    // `physics` is a fixed-timestep phase (1/60), so it sits out frames until a whole step is
+    // banked. Check the first frame it runs in: physics substeps, then update, then render.
     const physicsIdx = order.indexOf('physics')
-    const updateIdx = order.indexOf('update')
-    const renderIdx = order.indexOf('render')
+    expect(physicsIdx).toBeGreaterThanOrEqual(0)
+    if (physicsIdx > 0) expect(order[physicsIdx - 1]).toBe('render')
 
-    // Phase order should be: physics -> update -> render
-    expect(physicsIdx).toBeLessThan(updateIdx)
+    const frame = order.slice(physicsIdx)
+    const updateIdx = frame.indexOf('update')
+    const renderIdx = frame.indexOf('render')
+    expect(frame.slice(0, updateIdx).every((phase) => phase === 'physics')).toBe(true)
     expect(updateIdx).toBeLessThan(renderIdx)
   })
 

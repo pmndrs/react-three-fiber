@@ -4,9 +4,9 @@ import { useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 
 /**
- * A lone `<Canvas id>` — a primary with no secondaries.
+ * A lone `<Canvas primary>` — a primary with no secondaries.
  *
- * Repro for the alpha.4 regression of #3847: giving a WebGPU canvas an id made R3F size a second
+ * Repro for the alpha.4 regression of #3847: making a WebGPU canvas a primary made R3F size a second
  * CanvasTarget around the same element while the renderer kept drawing (and building its depth
  * buffer) with its own. Without a secondary to trigger setCanvasTarget the two never met, so every
  * frame raised:
@@ -54,10 +54,10 @@ export default function WebGPUPrimaryOnly() {
   const [readout, setReadout] = useState('…')
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* The id is the trigger: it registers this canvas as a primary and gives it a canvas target.
-          `renderer` selects WebGPU: the examples app compiles the /webgpu entry with both build
-          flags on, where an absent renderer prop still means WebGL. */}
-      <Canvas id="primary-only" renderer dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
+      {/* `primary` is the trigger: it registers this canvas as a primary and gives it a canvas
+          target. An id alone no longer does. `renderer` selects WebGPU: the examples app compiles
+          the /webgpu entry with both build flags on, where an absent renderer prop still means WebGL. */}
+      <Canvas id="primary-only" primary renderer dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 4, 5]} intensity={2} />
         <SpinningBox />

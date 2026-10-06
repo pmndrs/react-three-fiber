@@ -93,9 +93,11 @@ export function useFrame(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [optionsKey])
 
-  // Generate stable ID if not provided
-  const reactId = React.useId()
-  const id = options.id ?? reactId
+  // Generate a stable ID if not provided. Not React.useId(): that is only unique within one
+  // renderer, and react-dom and every copy of fiber's reconciler count from zero on their own. The
+  // scheduler tracks job ids globally, so a collision could make one job's unsubscribe miss it.
+  const [generatedId] = React.useState(() => scheduler.generateJobId())
+  const id = options.id ?? generatedId
 
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
@@ -162,6 +164,7 @@ export function useFrame(
           delta: frameState.delta,
           elapsed: frameState.elapsed,
           frame: frameState.frame,
+          overstep: frameState.overstep,
         }
         callbackRef.current?.(mergedState as typeof frameState, delta)
       }

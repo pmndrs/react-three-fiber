@@ -253,8 +253,8 @@ importers:
         specifier: ^7.28.6
         version: 7.28.6
       '@pmndrs/scheduler':
-        specifier: ^0.2.0
-        version: 0.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        specifier: ^0.3.0
+        version: 0.3.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       dequal:
         specifier: ^2.0.3
         version: 2.0.3
@@ -1779,8 +1779,8 @@ packages:
     engines: {node: '>=22.12.0'}
     hasBin: true
 
-  '@pmndrs/scheduler@0.2.0':
-    resolution: {integrity: sha512-Lv+4ZQjxw2BMcPDWHgcP2tULiEKZL+x5+mFW2YXWZUrDhT4h5PKpRv/U5ApweL+R319sdY63C688zd4QVamHvA==}
+  '@pmndrs/scheduler@0.3.0':
+    resolution: {integrity: sha512-zz1//QQphScVT8Hk/s9IIJBII8l0SIdN8DOKHChgE7BZfnJZiaZgXtpnhmRBVKsZeJBvMNvbGA/ALeqlIK3TbA==}
     peerDependencies:
       react: ^19.3.0
       react-dom: ^19.3.0
@@ -6329,7 +6329,7 @@ snapshots:
       '@clack/prompts': 1.7.0
       tsx: 4.23.13
 
-  '@pmndrs/scheduler@0.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@pmndrs/scheduler@0.3.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     optionalDependencies:
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
