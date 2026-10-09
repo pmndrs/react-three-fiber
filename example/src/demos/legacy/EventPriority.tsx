@@ -1,4 +1,4 @@
-import { Canvas, createPortal } from '@react-three/fiber'
+import { Canvas, createPortal } from '@react-three/fiber/legacy'
 import { OrbitControls, GizmoHelper, GizmoViewcube, useGLTF, PerspectiveCamera } from '@react-three/drei'
 import { Hud } from './components/Hud'
 import { useCallback, useEffect, useReducer, useState } from 'react'
