@@ -360,6 +360,10 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   every copy of fiber's reconciler count from zero on their own, and with scheduler 0.3's global job
   index, unmounting one of two colliding jobs could leave it running
   ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
+- `state.gl` on a WebGPU root is the renderer. It stayed `null`, because the store's mapping
+  getter does not survive zustand's state updates, so drei's `OrbitControls`, `Environment` and
+  `Preload` threw on `gl.domElement` / `gl.compile`
+  ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
 
 ### Examples
 
@@ -371,6 +375,8 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   each labelled with the renderer it actually uses.
 - `WebGPUPrimaryOnly` uses `<Canvas primary>`, and `UseFramePhases` sets the fixed `physics` timestep
   instead of throttling it with `fps`.
+- The `legacy` demos import from `@react-three/fiber/legacy`; they relied on the default import
+  rendering with WebGL ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
 
 ## 10.0.0-alpha.5
 
