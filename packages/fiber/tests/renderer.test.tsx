@@ -13,6 +13,7 @@ import {
   useFrame,
 } from '../src/index'
 import type { RootState, RootStore } from '../src/index'
+import { createRoot as createLegacyRoot } from '../src/legacy'
 import { suspend } from 'suspend-react'
 
 class Mock extends THREE.Group {
@@ -1169,6 +1170,8 @@ describe('renderer', () => {
       return new THREE.WebGLRenderer(props)
     })
 
+    // An async gl factory makes a WebGLRenderer, which lives on /legacy
+    const root = createLegacyRoot(document.createElement('canvas'))
     let store: RootStore = null!
     await act(async () => {
       // Kick off two configures before the first has finished initializing the renderer.
@@ -1183,6 +1186,7 @@ describe('renderer', () => {
     // The latest configure's size wins after the shared renderer resolves.
     expect(store.getState().size.width).toBe(300)
     expect(store.getState().size.height).toBe(300)
+    await act(async () => root.unmount())
   })
 
   it('should preserve setDpr changes from child component across re-configure', async () => {

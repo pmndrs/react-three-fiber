@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot } from '../src/index'
+import { ReconcilerRoot, createRoot } from '../src/legacy'
 
 /**
  * textureColorSpace — Tier 1 (jsdom, WebGL).

@@ -58,6 +58,8 @@ vi.mock('../src/support/webgpu', async (importOriginal) => {
 import { advance, Canvas, createRoot } from '../src'
 import { _roots, unmountComponentAtNode } from '../src/core/root'
 import { disposeRenderer } from '../src/core/renderer'
+// WebGLRenderer lives on /legacy: the gl-prop tests below run there
+import { createRoot as createLegacyRoot } from '../src/legacy'
 
 const deferred = () => {
   let resolve!: () => void
@@ -148,7 +150,7 @@ describe('renderer lifecycle', () => {
     })
 
     it('disposes a WebGLRenderer it created and releases its context', async () => {
-      const root = createRoot(document.createElement('canvas'))
+      const root = createLegacyRoot(document.createElement('canvas'))
       let gl!: THREE.WebGLRenderer
       await act(async () => {
         const store = (await root.configure({ gl: {}, frameloop: 'never' })).render(null)
@@ -168,7 +170,7 @@ describe('renderer lifecycle', () => {
       const gl = new THREE.WebGLRenderer({ canvas })
       const dispose = vi.spyOn(gl, 'dispose')
       const forceContextLoss = vi.spyOn(gl, 'forceContextLoss')
-      const root = createRoot(canvas)
+      const root = createLegacyRoot(canvas)
       await act(async () => (await root.configure({ gl, frameloop: 'never' })).render(null))
 
       await act(async () => root.unmount())
@@ -315,7 +317,7 @@ describe('renderer lifecycle', () => {
 
     it('releases the WebGL context even when dispose() throws', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const root = createRoot(document.createElement('canvas'))
+      const root = createLegacyRoot(document.createElement('canvas'))
       let gl!: THREE.WebGLRenderer
       await act(async () => {
         gl = (await root.configure({ gl: {}, frameloop: 'never' })).render(null).getState().gl as THREE.WebGLRenderer
@@ -376,7 +378,7 @@ describe('renderer lifecycle', () => {
     it('reports a forceContextLoss() that throws and still finishes the teardown', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const canvas = document.createElement('canvas')
-      const root = createRoot(canvas)
+      const root = createLegacyRoot(canvas)
       let gl!: THREE.WebGLRenderer
       await act(async () => {
         gl = (await root.configure({ gl: {}, frameloop: 'never' })).render(null).getState().gl as THREE.WebGLRenderer

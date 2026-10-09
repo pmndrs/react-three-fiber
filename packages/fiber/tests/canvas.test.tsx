@@ -8,14 +8,16 @@ import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
 import { Canvas, useEnvironment, useFrame, useLoader, useThree } from '../src'
 import type { DefaultRendererProps, RootState } from '../src'
+// WebGLRenderer lives on /legacy: the gl-prop tests below run there
+import { Canvas as LegacyCanvas } from '../src/legacy'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
     const renderer = await act(async () =>
       render(
-        <Canvas>
+        <LegacyCanvas>
           <group />
-        </Canvas>,
+        </LegacyCanvas>,
       ),
     )
 
@@ -256,9 +258,9 @@ describe('web Canvas', () => {
       const renderer = await act(async () =>
         render(
           <TestErrorBoundary fallback={<div data-testid="error-fallback">Error caught</div>}>
-            <Canvas>
+            <LegacyCanvas>
               <ErrorComponent />
-            </Canvas>
+            </LegacyCanvas>
           </TestErrorBoundary>,
         ),
       )
@@ -293,9 +295,9 @@ describe('web Canvas', () => {
 
       await act(async () =>
         render(
-          <Canvas background="#ff0000">
+          <LegacyCanvas background="#ff0000">
             <BackgroundChecker />
-          </Canvas>,
+          </LegacyCanvas>,
         ),
       )
 
@@ -321,9 +323,9 @@ describe('web Canvas', () => {
 
       await act(async () =>
         render(
-          <Canvas background={0x00ff00}>
+          <LegacyCanvas background={0x00ff00}>
             <BackgroundChecker />
-          </Canvas>,
+          </LegacyCanvas>,
         ),
       )
 
@@ -353,13 +355,13 @@ describe('web Canvas', () => {
       try {
         await act(async () =>
           render(
-            <Canvas
+            <LegacyCanvas
               background={{
                 preset: 'city',
                 backgroundBlurriness: 0.5,
               }}>
               <group />
-            </Canvas>,
+            </LegacyCanvas>,
           ),
         )
 
@@ -392,9 +394,9 @@ describe('web Canvas', () => {
       try {
         await act(async () =>
           render(
-            <Canvas background={{ files: faces }}>
+            <LegacyCanvas background={{ files: faces }}>
               <group />
-            </Canvas>,
+            </LegacyCanvas>,
           ),
         )
 
@@ -444,9 +446,9 @@ describe('web Canvas', () => {
       try {
         await act(async () =>
           render(
-            <Canvas occlusion>
+            <LegacyCanvas occlusion>
               <group />
-            </Canvas>,
+            </LegacyCanvas>,
           ),
         )
 

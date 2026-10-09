@@ -6,7 +6,7 @@ import { render, cleanup } from '@testing-library/react'
 import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
-import { createRoot, useThree, extend, useFrame } from '../src'
+import { createRoot, useThree, extend, useFrame } from '../src/legacy'
 
 //* Integration Tests (with Canvas) ==============================
 

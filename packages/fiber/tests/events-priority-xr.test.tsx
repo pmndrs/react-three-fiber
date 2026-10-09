@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import * as React from 'react'
 import { render, fireEvent } from '@testing-library/react'
 import { act } from './utils/act'
-import { Canvas, extend } from '../src'
+import { Canvas, extend } from '../src/legacy'
 import * as THREE from 'three'
 import type { RootState } from '#types'
 
