@@ -7,6 +7,9 @@ Full detail is in
 
 ### Breaking Changes
 
+- `@react-three/fiber` renders with `WebGPURenderer` by default; `WebGLRenderer` is only on
+  `@react-three/fiber/legacy`. `gl={...}` on the default import throws, and GLSL materials on a
+  WebGPU canvas warn in development (#4013).
 - The TSL resource hooks moved to `@react-three/tsl`; the deprecated standalone TSL utilities are
   removed, and `state.uniforms` and friends are added by that package.
 - Multi-canvas is configured with `<Canvas primary>` and `share`; `renderer={{ primaryCanvas }}`
@@ -17,9 +20,14 @@ Full detail is in
 - `<Environment>` / `useEnvironment` drop the split gain map format.
 - `@pmndrs/scheduler` 0.3: the `physics` phase is a fixed 1/60 timestep.
 
+### Deprecations
+
+- `@react-three/fiber/webgpu`: import from `@react-three/fiber` and register the renderer type
+  instead. Removed in the first beta (#4013).
+
 ### Features
 
-- One entry, either renderer: the core no longer imports three, and each renderer loads on demand.
+- The core no longer imports three; the default import loads the WebGPU renderer on demand.
 - `Register` narrows the renderer type app-wide; the Canvas `renderer` prop is typed.
 - `registerRootExtension`, `setRenderOverride` and the `@react-three/fiber/extension` entry.
 - Fixed-timestep phases and `state.overstep` from `@pmndrs/scheduler` 0.3.

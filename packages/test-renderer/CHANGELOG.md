@@ -4,6 +4,10 @@
 
 ### Major Changes
 
+- The default entry mocks WebGPU and creates WebGPU canvases, since `@react-three/fiber` now renders
+  with `WebGPURenderer`. Test WebGL scenes with `@react-three/test-renderer/legacy` (#4013).
+- `@react-three/test-renderer/webgpu` is deprecated with `@react-three/fiber/webgpu`, and removed in
+  the first beta. Use the default entry, which mocks WebGPU (#4013).
 - `@react-three/test-renderer/webgpu` no longer re-exports the TSL resource hooks (`useUniforms`,
   `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`,
   `rebuildAll*`) or the removed standalone TSL utilities. Import the hooks from
@@ -11,6 +15,8 @@
 
 ### Patch Changes
 
+- The WebGL2 context mock's `getSupportedExtensions()` returns the mocked extensions, which
+  `WebGPURenderer`'s WebGL2 fallback backend reads.
 - Tracks `@react-three/fiber@10.0.0-alpha.6`. See [Fiber's changelog](../fiber/CHANGELOG.md) and the
   [full Alpha 6 notes](../../CHANGELOG-ALPHA.md#1000-alpha6).
 

@@ -124,12 +124,12 @@ Every three class is a JSX element without any `extend()` call, on `<Canvas>` an
 
 ## Typing the renderer
 
-`@react-three/fiber` can construct either renderer, so `state.renderer` is `WebGLRenderer | WebGPURenderer` by default and a member only one of them has (`renderer.compute`, `renderer.shadowMap`) needs a narrow. An app that has decided on a renderer registers it once, anywhere, and everything renderer-typed follows: `useThree`, `useFrame`, `onCreated`, `useRenderTarget`, `state.isLegacy`.
+`@react-three/fiber` renders with `WebGPURenderer`, but its types stay `WebGLRenderer | WebGPURenderer`, because libraries compile against them and also run under `/legacy`. So in an app, a member only one of them has (`renderer.compute`, `renderer.shadowMap`) needs a narrow. An app registers its renderer once, anywhere, and everything renderer-typed follows: `useThree`, `useFrame`, `onCreated`, `useRenderTarget`, `state.isLegacy`.
 
 ```tsx
 declare module '@react-three/fiber' {
   interface Register {
-    renderer: 'webgpu' // or 'webgl'
+    renderer: 'webgpu' // or 'webgl' on @react-three/fiber/legacy
   }
 }
 
@@ -139,7 +139,7 @@ useFrame(({ renderer }) => renderer.compute(kernel))
 const fbo = useRenderTarget() // RenderTarget
 ```
 
-This types what your app does; it does not change what a Canvas renders, so keep the `renderer` prop on `<Canvas>`. The `/webgpu` and `/legacy` entries give the same narrowed types by import path instead, for apps that would rather not have the declaration. Both use the same core, so libraries typed against the union keep working under either.
+This types what your app does; it does not change what a Canvas renders: the import does (WebGPU on `@react-three/fiber`, WebGL on `/legacy`). `/legacy` also gives WebGL types by import path, with no declaration. `/webgpu` does the same for WebGPU but is deprecated and will be removed in the first beta, so register `'webgpu'` instead. All entries use the same core, so libraries typed against the union keep working under any of them.
 
 When you have not registered a renderer and need a WebGPU member in one place, narrow with the flag three sets:
 

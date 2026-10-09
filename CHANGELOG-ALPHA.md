@@ -6,17 +6,38 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ## 10.0.0-alpha.6
 
-Alpha 6 splits the package and reworks the frame loop. The TSL resource hooks move to their own
-package, `@react-three/tsl`, with uniforms typed by name. Multi-canvas is configured on the Canvas
-(`<Canvas primary>`, automatic sharing, `share`), and `scheduler` is a Canvas prop on every entry.
-`@pmndrs/scheduler` 0.3 makes the `physics` phase a fixed timestep with interpolation. The core no
-longer imports three: one entry serves both renderers and downloads only the one a Canvas asks
-for. Around that, the root and Canvas lifecycle was hardened (teardown at React's commit, renderer
-ownership and disposal, `<Activity>`, `root.ready`), and shader-shaping material props set
-`needsUpdate` for you. See the [migration guide](./docs/migration/v10.mdx) for the props that now
-throw.
+Alpha 6 makes WebGPU the default. `<Canvas>` from `@react-three/fiber` renders with
+`WebGPURenderer`, which falls back to a WebGL2 backend where the browser has no WebGPU;
+`WebGLRenderer` moves to `@react-three/fiber/legacy`, and the import is the switch. Around that, the
+package splits and the frame loop is reworked: the TSL resource hooks move to `@react-three/tsl`
+with uniforms typed by name, multi-canvas is configured on the Canvas (`<Canvas primary>`,
+automatic sharing, `share`), `scheduler` is a Canvas prop on every entry, and `@pmndrs/scheduler`
+0.3 makes the `physics` phase a fixed timestep with interpolation. The core no longer imports
+three, so the renderer is a lazy chunk and libraries add none. The root and Canvas lifecycle was
+hardened (teardown at React's commit, renderer ownership and disposal, `<Activity>`, `root.ready`),
+and shader-shaping material props set `needsUpdate` for you. Start with the
+[migration guide](./docs/migration/v10.mdx): GLSL scenes and WebGL-only libraries need `/legacy`.
 
 ### Breaking Changes
+
+- `@react-three/fiber` renders with `WebGPURenderer` by default. It rendered with `WebGLRenderer`
+  unless a Canvas had the `renderer` prop; now every `<Canvas>` and `createRoot` on the default
+  import (and on `/webgpu`) uses WebGPU, and `WebGLRenderer` is only on `@react-three/fiber/legacy`.
+  There is no prop to switch back per Canvas: import `Canvas` / `createRoot` from `/legacy` for
+  GLSL `ShaderMaterial`s, `onBeforeCompile`, `postprocessing` and other libraries that need
+  `WebGLRenderer`. Hooks and libraries can keep importing from `@react-three/fiber`, since every
+  entry shares one core. `gl={...}` on a default-import Canvas throws, naming `/legacy` (WebGPU
+  settings go in `renderer`), and `<Canvas renderer>` is now the same as `<Canvas>`. A GLSL material
+  on a WebGPU canvas, which three draws with a blank default material, logs a one-time development
+  warning naming `/legacy`. The default import's renderer support is still a lazy chunk, and the
+  WebGL one is no longer reachable from it. `@react-three/test-renderer`'s default entry mocks and
+  creates WebGPU canvases to match ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
+
+  ```diff
+  // GLSL shaders, postprocessing, drei shader materials
+  - import { Canvas } from '@react-three/fiber'
+  + import { Canvas } from '@react-three/fiber/legacy'
+  ```
 
 - Multi-canvas is configured on the Canvas, not in the `renderer` bag. Mark the canvas that owns the
   renderer `<Canvas primary>`; every other WebGPU canvas shares its renderer automatically, renders
@@ -26,7 +47,7 @@ throw.
   canvas on its own renderer. The primary announces itself synchronously on mount, so a canvas in
   the same commit shares it whatever its place in the tree; a primary mounting after canvases that
   already built their own renderer adopts none of them and warns once. With no `primary`, nothing
-  changes. `primary` implies WebGPU on the root entry and is not available on `/legacy`.
+  changes. `primary` is not available on `/legacy`.
   No deprecation path: `renderer={{ primaryCanvas }}` (and a top-level `primaryCanvas`) throws,
   pointing at `<Canvas primary>` / `share`. See [Multi-Canvas](./docs/webgpu/multi-canvas.mdx).
 
@@ -39,7 +60,7 @@ throw.
 
 - `scheduler` is a Canvas prop (and a `configure()` option) on every entry, `/legacy` included:
   `<Canvas scheduler={{ before, after, order, fps }}>`. `renderer={{ scheduler }}` throws, pointing
-  at `<Canvas scheduler>`. It also no longer turns a root-entry Canvas into a WebGPU one.
+  at `<Canvas scheduler>`.
 - `shadows` moved into the renderer settings: `renderer={{ shadows }}` (WebGPU) or `gl={{ shadows }}`
   (WebGL, `/legacy`), same values. The top-level prop throws, naming the new place. It applies to a
   renderer R3F builds; a renderer instance or factory keeps the `shadowMap` its creator set.
@@ -82,6 +103,16 @@ throw.
   [Frame Loop](./docs/frame-loop.mdx)
   ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
 
+### Deprecations
+
+- `@react-three/fiber/webgpu` and `@react-three/test-renderer/webgpu` are deprecated and will be
+  removed in the first v10 beta. With WebGPU the default, `/webgpu` is the same renderer as
+  `@react-three/fiber`, imported statically and typed against `WebGPURenderer`. Import from
+  `@react-three/fiber` (and `@react-three/test-renderer`) instead, and declare
+  `interface Register { renderer: 'webgpu' }` for the narrowed types. Both entries keep working
+  through the alphas; their exports are marked `@deprecated`, with no runtime notice
+  ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
+
 ### Features
 
 - React 19.3 is supported; the peer range is now `>=19.0 <19.4`. The vendored reconciler is built
@@ -90,13 +121,13 @@ throw.
   synchronously (three has nothing to animate) instead of leaving the reconciler stuck mid-commit
   ([#3915](https://github.com/pmndrs/react-three-fiber/issues/3915),
   [#3935](https://github.com/pmndrs/react-three-fiber/pull/3935)).
-- One import, either renderer, nothing of three up front. `@react-three/fiber`'s core no longer
-  imports `three` or `three/webgpu`: each renderer lives in a support module that the root entry
-  loads on demand, so a plain `<Canvas>` downloads only the WebGL renderer and `<Canvas renderer>`
-  only the WebGPU one, as separate lazy chunks. All entries are built in one pass on a shared core,
-  so a library importing hooks from `@react-three/fiber` adds no renderer and no second copy of
-  fiber to an app on any entry. `/legacy` and `/webgpu` remain as static, narrowed aliases (no extra
-  request, one renderer's types, `useRenderTarget` typed to its target). JSX element names resolve
+- Nothing of three up front. `@react-three/fiber`'s core no longer imports `three` or
+  `three/webgpu`: each renderer lives in a support module, and the default import loads the WebGPU
+  one on demand, as a lazy chunk. All entries are built in one pass on a shared core, so a library
+  importing hooks from `@react-three/fiber` adds no renderer and no second copy of fiber to an app on
+  any entry, `/legacy` included. `/legacy` (WebGL) and `/webgpu` load their renderer statically and
+  narrow the types to it (no extra request, one renderer's types, `useRenderTarget` typed to its
+  target). JSX element names resolve
   against explicit `extend()` registrations first, then the three namespace of the root's own
   renderer, so a WebGL root no longer advertises node materials it cannot build; each entry
   declares its own `ThreeElements` (`ThreeElementsOf<T>`) and `ReactThreeFiber` namespace. Core

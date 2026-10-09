@@ -14,12 +14,18 @@ nav: 32
 
 ## The Short Version
 
-**Most code works unchanged.** The default import supports both WebGL and WebGPU renderers, and your app keeps using WebGL unless you opt into WebGPU with `<Canvas renderer>`. Only the renderer your Canvas asks for is downloaded. You will get a deprecation warning, and should import from `/legacy` if you plan to stay with the old renderer.
+**`@react-three/fiber` now renders with WebGPU.** Every `<Canvas>` from the default import uses three's `WebGPURenderer`, which falls back to a WebGL2 backend where the browser has no WebGPU, so it runs everywhere v9 did. What it cannot run is GLSL: `ShaderMaterial`, `RawShaderMaterial`, `onBeforeCompile`, and libraries built on them (much of drei's shader-based components, `postprocessing`). Those need `WebGLRenderer`, which is now only on `@react-three/fiber/legacy`.
 
-A few things do break, and most of them fail loudly rather than silently: `<Canvas shadows>` throws (the setting moved into `gl` / `renderer`), the `onUpdate` prop is gone, and the dependency ranges moved. Two changes are quieter: a `useFrame` job in the `physics` phase now runs on a fixed timestep, and negative numeric `useFrame` priorities run in the opposite order from v9 (with a warning). The checklist below covers all of them.
+So the first decision is one import:
+
+- **Your scene uses GLSL or WebGL-only libraries:** change `@react-three/fiber` to `@react-three/fiber/legacy` wherever you import `Canvas` (and `createRoot`). Everything else in this guide still applies, and the rest of your app and libraries keep importing hooks from `@react-three/fiber`.
+- **It doesn't:** keep the import. Standard materials, lights, shadows, loaders and controls work on `WebGPURenderer` unchanged.
+
+A few other things break, and most of them fail loudly rather than silently: `<Canvas shadows>` throws (the setting moved into `gl` / `renderer`), `gl={...}` on a `@react-three/fiber` Canvas throws (it configures `WebGLRenderer`), the `onUpdate` prop is gone, and the dependency ranges moved. Three changes are quieter: a GLSL material on a WebGPU canvas renders blank (with a development warning), a `useFrame` job in the `physics` phase now runs on a fixed timestep, and negative numeric `useFrame` priorities run in the opposite order from v9 (with a warning). The checklist below covers all of them.
 
 ## Quick Checklist
 
+- [ ] Decide on the renderer: keep `@react-three/fiber` (WebGPU), or import `Canvas` from `@react-three/fiber/legacy` (WebGL) for GLSL and WebGL-only libraries (see [`@react-three/fiber` Renders With WebGPU](#react-threefiber-renders-with-webgpu))
 - [ ] Upgrade `three` to `>=0.185.0` (see [Dependency ranges moved](#dependency-ranges-moved))
 - [ ] Replace `state.gl` with `state.renderer`
 - [ ] Replace any `onUpdate` prop with an effect, `useFrame` or a ref callback (see [`onUpdate` Removed](#onupdate-removed))
@@ -32,20 +38,10 @@ Upgrading from an earlier v10 alpha? Also:
 
 - [ ] Import the TSL hooks from `@react-three/tsl` (see [TSL hooks moved](#tsl-hooks-moved-to-react-threetsl))
 - [ ] Replace `renderer={{ primaryCanvas }}` and `renderer={{ scheduler }}` with `<Canvas primary>` and `<Canvas scheduler>` (see [Multi-Canvas Props](#multi-canvas-props-alpha-upgraders))
+- [ ] Drop the `renderer` boolean: `<Canvas renderer>` is now the same as `<Canvas>`. An app on `@react-three/fiber` without it, which was on WebGL, is now on WebGPU
+- [ ] Move imports from the deprecated `@react-three/fiber/webgpu` (and `@react-three/test-renderer/webgpu`) to `@react-three/fiber` (and `@react-three/test-renderer`); register `renderer: 'webgpu'` for narrowed types (see [Typing the renderer](../API/typescript#typing-the-renderer)). They are removed in the first beta
 
-If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
-
-- [ ] Import from `@react-three/fiber/legacy` instead of `@react-three/fiber`
-
-**Want WebGPU?** Just add `renderer` to Canvas - no manual init required:
-
-```tsx
-<Canvas renderer>
-  <Scene />
-</Canvas>
-```
-
-You can also pass renderer parameters or a pre-created renderer instance. R3F handles initialization automatically:
+WebGPU needs no manual init. Pass renderer parameters or a pre-created renderer instance through `renderer`, and R3F handles initialization:
 
 ```tsx
 // Pass parameters
@@ -58,6 +54,26 @@ You can also pass renderer parameters or a pre-created renderer instance. R3F ha
 ---
 
 ## Breaking Changes
+
+### `@react-three/fiber` Renders With WebGPU
+
+The default import renders every `<Canvas>` with `WebGPURenderer`. In v9, and in the v10 alphas before alpha.6, it rendered with `WebGLRenderer` unless you passed `renderer`. `WebGLRenderer` now lives only on `@react-three/fiber/legacy`, and the import is the switch: there is no prop that turns a default-import Canvas back into WebGL.
+
+```diff
+// GLSL shaders, onBeforeCompile, postprocessing, drei's shader-based components
+- import { Canvas } from '@react-three/fiber'
++ import { Canvas } from '@react-three/fiber/legacy'
+```
+
+Change it where you import `Canvas` or `createRoot`. Hooks (`useThree`, `useFrame`, `useLoader`, ...) can keep coming from `@react-three/fiber`: every entry shares one core, so they work under a `/legacy` Canvas, and libraries that import from `@react-three/fiber` do too.
+
+What tells you which one you need:
+
+- **GLSL materials.** `WebGPURenderer` compiles node materials (TSL), not GLSL. A `ShaderMaterial` or `RawShaderMaterial` on a WebGPU canvas is drawn with a blank default material, three logs `NodeBuilder: Material "ShaderMaterial" is not compatible`, and R3F warns once per material type in development, naming `/legacy`. `onBeforeCompile` is ignored. Standard materials (`MeshStandardMaterial`, `MeshPhysicalMaterial`, ...) are converted to their node equivalents automatically.
+- **The `gl` prop.** It configures `WebGLRenderer`, so on a `@react-three/fiber` Canvas it throws, naming `/legacy`. Move renderer settings to `renderer={{ ... }}` to stay on WebGPU.
+- **Libraries.** Anything that needs a `WebGLRenderer` (`postprocessing`'s `EffectComposer`, GLSL-based drei components, code calling WebGL-only renderer APIs) needs `/legacy` until it supports `WebGPURenderer`. `state.gl` on a WebGPU canvas returns the `WebGPURenderer`, with a deprecation notice.
+
+Node materials go the other way: on `/legacy` they throw an error pointing back to `@react-three/fiber`.
 
 ### Dependency ranges moved
 
@@ -102,25 +118,24 @@ function MyComponent() {
 }
 ```
 
-> **Note:** `gl` still works but will log a deprecation warning. Update at your convenience.
+> **Note:** `state.gl` still works but logs a deprecation warning on a WebGPU canvas, where it returns the `WebGPURenderer`. On `/legacy` it is the `WebGLRenderer`, as before.
 
 ### Renderer Selection
 
-| Your Use Case                    | Import From                 | Renderer                                   |
-| -------------------------------- | --------------------------- | ------------------------------------------ |
-| Default (WebGL, or WebGPU with `renderer`) | `@react-three/fiber`        | Chosen per Canvas, downloaded on demand    |
-| WebGL only, no warnings          | `@react-three/fiber/legacy` | WebGLRenderer, no extra request            |
-| WebGPU only                      | `@react-three/fiber/webgpu` | WebGPURenderer, no extra request           |
+| Your Use Case                          | Import From                 | Renderer                                          |
+| -------------------------------------- | --------------------------- | ------------------------------------------------- |
+| Default                                | `@react-three/fiber`        | WebGPURenderer, downloaded on demand              |
+| GLSL shaders, WebGL-only libraries     | `@react-three/fiber/legacy` | WebGLRenderer, no extra request                   |
+| Deprecated, removed in the first beta  | `@react-three/fiber/webgpu` | WebGPURenderer, imported statically               |
 
 ```tsx
-// Default - WebGL by default, WebGPU with <Canvas renderer>. Only the one you use is downloaded.
+// Default - WebGPURenderer, fetched when the first Canvas mounts
 import { Canvas, useFrame } from '@react-three/fiber'
 
 // Legacy - WebGLRenderer only, typed as such
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 
-// WebGPU - WebGPURenderer only, typed as such (TSL hooks come from @react-three/tsl)
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+// TSL hooks come from @react-three/tsl on either WebGPU import
 import { useUniforms } from '@react-three/tsl'
 ```
 
@@ -509,13 +524,13 @@ This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffer
 Match your test renderer import to your fiber import:
 
 ```tsx
-// If using default fiber
+// If using default fiber (WebGPU: mocks WebGPU and creates WebGPU canvases)
 import ReactThreeTestRenderer from '@react-three/test-renderer'
 
-// If using legacy
+// If using legacy (WebGL)
 import ReactThreeTestRenderer from '@react-three/test-renderer/legacy'
 
-// If using WebGPU
+// Deprecated with @react-three/fiber/webgpu (removed in the first beta)
 import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
 ```
 
@@ -525,18 +540,17 @@ import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
 
 ### Do I need to switch to WebGPU?
 
-No. WebGL remains the default and will continue to be supported. WebGPU is opt-in for those who want to use TSL shaders or need WebGPU-specific features.
+Not if your scene needs WebGL: import from `@react-three/fiber/legacy`, which is fully supported and keeps `WebGLRenderer`. But WebGPU is the default now, so staying on WebGL is the choice you make explicitly.
 
-If you do want TSL or node materials, pass `renderer` to `<Canvas>` (or use the `/webgpu` entry). You don't need browser WebGPU support for this: `WebGPURenderer` falls back to WebGL2 automatically.
+You don't need browser WebGPU support for the default either: `WebGPURenderer` falls back to a WebGL2 backend automatically, and keeps running node materials and TSL there.
 
 ### Will my drei/postprocessing code work?
 
-Mostly, with one caveat during the alpha. v10's default import keeps the v9 surface these packages
-build on, so ordinary drei and postprocessing usage is expected to work.
+On `@react-three/fiber/legacy`, yes: it keeps the v9 `WebGLRenderer` surface these packages build on. On the default import, the renderer-agnostic parts of drei (controls, cameras, loaders, `Html`, ...) work, but anything built on GLSL or `EffectComposer` (most of `postprocessing`, drei's shader materials) needs `/legacy` until those packages support `WebGPURenderer`.
 
-The caveat is peer ranges: a `@react-three/drei` release declaring support for
+There is also a peer-range caveat during the alpha: a `@react-three/drei` release declaring support for
 `@react-three/fiber@^10` is still pending, so your package manager may warn or refuse to resolve
-until it lands. WebGPU-specific features will need ecosystem updates over time regardless.
+until it lands.
 
 ### What if I'm using `state.gl` everywhere?
 

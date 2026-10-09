@@ -177,7 +177,7 @@ return <mesh raycast={useCamera(anotherCamera)} />
 
 ## Render Loop
 
-By default, Fiber sets up a render loop that renders the default `scene` from the default `camera` to the renderer (a `WebGLRenderer`, or a `WebGPURenderer` when you opt into the `renderer` prop).
+By default, Fiber sets up a render loop that renders the default `scene` from the default `camera` to the renderer (a `WebGPURenderer`, or a `WebGLRenderer` on `@react-three/fiber/legacy`).
 
 In v10 the loop is driven by a single shared `requestAnimationFrame` scheduler, not three.js' `setAnimationLoop`. Work is organised into ordered **phases** — the defaults are `start`, `input`, `physics`, `update`, `render`, `finish` — and on each frame the scheduler:
 
