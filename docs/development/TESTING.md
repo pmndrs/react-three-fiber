@@ -88,7 +88,7 @@ It is **not** a per-PR CI gate (it needs a physical GPU + display). Treat it as 
 
 These are the real-GPU behaviors no jsdom/mock test can reach. Each should become a scripted Playwright check against the example app:
 
-1. **Basic WebGPU render** — `<Canvas renderer>` inits without a manual `renderer.init()`; first frame draws; no depth mismatch.
+1. **Basic WebGPU render** — `<Canvas>` inits without a manual `renderer.init()`; first frame draws; no depth mismatch.
 2. **WebGPU-only entry** — `@react-three/fiber/webgpu` runs with no WebGL renderer loaded; node materials resolve from the root's namespace.
 3. **Multi-canvas shared renderer** — a `<Canvas primary>` + a plain secondary `<Canvas>` (auto-sharing) and one with `share="main"` share one renderer, switch targets correctly, clean up, render after the primary by default, honor `scheduler={{ after, fps }}`, **and share state via `primaryStore`**. jsdom covers the sharing rules and timing (`tests/multi-canvas-primary.test.tsx`); this checks the pixels.
 4. **Occlusion** — `onOccluded` / `onVisible` fire only on state change; clean up on unmount.
@@ -206,7 +206,7 @@ pnpm analyze-test                     # dry-run @react-three/test-renderer packa
 
 What `verify-treeshake` checks, per bundler:
 
-- **Root app** (`Canvas` from `@react-three/fiber`): the eager output carries neither renderer; the two lazy chunks carry exactly one each.
+- **Root app** (`Canvas` from `@react-three/fiber`): the eager output carries neither renderer; the one lazy renderer chunk carries WebGPU only, and no chunk carries WebGL.
 - **`/webgpu` app**: the WebGPU renderer and never the WebGL one. **`/legacy` app**: the reverse.
 - **A library importing hooks** from the root or `/extension` entry adds no renderer, next to any app, and core is bundled once.
 - **Root app with `<Environment>`**: the decoders stay lazy.
@@ -230,6 +230,8 @@ These belong in CI as well as locally — see the parity note above.
 **"Cannot find module" errors?** Ensure `pnpm install` ran; if the error references `dist`, run `pnpm stub`.
 
 **`verify-treeshake` fails?** You must `pnpm build` first (`pnpm install` re-stubs `dist`). A renderer in the eager output means something in `src/core/` imports a value from `three`/`three/webgpu`, or a module that does (a three addon) is imported statically; see [BUILD.md](./BUILD.md).
+
+**A test fails on the root entry inside three's WebGL backend (`ImageBitmap is not defined`, `availableExtensions`)?** The root entry renders with `WebGPURenderer`, which in jsdom runs its WebGL2 fallback backend against the WebGL mock, and a rendered frame needs browser APIs jsdom does not have. A test that exercises core behaviour (events, visibility, sizing, Suspense) rather than the renderer imports `Canvas` / `createRoot` from `../src/legacy`, which renders through the WebGL mock as before. Tests of WebGPU behaviour mock the renderer (see `renderer-lifecycle.test.tsx`) or use `frameloop: 'never'`.
 
 **Tests rendering on the root entry time out or find `scene` null?** The root entry loads a renderer support with a dynamic import. `setupTests.ts` imports both supports so that import is cached and resolves inside `act()`; a test that builds a bare store with `createStore` must `registerThree(...)` itself (see `webgpu/useRenderTarget.test.tsx`).
 

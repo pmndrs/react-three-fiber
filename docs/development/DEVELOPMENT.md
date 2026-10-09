@@ -6,7 +6,7 @@ This is the hub for all technical documentation. It covers day-to-day workflow, 
 
 v10 introduces significant architectural changes:
 
-- **WebGPU Support** — `<Canvas renderer>` on `@react-three/fiber`, with `/webgpu` and `/legacy` entries for one renderer only
+- **WebGPU by default** — `<Canvas>` on `@react-three/fiber` renders with WebGPURenderer; `/legacy` keeps WebGLRenderer, `/webgpu` loads WebGPU statically
 - **Native Split** — React Native support moved to separate `@react-three/native` package
 - **New Build System** — Unbuild, one build with a shared core; renderer supports loaded on demand
 - **Modern Tooling** — pnpm workspaces and Vitest for testing

@@ -52,7 +52,7 @@ const provider: RendererProvider = {
 const provider: RendererProvider = { webgl: () => webglSupport }
 ```
 
-`configure()` picks the renderer from the props (`renderer` selects WebGPU on the root entry), awaits its support, and keeps it as `state.internal.support`. That is the moment three is downloaded on the root entry: bundlers emit `dist/chunks/webgl.mjs` and `dist/chunks/webgpu.mjs` as lazy chunks, and an app fetches only the one its Canvas asked for. `/legacy` and `/webgpu` import their support statically, for apps that would rather not have that request; they are the same core.
+`configure()` picks the renderer the entry's provider offers (WebGPU on the root entry and `/webgpu`, WebGL on `/legacy`), awaits its support, and keeps it as `state.internal.support`. That is the moment three is downloaded on the root entry: bundlers emit `dist/chunks/webgpu.mjs` as a lazy chunk. `/legacy` and `/webgpu` import their support statically, for apps that would rather not have that request; they are the same core.
 
 ### Core responsibilities
 
@@ -80,7 +80,7 @@ Nothing in `src/core/` knows which renderer it will run with, and nothing there 
 - **`state.internal.support`** carries the renderer-specific classes core touches by name, and the three namespace of that flavour. JSX element names resolve against explicit `extend()` registrations first, then against `support.three` (`src/core/extend.ts`), so a WebGPU root sees node materials and a WebGL root does not. No entry calls `extend(THREE)` at import time any more; that call is what used to force a whole namespace into every entry's eager graph.
 - **`getThree()`** (`src/core/three.ts`) is three's _shared core_: `Vector3`, `Scene`, `Raycaster`, the constants. The first support that loads registers its namespace; both flavours export the very same objects for these, so one registration serves every root. It is available before any element renders, hook runs or `onCreated` fires, and throws a pointed error before that.
 - **Store objects that are three instances** (`pointer`, `frustum`, the viewport's scratch vectors) are created in `configure()` once the support is loaded, not in `createStore`. Module-level scratch objects (`utils/three.ts`, `visibility.ts`) are created on first use.
-- **Three addons** (`three/examples/jsm/*`) import from `three`, so they are loaded with a dynamic import where they are used: the environment decoders in `useEnvironment.tsx` (three's own HDR, EXR, Ultra HDR and cube loaders; no third-party decoder), `GroundedSkybox` in `Environment.tsx`. On the root entry, a WebGPU app that uses an `.hdr`/`.exr` environment therefore also fetches the chunk that holds `three.module.js` (the addon needs it, and the WebGL support shares it), lazily; `/webgpu` has no WebGL support in its graph and avoids that.
+- **Three addons** (`three/examples/jsm/*`) import from `three`, so they are loaded with a dynamic import where they are used: the environment decoders in `useEnvironment.tsx` (three's own HDR, EXR, Ultra HDR and cube loaders; no third-party decoder), `GroundedSkybox` in `Environment.tsx`. On the root entry and `/webgpu`, an app that uses an `.hdr`/`.exr` environment therefore also fetches the chunk that holds `three.module.js` (the addon needs it), lazily.
 
 ```typescript
 // In src/core/: types are free, values are not
