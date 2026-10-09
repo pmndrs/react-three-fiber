@@ -61,6 +61,8 @@ describe('entries', () => {
       expect(state.internal.support.kind).toBe('webgpu')
       expect(state.isLegacy).toBe(false)
       expect(state.renderer).toBeInstanceOf(WebGPURenderer)
+      // Libraries that still read `gl` (drei's controls read `gl.domElement`) get the renderer, not null
+      expect(state.gl).toBe(state.renderer)
     })
 
     it('root entry: the renderer prop configures WebGPU', async () => {
