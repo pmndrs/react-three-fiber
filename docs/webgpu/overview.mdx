@@ -240,8 +240,8 @@ Uniforms, nodes, buffers and GPU storage belong to the **renderer**, not to one 
 ```typescript
 // Added to RootState by @react-three/tsl
 interface RootState {
-  uniforms: UniformStore // Global uniforms + scopes (typed by name once registered)
-  nodes: NodeStore // Global TSL nodes + scopes
+  uniforms: AppUniforms // Global uniforms + scopes (typed by name once registered, loose otherwise)
+  nodes: AppNodes // Global TSL nodes + scopes (typed by name once registered, loose otherwise)
   buffers: BufferStore // GPU buffer storage + scopes
   gpuStorage: StorageStore // GPU texture storage + scopes
   renderPipeline?: RenderPipeline | null // Per canvas, set by useRenderPipeline

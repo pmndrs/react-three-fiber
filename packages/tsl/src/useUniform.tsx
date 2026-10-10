@@ -48,13 +48,17 @@ export type UniformValue =
   | Node // TSL nodes like color(), vec3(), float() for type casting
   | UniformNode // Allow passing existing uniform nodes
 
+/** `useUniform<T>(name)`'s result: exact for an explicit `T`, a `LooseUniformNode` without one. */
+export type ReadUniform<T extends UniformValue> = UniformValue extends T ? LooseUniformNode : UniformNodeFor<T>
+
 //* Hook Overloads ==============================
 
 // Get a registered uniform: typed by name, no generic needed (see ./register)
 export function useUniform<K extends keyof RegisteredUniforms & string>(name: K): RegisteredUniform<K>
 
-// Get existing uniform (throws if not found)
-export function useUniform<T extends UniformValue = UniformValue>(name: string): UniformNodeFor<T>
+// Get existing uniform (throws if not found): exact with a type, `useUniform<Color>('uColor')`, a
+// LooseUniformNode without one (a string name cannot carry the type; see LooseUniformNode)
+export function useUniform<T extends UniformValue = UniformValue>(name: string): ReadUniform<T>
 
 // Create uniform if not exists, or update value if exists
 export function useUniform<T extends UniformValue>(name: string, value: T): UniformNodeFor<T>

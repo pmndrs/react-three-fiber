@@ -152,7 +152,7 @@ describe('useLocalNodes: changes to what the creator read', () => {
     expect(log.runs).toBe(1)
 
     const uX = uniform(2)
-    patch(store, 'uniforms', { late: { uY: (store.getState().uniforms.late as { uY: unknown }).uY, uX } })
+    patch(store, 'uniforms', { late: { uY: store.getState().uniforms.late.uY, uX } })
     expect(log.runs).toBe(2)
     expect(log.result!.node).toBe(uX)
   })
@@ -326,7 +326,10 @@ describe('useLocalNodes: tracked reads across the React lifecycle', () => {
     }
     // Runs in the same commit, after Reader rendered but before its subscription is live.
     function ReplaceOnCommit() {
-      React.useLayoutEffect(() => store.setState((s) => ({ uniforms: { ...s.uniforms, uRead: next } })), [])
+      React.useLayoutEffect(
+        () => store.setState((s) => ({ uniforms: { ...s.uniforms, uRead: next as LooseUniformEntry } })),
+        [],
+      )
       return null
     }
 

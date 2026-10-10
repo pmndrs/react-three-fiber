@@ -233,8 +233,10 @@ function runPublicConsumerTest() {
     ['TSL (webgpu)', 'scripts/type-tests/tsconfig.tsl.json'],
     ['TSL (default)', 'scripts/type-tests/tsconfig.tsl.default.json'],
     ['TSL (legacy)', 'scripts/type-tests/tsconfig.tsl.legacy.json'],
+    ['TSL loose reads (unregistered)', 'scripts/type-tests/tsconfig.tsl.loose.json'],
     ['TSL Register (strict)', 'scripts/type-tests/tsconfig.tsl.register.json'],
     ['TSL Register (strict: false)', 'scripts/type-tests/tsconfig.tsl.register-loose.json'],
+    ['TSL Register nodes (strict: false)', 'scripts/type-tests/tsconfig.tsl.register-nodes.json'],
   ]
 
   try {

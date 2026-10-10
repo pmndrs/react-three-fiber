@@ -17,7 +17,8 @@
  *   playerHealth: uniforms.scope('player').uHealth, // or uniforms.player.uHealth
  * }), [])
  *
- * // Without registration, give a scope its schema
+ * // Without registration a read is loose: TSL takes it as is. A scope schema makes it exact.
+ * useLocalNodes(({ uniforms }) => ({ wobble: sin(uniforms.uTime.mul(2)) }), [])
  * useLocalNodes(({ uniforms }) => {
  *   const player = uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')
  *   return { damage: player.uHealth.mul(2) }
@@ -30,7 +31,7 @@ import { getTextureView, type RootState, type RootStore } from '@react-three/fib
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
 import { SCOPE, type ReadObserver, type ResourceView, type TrackedKind } from './readTracking'
-import type { CreatorUniforms } from '../register'
+import type { CreatorNodes, CreatorUniforms } from '../register'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -60,10 +61,15 @@ interface ReadContext extends ReadOptions {
  * Property access returns `T` (assumes leaf node).
  * Use `.scope(key)` for nested object access.
  *
+ * `TLeaf` is what a scope schema must hold (`scope<{ uHealth: UniformNode<'float', number> }>()`),
+ * `TRead` what a leaf reads as without one. They differ for uniforms and nodes, whose unregistered
+ * reads are the loose `LooseUniformNode` / `LooseNode` (see those types for why).
  */
-export type ScopedStoreMethods<TLeaf> = {
+export type ScopedStoreMethods<TLeaf, TRead extends TLeaf = TLeaf> = {
   /** Access a nested scope by key. Returns empty wrapper if scope doesn't exist. */
-  scope<TScope extends Record<string, TLeaf> = Record<string, TLeaf>>(key: string): ScopedStoreType<TLeaf, TScope>
+  scope<TScope extends Record<string, TLeaf> = Record<string, TRead>>(
+    key: string,
+  ): ScopedStoreType<TLeaf, TScope, TRead>
   /** Check if a key exists in the store */
   has(key: string): boolean
   /** Get all keys in the store */
@@ -73,7 +79,8 @@ export type ScopedStoreMethods<TLeaf> = {
 export type ScopedStoreType<
   TLeaf,
   TEntries extends Record<string, TLeaf> = Record<string, TLeaf>,
-> = Readonly<TEntries> & ScopedStoreMethods<TLeaf>
+  TRead extends TLeaf = TLeaf,
+> = Readonly<TEntries> & ScopedStoreMethods<TLeaf, TRead>
 
 interface ScopedStoreData<TLeaf> {
   [key: string]: TLeaf | ScopedStoreData<TLeaf>
@@ -220,8 +227,8 @@ export function createScopedStore<TLeaf>(
 export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
   /** Type-safe uniform access - property access returns UniformNode, typed by name when registered */
   uniforms: CreatorUniforms
-  /** Type-safe node access for real, callable, and legacy structural nodes */
-  nodes: ScopedStoreType<NodeLike>
+  /** Node access: each read a `LooseNode` (callable, every operator), typed by name when registered */
+  nodes: CreatorNodes
   /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */
   buffers: ScopedStoreType<BufferLike>
   /** Type-safe GPU storage access - property access returns StorageLike (StorageTexture, TSL nodes) */

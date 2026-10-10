@@ -1,10 +1,10 @@
 ---
 title: Typed Uniforms
-description: Type @react-three/tsl uniforms by name across your app with the Register interface, choose strict or loose checking, and back the types at runtime with configureTSL.
+description: Type @react-three/tsl uniforms and nodes by name across your app with the Register interface, choose strict or loose checking, back the types at runtime with configureTSL, and know what an unregistered read is typed as.
 nav: 18
 ---
 
-Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Registering your uniforms once fixes that for the whole app.
+Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Without registration such a read is [loose](#what-stays-loose): usable in any TSL expression, but not exactly typed. Registering your uniforms once types them by name for the whole app.
 
 ## Register your uniforms
 
@@ -65,13 +65,36 @@ Registration never makes existing code stricter than it has to:
 | Call | Not registered | Registered |
 | --- | --- | --- |
 | `useUniforms(() => ({...}))` | Inferred from the creator | Inferred; registered keys keep their type |
-| `useUniforms()` / `state.uniforms` / a creator's `uniforms` | Loose `UniformStore` | Typed; unknown root keys are errors |
+| `useUniforms()` / `state.uniforms` / a creator's `uniforms` | Loose | Typed; unknown root keys are errors |
 | `useUniforms('player')` (registered scope) | Loose | Typed |
 | `useUniforms('enemy')` (other scope) | Loose | Loose |
 | `useUniforms<{ blur: number }>('fx')` | Typed by the explicit schema | Same |
 | `useUniform('uTime')` | Loose unless you pass a type | Typed by name |
 
-With nothing registered, every hook keeps exactly the types it had before.
+A loose read is a `LooseUniformNode`, and it works in TSL as is:
+
+```tsx
+const { uTime, uColor } = useUniforms()
+material.colorNode = mix(color('red'), uColor, sin(uTime.mul(2)))
+useFrame((_, delta) => (uTime.value += delta))
+```
+
+Why it is typed that way: a read by name can't know what the uniform under that name holds, and three's types only give the operator methods (`.mul`, `.add`, swizzles, `.toVar()`) to a node whose type is known: a float, a vec3, a color. A plain "some uniform" type has none of them, which is why these reads used to need a cast. So an unregistered read is typed as a node that has every member that any of three's uniform nodes has, each typed `any`. Every operator, TSL function and material slot accepts it, and a misspelt member (`uTime.valeu`) is still an error.
+
+It's a deliberate simplification, and it gives up two things. What its own methods return is `any` (TSL functions such as `sin()` or `mix()` still return typed nodes), and nothing checks that an operation fits the uniform's real type: `cross()` wants two vec3s and will take it. Cast once when you want the exact type; a single `as` works, since every member is `any`:
+
+```tsx
+import type { Color, UniformNode, Vector3 } from 'three/webgpu'
+
+const uDir = uniforms.uDir as UniformNode<'vec3', Vector3>
+const facing = cross(uDir, normalView) // checked as vec3
+const uTint = uniforms.uTint as UniformNode<'color', Color>
+uTint.value.set('red') // .value is a Color
+```
+
+`UniformNode` here is three's (`<NodeType, Value>`). A schema does the same without a cast: `useUniforms<{ blur: number }>('fx')`, `useUniform<Color>('uTint')`, or `uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')` in a creator. Registering gives exact types everywhere and also catches a misspelt name, which no loose read can.
+
+A root read (`useUniforms().x`, `state.uniforms.x`, a creator's `uniforms.x`) may name a scope as well as a uniform, so `state.uniforms.player.uHealth` is loose the same way. Cast the uniform, not the scope.
 
 ## Strict or loose
 
@@ -86,7 +109,36 @@ declare module '@react-three/tsl' {
 }
 ```
 
-Registered keys stay fully typed. Unregistered root keys are allowed, typed as the loose `UniformNode | UniformRecord` union, so a typo compiles.
+Registered keys stay fully typed. Unregistered root keys are allowed and read [loose](#what-stays-loose), so a typo compiles. `strict` covers registered [nodes](#register-your-nodes) the same way.
+
+## Register your nodes
+
+Nodes register the same way, by their node types. `nodes` holds root-level nodes, `nodeScopes` named scopes:
+
+```ts
+import type { Node } from 'three/webgpu'
+import { Fn, sin, vec3 } from 'three/tsl'
+import type { CreatorState } from '@react-three/tsl'
+
+export const rimLightFn = Fn(() => vec3(1, 0.5, 0))
+export const sharedNodes = ({ uniforms }: CreatorState) => ({
+  wobble: sin(uniforms.uTime.mul(2)).toVar(),
+  rimLight: rimLightFn,
+})
+
+declare module '@react-three/tsl' {
+  interface Register {
+    nodes: ReturnType<typeof sharedNodes> // or spelled out: { wobble: Node<'float'>; rimLight: typeof rimLightFn }
+    nodeScopes: { fx: { blur: Node<'vec4'> } }
+  }
+}
+```
+
+Then `useNodes().wobble`, `useNodes('fx').blur`, `state.nodes.wobble` and a creator's `nodes.rimLight()` are typed by name, typos on the root are errors (unless `strict: false`), and creators are checked: `useNodes(() => ({ wobble: vec3(1) }))` is an error once `wobble` is registered as a float node. A scope only known at runtime (`useNodes(creator, props.scope)`) is not checked.
+
+Unlike uniforms there is no `configureTSL` for nodes: a registered node exists once the component that creates it (`useNodes(sharedNodes)`) has rendered. A component rendered before that reads `undefined`, whatever the type says.
+
+Without registration a node read is a loose `LooseNode`, for the same reason a uniform read is a `LooseUniformNode`: it has every member of three's nodes and of an `Fn()`, typed `any`, and can be called, so `nodes.wobble.mul(2)`, `material.colorNode = nodes.wobble` and `nodes.rimLightFn()` compile. One `as` makes it exact: `nodes.blur as Node<'vec4'>`, `nodes.rimLight as typeof rimLightFn`.
 
 ## configureTSL
 
@@ -101,4 +153,4 @@ Pass the same objects you registered, so the types and the runtime come from one
 ## Notes
 
 - `Register` is global to your TypeScript program, like any module augmentation. Declare it once.
-- `useNodes`, `useBuffers` and `useGPUStorage` are not covered yet; they keep their current types.
+- `useBuffers` and `useGPUStorage` are not covered yet. A read is the union of what the hook stores (`BufferLike`: typed arrays, buffer attributes and buffer nodes; `StorageLike`: storage textures and nodes), since a CPU array and a GPU buffer node have little in common to make loose. Narrow it with one `as` (`buffers.positions as StorageBufferNode<'vec3'>`) or a schema (`useBuffers<{ positions: StorageBufferNode<'vec3'> }>('particles')`).

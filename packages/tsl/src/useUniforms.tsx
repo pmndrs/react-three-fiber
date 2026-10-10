@@ -12,6 +12,7 @@ import { useScopedResource } from './internal/useScopedResource'
 import { createUniform } from './internal/createUniform'
 import type {
   AppUniforms,
+  ReadUniforms,
   RegisteredScopes,
   RegisteredScopeUniforms,
   RootUniformInput,
@@ -40,8 +41,8 @@ export type UniformsWithUtils<T extends UniformRecord | UniformStore = UniformRe
 }
 
 //* Hook Overloads ==============================
-// Registration-aware (see ./register). With nothing registered every signature below behaves
-// exactly as before: RootUniformInput is UniformInputRecord and AppUniforms is UniformStore.
+// Registration-aware (see ./register). With nothing registered, RootUniformInput is
+// UniformInputRecord and the readers return LooseUniformNode entries (see that type for why).
 
 // Create/get uniforms at root level - function (+ utils). Registered keys keep their type.
 export function useUniforms<T extends RootUniformInput>(
@@ -74,8 +75,8 @@ export function useUniforms<S extends keyof RegisteredScopes & string>(
 // Read existing uniforms against an explicit schema, at root (no scope) or within a scope.
 // A reader cannot infer types from a runtime string; supply the values the creator registered:
 //   useUniforms<{ blurAmount: number }>() // blurAmount: UniformNode<'float', number>
-// With no schema this is the loose reader for any other scope.
-export function useUniforms<T extends UniformInputRecord>(scope?: string): UniformsWithUtils<UniformNodesFor<T>>
+// With no schema this is the loose reader for any other scope: each entry a LooseUniformNode.
+export function useUniforms<T extends UniformInputRecord>(scope?: string): UniformsWithUtils<ReadUniforms<T>>
 
 //* Hook Implementation ==============================
 

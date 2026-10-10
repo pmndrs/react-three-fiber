@@ -105,7 +105,7 @@ describe('useLocalNodes: install form', () => {
 
   it('a replaced resource read by the creator rebuilds and reinstalls', async () => {
     const store = makeStore()
-    act(() => store.setState((s) => ({ uniforms: { ...s.uniforms, uFog: uniform(1) } })))
+    act(() => store.setState((s) => ({ uniforms: { ...s.uniforms, uFog: uniform(1) as LooseUniformEntry } })))
     const scene = { fogNode: null as unknown }
     let installs = 0
 
@@ -125,7 +125,7 @@ describe('useLocalNodes: install form', () => {
     expect(installs).toBe(1)
 
     const next = uniform(2)
-    act(() => store.setState((s) => ({ uniforms: { ...s.uniforms, uFog: next } })))
+    act(() => store.setState((s) => ({ uniforms: { ...s.uniforms, uFog: next as LooseUniformEntry } })))
     expect(installs).toBe(2)
     expect(scene.fogNode).toBe(next)
   })

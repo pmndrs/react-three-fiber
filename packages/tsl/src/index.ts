@@ -13,7 +13,7 @@
  *   const uniforms = useThree((s) => s.uniforms)
  */
 
-// Typed uniforms by registration (declare module '@react-three/tsl' { interface Register {...} })
+// Typed uniforms and nodes by registration (declare module '@react-three/tsl' { interface Register {...} })
 export type {
   Register,
   AppUniforms,
@@ -23,6 +23,11 @@ export type {
   ScopeUniformInput,
   RegisteredScopeUniforms,
   RegisteredUniform,
+  AppNodes,
+  RegisteredNodes,
+  RegisteredNodeScopes,
+  RootNodeInput,
+  ScopeNodeInput,
 } from './register'
 
 // Global TSL and render-pipeline types, and the RootState augmentation

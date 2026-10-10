@@ -15,6 +15,7 @@ import { isTSLNode } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
 import type { NodeLike, NodeRecord, NodeStore } from '../types'
+import type { AppNodes, ReadNodes, RegisteredNodeScopes, RootNodeInput, ScopeNodeInput } from './register'
 
 //* Types ==============================
 
@@ -56,27 +57,37 @@ export type NodesWithUtils<T extends Record<string, unknown> = NodeRecord> = T &
 
 //* Hook Overloads ==============================
 
-// Get all nodes (returns full structure with root nodes and scopes + utils)
-export function useNodes(): NodesWithUtils<NodeStore>
+// Registration-aware (see ./register). Unregistered reads are LooseNode entries: every operator,
+// material slot and call works on them, and a single `as` makes one exact (see LooseNode for why).
 
-// Get nodes from a specific scope (+ utils)
-export function useNodes(scope: string): NodesWithUtils<NodeRecord>
+// Get all nodes (root nodes and scopes + utils): typed by name when registered, loose otherwise
+export function useNodes(): NodesWithUtils<AppNodes>
+
+// Get a registered node scope: typed by name, and the scope name autocompletes (+ utils)
+export function useNodes<S extends keyof RegisteredNodeScopes & string>(
+  scope: S,
+): NodesWithUtils<RegisteredNodeScopes[S]>
 
 // Read existing nodes against an explicit schema, at root (no scope) or within a scope.
 // A reader cannot infer types from a runtime string; supply the shape the creator returned.
-export function useNodes<T extends NodeRecord>(scope?: string): NodesWithUtils<T>
+// With no schema this is the loose reader for any other scope: each entry a LooseNode.
+export function useNodes<T extends NodeRecord>(scope?: string): NodesWithUtils<ReadNodes<T>>
 
-// Create/get nodes at root level (no scope) (+ utils)
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
+// Create/get nodes at root level (no scope) (+ utils). Registered keys keep their type.
+export function useNodes<T extends RootNodeInput>(creator: NodeCreator<T>): NodesWithUtils<T>
 
-// Create/get nodes within a scope (+ utils)
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
+// Create/get nodes within a scope (+ utils). A registered scope is type-checked.
+export function useNodes<T extends NodeRecord, S extends string>(
+  creator: (state: CreatorState) => T & ScopeNodeInput<S>,
+  scope: S,
+): NodesWithUtils<T>
 
-// Broad implementation overload keeps utility-only consumers assignable while the
-// preceding call-site overloads preserve exact creator and reader inference.
-export function useNodes(
-  creatorOrScope?: NodeCreator<NodeRecord> | string,
-  scope?: string,
+// Broad form for a scope only known at runtime (`string | undefined`, e.g. a prop), unchecked. A
+// call with no scope or a literal one cannot fall through to it, so a creator that breaks its
+// registered types stays an error instead of landing here.
+export function useNodes<S extends string | undefined>(
+  creatorOrScope: NodeCreator<NodeRecord> | string | undefined,
+  scope: S & (string extends S ? unknown : never),
 ): NodesWithUtils<Record<string, unknown>>
 
 //* Hook Implementation ==============================
@@ -345,8 +356,8 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  *
  * @example
  * ```tsx
- * // Resource-driven composition: no surrounding JS inputs. `uniforms.uTime` is typed when the
- * // app registers its uniforms (see `Register`); otherwise give a scope its schema or cast.
+ * // Resource-driven composition: no surrounding JS inputs. `uniforms.uTime` is typed by name when
+ * // the app registers its uniforms (see `Register`), and a loose node TSL accepts as is otherwise.
  * const { wobble, uTime } = useLocalNodes(({ uniforms, nodes }) => ({
  *   wobble: sin(uniforms.uTime.mul(2)),
  *   uTime: uniforms.uTime, // can return uniforms too
@@ -357,10 +368,10 @@ function useDependencyToken(deps: React.DependencyList | undefined): object {
  *   result: pattern === 'noise' ? nodes.noise : nodes.stripes,
  * }), [pattern])
  *
- * // An unregistered uniform, cast to its type
- * const { colorNode } = useLocalNodes(({ uniforms }) => {
- *   const uValue = uniforms.myUniform as UniformNode<'float', number>
- *   return { colorNode: mix(colorA, colorB, uValue) }
+ * // An unregistered uniform works as is; one `as` gives its exact type where that matters
+ * const { colorNode, facing } = useLocalNodes(({ uniforms }) => {
+ *   const uDir = uniforms.uDir as UniformNode<'vec3', Vector3> // cross() wants a vec3
+ *   return { colorNode: mix(colorA, colorB, uniforms.myUniform), facing: cross(uDir, normalView) }
  * }, [])
  * ```
  */
