@@ -111,8 +111,9 @@ const rule: Rule.RuleModule = {
       }
       if (entry === 'legacy') {
         for (const [prop, attribute] of attributes(element)) {
-          if (OCCLUSION_EVENTS.has(prop))
+          if (OCCLUSION_EVENTS.has(prop)) {
             ctx.report({ node: attribute as never, messageId: 'occlusionOnLegacy', data: { prop } })
+          }
         }
       }
     }

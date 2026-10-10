@@ -59,6 +59,25 @@ describe.each([
   })
 })
 
+describe('migration config', () => {
+  it('reports and fixes v9 code', () => {
+    const linter = new Linter10()
+    const v9 = `
+      import { Canvas, useThree } from '@react-three/fiber/webgpu'
+      function Scene() {
+        const { gl } = useThree()
+        return <Canvas shadows />
+      }
+    `
+    const config = [{ ...configs.migration, languageOptions }]
+    const { output, messages } = linter.verifyAndFix(v9, config as never)
+    expect(messages).toEqual([])
+    expect(output).toContain("from '@react-three/fiber'")
+    expect(output).toContain('const { renderer: gl } = useThree()')
+    expect(output).toContain('<Canvas renderer={{ shadows: true }} />')
+  })
+})
+
 describe('ESLint 8 eslintrc config', () => {
   it('reports with the legacy recommended config', async () => {
     const eslint = new ESLint8({

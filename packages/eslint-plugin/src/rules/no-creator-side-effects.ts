@@ -30,8 +30,9 @@ function returnsValue(creator: FunctionNode): boolean {
     if (isFunction(node)) return
     for (const [key, value] of Object.entries(node)) {
       if (key === 'parent') continue
-      if (Array.isArray(value)) value.forEach((child) => child && typeof child.type === 'string' && visit(child))
-      else if (value && typeof value === 'object' && typeof (value as ESTree.Node).type === 'string') {
+      if (Array.isArray(value)) {
+        value.forEach((child) => child && typeof child.type === 'string' && visit(child))
+      } else if (value && typeof value === 'object' && typeof (value as ESTree.Node).type === 'string') {
         visit(value as ESTree.Node)
       }
     }
