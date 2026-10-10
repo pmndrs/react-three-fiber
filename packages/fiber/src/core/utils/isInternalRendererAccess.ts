@@ -2,10 +2,20 @@
 
 /**
  * Library frames whose reads of `state.gl` are internal plumbing, not user
- * intent: zustand cloning state during `setState`, and the `Object.assign`
- * shallow-merge that touches every enumerable getter while doing so.
+ * intent: zustand cloning state during `setState`, the `Object.assign`
+ * shallow-merge that touches every enumerable getter while doing so, and
+ * @pmndrs/scheduler spreading a root's state into each frame state it builds
+ * (`tickRoot`, `stepJob`). The last two names also match a bundled, unminified
+ * scheduler, whose frames no longer carry the package path.
  */
-const INTERNAL_LIB_MARKERS = ['zustand', 'setState', 'Object.assign']
+const INTERNAL_LIB_MARKERS = [
+  'zustand',
+  'setState',
+  'Object.assign',
+  '@pmndrs/scheduler',
+  'Scheduler.tickRoot',
+  'Scheduler.stepJob',
+]
 
 /**
  * R3F's own source is deliberately NOT on this list.

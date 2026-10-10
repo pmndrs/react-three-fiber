@@ -343,7 +343,6 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
           state.set((prev) => ({
             webGPUSupported: primaryEntry.store.getState().webGPUSupported,
             renderer: renderer,
-            gl: renderer as unknown as WebGLRenderer,
             primaryStore: primaryEntry.store,
             internal: {
               ...prev.internal,
@@ -398,7 +397,6 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
               state.set((prev) => ({
                 webGPUSupported: isWebGPUBackend,
                 renderer: renderer,
-                gl: renderer as unknown as WebGLRenderer,
                 primaryStore: store,
                 internal: {
                   ...prev.internal,
@@ -427,16 +425,9 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
 
             state.internal.actualRenderer = renderer
             state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
-            // `gl` mirrors `renderer` for libraries that still read it (drei's controls read
-            // `gl.domElement`). The store's deprecating `gl` getter only lives on the initial state
-            // object: zustand's set() copies it into a plain field, so set the value explicitly.
+            // `state.gl` aliases this renderer through the store's accessor (with a deprecation notice)
             // Self-reference primaryStore - this canvas is its own primary
-            state.set({
-              webGPUSupported: isWebGPUBackend,
-              renderer: renderer,
-              gl: renderer as unknown as WebGLRenderer,
-              primaryStore: store,
-            })
+            state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
 
             if (primary) {
               //* Register as Primary Canvas ==============================

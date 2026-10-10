@@ -21,6 +21,18 @@ import { vi } from 'vitest'
 import '../src/support/webgl'
 import '../src/support/webgpu'
 
+// jsdom has no ImageBitmap. The root entry renders with WebGPURenderer, whose WebGL2 fallback
+// backend checks `image instanceof ImageBitmap` while uploading a texture (the scene's environment
+// and output textures included), so any test that lets a frame render on the root entry threw a
+// ReferenceError, depending on whether a frame landed before it finished.
+if (typeof globalThis.ImageBitmap === 'undefined') {
+  ;(globalThis as any).ImageBitmap = class ImageBitmap {
+    width = 0
+    height = 0
+    close() {}
+  }
+}
+
 // Mock react-use-measure globally for tests
 vi.mock('react-use-measure', () => ({
   default: vi.fn(() => [() => {}, { width: 1280, height: 800, top: 0, left: 0, bottom: 800, right: 1280, x: 0, y: 0 }]),

@@ -5,6 +5,7 @@ import * as React from 'react'
 import { context } from '../../context'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils/react'
 import { notifyDepreciated } from '../../utils/notices'
+import { cloneState } from '../../utils/stateAccessors'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
@@ -157,16 +158,15 @@ export function useFrame(
 
       // Wrapper that merges store state with timing (for portal isolation)
       const wrappedCallback: FrameNextCallback = (frameState, delta) => {
-        const localState = store.getState()
-        const mergedState = {
-          ...localState,
-          time: frameState.time,
-          delta: frameState.delta,
-          elapsed: frameState.elapsed,
-          frame: frameState.frame,
-          overstep: frameState.overstep,
-        }
-        callbackRef.current?.(mergedState as typeof frameState, delta)
+        // Copied with its accessors, not spread: a spread would read `state.gl` and log its
+        // deprecation notice for every WebGPU app
+        const mergedState = cloneState<FrameNextState>(store.getState())
+        mergedState.time = frameState.time
+        mergedState.delta = frameState.delta
+        mergedState.elapsed = frameState.elapsed
+        mergedState.frame = frameState.frame
+        mergedState.overstep = frameState.overstep
+        callbackRef.current?.(mergedState, delta)
       }
 
       // Register with global scheduler
