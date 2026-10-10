@@ -29,13 +29,13 @@ const GET_SCHEDULER = new Set(['getScheduler'])
 export interface FrameMatch<T extends ESTree.Node> {
   /** The node a selector matched. */
   node: T
-  /** The outermost frame callback the node runs inside of. */
+  /** The outermost callback the node runs inside of. */
   callback: FunctionNode
   /** Ancestors between the node and the callback, nearest first (the callback excluded). */
   path: ESTree.Node[]
 }
 
-type FrameHandlers = Record<string, (match: FrameMatch<any>) => void>
+export type FrameHandlers = Record<string, (match: FrameMatch<any>) => void>
 
 /**
  * Runs `handlers` for nodes inside a per-frame callback.
@@ -51,7 +51,6 @@ type FrameHandlers = Record<string, (match: FrameMatch<any>) => void>
 export function frameLoopListener(ctx: Rule.RuleContext, handlers: FrameHandlers): Rule.RuleListener {
   const aliases = new Map<string, string>()
   const callbacks = new Set<ESTree.Node>()
-  const pending: { selector: string; node: ESTree.Node }[] = []
 
   const importedName = (callee: ESTree.Node) => {
     const name = calleeName(callee)
@@ -98,6 +97,26 @@ export function frameLoopListener(ctx: Rule.RuleContext, handlers: FrameHandlers
       const callback = resolveFunction(ctx, callbackOf(node))
       if (callback) callbacks.add(callback)
     },
+  }
+
+  return mergeListeners(tracking, insideCallbacks(callbacks, handlers))
+}
+
+/**
+ * Runs `handlers` for nodes inside any function in `callbacks`, once the whole file has been read
+ * (so `callbacks` may be filled in after the nodes are visited).
+ */
+export function insideCallbacks(
+  callbacks: { has(node: ESTree.Node): boolean },
+  handlers: FrameHandlers,
+): Rule.RuleListener {
+  const pending: { selector: string; node: ESTree.Node }[] = []
+
+  const collecting: Rule.RuleListener = Object.fromEntries(
+    Object.keys(handlers).map((selector) => [selector, (node: ESTree.Node) => pending.push({ selector, node })]),
+  )
+
+  return mergeListeners(collecting, {
     'Program:exit'() {
       for (const { selector, node } of pending) {
         const path = ancestors(node)
@@ -110,11 +129,5 @@ export function frameLoopListener(ctx: Rule.RuleContext, handlers: FrameHandlers
         handlers[selector]({ node, callback: path[index] as FunctionNode, path: path.slice(0, index) })
       }
     },
-  }
-
-  const collecting: Rule.RuleListener = Object.fromEntries(
-    Object.keys(handlers).map((selector) => [selector, (node: ESTree.Node) => pending.push({ selector, node })]),
-  )
-
-  return mergeListeners(tracking, collecting)
+  })
 }

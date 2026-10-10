@@ -13,6 +13,10 @@ const jsHeader = (file: string) =>
 // @command pnpm codegen:eslint
 ` + file
 
+/** `meta.docs.migration`: a rule for upgrading from v9, enabled by the `migration` config. */
+const isMigration = (rule: Rule.RuleModule) =>
+  Boolean((rule.meta?.docs as { migration?: boolean } | undefined)?.migration)
+
 interface FoundRule {
   module: Rule.RuleModule
   moduleName: string
@@ -137,14 +141,17 @@ async function generateReadme(rules: FoundRule[]) {
     const row = `| ${link(rule.moduleName, docsPath)} | ${rule.module.meta?.docs?.description} | ${conditional(
       '✅',
       Boolean(rule.module.meta?.docs?.recommended),
-    )} | ${conditional('🔧', rule.module.meta?.fixable)} | ${conditional('💡', rule.module.meta?.hasSuggestions)} |`
+    )} | ${conditional('🔄', isMigration(rule.module))} | ${conditional('🔧', rule.module.meta?.fixable)} | ${conditional(
+      '💡',
+      rule.module.meta?.hasSuggestions,
+    )} |`
 
     rows.push(row)
   }
 
   const code = `
-| Rule | Description | ✅ | 🔧 | 💡 | 
-| ---- | -- | -- | -- | -- |
+| Rule | Description | ✅ | 🔄 | 🔧 | 💡 |
+| ---- | -- | -- | -- | -- | -- |
 ${rows.join('\n')}
   `
 
@@ -165,6 +172,7 @@ ${rows.join('\n')}
 async function generate() {
   const rulePaths = (await fs.readdir(rulesDir)).sort()
   const recommended: FoundRule[] = []
+  const migration: FoundRule[] = []
   const rules: FoundRule[] = []
 
   for (const moduleName of rulePaths) {
@@ -179,10 +187,14 @@ async function generate() {
     if (rule.meta?.docs?.recommended) {
       recommended.push(foundRule)
     }
+    if (isMigration(rule)) {
+      migration.push(foundRule)
+    }
   }
 
   await generateRuleIndex(rules)
   await generateConfig('all', rules)
+  await generateConfig('migration', migration)
   await generateConfig('recommended', recommended)
   await generatePluginIndex()
   await generateReadme(rules)

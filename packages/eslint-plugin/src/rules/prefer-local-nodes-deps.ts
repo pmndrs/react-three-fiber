@@ -1,8 +1,7 @@
 import type { Rule, Scope } from 'eslint'
-import * as ESTree from 'estree'
+import type * as ESTree from 'estree'
+import { resolveFunction } from '../lib/ast'
 import { gitHubUrl } from '../lib/url'
-
-type CreatorFunction = ESTree.ArrowFunctionExpression | ESTree.FunctionExpression
 
 function isUseLocalNodes(callee: ESTree.CallExpression['callee']): boolean {
   if (callee.type === 'Identifier') return callee.name === 'useLocalNodes'
@@ -35,7 +34,7 @@ const rule: Rule.RuleModule = {
     hasSuggestions: true,
     messages: {
       missingDeps:
-        'useLocalNodes re-runs an inline creator on every render when no dependency array is passed. ' +
+        'useLocalNodes re-runs its creator on every render when no dependency array is passed, even a useCallback one. ' +
         'Pass [] so the graph is built once and rebuilt only when a shared resource it reads changes.',
       capturesValues:
         'useLocalNodes re-runs this creator on every render: it has no dependency array and reads {{names}} from the component. ' +
@@ -46,8 +45,7 @@ const rule: Rule.RuleModule = {
     docs: {
       url: gitHubUrl('prefer-local-nodes-deps'),
       recommended: true,
-      description:
-        'Require a dependency array on useLocalNodes with an inline creator, so the graph is not rebuilt on every render.',
+      description: 'Require a dependency array on useLocalNodes, so the graph is not rebuilt on every render.',
     },
     schema: [],
   },
@@ -55,10 +53,13 @@ const rule: Rule.RuleModule = {
     return {
       CallExpression(node: ESTree.CallExpression) {
         if (!isUseLocalNodes(node.callee) || node.arguments.length !== 1) return
-        const creator = node.arguments[0]
-        if (creator.type !== 'ArrowFunctionExpression' && creator.type !== 'FunctionExpression') return
+        const creator = node.arguments[0] as ESTree.Node
+        // Inline, or by reference to a function or useCallback: a stable creator identity does not
+        // help, since without an array the hook re-runs it on every render either way
+        const fn = resolveFunction(ctx, creator)
+        if (!fn) return
 
-        const names = capturedNames(ctx.sourceCode.getScope(creator as CreatorFunction))
+        const names = capturedNames(ctx.sourceCode.getScope(fn))
         if (names.length > 0) {
           ctx.report({
             node,

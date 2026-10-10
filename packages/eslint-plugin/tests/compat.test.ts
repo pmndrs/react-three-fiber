@@ -25,7 +25,14 @@ describe('plugin shape', () => {
   it('exposes every rule through the default export and the named exports', () => {
     expect(plugin.rules).toBe(rules)
     expect(plugin.configs).toBe(configs)
-    expect(Object.keys(configs).sort()).toEqual(['all', 'legacy-all', 'legacy-recommended', 'recommended'])
+    expect(Object.keys(configs).sort()).toEqual([
+      'all',
+      'legacy-all',
+      'legacy-migration',
+      'legacy-recommended',
+      'migration',
+      'recommended',
+    ])
   })
 
   it('enables every rule in the all configs', () => {
@@ -49,6 +56,25 @@ describe.each([
     const linter = new (Linter as typeof Linter10)({ configType: 'flat' } as never)
     const messages = linter.verify(code, [{ ...configs.recommended, languageOptions }] as never)
     expect(messages.map((message) => message.ruleId)).toEqual(expected)
+  })
+})
+
+describe('migration config', () => {
+  it('reports and fixes v9 code', () => {
+    const linter = new Linter10()
+    const v9 = `
+      import { Canvas, useThree } from '@react-three/fiber/webgpu'
+      function Scene() {
+        const { gl } = useThree()
+        return <Canvas shadows />
+      }
+    `
+    const config = [{ ...configs.migration, languageOptions }]
+    const { output, messages } = linter.verifyAndFix(v9, config as never)
+    expect(messages).toEqual([])
+    expect(output).toContain("from '@react-three/fiber'")
+    expect(output).toContain('const { renderer: gl } = useThree()')
+    expect(output).toContain('<Canvas renderer={{ shadows: true }} />')
   })
 })
 

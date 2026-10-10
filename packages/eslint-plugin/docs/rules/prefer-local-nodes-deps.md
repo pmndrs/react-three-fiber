@@ -1,4 +1,6 @@
-`useLocalNodes` works like `useMemo`: without a dependency array it runs its creator on every render. For an inline creator that means a new TSL graph each time the component renders, and a shader recompile for every material using it.
+`useLocalNodes` works like `useMemo`: without a dependency array it runs its creator on every render. That means a new TSL graph each time the component renders, and a shader recompile for every material using it.
+
+The rule checks inline creators and creators passed by reference: a function declaration, a function expression, or `useCallback(fn, deps)` in the same file. Wrapping a creator in `useCallback` does not help, since without an array `useLocalNodes` re-runs it on every render whatever its identity.
 
 Pass `[]` for the normal case: the graph is built once, and `useLocalNodes` still rebuilds it when a shared resource the creator reads (a uniform, node, buffer or texture) is replaced, or on a hot update.
 
@@ -15,6 +17,15 @@ function Fog() {
   const { fogNode } = useLocalNodes(({ uniforms }) => ({
     fogNode: fog(uniforms.fogColor, rangeFogFactor(uniforms.near, uniforms.far)),
   }))
+}
+```
+
+So does this: the stable `useCallback` identity does not stop the re-run.
+
+```js
+function Fog() {
+  const createFog = useCallback(({ uniforms }) => ({ fogNode: fog(uniforms.fogColor, uniforms.fogFactor) }), [])
+  const { fogNode } = useLocalNodes(createFog)
 }
 ```
 
