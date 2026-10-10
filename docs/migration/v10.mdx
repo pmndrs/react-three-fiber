@@ -71,7 +71,7 @@ What tells you which one you need:
 
 - **GLSL materials.** `WebGPURenderer` compiles node materials (TSL), not GLSL. A `ShaderMaterial` or `RawShaderMaterial` on a WebGPU canvas is drawn with a blank default material, three logs `NodeBuilder: Material "ShaderMaterial" is not compatible`, and R3F warns once per material type in development, naming `/legacy`. `onBeforeCompile` is ignored. Standard materials (`MeshStandardMaterial`, `MeshPhysicalMaterial`, ...) are converted to their node equivalents automatically.
 - **The `gl` prop.** It configures `WebGLRenderer`, so on a `@react-three/fiber` Canvas it throws, naming `/legacy`. Move renderer settings to `renderer={{ ... }}` to stay on WebGPU.
-- **Libraries.** Anything that needs a `WebGLRenderer` (`postprocessing`'s `EffectComposer`, GLSL-based drei components, code calling WebGL-only renderer APIs) needs `/legacy` until it supports `WebGPURenderer`. `state.gl` on a WebGPU canvas is the `WebGPURenderer`, so code that only reads `gl.domElement` or `gl.setSize` keeps working, while WebGL-only calls do not.
+- **Libraries.** Anything that needs a `WebGLRenderer` (`postprocessing`'s `EffectComposer`, GLSL-based drei components, code calling WebGL-only renderer APIs) needs `/legacy` until it supports `WebGPURenderer`. `state.gl` on a WebGPU canvas aliases the `WebGPURenderer`, with a one-time deprecation notice: code that only reads `gl.domElement` or `gl.setSize` keeps working, WebGL-only calls do not.
 
 Node materials go the other way: on `/legacy` they throw an error pointing back to `@react-three/fiber`.
 
@@ -118,7 +118,7 @@ function MyComponent() {
 }
 ```
 
-> **Note:** `state.gl` still works. On a WebGPU canvas it is the `WebGPURenderer` (the same object as `state.renderer`); on `/legacy` it is the `WebGLRenderer`, as before. Prefer `state.renderer` in new code.
+> **Note:** `state.gl` still works. On a WebGPU canvas it aliases `state.renderer` (the `WebGPURenderer`) and logs a one-time deprecation notice; on `/legacy` it is the `WebGLRenderer`, as before, with no notice. Prefer `state.renderer` in new code.
 
 ### Renderer Selection
 
@@ -554,7 +554,7 @@ until it lands.
 
 ### What if I'm using `state.gl` everywhere?
 
-It still works: `state.gl` is the same object as `state.renderer`. On a WebGPU canvas that is a `WebGPURenderer`, so WebGL-only calls on it fail; if your code makes those, import from `/legacy`. Update to `state.renderer` when convenient.
+It still works: `state.gl` aliases `state.renderer`. On a WebGPU canvas you'll see a one-time deprecation notice in development, and since that renderer is a `WebGPURenderer`, WebGL-only calls on it fail; if your code makes those, import from `/legacy`. Update to `state.renderer` when convenient.
 
 ---
 

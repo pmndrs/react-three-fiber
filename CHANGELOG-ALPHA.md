@@ -360,10 +360,12 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   every copy of fiber's reconciler count from zero on their own, and with scheduler 0.3's global job
   index, unmounting one of two colliding jobs could leave it running
   ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
-- `state.gl` on a WebGPU root is the renderer. It stayed `null`, because the store's mapping
-  getter does not survive zustand's state updates, so drei's `OrbitControls`, `Environment` and
-  `Preload` threw on `gl.domElement` / `gl.compile`
-  ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
+- `state.gl` on a WebGPU root aliases the renderer, with its one-time deprecation notice. It was
+  `null`, because the store's accessor did not survive zustand's state updates, so drei's
+  `OrbitControls`, `Environment` and `Preload` threw on `gl.domElement` / `gl.compile`, and the
+  notice never showed. The root and portal stores now keep the `gl` / `renderer` accessors on every
+  state object ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013),
+  [#4014](https://github.com/pmndrs/react-three-fiber/issues/4014)).
 
 ### Examples
 
