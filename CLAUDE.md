@@ -16,6 +16,7 @@ pnpm install          # Install dependencies (runs postinstall: stub + patch-rea
 pnpm dev              # Generate stubs (src → dist links for immediate change reflection)
 pnpm examples         # Run Vite example app for visual testing
 pnpm test:watch       # Watch mode testing
+pnpm test:gpu         # Tier-3 tests on a real WebGPU device (Linux: needs mesa-vulkan-drivers)
 
 # Building & Verification
 pnpm build            # Build fiber + eslint-plugin packages
@@ -102,6 +103,7 @@ The react-reconciler package is patched during postinstall (via Vite) and bundle
 - **Framework**: Vitest with jsdom environment
 - **Coverage**: v8 provider
 - **Setup**: `packages/fiber/tests/setupTests.ts` (mocks WebGL2, ResizeObserver, PointerEvent)
+- **Real GPU (Tier 3)**: `pnpm test:gpu` runs `vitest.gpu.config.ts` in `vitest-environment-webgpu-node` (Dawn in Node, a headless canvas, no DOM). Tests are `packages/*/tests/gpu/**/*.gpu.test.tsx`, use `createRoot` (never `<Canvas>`) through the helpers in `packages/fiber/tests/gpu/harness.tsx`, and read pixels back. No mocks, no coverage, excluded from `pnpm test`. On Linux without a GPU, install `mesa-vulkan-drivers` (lavapipe) first; macOS needs nothing. Screenshot baselines live in `__screenshots__/`: regenerate with `UPDATE_SCREENSHOTS=1` only for an intended rendering change. CI runs it as its own job; it is not in `pnpm run ci`. See `docs/development/TESTING.md`.
 
 Tests run against source files. `pnpm verify-treeshake` bundles consumer apps from the built `dist` with Vite and esbuild and checks which renderer each carries; `pnpm verify-types` checks the built declarations.
 

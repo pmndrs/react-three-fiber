@@ -132,6 +132,8 @@ export default [
       'vitest/no-identical-title': 'error',
       'vitest/prefer-to-have-length': 'warn',
       'vitest/valid-expect': 'error',
+      // Helpers named expect* assert too (the Tier-3 suite's expectColor, expectCleanFrame)
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expect*', 'assert'] }],
     },
   },
 ]
