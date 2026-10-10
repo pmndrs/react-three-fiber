@@ -15,11 +15,13 @@
  * The runtime test below pins the other half of the contract: this is a types-only narrowing,
  * so the exported values must still be the core implementations.
  */
+import type { WebGLRenderer } from 'three'
 import type { WebGPURenderer } from 'three/webgpu'
 
 import { useThree, useFrame } from '../../src/webgpu'
 import { useThree as useThreeCore, useFrame as useFrameCore } from '../../src/core'
 import type { RootState as WebGPURootState } from '../../src/webgpu'
+import type { RootState as RootStateCore } from '../../types/store'
 
 /** Never invoked — this exists so `tsc` checks the bodies. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -35,8 +37,10 @@ function typeAssertions() {
   const state: WebGPURootState = useThree()
   const fromState: WebGPURenderer = state.renderer
 
-  // `gl` is narrowed too — on the base RootState it is a WebGLRenderer.
-  const gl: WebGPURenderer = useThree((s) => s.gl)
+  // `gl` keeps the base type (WebGLRenderer, for code written against it), so the narrowed state stays
+  // assignable to the base RootState: `useFrame((state: RootState) => ...)` still compiles.
+  const gl: WebGLRenderer = useThree((s) => s.gl)
+  const asBase: RootStateCore = state
 
   // useFrame's callback state is narrowed the same way. This is the `DepthAttachmentSync`
   // pattern from the docs, which previously needed
@@ -50,7 +54,7 @@ function typeAssertions() {
   // A selector returning something other than the renderer still infers normally.
   const width: number = useThree((s) => s.size.width)
 
-  void [renderer, state, fromState, gl, width]
+  void [renderer, state, fromState, gl, asBase, width]
 }
 
 describe('webgpu entry: narrowed state hooks (#3851)', () => {

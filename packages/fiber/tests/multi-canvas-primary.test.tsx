@@ -25,7 +25,9 @@ import { Canvas as CoreCanvas } from '../src/web/Canvas'
 import { createRoot as createCoreRoot, _roots } from '../src/core/root'
 import { livePrimaryKeys, resetCanvasRegistry } from '../src/core/renderer'
 import { webgpuSupport } from '../src/support/webgpu'
-import type { CanvasProps, RendererProvider, RootStore, WebGPUSupport } from '../src'
+import type { RendererProvider, RootStore, WebGPUSupport } from '../src'
+// The core Canvas's props (the root entry's CanvasProps types onCreated against WebGPURootState)
+import type { CanvasProps } from '../types/canvas'
 
 const gpu = { instances: [] as MockWebGPURenderer[], drawn: [] as HTMLCanvasElement[] }
 const { CanvasTarget } = webgpuSupport
