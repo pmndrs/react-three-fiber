@@ -13,7 +13,7 @@ import type { PresetsType } from '../src/core/components/Environment/environment
 export interface BackgroundConfig {
   /** HDRI preset name: 'apartment', 'city', 'dawn', 'forest', 'lobby', 'night', 'park', 'studio', 'sunset', 'warehouse' */
   preset?: PresetsType
-  /** Files for cube texture (6 faces) or single HDR/EXR */
+  /** Files for cube texture (6 faces) or a single equirect (.hdr, .exr, .jpg, .png, .webp, .avif, .gif) */
   files?: string | string[]
   /** Separate files for scene.background (visual backdrop) */
   backgroundMap?: string | string[]
@@ -33,7 +33,7 @@ export interface BackgroundConfig {
  *
  * String detection priority:
  * 1. Preset - exact match against known presets (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
- * 2. URL - starts with /, ./, ../, http://, https://, OR has image extension
+ * 2. URL - starts with /, ./, ../, http://, https://, data:, OR has an image extension (a query or hash may follow)
  * 3. Color - default fallback (CSS color names, hex values, rgb(), etc.)
  *
  * @example Color

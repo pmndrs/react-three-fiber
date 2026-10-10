@@ -13,7 +13,8 @@ import { presetsObj } from '../components/Environment/environment-assets'
  * Returns `null` when no background is set.
  */
 export function parseBackground(background: BackgroundProp | undefined): EnvironmentProps | null {
-  if (!background) return null
+  // `0` is black, not unset
+  if (background === undefined || background === null || background === '') return null
 
   // Object form - pass through with mapping
   if (typeof background === 'object' && !(background as any).isColor) {
@@ -38,8 +39,8 @@ export function parseBackground(background: BackgroundProp | undefined): Environ
     if (background in presetsObj) {
       return { preset: background as keyof typeof presetsObj, background: true }
     }
-    // URL pattern (prefix) or image extension (suffix)?
-    if (/^(https?:\/\/|\/|\.\/|\.\.\/)|\.(hdr|exr|jpg|jpeg|png|webp|gif)$/i.test(background)) {
+    // URL pattern (prefix) or image extension (suffix, before any query or hash)?
+    if (/^(https?:\/\/|\/|\.\/|\.\.\/|data:)|\.(hdr|exr|jpg|jpeg|png|webp|avif|gif)([?#].*)?$/i.test(background)) {
       return { files: background, background: true }
     }
     // Default to color
