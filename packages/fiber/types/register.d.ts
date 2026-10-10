@@ -3,10 +3,14 @@ import type { WebGPURenderer, RenderTarget } from 'three/webgpu'
 import type { RendererSupport, WebGLSupport, WebGPUSupport } from './provider'
 
 //* Register ==============================
-// The root entry can construct either renderer, so by default `state.renderer` is the union of
-// both and a WebGPU-only member (`renderer.compute`, `renderer.backend`) needs a narrow. An app that
-// has decided on one renderer says so once, and every renderer-typed field follows -- `useThree`,
-// `useFrame`, `onCreated`, `useRenderTarget`, `state.internal.support`:
+// The base RootState is typed for both renderers, so by default `state.renderer` is the union and a
+// WebGPU-only member (`renderer.compute`, `renderer.backend`) needs a narrow. That base is what
+// `@react-three/fiber/extension` (the entry for libraries) and the `RootState` type expose, so a
+// library compiles for apps on either renderer.
+//
+// Apps rarely need this: each entry's hooks are already typed for the renderer it renders with
+// (`@react-three/fiber` WebGPU, `/legacy` WebGL). Registering narrows the base types too, for code
+// that goes through them (`/extension` hooks in an app, `RootState` annotations):
 //
 //   declare module '@react-three/fiber' {
 //     interface Register {
@@ -15,8 +19,7 @@ import type { RendererSupport, WebGLSupport, WebGPUSupport } from './provider'
 //   }
 //
 // Same pattern as `Register` in @react-three/tsl (and TanStack Router). Nothing registered means
-// the union, unchanged. The `/legacy` and `/webgpu` entries are the same thing decided by import
-// path; this is for apps on `@react-three/fiber` that want the narrowed types without changing it.
+// the union, unchanged.
 
 /**
  * Augment this to type `RootState` for the renderer your app uses. Recognised keys:
