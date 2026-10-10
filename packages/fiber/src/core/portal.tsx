@@ -7,6 +7,7 @@ import { context } from './store'
 import { reconciler } from './reconciler'
 import { getThree } from './three'
 import { updateCamera, useIsomorphicLayoutEffect, useMutableCallback } from './utils'
+import { cloneState, isAccessor, keepAccessors } from './utils/stateAccessors'
 import type { RootState, EventManager, InjectState } from '#types'
 
 export function createPortal(
@@ -116,6 +117,9 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     const lastRoot = lastRootState.current
     if (lastRoot) {
       for (const key in rootState) {
+        // `gl` / `renderer` are accessors over `internal`, which is merged below; reading them here
+        // would log `gl`'s deprecation notice
+        if (isAccessor(rootState, key)) continue
         const field = key as keyof RootState
         const changed = rootState[field] !== lastRoot[field]
         const inherited = !(key in rest) && injectState[field] === lastRoot[field]
@@ -143,11 +147,9 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     // portal state in memory, chaining every replaced state through setEvents → unbounded leak (#3751).
     const set = injectState.set
 
-    return {
-      // The intersect consists of the previous root state
-      ...rootState,
-      ...injectState,
-      ...followed,
+    // The intersect consists of the previous root state. Copied with its accessors, not spread: a
+    // spread would read `state.gl` and log its deprecation notice for every portal on a WebGPU root
+    return Object.assign(cloneState<RootState>(rootState, injectState, followed), {
       // Portals have their own scene - always a real THREE.Scene (injected if needed)
       scene: portalScene,
       // rootScene always points to the actual THREE.Scene, even inside portals
@@ -162,16 +164,21 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       size: resolvedSize,
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
-      setEvents: (events: Partial<EventManager<any>>) =>
-        set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      // Container for child attachment - the portalScene (injected or container itself)
-      internal: { ...rootState.internal, ...injectState.internal, container: portalScene },
-    } as RootState
+      setEvents: (events: Partial<EventManager<any>>) => set((state) => ({ events: { ...state.events, ...events } })),
+      // Container for child attachment - the portalScene (injected or container itself). A portal
+      // renders with its parent's renderer, which `renderer` / `gl` read from `actualRenderer`
+      internal: {
+        ...rootState.internal,
+        ...injectState.internal,
+        actualRenderer: rootState.internal.actualRenderer,
+        container: portalScene,
+      },
+    } as Partial<RootState>) as RootState
   })
 
   const usePortalStore = useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
-    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get }) as RootState)
+    const store = createWithEqualityFn<RootState>(keepAccessors((set, get) => ({ ...rest, set, get }) as RootState))
 
     // Initialize with current state synchronously (required for reconciler.createPortal)
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))

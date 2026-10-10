@@ -26,8 +26,7 @@ import type {
 } from '#types'
 
 import { calculateDpr, is, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
-import { notifyDepreciated } from './utils/notices'
-import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
+import { defineRendererAccessors, preserveAccessors } from './utils/stateAccessors'
 import { getThree } from './three'
 
 //* Cross-Bundle Singleton ==============================
@@ -81,7 +80,9 @@ export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
-  const rootStore = createWithEqualityFn<RootState>((set, get) => {
+  const rootStore = createWithEqualityFn<RootState>((rawSet, get, api) => {
+    // Every state object keeps the `gl` / `renderer` accessors installed below (#4014)
+    const set = (api.setState = preserveAccessors(rawSet, get))
     // Scratch vectors, created on first use: getCurrentViewport runs after the root's renderer
     // support is loaded (configure sets the size), which is when three's classes exist.
     let position: Vector3 | undefined
@@ -195,8 +196,7 @@ export const createStore = (
         getCurrentViewport,
       },
 
-      setEvents: (events: Partial<EventManager<any>>) =>
-        set((state) => ({ ...state, events: { ...state.events, ...events } })),
+      setEvents: (events: Partial<EventManager<any>>) => set((state) => ({ events: { ...state.events, ...events } })),
       setSize: (width?: number, height?: number, top?: number, left?: number) => {
         const state = get()
 
@@ -324,55 +324,10 @@ export const createStore = (
   const state = rootStore.getState()
 
   //* Setup Renderer Accessors ==============================
-  // Both state.gl and state.renderer map to internal.actualRenderer
-  // state.gl shows deprecation warning in WebGPU mode for backwards compatibility
-
-  // state.gl - backwards compatibility with deprecation warning
-  Object.defineProperty(state, 'gl', {
-    get() {
-      const currentState = rootStore.getState()
-
-      // Warn if accessing gl in WebGPU mode (not legacy)
-      if (!currentState.isLegacy && currentState.internal.actualRenderer) {
-        // Capture stack trace to show where gl was accessed
-        const stack = new Error().stack || ''
-
-        // Skip warning if access is from internal operations (zustand setState,
-        // Object.assign spreads, R3F's own components like <Environment>, etc.)
-        if (!isInternalRendererAccess(stack)) {
-          const cleanedStack = stack.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
-
-          notifyDepreciated({
-            heading: 'Accessing state.gl in WebGPU mode',
-            body:
-              'Please use state.renderer instead. state.gl is deprecated and will be removed in future versions.\n\n' +
-              'For backwards compatibility, state.gl currently maps to state.renderer, but this may cause issues with libraries expecting WebGLRenderer.\n\n' +
-              'Accessed from:\n' +
-              cleanedStack,
-          })
-        }
-      }
-
-      return currentState.internal.actualRenderer as WebGLRenderer
-    },
-    set(value: WebGLRenderer) {
-      rootStore.getState().internal.actualRenderer = value
-    },
-    enumerable: true,
-    configurable: true,
-  })
-
-  // state.renderer - modern accessor (no warning)
-  Object.defineProperty(state, 'renderer', {
-    get() {
-      return rootStore.getState().internal.actualRenderer
-    },
-    set(value: WebGPURenderer | WebGLRenderer) {
-      rootStore.getState().internal.actualRenderer = value
-    },
-    enumerable: true,
-    configurable: true,
-  })
+  // state.renderer and state.gl both map to internal.actualRenderer; state.gl logs a one-time
+  // deprecation notice when a WebGPU root is read through it. preserveAccessors above keeps them on
+  // every later state object.
+  defineRendererAccessors(state)
 
   //* Scene Sync Subscription ==============================
   // If someone sets scene to an actual THREE.Scene (not a portal container),

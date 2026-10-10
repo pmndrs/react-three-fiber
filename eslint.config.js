@@ -10,7 +10,7 @@ import globals from 'globals'
 // Try to import the local eslint plugin if built
 let reactThreePlugin
 try {
-  reactThreePlugin = await import('./packages/eslint-plugin/dist/index.mjs')
+  reactThreePlugin = (await import('./packages/eslint-plugin/dist/index.mjs')).default
 } catch {
   // Plugin not built yet, skip
 }

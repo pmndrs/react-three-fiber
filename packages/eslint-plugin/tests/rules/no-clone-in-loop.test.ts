@@ -1,9 +1,5 @@
-import { RuleTester } from 'eslint'
 import rule from '../../src/rules/no-clone-in-loop'
-
-const tester = new RuleTester({
-  parserOptions: { ecmaVersion: 2015 },
-})
+import { tester } from '../tester'
 
 tester.run('no-clone-in-loop', rule, {
   valid: [

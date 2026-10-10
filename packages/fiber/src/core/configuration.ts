@@ -355,14 +355,12 @@ export function createRootConfiguration<TCanvas extends HTMLCanvasElement | Offs
       // Cast xr to any - both renderer XR managers have these methods but with slightly different event type signatures
       const xr = {
         connect() {
-          const { gl, renderer } = store.getState()
-          const xrManager = (renderer || gl).xr as any
+          const xrManager = store.getState().renderer.xr as any
           xrManager.addEventListener('sessionstart', handleSessionChange)
           xrManager.addEventListener('sessionend', handleSessionChange)
         },
         disconnect() {
-          const { gl, renderer } = store.getState()
-          const xrManager = (renderer || gl).xr as any
+          const xrManager = store.getState().renderer.xr as any
           xrManager.removeEventListener('sessionstart', handleSessionChange)
           xrManager.removeEventListener('sessionend', handleSessionChange)
         },

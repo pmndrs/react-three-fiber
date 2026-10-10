@@ -33,27 +33,32 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
-  "dependencies": {
-    "@babel/runtime": "^7.17.8",
-    "eslint": "^8.12.0"
+  "peerDependencies": {
+    "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0"
   },
   "devDependencies": {
-    "@types/eslint": "^8.4.10",
     "@types/estree": "^1.0.8",
     "@types/lodash": "^4.14.191",
-    "@types/prettier": "^3.0.0",
+    "eslint": "^10.12.0",
+    "eslint-v8": "npm:eslint@8.57.1",
+    "eslint-v9": "npm:eslint@9.39.5",
     "lodash": "^4.17.19",
-    "prettier": "^2.6.1",
-    "ts-node": "^10.9.1"
+    "prettier": "^3.8.0",
+    "tsx": "^4.23.13"
   },
   "scripts": {
     "build": "unbuild",
     "stub": "unbuild --stub",
-    "codegen": "ts-node scripts/codegen.ts"
+    "codegen": "tsx scripts/codegen.ts"
   }
 }
