@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
-import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
+import {
+  clearResourceEntries,
+  readWithStaged,
+  rebuildResource,
+  removeResourceEntries,
+} from './internal/resourceRegistry'
 import { createLazyCreatorState, createResourceView, type CreatorState } from './internal/ScopedStore'
 import {
   createReadTracker,
@@ -189,14 +194,12 @@ export function useNodes<T extends NodeRecord>(
   // Case 1: No arguments - all nodes (root + scopes), reactive via storeNodes
   // Case 2: String argument - that scope's nodes (guard against a TSL node
   //         stored under the same name), reactive via storeNodes
+  //         Both overlay nodes staged earlier in this render, so a child sees
+  //         what its parent declares (see readWithStaged).
   // Case 3: Creator function - the entries registered above
-  let nodes: NodeRecord | NodeStore = created
-  if (creatorOrScope === undefined) {
-    nodes = storeNodes as NodeStore
-  } else if (typeof creatorOrScope === 'string') {
-    const scopeData = storeNodes[creatorOrScope]
-    nodes = scopeData && !isTSLNode(scopeData) ? (scopeData as NodeRecord) : {}
-  }
+  const nodes = isReader
+    ? (readWithStaged(store, 'nodes', storeNodes, creatorOrScope, isTSLNode) as NodeRecord | NodeStore)
+    : created
 
   // Return nodes with utils
   return { ...nodes, removeNodes, clearNodes, rebuildNodes } as NodesWithUtils<T>

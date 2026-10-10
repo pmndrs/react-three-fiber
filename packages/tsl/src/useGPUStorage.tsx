@@ -2,7 +2,12 @@
 import { useCallback } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
-import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
+import {
+  clearResourceEntries,
+  readWithStaged,
+  rebuildResource,
+  removeResourceEntries,
+} from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
 import { warnMissingReads } from './internal/readTracking'
 import { isStorageLike } from './internal/resourceGuards'
@@ -204,14 +209,14 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
   // Case 1: No arguments - all storage (root + scopes), reactive via storeStorage
   // Case 2: String argument - that scope's storage (guard against a storage
   //         item stored under the same name), reactive via storeStorage
+  //         Both overlay storage staged earlier in this render, so a child sees
+  //         what its parent declares (see readWithStaged).
   // Case 3: Creator function - the entries registered above
-  let gpuStorage: StorageRecordType | StorageStore = created
-  if (creatorOrScope === undefined) {
-    gpuStorage = storeStorage
-  } else if (typeof creatorOrScope === 'string') {
-    const scopeData = storeStorage[creatorOrScope]
-    gpuStorage = scopeData && !isStorageLike(scopeData) ? (scopeData as StorageRecordType) : {}
-  }
+  const gpuStorage = isReader
+    ? (readWithStaged(store, 'gpuStorage', storeStorage, creatorOrScope, isStorageLike) as
+        | StorageRecordType
+        | StorageStore)
+    : created
 
   // Return storage with utils
   return {

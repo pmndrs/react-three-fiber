@@ -130,6 +130,8 @@ const playerUniforms = useUniforms('player')
 const { uHealth } = useUniforms<{ uHealth: number; uSpeed: number }>('player')
 ```
 
+A reader sees what was declared above it in the same render: a child calling `useUniforms()` gets the uniforms its parent creates on its very first render, before the parent's registration has landed on the store, so a render pipeline or material it builds right away closes over the real node. The same holds for the reader forms of `useNodes`, `useBuffers` and `useGPUStorage`, and for `useUniform(name)`. A reader rendered _before_ the component that declares an entry (a sibling earlier in the tree) gets it once that registration commits, and re-renders then; `useUniform(name)` there throws, since the uniform does not exist yet.
+
 ### Parameters
 
 | Parameter | Type                                 | Description                                  |

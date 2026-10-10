@@ -139,6 +139,42 @@ export function withStagedOverlay(store: RootStore, kind: ResourceKind, committe
   return view
 }
 
+/**
+ * What a reader hook (`useUniforms()`, `useNodes('fx')`, `useBuffers()`, `useGPUStorage()`, ...)
+ * returns: the committed map — or, with `scope`, that scope of it — with this render pass's staged
+ * entries overlaid, exactly as a creator sees them through `CreatorState`.
+ *
+ * Without the overlay a child reader could never see what its parent declares: the child renders
+ * before any flush, and its layout effects run before the parent's, so whatever it closes over in
+ * its first render or commit (a render pipeline graph, say) was built from `undefined`.
+ *
+ * Identity: with nothing staged (the steady state, and every render after the flush) the committed
+ * object itself is returned, never a copy. While something is staged the result is a fresh object;
+ * the hooks spread it into a fresh return value anyway, and the entries inside it are the very
+ * objects the flush commits, so a consumer keyed on an entry sees no change at commit.
+ *
+ * Trade-off, shared with creators: an entry staged by a render React then discards (an interrupted
+ * transition, a suspended sibling) stays visible until a later flush of its scope commits it or an
+ * invalidation drops it. For create-if-not-exists resources that is harmless — the next creator
+ * render of that name reuses the staged entry rather than making another.
+ */
+export function readWithStaged(
+  store: RootStore,
+  kind: ResourceKind,
+  committed: ResourceEntries,
+  scope: string | undefined,
+  isLeaf: LeafGuard,
+): ResourceEntries {
+  if (scope === undefined) return withStagedOverlay(store, kind, committed)
+
+  // A leaf stored under the scope's name is not the scope
+  const scopeData = committed[scope]
+  const current = scopeData && typeof scopeData === 'object' && !isLeaf(scopeData) ? (scopeData as ResourceEntries) : {}
+  // '' is the root pseudo-scope's staging key, never a user scope
+  const staged = scope === ROOT_SCOPE ? undefined : peekStaged(store, kind, scope)
+  return staged ? { ...current, ...staged } : current
+}
+
 //* Commit-phase API (flush) ==============================
 
 /**
