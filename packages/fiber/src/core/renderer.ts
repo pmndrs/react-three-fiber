@@ -6,7 +6,7 @@ import { getThree, registerThree } from './three'
 import { calculateDpr, is } from './utils'
 import { getScheduler } from '@pmndrs/scheduler'
 import { resolveThen } from './utils/promise'
-import { isDevelopment, notifyDepreciated } from './utils/notices'
+import { isDevelopment } from './utils/notices'
 import { computeInitialSize } from './utils/three'
 
 export const isRenderer = (def: any) => !!def?.render
@@ -194,8 +194,9 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
   // Check if the requested renderer is one this entry can construct
   if (glConfig && !webgl) {
     throw new Error(
-      'WebGLRenderer (gl prop) is not available on this entry. ' +
-        'Use @react-three/fiber or @react-three/fiber/legacy instead.',
+      'R3F: the `gl` prop configures WebGLRenderer, which is only available on @react-three/fiber/legacy. ' +
+        'Import Canvas from @react-three/fiber/legacy to keep WebGL, or move these settings to the ' +
+        '`renderer` prop for WebGPU.',
     )
   }
   if (rendererConfig && !webgpu) {
@@ -284,23 +285,13 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
   const explicitShare = is.str(share)
 
   //* Determine which renderer to use ==============================
-  // Entry-specific defaults:
-  // - @react-three/fiber/webgpu: always WebGPU, no renderer prop needed (no webgl loader)
-  // - @react-three/fiber/legacy: always WebGL (no webgpu loader)
-  // - @react-three/fiber: WebGL unless the renderer prop, `primary`, or a primary to share asks
-  //   for WebGPU; only the chosen renderer's support is downloaded (both loaders are dynamic
-  //   imports)
+  // Each entry offers one renderer:
+  // - @react-three/fiber and @react-three/fiber/webgpu: WebGPU (a dynamic and a static loader)
+  // - @react-three/fiber/legacy: WebGL
+  // A provider offering both still works: WebGL unless the renderer prop, `primary`, or a primary
+  // to share asks for WebGPU.
   const wantsGL =
     !!webgl && (state.isLegacy || !!glConfig || !webgpu || (!rendererConfig && !primary && shareKey === undefined))
-
-  // Deprecation warning for WebGL usage (only on the entry that offers both)
-  if (webgl && webgpu && !state.isLegacy && wantsGL) {
-    notifyDepreciated({
-      heading: 'WebGlRenderer Usage',
-      body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
-      link: 'https://docs.pmnd.rs/react-three-fiber/api/renderer',
-    })
-  }
 
   let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
 
@@ -352,6 +343,7 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
           state.set((prev) => ({
             webGPUSupported: primaryEntry.store.getState().webGPUSupported,
             renderer: renderer,
+            gl: renderer as unknown as WebGLRenderer,
             primaryStore: primaryEntry.store,
             internal: {
               ...prev.internal,
@@ -406,6 +398,7 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
               state.set((prev) => ({
                 webGPUSupported: isWebGPUBackend,
                 renderer: renderer,
+                gl: renderer as unknown as WebGLRenderer,
                 primaryStore: store,
                 internal: {
                   ...prev.internal,
@@ -434,9 +427,16 @@ export function initializeRenderer<TCanvas extends HTMLCanvasElement | Offscreen
 
             state.internal.actualRenderer = renderer
             state.internal.releaseRenderer = leaseRenderer(renderer, resolved.owned)
-            // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
+            // `gl` mirrors `renderer` for libraries that still read it (drei's controls read
+            // `gl.domElement`). The store's deprecating `gl` getter only lives on the initial state
+            // object: zustand's set() copies it into a plain field, so set the value explicitly.
             // Self-reference primaryStore - this canvas is its own primary
-            state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+            state.set({
+              webGPUSupported: isWebGPUBackend,
+              renderer: renderer,
+              gl: renderer as unknown as WebGLRenderer,
+              primaryStore: store,
+            })
 
             if (primary) {
               //* Register as Primary Canvas ==============================

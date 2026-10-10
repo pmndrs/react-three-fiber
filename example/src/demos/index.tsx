@@ -17,7 +17,8 @@ export interface DemoGroup {
 const demo = (load: () => Promise<{ default: ComponentType }>): Demo => ({ Component: lazy(load) })
 
 //* Default Examples ==============================
-// Work with both WebGL and WebGPU renderers
+// Core features on the root entry, `@react-three/fiber`, which renders with WebGPURenderer
+// (falling back to its WebGL2 backend where the browser has no WebGPU)
 const defaultDemos = {
   Activity: demo(() => import('./default/Activity')),
   AutoDispose: demo(() => import('./default/AutoDispose')),
@@ -45,7 +46,7 @@ const defaultDemos = {
 }
 
 //* Legacy Examples ==============================
-// WebGL-only, using features not yet supported in WebGPU
+// WebGLRenderer via `@react-three/fiber/legacy`: GLSL materials, WebGL-only drei helpers, custom renderers
 const legacyDemos = {
   EventPriority: demo(() => import('./legacy/EventPriority')),
   Lines: demo(() => import('./legacy/Lines')),

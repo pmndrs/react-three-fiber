@@ -1,5 +1,5 @@
 import { Line } from '@react-three/drei'
-import { Canvas, type ThreeElements, type ThreeEvent, type Vector3 } from '@react-three/fiber'
+import { Canvas, type ThreeElements, type ThreeEvent, type Vector3 } from '@react-three/fiber/legacy'
 import { useState } from 'react'
 
 function PolyLine({

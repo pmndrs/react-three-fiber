@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber/legacy'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { SVGRenderer } from 'three/addons/renderers/SVGRenderer.js'

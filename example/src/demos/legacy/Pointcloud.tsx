@@ -1,4 +1,4 @@
-import { Canvas, ThreeEvent, extend } from '@react-three/fiber'
+import { Canvas, ThreeEvent, extend } from '@react-three/fiber/legacy'
 import { useCallback, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 

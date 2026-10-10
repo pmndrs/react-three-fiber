@@ -1,6 +1,9 @@
 /**
  * @fileoverview WebGPU Entry Point - Full WebGPU Support with Hooks
  *
+ * Deprecated with `@react-three/fiber/webgpu`, and removed with it in the first v10 beta: the default
+ * entry (`@react-three/test-renderer`) now mocks WebGPU too.
+ *
  * Use this entry point when testing applications built on @react-three/fiber/webgpu.
  *
  * This entry provides:

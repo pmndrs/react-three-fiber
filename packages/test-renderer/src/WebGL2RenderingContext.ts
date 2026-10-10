@@ -775,6 +775,12 @@ export class WebGL2RenderingContext {
     return extensions[ext]
   }
 
+  // WebGPURenderer's WebGL2 fallback backend lists the supported extensions up front and checks
+  // them with `.includes()`, so this has to return an array rather than the no-op stub's undefined
+  getSupportedExtensions() {
+    return Object.keys(extensions)
+  }
+
   getProgramInfoLog = () => ''
 
   getShaderInfoLog = () => ''

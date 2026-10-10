@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { act } from 'react'
 import { render } from '@testing-library/react'
-import { ReconcilerRoot, createRoot, Canvas, useThree } from '../src/index'
+import { ReconcilerRoot, createRoot, Canvas, useThree } from '../src/legacy'
 
 /**
  * Canvas size control — Tier 1 (jsdom).
