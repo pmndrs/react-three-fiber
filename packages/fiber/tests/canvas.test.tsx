@@ -412,6 +412,49 @@ describe('web Canvas', () => {
         cubeSpy.mockRestore()
       }
     })
+
+    it.each(['/sky.png', '/sky.webp', '/sky.gif'])('loads an LDR equirect %s through TextureLoader', async (file) => {
+      // parseBackground routes these to useEnvironment, which used to read only .hdr/.exr/.jpg
+      // and threw "Unrecognized file extension" for every other image a backdrop is likely to be.
+      let loaded: THREE.Texture | undefined
+      let sceneBackground: THREE.Scene['background'] = null
+      const loadSpy = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(((
+        _url: string,
+        onLoad?: (texture: THREE.Texture) => void,
+      ) => {
+        loaded = new THREE.Texture()
+        onLoad?.(loaded)
+        return loaded
+      }) as any)
+
+      function BackgroundChecker() {
+        const scene = useThree((state) => state.scene)
+        React.useEffect(() => {
+          sceneBackground = scene.background
+        })
+        return null
+      }
+
+      try {
+        await act(async () =>
+          render(
+            <LegacyCanvas background={file}>
+              <BackgroundChecker />
+            </LegacyCanvas>,
+          ),
+        )
+
+        expect(loadSpy).toHaveBeenCalledTimes(1)
+        expect(loadSpy.mock.calls[0][0]).toBe(file)
+        expect(sceneBackground).toBe(loaded)
+        // An LDR image holds sRGB values, mapped as an equirect like a single .hdr
+        expect(loaded!.mapping).toBe(THREE.EquirectangularReflectionMapping)
+        expect(loaded!.colorSpace).toBe('srgb')
+      } finally {
+        useEnvironment.clear({ files: file })
+        loadSpy.mockRestore()
+      }
+    })
   })
 
   describe('frustum / occlusion props', () => {

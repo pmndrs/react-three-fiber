@@ -25,10 +25,11 @@ const defaultFiles = ['/px.png', '/nx.png', '/py.png', '/ny.png', '/pz.png', '/n
 // Every decoder is loaded on demand. The three addon loaders import from `three`, so none of them
 // may sit in core's eager graph: a `preset` environment is one `.hdr`, and used to ship the EXR
 // decoder alongside. All of them decode on the CPU, so none needs the root's renderer; the `.jpg`
-// one is three's own UltraHDRLoader (the single-file Ultra HDR standard).
+// one is three's own UltraHDRLoader (the single-file Ultra HDR standard). A plain `.png`, `.webp`
+// or `.gif` is an LDR equirect image and goes through three's core TextureLoader.
 
 type EnvironmentLoader = ConstructorRepresentation<LoaderLike>
-type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg'
+type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg' | 'ldr'
 
 // Loaders already resolved, so `clear` and a second `useEnvironment` need no round trip.
 const loadedLoaders = new Map<EnvironmentFormat, EnvironmentLoader>()
@@ -71,6 +72,9 @@ async function importLoader(format: EnvironmentFormat): Promise<EnvironmentLoade
       break
     case 'jpg':
       loader = (await import('three/examples/jsm/loaders/UltraHDRLoader.js')).UltraHDRLoader
+      break
+    case 'ldr':
+      loader = getThree().TextureLoader
       break
   }
   return loader
@@ -129,8 +133,8 @@ export function useEnvironment({
   const three = getThree()
   texture.mapping = isCubemap ? three.CubeReflectionMapping : three.EquirectangularReflectionMapping
 
-  // LDR cube faces are sRGB images; an HDR cube set carries linear radiance like an equirect .hdr
-  texture.colorSpace = colorSpace ?? (isCubemap && format !== 'hdr-cube' ? 'srgb' : 'srgb-linear')
+  // LDR images (cube faces or a single equirect) are sRGB; HDR data carries linear radiance
+  texture.colorSpace = colorSpace ?? (format === 'cube' || format === 'ldr' ? 'srgb' : 'srgb-linear')
 
   return texture
 }
@@ -227,6 +231,8 @@ function getFormat(files: string | string[]): { format: EnvironmentFormat | unde
   else if (firstEntry.startsWith('data:image/jpeg')) format = 'jpg'
   else if (firstExtension === 'hdr' || firstExtension === 'exr') format = firstExtension
   else if (firstExtension === 'jpg' || firstExtension === 'jpeg') format = 'jpg'
+  else if (/^data:image\/(png|webp|gif)[;,]/.test(firstEntry)) format = 'ldr'
+  else if (firstExtension === 'png' || firstExtension === 'webp' || firstExtension === 'gif') format = 'ldr'
 
   return { format, isCubemap }
 }

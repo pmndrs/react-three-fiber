@@ -216,6 +216,10 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   is async from three r186, the `unmountComponentAtNode` callback runs once that dispose has settled.
 - Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
   rendering the same canvas before that commit cancels the teardown.
+- `<Canvas background="/sky.png">` (and `.webp` / `.gif`) loads instead of throwing. The background
+  parser routes those files to `useEnvironment`, which only recognised `.hdr`, `.exr` and `.jpg`;
+  it now loads a single `.png`, `.webp` or `.gif` (or a `data:image/` URL of one) as an sRGB equirect
+  through three's `TextureLoader`, for `<Environment files>` and `useEnvironment` too.
 
 ### Breaking Changes
 

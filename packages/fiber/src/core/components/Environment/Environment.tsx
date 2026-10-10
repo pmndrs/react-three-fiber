@@ -42,7 +42,7 @@ import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironme
  *   - scale: Scale of backside projected sphere (default: 1000)
  *
  * Additional loader props:
- * @property files - File path(s) for environment. Supports .hdr, .exr, Ultra HDR .jpg, or array of 6 cube faces
+ * @property files - File path(s) for environment. Supports .hdr, .exr, Ultra HDR .jpg, an LDR .png/.webp/.gif, or array of 6 cube faces
  * @property path - Base path for file loading
  * @property extensions - Texture extensions override
  */
@@ -160,7 +160,7 @@ export function EnvironmentMap({ scene, background = false, map, ...config }: En
 /**
  * Internal component that loads environment textures from files or presets.
  * Uses HDRLoader for .hdr, EXRLoader for .exr, UltraHDRLoader for .jpg/.jpeg Ultra HDR,
- * or CubeTextureLoader for arrays of images.
+ * TextureLoader for an LDR .png/.webp/.gif, or CubeTextureLoader for arrays of images.
  *
  * @example With preset
  * ```jsx
@@ -461,7 +461,7 @@ function EnvironmentDualSource(props: EnvironmentProps) {
  *
  * Supports multiple input methods:
  * - **Presets**: Selection of HDRI Haven assets (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
- * - **Files**: HDR (.hdr), EXR (.exr), Ultra HDR JPEG (.jpg), or cube faces (array of 6 images)
+ * - **Files**: HDR (.hdr), EXR (.exr), Ultra HDR JPEG (.jpg), LDR image (.png, .webp, .gif), or cube faces (array of 6 images)
  * - **Texture**: Pre-existing cube texture via `map` prop
  * - **Custom Scene**: Render children into environment using portal and cube camera
  * - **Ground Projection**: Project environment onto ground plane
