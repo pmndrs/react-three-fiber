@@ -1,12 +1,16 @@
 import type { Rule } from 'eslint'
 import fs from 'fs/promises'
-import { join, extname, relative } from 'path'
-import { camelCase } from 'lodash'
+import { dirname, join, extname, relative } from 'path'
+import { fileURLToPath, pathToFileURL } from 'url'
+import lodash from 'lodash'
 import { format, resolveConfig } from 'prettier'
+
+const { camelCase } = lodash
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const jsHeader = (file: string) =>
   `// THIS FILE WAS GENERATED DO NOT MODIFY BY HAND
-// @command yarn codegen:eslint
+// @command pnpm codegen:eslint
 ` + file
 
 interface FoundRule {
@@ -16,6 +20,7 @@ interface FoundRule {
 
 interface GeneratedConfig {
   name: string
+  fileName: string
   path: string
 }
 
@@ -40,18 +45,24 @@ async function ruleDocsPath(name: string): Promise<string> {
 
 async function generateConfig(name: string, rules: FoundRule[]) {
   const code = `
+    import type { Linter } from 'eslint'
+
     export default {
       plugins: ['@react-three'],
       rules: {
         ${rules.map((rule) => `'@react-three/${rule.moduleName}': 'error'`).join(',')}
       },
-    }
+    } satisfies Linter.LegacyConfig
   `
 
   const filepath = join(configsDir, `${name}.ts`)
   await writeFile(filepath, code)
 
-  generatedConfigs.push({ name: camelCase(name), path: './' + relative(srcDir, join(configsDir, name)) })
+  generatedConfigs.push({
+    name: camelCase(name),
+    fileName: name,
+    path: './' + relative(srcDir, join(configsDir, name)),
+  })
 }
 
 async function writeFile(filepath: string, code: string) {
@@ -75,13 +86,37 @@ async function generateRuleIndex(rules: FoundRule[]) {
 
 async function generatePluginIndex() {
   const code = `
+    import type { ESLint, Linter } from 'eslint'
     ${generatedConfigs.map((config) => `import ${config.name} from '${config.path}'`).join('\n')}
+    import rules from './rules/index'
 
-    export { default as rules } from './rules/index'
-
-    export const configs = {
-      ${generatedConfigs.map((config) => `${config.name}`).join(',')}
+    type Configs = {
+      ${generatedConfigs.map((config) => `${config.name}: Linter.Config`).join('\n')}
+      ${generatedConfigs.map((config) => `'legacy-${config.fileName}': Linter.LegacyConfig`).join('\n')}
     }
+
+    const plugin: ESLint.Plugin & { rules: typeof rules; configs: Configs } = {
+      meta: { name: '@react-three/eslint-plugin' },
+      rules,
+      configs: {} as Configs,
+    }
+
+    /** A flat config (ESLint 9+, or ESLint 8 with eslint.config.js) that registers the plugin itself. */
+    const flat = (name: string, legacy: Linter.LegacyConfig): Linter.Config => ({
+      name: \`@react-three/\${name}\`,
+      plugins: { '@react-three': plugin },
+      rules: legacy.rules,
+    })
+
+    export const configs: Configs = {
+      ${generatedConfigs.map((config) => `${config.name}: flat('${config.fileName}', ${config.name})`).join(',')},
+      ${generatedConfigs.map((config) => `'legacy-${config.fileName}': ${config.name}`).join(',')},
+    }
+
+    plugin.configs = configs
+
+    export { rules }
+    export default plugin
   `
 
   const filepath = join(srcDir, 'index.ts')
@@ -101,7 +136,7 @@ async function generateReadme(rules: FoundRule[]) {
     const docsPath = await ruleDocsPath(rule.moduleName)
     const row = `| ${link(rule.moduleName, docsPath)} | ${rule.module.meta?.docs?.description} | ${conditional(
       '✅',
-      rule.module.meta?.docs?.recommended,
+      Boolean(rule.module.meta?.docs?.recommended),
     )} | ${conditional('🔧', rule.module.meta?.fixable)} | ${conditional('💡', rule.module.meta?.hasSuggestions)} |`
 
     rows.push(row)
@@ -121,14 +156,14 @@ ${rows.join('\n')}
 
   const newReadme = readme.replace(
     found[0],
-    '<!-- START_RULE_CODEGEN -->' + '\n<!-- @command yarn codegen:eslint -->' + code + '\n<!-- END_CODEGEN -->',
+    '<!-- START_RULE_CODEGEN -->' + '\n<!-- @command pnpm codegen:eslint -->' + code + '\n<!-- END_CODEGEN -->',
   )
 
   await writeFile(filepath, newReadme)
 }
 
 async function generate() {
-  const rulePaths = await fs.readdir(rulesDir)
+  const rulePaths = (await fs.readdir(rulesDir)).sort()
   const recommended: FoundRule[] = []
   const rules: FoundRule[] = []
 
@@ -137,7 +172,7 @@ async function generate() {
       continue
     }
 
-    const rule: Rule.RuleModule = (await import(join(rulesDir, moduleName))).default
+    const rule: Rule.RuleModule = (await import(pathToFileURL(join(rulesDir, moduleName)).href)).default
     const foundRule = { module: rule, moduleName: moduleName.replace(extname(moduleName), '') }
     rules.push(foundRule)
 
