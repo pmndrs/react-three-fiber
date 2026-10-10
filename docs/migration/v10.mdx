@@ -53,6 +53,32 @@ WebGPU needs no manual init. Pass renderer parameters or a pre-created renderer 
 
 ---
 
+## Breaking Changes at a Glance
+
+Every change below is covered in its own section. The same list, with the alpha each one landed in, is kept in the repository as [BREAKING-CHANGES.md](https://github.com/pmndrs/react-three-fiber/blob/v10/BREAKING-CHANGES.md). **Silent** changes alter behaviour or types without an error, so check for those.
+
+| Change | What to do |
+| --- | --- |
+| [`@react-three/fiber` renders with WebGPU](#react-threefiber-renders-with-webgpu) | Keep it, or import `Canvas` from `/legacy` for GLSL and WebGL-only libraries |
+| **Silent:** GLSL materials render blank on a WebGPU canvas | `/legacy`, or port to a node material (warns once in development) |
+| `gl={...}` on a `@react-three/fiber` Canvas throws | `/legacy`, or move settings to `renderer={{ ... }}` |
+| [Hooks are typed for WebGPU](#hooks-typed-for-webgpu) | Nothing for most apps; libraries for both renderers type against `/extension` |
+| [`/webgpu` entry deprecated](#renderer-selection) | Import from `@react-three/fiber` |
+| [Dependency ranges](#dependency-ranges-moved): three `>=0.185.0`, React `>=19.0 <19.4` | Upgrade three |
+| [React Native](#react-native-moved-to-its-own-package) is `@react-three/native` | Change the import |
+| [`state.gl` deprecated](#gl-renamed-to-renderer) | `state.renderer` |
+| [`state.clock` removed](#useframe-clock-removed) | `state.time` / `delta` / `elapsed` |
+| **Silent:** [numeric `useFrame` priority](#render-phase-takes-over-rendering) runs higher first | Phases or `before` / `after` |
+| **Silent:** [`physics` phase is a fixed timestep](#physics-runs-on-a-fixed-timestep) | Step by the `delta` you get |
+| [`legacy`, `linear`, `flat`, `colorSpace`, `toneMapping` props removed](#renderer-props-removed) | Renderer settings in `renderer` / `gl` |
+| [`shadows` prop throws](#shadows-moved-into-the-renderer-settings) | `renderer={{ shadows }}` / `gl={{ shadows }}` |
+| [`onUpdate` removed](#onupdate-removed) | An effect, `useFrame` or a ref callback |
+| [Split gain map environments](#split-gain-map-environments-removed) | Single-file Ultra HDR `.jpg` |
+| [Multi-canvas props](#multi-canvas-props-alpha-upgraders) (alpha upgraders) | `<Canvas primary>`, `share`, `<Canvas scheduler>` |
+| [TSL hooks](#tsl-hooks-moved-to-react-threetsl) (alpha upgraders) | Import from `@react-three/tsl` |
+
+---
+
 ## Breaking Changes
 
 ### `@react-three/fiber` Renders With WebGPU
@@ -74,6 +100,21 @@ What tells you which one you need:
 - **Libraries.** Anything that needs a `WebGLRenderer` (`postprocessing`'s `EffectComposer`, GLSL-based drei components, code calling WebGL-only renderer APIs) needs `/legacy` until it supports `WebGPURenderer`. `state.gl` on a WebGPU canvas aliases the `WebGPURenderer`, with a one-time deprecation notice: code that only reads `gl.domElement` or `gl.setSize` keeps working, WebGL-only calls do not.
 
 Node materials go the other way: on `/legacy` they throw an error pointing back to `@react-three/fiber`.
+
+### Hooks Typed for WebGPU
+
+`useThree`, `useFrame`, `useRenderTarget` and `Canvas`'s `onCreated` from `@react-three/fiber` are typed for the renderer that import renders with: `state.renderer` is a `WebGPURenderer`, and WebGPU-only members need no cast or declaration. The JSX elements are three's `three/webgpu` namespace, so node materials are typed and `<webGLRenderer>` is not.
+
+```tsx
+import { useFrame, useThree } from '@react-three/fiber'
+
+const renderer = useThree((s) => s.renderer) // WebGPURenderer
+useFrame(({ renderer }) => renderer.compute(kernel))
+```
+
+`RootState` itself is still the shared base type (either renderer), so packages that augment it keep working, and code annotated with it still compiles: `useFrame((state: RootState) => ...)` is fine. The deprecated `state.gl` keeps its base type; use `state.renderer`.
+
+What this breaks is code that relied on the union from the default import, such as reading `state.renderer` as a `WebGLRenderer`. That code would fail at runtime on a WebGPU canvas anyway; it belongs on `/legacy`, whose hooks are typed for `WebGLRenderer`. Libraries that support both renderers type against `@react-three/fiber/extension`, which keeps the union. See [Typing the renderer](../API/typescript#typing-the-renderer).
 
 ### Dependency ranges moved
 
@@ -518,6 +559,10 @@ This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffer
 ---
 
 ## TypeScript Changes
+
+### Hooks Follow the Import
+
+`useThree`, `useFrame`, `useRenderTarget` and `onCreated` are typed for the renderer of the entry you import them from: `WebGPURenderer` on `@react-three/fiber`, `WebGLRenderer` on `/legacy`. The `Register` declaration earlier alphas suggested for this is no longer needed in apps. See [Hooks Typed for WebGPU](#hooks-typed-for-webgpu) and [Typing the renderer](../API/typescript#typing-the-renderer).
 
 ### Test Renderer Entry Points
 

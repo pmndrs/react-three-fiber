@@ -17,6 +17,7 @@ three, so the renderer is a lazy chunk and libraries add none. The root and Canv
 hardened (teardown at React's commit, renderer ownership and disposal, `<Activity>`, `root.ready`),
 and shader-shaping material props set `needsUpdate` for you. Start with the
 [migration guide](./docs/migration/v10.mdx): GLSL scenes and WebGL-only libraries need `/legacy`.
+Every breaking change since v9 is listed in [BREAKING-CHANGES.md](./BREAKING-CHANGES.md).
 
 ### Breaking Changes
 
@@ -39,6 +40,15 @@ and shader-shaping material props set `needsUpdate` for you. Start with the
   + import { Canvas } from '@react-three/fiber/legacy'
   ```
 
+- `useThree`, `useFrame`, `useRenderTarget` and `Canvas`'s `onCreated` from `@react-three/fiber` are
+  typed for `WebGPURenderer` (`WebGPURootState`, `RenderTarget`), with nothing to register, and its
+  JSX map is the `three/webgpu` namespace. The hooks were typed for either renderer, so WebGPU-only
+  members needed a `Register` declaration or a cast. `RootState` stays the base type every entry
+  shares (either renderer), so augmentations of it keep working, and `WebGPURootState` stays
+  assignable to it: the deprecated `gl` keeps its base type. Code that read the default import's
+  state as WebGL belongs on `/legacy`; libraries that run on both renderers type against
+  `@react-three/fiber/extension`, which keeps the union and which `Register` still narrows
+  ([#4020](https://github.com/pmndrs/react-three-fiber/pull/4020)).
 - Multi-canvas is configured on the Canvas, not in the `renderer` bag. Mark the canvas that owns the
   renderer `<Canvas primary>`; every other WebGPU canvas shares its renderer automatically, renders
   after it by default, and ignores its own `renderer` settings (one development warning), since
@@ -329,8 +339,8 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   is async from three r186, the `unmountComponentAtNode` callback runs once that dispose has settled.
 - Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
   rendering the same canvas before that commit cancels the teardown.
-- Using a node material on a WebGL canvas throws a clear error naming the fix (pass `renderer` to
-  `<Canvas>`, or import from `/webgpu`), instead of three failing on the first frame with
+- Using a node material on a WebGL (`/legacy`) canvas throws a clear error naming the fix (import
+  `Canvas` from `@react-three/fiber`), instead of three failing on the first frame with
   `Cannot read properties of undefined (reading 'replace')`. Covers node material elements,
   `<primitive>` and the `material` prop
   ([#3889](https://github.com/pmndrs/react-three-fiber/issues/3889),
@@ -366,6 +376,19 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   notice never showed. The root and portal stores now keep the `gl` / `renderer` accessors on every
   state object ([#4014](https://github.com/pmndrs/react-three-fiber/issues/4014),
   [#4016](https://github.com/pmndrs/react-three-fiber/pull/4016)).
+- Image backgrounds and environments load. `<Canvas background>`, `<Environment files>` and
+  `useEnvironment` share one loader path, and several common inputs failed on it:
+  - `.png`, `.webp`, `.avif` and `.gif` threw "Unrecognized file extension"; they load as an sRGB
+    equirect through three's `TextureLoader` (a `data:image/` URL of one too).
+  - A plain `.jpg` threw, since every JPEG went to `UltraHDRLoader`, which rejects one without a gain
+    map. The file is fetched once: an Ultra HDR JPEG decodes as linear HDR as before, any other
+    decodes from the same bytes as an sRGB image.
+  - A query or hash after the extension (`sky.hdr?v=2`, `sky.png#rev`) broke the format detection,
+    and a bare `sky.png?v=2` or a `data:` URL given to `background` was parsed as a color.
+  - `background={0x000000}` was ignored, `0` being read as unset.
+  - `background={{ preset, backgroundMap }}` showed the preset as the backdrop, not the map, and
+    `background={{ backgroundMap }}` alone also tried to load six default cube faces (`/px.png` ...)
+    for the environment; it now sets only the backdrop.
 
 ### Examples
 
@@ -379,6 +402,28 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   instead of throttling it with `fps`.
 - The `legacy` demos import from `@react-three/fiber/legacy`; they relied on the default import
   rendering with WebGL ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
+
+### eslint-plugin
+
+- **Breaking:** `configs.recommended` and `configs.all` are flat configs, and the default export is
+  the plugin object for `eslint.config.js`. eslintrc users switch to
+  `plugin:@react-three/legacy-recommended` / `plugin:@react-three/legacy-all`. `eslint` moved to
+  `peerDependencies` (`^8.57.0 || ^9.0.0 || ^10.0.0`), and the plugin is tested against ESLint 10,
+  9 and 8 (flat and eslintrc).
+- New rule `no-fast-state` (in `recommended`, from [RFC #2701](https://github.com/pmndrs/react-three-fiber/issues/2701)):
+  flags `useState`/`useReducer` setters, `setX` props and the R3F store's `set`/`setSize`/`setDpr`/
+  `setEvents`/`setFrameloop` called in the frame loop. Calls behind a condition are allowed, as the
+  RFC settled for polling; `{ allowGuarded: false }` reports them too.
+- New rule `prefer-useloader` (in `recommended`, from the same RFC): flags `load()`/`loadAsync()` on a
+  `new XLoader()` (or a variable holding one) inside `useEffect`, `useLayoutEffect`,
+  `useInsertionEffect`, `useMemo` or a `useState` initialiser, and points to `useLoader`/`useTexture`.
+- The frame loop rules (`no-new-in-loop`, `no-clone-in-loop`, `no-fast-state`) see every per-frame
+  callback: `useFrame` through an imported alias or a namespace, callbacks passed by reference
+  (function declarations, function expressions, `useCallback`), and `addEffect`, `addAfterEffect`,
+  `setRenderOverride` and the scheduler's `register`. Only the callback is checked, not the options
+  argument. `no-new-in-loop` no longer reports `throw new X()` or `new SomethingError()`, which only
+  run on the failure path.
+- The `codegen:eslint` script runs again (it failed under the ESM root), and generates the flat configs.
 
 ## 10.0.0-alpha.5
 

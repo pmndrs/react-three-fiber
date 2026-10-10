@@ -124,29 +124,46 @@ Every three class is a JSX element without any `extend()` call, on `<Canvas>` an
 
 ## Typing the renderer
 
-`@react-three/fiber` renders with `WebGPURenderer`, but its types stay `WebGLRenderer | WebGPURenderer`, because libraries compile against them and also run under `/legacy`. So in an app, a member only one of them has (`renderer.compute`, `renderer.shadowMap`) needs a narrow. An app registers its renderer once, anywhere, and everything renderer-typed follows: `useThree`, `useFrame`, `onCreated`, `useRenderTarget`, `state.isLegacy`.
+Each entry's hooks are typed for the renderer it renders with, so there is nothing to declare:
+
+| Import from                    | `useThree` / `useFrame` / `onCreated` state | `useRenderTarget()` | JSX elements                 |
+| ------------------------------ | ------------------------------------------- | ------------------- | ---------------------------- |
+| `@react-three/fiber`           | `WebGPURootState` (`WebGPURenderer`)        | `RenderTarget`      | `three/webgpu`               |
+| `@react-three/fiber/legacy`    | `LegacyRootState` (`WebGLRenderer`)         | `WebGLRenderTarget` | `three`                      |
+| `@react-three/fiber/extension` | `RootState` (either renderer)               | —                   | —                            |
 
 ```tsx
-declare module '@react-three/fiber' {
-  interface Register {
-    renderer: 'webgpu' // or 'webgl' on @react-three/fiber/legacy
-  }
-}
+import { useFrame, useRenderTarget, useThree } from '@react-three/fiber'
 
-// From here on, with no cast:
 const renderer = useThree((s) => s.renderer) // WebGPURenderer
 useFrame(({ renderer }) => renderer.compute(kernel))
 const fbo = useRenderTarget() // RenderTarget
 ```
 
-This types what your app does; it does not change what a Canvas renders: the import does (WebGPU on `@react-three/fiber`, WebGL on `/legacy`). `/legacy` also gives WebGL types by import path, with no declaration. `/webgpu` does the same for WebGPU but is deprecated and will be removed in the first beta, so register `'webgpu'` instead. All entries use the same core, so libraries typed against the union keep working under any of them.
+`RootState` is the base type every entry shares, with `renderer` typed as either renderer. The narrowed states extend it, so a function annotated with it (`useFrame((state: RootState) => ...)`) still compiles, and fields a package adds to it (`declare module '@react-three/fiber' { interface RootState { ... } }`) appear on the narrowed states too. The deprecated `state.gl` keeps the base type; use `state.renderer`.
 
-When you have not registered a renderer and need a WebGPU member in one place, narrow with the flag three sets:
+### Libraries
+
+A library that works under either renderer imports its hooks from `@react-three/fiber/extension`, whose types are the base `RootState`. Narrow where it needs one renderer's members:
 
 ```tsx
+import { useThree } from '@react-three/fiber/extension'
+
 const renderer = useThree((s) => s.renderer)
 if ('isWebGPURenderer' in renderer) renderer.compute(kernel)
 ```
+
+An app can narrow those base types too, for code that goes through them, by registering its renderer once:
+
+```tsx
+declare module '@react-three/fiber' {
+  interface Register {
+    renderer: 'webgpu' // or 'webgl'
+  }
+}
+```
+
+Registering only changes types. What a Canvas renders with is decided by the import: WebGPU on `@react-three/fiber`, WebGL on `/legacy`. (`/webgpu` is the deprecated name for the WebGPU entry and is removed in the first beta.)
 
 ## Exported types
 
@@ -160,9 +177,10 @@ Intersection
 Subscription
 RenderCallback
 
-// `useThree`'s returned internal state
+// The base root state every entry shares; `useThree` on @react-three/fiber returns WebGPURootState
 RootState
-// Register the renderer your app uses, to narrow RootState (see above)
+WebGPURootState
+// Register a renderer to narrow the base RootState (see above)
 Register
 Performance
 Dpr

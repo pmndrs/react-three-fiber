@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { WebGPURenderer } from 'three/webgpu'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
 import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader.js'
+import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js'
 import { Canvas, useEnvironment, useFrame, useLoader, useThree } from '../src'
 import type { DefaultRendererProps, RootState } from '../src'
 // WebGLRenderer lives on /legacy: the gl-prop tests below run there
@@ -411,6 +412,271 @@ describe('web Canvas', () => {
         hdrCubeSpy.mockRestore()
         cubeSpy.mockRestore()
       }
+    })
+
+    it.each(['/sky.png', '/sky.webp', '/sky.gif'])('loads an LDR equirect %s through TextureLoader', async (file) => {
+      // parseBackground routes these to useEnvironment, which used to read only .hdr/.exr/.jpg
+      // and threw "Unrecognized file extension" for every other image a backdrop is likely to be.
+      let loaded: THREE.Texture | undefined
+      let sceneBackground: THREE.Scene['background'] = null
+      const loadSpy = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(((
+        _url: string,
+        onLoad?: (texture: THREE.Texture) => void,
+      ) => {
+        loaded = new THREE.Texture()
+        onLoad?.(loaded)
+        return loaded
+      }) as any)
+
+      function BackgroundChecker() {
+        const scene = useThree((state) => state.scene)
+        React.useEffect(() => {
+          sceneBackground = scene.background
+        })
+        return null
+      }
+
+      try {
+        await act(async () =>
+          render(
+            <LegacyCanvas background={file}>
+              <BackgroundChecker />
+            </LegacyCanvas>,
+          ),
+        )
+
+        expect(loadSpy).toHaveBeenCalledTimes(1)
+        expect(loadSpy.mock.calls[0][0]).toBe(file)
+        expect(sceneBackground).toBe(loaded)
+        // An LDR image holds sRGB values, mapped as an equirect like a single .hdr
+        expect(loaded!.mapping).toBe(THREE.EquirectangularReflectionMapping)
+        expect(loaded!.colorSpace).toBe('srgb')
+      } finally {
+        useEnvironment.clear({ files: file })
+        loadSpy.mockRestore()
+      }
+    })
+
+    // Captures the scene the background lands on, after every commit
+    function captureScene() {
+      const seen: { scene?: THREE.Scene } = {}
+      function SceneChecker() {
+        const scene = useThree((state) => state.scene)
+        React.useEffect(() => {
+          seen.scene = scene
+        })
+        return null
+      }
+      return [seen, SceneChecker] as const
+    }
+
+    // A one-texel texture standing in for whatever TextureLoader would decode
+    function stubTextureLoader() {
+      const loaded = new Map<string, THREE.Texture>()
+      const spy = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(((
+        url: string,
+        onLoad?: (texture: THREE.Texture) => void,
+      ) => {
+        const texture = new THREE.Texture()
+        loaded.set(url, texture)
+        onLoad?.(texture)
+        return texture
+      }) as any)
+      return { spy, loaded }
+    }
+
+    it('sets a black background for the hex number 0', async () => {
+      const [seen, SceneChecker] = captureScene()
+      await act(async () =>
+        render(
+          <LegacyCanvas background={0x000000}>
+            <SceneChecker />
+          </LegacyCanvas>,
+        ),
+      )
+
+      expect(seen.scene!.background).toBeInstanceOf(THREE.Color)
+      expect((seen.scene!.background as THREE.Color).getHexString()).toBe('000000')
+    })
+
+    it('reads the extension past a query or hash', async () => {
+      const { spy, loaded } = stubTextureLoader()
+      const [seen, SceneChecker] = captureScene()
+      try {
+        await act(async () =>
+          render(
+            <LegacyCanvas background="/sky.png#rev">
+              <SceneChecker />
+            </LegacyCanvas>,
+          ),
+        )
+
+        expect(spy.mock.calls[0][0]).toBe('/sky.png#rev')
+        expect(seen.scene!.background).toBe(loaded.get('/sky.png#rev'))
+      } finally {
+        useEnvironment.clear({ files: '/sky.png#rev' })
+        spy.mockRestore()
+      }
+    })
+
+    describe('.jpg', () => {
+      // Hands the loader the bytes of `file` without a network, and an image for any blob URL
+      function stubJpegFetch() {
+        const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]).buffer // a JPEG with no gain map
+        const fileSpy = vi.spyOn(THREE.FileLoader.prototype, 'load').mockImplementation(((
+          _url: string,
+          onLoad?: (data: ArrayBuffer) => void,
+        ) => {
+          onLoad?.(bytes)
+        }) as any)
+        const image = { width: 2, height: 1 } as HTMLImageElement
+        const imageSpy = vi.spyOn(THREE.ImageLoader.prototype, 'load').mockImplementation(((
+          _url: string,
+          onLoad?: (image: HTMLImageElement) => void,
+        ) => {
+          onLoad?.(image)
+          return image
+        }) as any)
+        const createObjectURL = vi.fn(() => 'blob:sky')
+        const revokeObjectURL = vi.fn()
+        const urlStatics = { createObjectURL: URL.createObjectURL, revokeObjectURL: URL.revokeObjectURL }
+        Object.assign(URL, { createObjectURL, revokeObjectURL })
+        return {
+          fileSpy,
+          imageSpy,
+          image,
+          createObjectURL,
+          revokeObjectURL,
+          restore() {
+            fileSpy.mockRestore()
+            imageSpy.mockRestore()
+            Object.assign(URL, urlStatics)
+          },
+        }
+      }
+
+      it('loads a plain JPEG as an sRGB image from the bytes already fetched', async () => {
+        // UltraHDRLoader rejects a JPEG without a gain map, so `<Canvas background="./sky.jpg">` threw
+        const stub = stubJpegFetch()
+        const [seen, SceneChecker] = captureScene()
+        try {
+          await act(async () =>
+            render(
+              <LegacyCanvas background="./sky.jpg">
+                <SceneChecker />
+              </LegacyCanvas>,
+            ),
+          )
+
+          // Fetched once, decoded from a blob of those bytes, and the blob URL released
+          expect(stub.fileSpy).toHaveBeenCalledTimes(1)
+          expect(stub.fileSpy.mock.calls[0][0]).toBe('./sky.jpg')
+          expect(stub.imageSpy.mock.calls[0][0]).toBe('blob:sky')
+          expect(stub.revokeObjectURL).toHaveBeenCalledWith('blob:sky')
+
+          const background = seen.scene!.background as THREE.Texture
+          expect(background).toBeInstanceOf(THREE.Texture)
+          expect(background.image).toBe(stub.image)
+          expect(background.mapping).toBe(THREE.EquirectangularReflectionMapping)
+          expect(background.colorSpace).toBe('srgb')
+        } finally {
+          useEnvironment.clear({ files: './sky.jpg' })
+          stub.restore()
+        }
+      })
+
+      it('still decodes an Ultra HDR JPEG as linear HDR data', async () => {
+        const stub = stubJpegFetch()
+        const data = new Uint16Array(8)
+        const parseSpy = vi.spyOn(UltraHDRLoader.prototype, 'parse').mockImplementation(function (
+          this: UltraHDRLoader,
+          _buffer,
+          onLoad,
+        ) {
+          onLoad({ data, width: 2, height: 1, format: THREE.RGBAFormat, type: this.type } as any)
+        })
+        const [seen, SceneChecker] = captureScene()
+        try {
+          await act(async () =>
+            render(
+              <LegacyCanvas background="./hdr.jpg">
+                <SceneChecker />
+              </LegacyCanvas>,
+            ),
+          )
+
+          expect(parseSpy).toHaveBeenCalledTimes(1)
+          expect(stub.imageSpy).not.toHaveBeenCalled()
+          const background = seen.scene!.background as THREE.DataTexture
+          expect(background).toBeInstanceOf(THREE.DataTexture)
+          expect(background.image).toEqual({ data, width: 2, height: 1 })
+          expect(background.type).toBe(THREE.HalfFloatType)
+          expect(background.colorSpace).toBe('srgb-linear')
+        } finally {
+          useEnvironment.clear({ files: './hdr.jpg' })
+          parseSpy.mockRestore()
+          stub.restore()
+        }
+      })
+    })
+
+    describe('backgroundMap', () => {
+      it('shows backgroundMap rather than the preset behind it', async () => {
+        const { spy, loaded } = stubTextureLoader()
+        const hdrSpy = vi
+          .spyOn(HDRLoader.prototype, 'load')
+          .mockImplementation((_url: string, onLoad?: (data: THREE.DataTexture, texData: object) => void) => {
+            const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1)
+            onLoad?.(texture, {})
+            return texture
+          })
+        const [seen, SceneChecker] = captureScene()
+        try {
+          await act(async () =>
+            render(
+              <LegacyCanvas background={{ preset: 'city', backgroundMap: '/sky.png' }}>
+                <SceneChecker />
+              </LegacyCanvas>,
+            ),
+          )
+
+          // The preset lights the scene, the backdrop is the map
+          expect(hdrSpy).toHaveBeenCalledTimes(1)
+          expect(spy.mock.calls.map((call) => call[0])).toEqual(['/sky.png'])
+          expect(seen.scene!.background).toBe(loaded.get('/sky.png'))
+          expect(seen.scene!.environment).toBe(hdrSpy.mock.results[0].value)
+        } finally {
+          useLoader.clear(HDRLoader, 'potsdamer_platz_1k.hdr')
+          useEnvironment.clear({ files: '/sky.png' })
+          hdrSpy.mockRestore()
+          spy.mockRestore()
+        }
+      })
+
+      it('sets only the backdrop when given no environment', async () => {
+        // The environment half used to fall back to six default cube faces (/px.png ...) that
+        // nobody provided
+        const { spy, loaded } = stubTextureLoader()
+        const cubeSpy = vi.spyOn(THREE.CubeTextureLoader.prototype, 'load')
+        const [seen, SceneChecker] = captureScene()
+        try {
+          await act(async () =>
+            render(
+              <LegacyCanvas background={{ backgroundMap: '/sky.png' }}>
+                <SceneChecker />
+              </LegacyCanvas>,
+            ),
+          )
+
+          expect(cubeSpy).not.toHaveBeenCalled()
+          expect(seen.scene!.background).toBe(loaded.get('/sky.png'))
+          expect(seen.scene!.environment).toBeNull()
+        } finally {
+          useEnvironment.clear({ files: '/sky.png' })
+          cubeSpy.mockRestore()
+          spy.mockRestore()
+        }
+      })
     })
   })
 

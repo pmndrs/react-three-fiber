@@ -49,19 +49,16 @@ const rule: Rule.RuleModule = {
       description:
         'Require a dependency array on useLocalNodes with an inline creator, so the graph is not rebuilt on every render.',
     },
+    schema: [],
   },
   create(ctx) {
-    const sourceCode = ctx.sourceCode ?? ctx.getSourceCode()
-    const scopeOf = (node: ESTree.Node) =>
-      (sourceCode as { getScope?: (node: ESTree.Node) => Scope.Scope }).getScope?.(node) ?? ctx.getScope()
-
     return {
       CallExpression(node: ESTree.CallExpression) {
         if (!isUseLocalNodes(node.callee) || node.arguments.length !== 1) return
         const creator = node.arguments[0]
         if (creator.type !== 'ArrowFunctionExpression' && creator.type !== 'FunctionExpression') return
 
-        const names = capturedNames(scopeOf(creator as CreatorFunction))
+        const names = capturedNames(ctx.sourceCode.getScope(creator as CreatorFunction))
         if (names.length > 0) {
           ctx.report({
             node,

@@ -2,7 +2,20 @@
 
 ## 1.0.0-alpha.6
 
+### Major Changes
+
+- `configs.recommended` and `configs.all` are flat configs, and the default export is the plugin
+  object for `eslint.config.js`. eslintrc users switch to `plugin:@react-three/legacy-recommended` /
+  `plugin:@react-three/legacy-all`. `eslint` moved to `peerDependencies`
+  (`^8.57.0 || ^9.0.0 || ^10.0.0`).
+
 ### Minor Changes
+
+- New rules `no-fast-state` (state setters and store setters called in the frame loop) and
+  `prefer-useloader` (loaders called in effects instead of `useLoader` / `useTexture`), both in
+  `recommended`. The frame loop rules now see every per-frame callback: `useFrame` through an alias
+  or namespace, callbacks passed by reference, and `addEffect`, `addAfterEffect`,
+  `setRenderOverride` and the scheduler's `register`.
 
 - New rule `prefer-local-nodes-deps`, in `recommended`. It flags a `useLocalNodes` call with an
   inline creator and no dependency array, which rebuilds the node graph on every render. When the

@@ -118,7 +118,7 @@ The `background` prop sets the scene background (and, for environment maps, imag
 // Drei environment preset (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
 <Canvas background="sunset" />
 
-// URL to an HDR/EXR/image file
+// URL to an HDR/EXR/image file: .hdr, .exr, .jpg (Ultra HDR or plain), .png, .webp, .avif, .gif
 <Canvas background="/env.hdr" />
 <Canvas background="./sky.jpg" />
 
@@ -126,7 +126,9 @@ The `background` prop sets the scene background (and, for environment maps, imag
 <Canvas background={{ files: ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr'], path: '/pisa/' }} />
 ```
 
-When a **string** is given it is resolved in this order: exact **preset** name → **URL** (starts with `/`, `./`, `../`, `http://`, `https://`, or ends in `.hdr`/`.exr`/`.jpg`/`.jpeg`/`.png`/`.webp`/`.gif`) → otherwise a **CSS color**. So `"city"` is a preset, `"./city.jpg"` is a URL, and `"cyan"` is a color.
+When a **string** is given it is resolved in this order: exact **preset** name → **URL** (starts with `/`, `./`, `../`, `http://`, `https://`, `data:`, or ends in `.hdr`/`.exr`/`.jpg`/`.jpeg`/`.png`/`.webp`/`.avif`/`.gif`, optionally followed by a `?query` or `#hash`) → otherwise a **CSS color**. So `"city"` is a preset, `"./city.jpg"` is a URL, and `"cyan"` is a color.
+
+HDR files (`.hdr`, `.exr`, an Ultra HDR `.jpg`) also light the scene with linear radiance. Any other image is an sRGB equirect: it works as a backdrop and as a (low dynamic range) environment.
 
 For separate backdrop and environment maps, pass an object:
 
@@ -134,7 +136,7 @@ For separate backdrop and environment maps, pass an object:
 <Canvas
   background={{
     preset: 'city', // or files: '/env.hdr'
-    backgroundMap: '/sky.jpg', // optional separate visual backdrop
+    backgroundMap: '/sky.jpg', // optional separate visual backdrop; on its own, it sets only the backdrop
     backgroundBlurriness: 0.5,
     backgroundIntensity: 1,
     environmentIntensity: 1.2,

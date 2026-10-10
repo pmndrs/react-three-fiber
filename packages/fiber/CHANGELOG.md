@@ -10,6 +10,8 @@ Full detail is in
 - `@react-three/fiber` renders with `WebGPURenderer` by default; `WebGLRenderer` is only on
   `@react-three/fiber/legacy`. `gl={...}` on the default import throws, and GLSL materials on a
   WebGPU canvas warn in development (#4013).
+- Its hooks and `Canvas` are typed for `WebGPURenderer`; `RootState` stays the shared base (#4020).
+  See [BREAKING-CHANGES.md](../../BREAKING-CHANGES.md) for every breaking change since v9.
 - The TSL resource hooks moved to `@react-three/tsl`; the deprecated standalone TSL utilities are
   removed, and `state.uniforms` and friends are added by that package.
 - Multi-canvas is configured with `<Canvas primary>` and `share`; `renderer={{ primaryCanvas }}`
