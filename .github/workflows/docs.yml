@@ -45,14 +45,6 @@ env:
   LOGO: '/logo.jpg'
   GITHUB: 'https://github.com/pmndrs/react-three-fiber'
   DISCORD: 'https://discord.com/channels/740090768164651008/740093168770613279'
-  THEME_PRIMARY: '#323e48'
-  THEME_SCHEME: 'tonalSpot'
-  THEME_CONTRAST: '0'
-  THEME_NOTE: '#1f6feb'
-  THEME_TIP: '#238636'
-  THEME_IMPORTANT: '#8957e5'
-  THEME_WARNING: '#d29922'
-  THEME_CAUTION: '#da3633'
   CONTRIBUTORS_PAT: ${{ secrets.GITHUB_TOKEN }}
   # Version label in the sidebar footer: the latest vX.Y.Z tag, not the legacy
   # @react-three/fiber@X.Y.Z ones
