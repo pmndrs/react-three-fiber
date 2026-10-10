@@ -1,9 +1,5 @@
-import { RuleTester } from 'eslint'
 import rule from '../../src/rules/prefer-local-nodes-deps'
-
-const tester = new RuleTester({
-  parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
-})
+import { tester } from '../tester'
 
 tester.run('prefer-local-nodes-deps', rule, {
   valid: [
@@ -62,7 +58,22 @@ tester.run('prefer-local-nodes-deps', rule, {
       useLocalNodes(function ({ uniforms }) { return { fogNode: uniforms.uFog.mul(SCALE) } })
     }
   `,
-      errors: [{ messageId: 'missingDeps' }],
+      errors: [
+        {
+          messageId: 'missingDeps',
+          suggestions: [
+            {
+              messageId: 'addEmptyDeps',
+              output: `
+    const SCALE = 2
+    function Fog() {
+      useLocalNodes(function ({ uniforms }) { return { fogNode: uniforms.uFog.mul(SCALE) } }, [])
+    }
+  `,
+            },
+          ],
+        },
+      ],
     },
     {
       // A prop read in the creator: steer to a uniform, and offer no [] (it would freeze the prop)

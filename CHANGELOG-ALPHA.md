@@ -242,6 +242,28 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `Texture.onUpdate` (fired after a GPU upload, not after prop changes). R3F logs a one-time notice
   the first time it sees an `onUpdate` prop.
 
+### eslint-plugin
+
+- **Breaking:** `configs.recommended` and `configs.all` are flat configs, and the default export is
+  the plugin object for `eslint.config.js`. eslintrc users switch to
+  `plugin:@react-three/legacy-recommended` / `plugin:@react-three/legacy-all`. `eslint` moved to
+  `peerDependencies` (`^8.57.0 || ^9.0.0 || ^10.0.0`), and the plugin is tested against ESLint 10,
+  9 and 8 (flat and eslintrc).
+- New rule `no-fast-state` (in `recommended`, from [RFC #2701](https://github.com/pmndrs/react-three-fiber/issues/2701)):
+  flags `useState`/`useReducer` setters, `setX` props and the R3F store's `set`/`setSize`/`setDpr`/
+  `setEvents`/`setFrameloop` called in the frame loop. Calls behind a condition are allowed, as the
+  RFC settled for polling; `{ allowGuarded: false }` reports them too.
+- New rule `prefer-useloader` (in `recommended`, from the same RFC): flags `load()`/`loadAsync()` on a
+  `new XLoader()` (or a variable holding one) inside `useEffect`, `useLayoutEffect`,
+  `useInsertionEffect`, `useMemo` or a `useState` initialiser, and points to `useLoader`/`useTexture`.
+- The frame loop rules (`no-new-in-loop`, `no-clone-in-loop`, `no-fast-state`) see every per-frame
+  callback: `useFrame` through an imported alias or a namespace, callbacks passed by reference
+  (function declarations, function expressions, `useCallback`), and `addEffect`, `addAfterEffect`,
+  `setRenderOverride` and the scheduler's `register`. Only the callback is checked, not the options
+  argument. `no-new-in-loop` no longer reports `throw new X()` or `new SomethingError()`, which only
+  run on the failure path.
+- The `codegen:eslint` script runs again (it failed under the ESM root), and generates the flat configs.
+
 ## 10.0.0-alpha.5
 
 Alpha 5 is a types release. The WebGPU resource hooks now carry three's exact node generics, the
