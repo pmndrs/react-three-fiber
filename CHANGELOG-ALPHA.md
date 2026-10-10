@@ -216,6 +216,19 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   is async from three r186, the `unmountComponentAtNode` callback runs once that dispose has settled.
 - Roots are torn down when React commits the unmount, not after a 500 ms timer, and configuring or
   rendering the same canvas before that commit cancels the teardown.
+- Image backgrounds and environments load. `<Canvas background>`, `<Environment files>` and
+  `useEnvironment` share one loader path, and several common inputs failed on it:
+  - `.png`, `.webp`, `.avif` and `.gif` threw "Unrecognized file extension"; they load as an sRGB
+    equirect through three's `TextureLoader` (a `data:image/` URL of one too).
+  - A plain `.jpg` threw, since every JPEG went to `UltraHDRLoader`, which rejects one without a gain
+    map. The file is fetched once: an Ultra HDR JPEG decodes as linear HDR as before, any other
+    decodes from the same bytes as an sRGB image.
+  - A query or hash after the extension (`sky.hdr?v=2`, `sky.png#rev`) broke the format detection,
+    and a bare `sky.png?v=2` or a `data:` URL given to `background` was parsed as a color.
+  - `background={0x000000}` was ignored, `0` being read as unset.
+  - `background={{ preset, backgroundMap }}` showed the preset as the backdrop, not the map, and
+    `background={{ backgroundMap }}` alone also tried to load six default cube faces (`/px.png` ...)
+    for the environment; it now sets only the backdrop.
 
 ### Breaking Changes
 

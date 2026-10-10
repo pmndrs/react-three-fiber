@@ -5,7 +5,8 @@ import { getThree } from '../three'
 import { suspend } from 'suspend-react'
 import { presetsObj, PresetsType } from '../components/Environment/environment-assets'
 
-import type { Texture, Loader, CubeTexture, ColorSpace } from 'three'
+import type { Texture, Loader, CubeTexture, ColorSpace, DataTexture } from 'three'
+import type { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js'
 import type { ConstructorRepresentation, LoaderLike } from '#types'
 
 const CUBEMAP_ROOT = 'https://raw.githack.com/pmndrs/drei-assets/456060a26bbeb8fdf79326f224b6d99b8bcce736/hdri/'
@@ -25,10 +26,12 @@ const defaultFiles = ['/px.png', '/nx.png', '/py.png', '/ny.png', '/pz.png', '/n
 // Every decoder is loaded on demand. The three addon loaders import from `three`, so none of them
 // may sit in core's eager graph: a `preset` environment is one `.hdr`, and used to ship the EXR
 // decoder alongside. All of them decode on the CPU, so none needs the root's renderer; the `.jpg`
-// one is three's own UltraHDRLoader (the single-file Ultra HDR standard).
+// one is three's own UltraHDRLoader (the single-file Ultra HDR standard), falling back to a plain
+// image for a JPEG without a gain map. A `.png`, `.webp`, `.avif` or `.gif` is an LDR equirect
+// image and goes through three's core TextureLoader.
 
 type EnvironmentLoader = ConstructorRepresentation<LoaderLike>
-type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg'
+type EnvironmentFormat = 'cube' | 'hdr-cube' | 'hdr' | 'exr' | 'jpg' | 'ldr'
 
 // Loaders already resolved, so `clear` and a second `useEnvironment` need no round trip.
 const loadedLoaders = new Map<EnvironmentFormat, EnvironmentLoader>()
@@ -70,10 +73,77 @@ async function importLoader(format: EnvironmentFormat): Promise<EnvironmentLoade
       loader = (await import('three/examples/jsm/loaders/EXRLoader.js')).EXRLoader
       break
     case 'jpg':
-      loader = (await import('three/examples/jsm/loaders/UltraHDRLoader.js')).UltraHDRLoader
+      loader = createJpegLoader((await import('three/examples/jsm/loaders/UltraHDRLoader.js')).UltraHDRLoader)
+      break
+    case 'ldr':
+      loader = getThree().TextureLoader
       break
   }
   return loader
+}
+
+/**
+ * A `.jpg` is Ultra HDR only when it carries a gain map; most are plain photos, which UltraHDRLoader
+ * rejects. This reads the file once and lets UltraHDRLoader validate it: an Ultra HDR file decodes
+ * as linear HDR data exactly as before, any other JPEG decodes from the same bytes as an sRGB image.
+ * It stays an UltraHDRLoader, so `extensions` can still call `setDataType`.
+ */
+function createJpegLoader(UltraHDR: typeof UltraHDRLoader): EnvironmentLoader {
+  return class JpegEnvironmentLoader extends UltraHDR {
+    // @ts-expect-error A plain JPEG resolves to a Texture, not the DataTexture UltraHDRLoader declares
+    override load(
+      url: string,
+      onLoad?: (texture: Texture) => void,
+      onProgress?: (event: ProgressEvent) => void,
+      onError?: (error: unknown) => void,
+    ): void {
+      const three = getThree()
+      const file = new three.FileLoader(this.manager)
+      file.setResponseType('arraybuffer')
+      file.setRequestHeader(this.requestHeader)
+      file.setPath(this.path)
+      file.setWithCredentials(this.withCredentials)
+      file.load(
+        url,
+        (buffer) => {
+          try {
+            // Validation throws synchronously, before any decoding starts
+            this.parse(buffer as ArrayBuffer, (texData) => {
+              // three passes the pixels as `data`; @types/three calls the field `hdrBuffer`
+              const { data } = texData as unknown as { data: Uint16Array | Float32Array }
+              const texture = new three.DataTexture(data, texData.width, texData.height, three.RGBAFormat, texData.type)
+              texture.minFilter = three.LinearMipMapLinearFilter
+              texture.magFilter = three.LinearFilter
+              texture.generateMipmaps = true
+              texture.flipY = true
+              texture.needsUpdate = true
+              onLoad?.(texture)
+            })
+          } catch {
+            // No gain map: an ordinary JPEG. Decode the bytes already fetched rather than fetch again.
+            const objectURL = URL.createObjectURL(new Blob([buffer as ArrayBuffer], { type: 'image/jpeg' }))
+            const settle = () => URL.revokeObjectURL(objectURL)
+            new three.ImageLoader().load(
+              objectURL,
+              (image) => {
+                settle()
+                const texture = new three.Texture(image)
+                texture.needsUpdate = true
+                onLoad?.(texture)
+              },
+              undefined,
+              (error) => {
+                settle()
+                onError?.(error)
+              },
+            )
+          }
+        },
+        onProgress,
+        onError,
+      )
+    }
+  }
 }
 
 const LOADER_KEY = Symbol('r3f-environment-loader')
@@ -129,8 +199,10 @@ export function useEnvironment({
   const three = getThree()
   texture.mapping = isCubemap ? three.CubeReflectionMapping : three.EquirectangularReflectionMapping
 
-  // LDR cube faces are sRGB images; an HDR cube set carries linear radiance like an equirect .hdr
-  texture.colorSpace = colorSpace ?? (isCubemap && format !== 'hdr-cube' ? 'srgb' : 'srgb-linear')
+  // HDR data (.hdr, .exr, Ultra HDR, an .hdr cube set) carries linear radiance. LDR images (cube
+  // faces, a single equirect, a JPEG without a gain map) are sRGB.
+  const hdr = format === 'hdr-cube' || (texture as DataTexture).isDataTexture === true
+  texture.colorSpace = colorSpace ?? (hdr ? 'srgb-linear' : 'srgb')
 
   return texture
 }
@@ -216,7 +288,8 @@ function validatePreset(preset: string) {
 function getFormat(files: string | string[]): { format: EnvironmentFormat | undefined; isCubemap: boolean } {
   const isCubemap = isArray(files) && files.length === 6
   const firstEntry = isArray(files) ? files[0] : files
-  const firstExtension = firstEntry.split('.').pop()?.split('?')?.shift()?.toLowerCase()
+  // The extension of the path, ignoring any query or hash (`sky.hdr?v=2`, `sky.hdr#rev`)
+  const firstExtension = firstEntry.split(/[?#]/)[0].split('.').pop()?.toLowerCase()
 
   // A six-file set is a cubemap, but its faces decide the loader: Radiance `.hdr` faces need
   // HDRCubeTextureLoader, everything else goes through the plain CubeTextureLoader.
@@ -227,6 +300,8 @@ function getFormat(files: string | string[]): { format: EnvironmentFormat | unde
   else if (firstEntry.startsWith('data:image/jpeg')) format = 'jpg'
   else if (firstExtension === 'hdr' || firstExtension === 'exr') format = firstExtension
   else if (firstExtension === 'jpg' || firstExtension === 'jpeg') format = 'jpg'
+  else if (/^data:image\/(png|webp|avif|gif)[;,]/.test(firstEntry)) format = 'ldr'
+  else if (['png', 'webp', 'avif', 'gif'].includes(firstExtension!)) format = 'ldr'
 
   return { format, isCubemap }
 }

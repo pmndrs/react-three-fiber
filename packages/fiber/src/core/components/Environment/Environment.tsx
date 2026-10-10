@@ -42,7 +42,7 @@ import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironme
  *   - scale: Scale of backside projected sphere (default: 1000)
  *
  * Additional loader props:
- * @property files - File path(s) for environment. Supports .hdr, .exr, Ultra HDR .jpg, or array of 6 cube faces
+ * @property files - File path(s) for environment. Supports .hdr, .exr, .jpg (Ultra HDR or plain), an LDR .png/.webp/.avif/.gif, or array of 6 cube faces
  * @property path - Base path for file loading
  * @property extensions - Texture extensions override
  */
@@ -159,8 +159,9 @@ export function EnvironmentMap({ scene, background = false, map, ...config }: En
 
 /**
  * Internal component that loads environment textures from files or presets.
- * Uses HDRLoader for .hdr, EXRLoader for .exr, UltraHDRLoader for .jpg/.jpeg Ultra HDR,
- * or CubeTextureLoader for arrays of images.
+ * Uses HDRLoader for .hdr, EXRLoader for .exr, UltraHDRLoader for .jpg/.jpeg (a JPEG without a gain
+ * map loads as a plain image), TextureLoader for an LDR .png/.webp/.avif/.gif, or CubeTextureLoader
+ * for arrays of images.
  *
  * @example With preset
  * ```jsx
@@ -449,8 +450,10 @@ function EnvironmentDualSource(props: EnvironmentProps) {
   const { backgroundFiles, ...envProps } = props
   return (
     <>
-      <EnvironmentCube {...envProps} background={false} />
-      <EnvironmentCube {...props} files={backgroundFiles} background="only" />
+      {/* Without files or a preset there is no environment to light with, only the backdrop */}
+      {(envProps.files || envProps.preset) && <EnvironmentCube {...envProps} background={false} />}
+      {/* A preset would take precedence over the backdrop's own files */}
+      <EnvironmentCube {...props} files={backgroundFiles} preset={undefined} background="only" />
     </>
   )
 }
@@ -461,7 +464,7 @@ function EnvironmentDualSource(props: EnvironmentProps) {
  *
  * Supports multiple input methods:
  * - **Presets**: Selection of HDRI Haven assets (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
- * - **Files**: HDR (.hdr), EXR (.exr), Ultra HDR JPEG (.jpg), or cube faces (array of 6 images)
+ * - **Files**: HDR (.hdr), EXR (.exr), JPEG (.jpg, Ultra HDR when it carries a gain map), LDR image (.png, .webp, .avif, .gif), or cube faces (array of 6 images)
  * - **Texture**: Pre-existing cube texture via `map` prop
  * - **Custom Scene**: Render children into environment using portal and cube camera
  * - **Ground Projection**: Project environment onto ground plane
@@ -552,7 +555,7 @@ function EnvironmentDualSource(props: EnvironmentProps) {
  */
 export function Environment(props: EnvironmentProps) {
   // Handle color-only background (no files/preset/map)
-  if (props.color && !props.files && !props.preset && !props.map) {
+  if (props.color !== undefined && !props.files && !props.preset && !props.map) {
     return <EnvironmentColor {...props} />
   }
 

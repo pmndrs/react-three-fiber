@@ -20,6 +20,10 @@ describe('parseBackground', () => {
       expect(parseBackground(0x00ff00)).toEqual({ color: 0x00ff00, background: true })
     })
 
+    it('treats 0 as black rather than unset', () => {
+      expect(parseBackground(0)).toEqual({ color: 0, background: true })
+    })
+
     it('treats THREE.Color instances as colors', () => {
       const color = new THREE.Color('blue')
       expect(parseBackground(color as any)).toEqual({ color, background: true })
@@ -35,7 +39,7 @@ describe('parseBackground', () => {
   describe('files / URLs', () => {
     // Regression for Bug #3: the extension branch used `\\.` (escaped backslash)
     // instead of `\.`, so bare filenames fell through and were mis-parsed as colors.
-    it.each(['sky.hdr', 'sky.exr', 'sky.jpg', 'sky.jpeg', 'sky.png', 'sky.webp', 'sky.gif'])(
+    it.each(['sky.hdr', 'sky.exr', 'sky.jpg', 'sky.jpeg', 'sky.png', 'sky.webp', 'sky.avif', 'sky.gif'])(
       'treats bare filename %s as a file',
       (file) => {
         expect(parseBackground(file)).toEqual({ files: file, background: true })
@@ -48,6 +52,18 @@ describe('parseBackground', () => {
         expect(parseBackground(url)).toEqual({ files: url, background: true })
       },
     )
+
+    it.each(['sky.png?v=2', 'sky.hdr#rev', 'SKY.JPG?w=2048&q=80'])('treats %s (query or hash) as a file', (file) => {
+      expect(parseBackground(file)).toEqual({ files: file, background: true })
+    })
+
+    it.each([
+      'data:image/png;base64,iVBORw0KGgo=',
+      'data:image/jpeg;base64,/9j/4AAQ',
+      'data:application/hdr;base64,Iz8=',
+    ])('treats data URL %s as a file', (url) => {
+      expect(parseBackground(url)).toEqual({ files: url, background: true })
+    })
   })
 
   describe('object form', () => {
