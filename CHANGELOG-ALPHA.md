@@ -180,6 +180,12 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `ThreeToJSXElements` drops three's non-constructor exports (constants, functions, namespaces)
   from `JSX.IntrinsicElements` instead of mapping them to `never`-valued elements
   ([#3898](https://github.com/pmndrs/react-three-fiber/issues/3898)).
+- `@react-three/tsl`: the reader forms `useUniforms()`, `useUniforms('scope')`, `useNodes()`,
+  `useNodes('scope')` and those of `useBuffers` and `useGPUStorage` see entries a parent component
+  declares in the same render, as creators already did. A child renders before its parent's
+  registration lands on the store, so its first render got `undefined`, and anything it built from
+  that during commit kept it. The `WebGPUMotionBlur` example rendered a blank canvas this way: its
+  render pipeline compiled with `velocity * null`.
 - `@react-three/tsl`: on a secondary canvas, a `useLocalNodes` creator's `scene`, `camera` and
   `textures` are that canvas's own. They were the primary canvas's, so an install step on a
   secondary would have written the primary's `scene.fogNode`. The TSL maps still come from the

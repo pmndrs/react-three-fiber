@@ -4,7 +4,12 @@ import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
 import * as THREE from 'three/webgpu'
 import { vectorize } from './internal/utils'
 import { useCompareMemoize } from './internal/useCompareMemoize'
-import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
+import {
+  clearResourceEntries,
+  readWithStaged,
+  rebuildResource,
+  removeResourceEntries,
+} from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
 import { warnMissingReads } from './internal/readTracking'
 import { isUniformNode } from './internal/resourceGuards'
@@ -267,15 +272,12 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   })
 
   // Read-only: all uniforms / a specific scope (guard against a uniform stored
-  // under the requested name), reactive via storeUniforms. Creator mode returns
-  // the entries registered above.
-  let uniforms: UniformRecord | UniformStore = created
-  if (memoizedInput === undefined) {
-    uniforms = storeUniforms
-  } else if (typeof memoizedInput === 'string') {
-    const scopeData = storeUniforms[memoizedInput]
-    uniforms = scopeData && !isUniformNode(scopeData) ? (scopeData as UniformRecord) : {}
-  }
+  // under the requested name), reactive via storeUniforms, with uniforms staged
+  // earlier in this render overlaid so a child sees what its parent declares
+  // (see readWithStaged). Creator mode returns the entries registered above.
+  const uniforms = isReader
+    ? (readWithStaged(store, 'uniforms', storeUniforms, memoizedInput, isUniformNode) as UniformRecord | UniformStore)
+    : created
 
   // Return uniforms with utils
   return { ...uniforms, removeUniforms, clearUniforms, rebuildUniforms } as UniformsWithUtils<UniformRecord>

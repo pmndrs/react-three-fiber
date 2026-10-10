@@ -2,7 +2,12 @@
 import { useCallback } from 'react'
 import { useStore } from '@react-three/fiber/extension'
 import { usePrimaryStore, usePrimaryThree } from './internal/usePrimaryStore'
-import { clearResourceEntries, rebuildResource, removeResourceEntries } from './internal/resourceRegistry'
+import {
+  clearResourceEntries,
+  readWithStaged,
+  rebuildResource,
+  removeResourceEntries,
+} from './internal/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './internal/ScopedStore'
 import { warnMissingReads } from './internal/readTracking'
 import { isBufferLike } from './internal/resourceGuards'
@@ -199,14 +204,12 @@ export function useBuffers<T extends Record<string, BufferLike>>(
   // Case 1: No arguments - all buffers (root + scopes), reactive via storeBuffers
   // Case 2: String argument - that scope's buffers (guard against a buffer
   //         stored under the same name), reactive via storeBuffers
+  //         Both overlay buffers staged earlier in this render, so a child sees
+  //         what its parent declares (see readWithStaged).
   // Case 3: Creator function - the entries registered above
-  let buffers: BufferRecordType | BufferStore = created
-  if (creatorOrScope === undefined) {
-    buffers = storeBuffers
-  } else if (typeof creatorOrScope === 'string') {
-    const scopeData = storeBuffers[creatorOrScope]
-    buffers = scopeData && !isBufferLike(scopeData) ? (scopeData as BufferRecordType) : {}
-  }
+  const buffers = isReader
+    ? (readWithStaged(store, 'buffers', storeBuffers, creatorOrScope, isBufferLike) as BufferRecordType | BufferStore)
+    : created
 
   // Return buffers with utils
   return { ...buffers, removeBuffers, clearBuffers, rebuildBuffers, disposeBuffers } as BuffersWithUtils<T>
