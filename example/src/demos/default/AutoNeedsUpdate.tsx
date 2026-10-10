@@ -19,6 +19,8 @@
  */
 
 import { Canvas, useFrame } from '@react-three/fiber'
+// WebGLRenderer is only on /legacy; both entries share one core, so the hooks work under either Canvas
+import { Canvas as LegacyCanvas } from '@react-three/fiber/legacy'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 
@@ -117,6 +119,8 @@ function Row({ children }: { children: ReactNode }) {
 
 export default function AutoNeedsUpdate() {
   const [webgpu, setWebgpu] = useState(true)
+  // The import picks the renderer: WebGPU from @react-three/fiber, WebGL from /legacy
+  const RendererCanvas = webgpu ? Canvas : LegacyCanvas
   const [settings, setSettings] = useState<Settings>({
     flatShading: false,
     vertexColors: false,
@@ -142,13 +146,13 @@ export default function AutoNeedsUpdate() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#d8dde6' }}>
-      <Canvas key={webgpu ? 'webgpu' : 'webgl'} renderer={webgpu} camera={{ position: [0, 1.2, 5.5], fov: 45 }}>
+      <RendererCanvas key={webgpu ? 'webgpu' : 'webgl'} camera={{ position: [0, 1.2, 5.5], fov: 45 }}>
         <color attach="background" args={['#d8dde6']} />
         <fog attach="fog" args={['#d8dde6', 4, 9]} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[3, 4, 5]} intensity={2.5} />
         <Shell settings={settings} onVersion={onVersion} />
-      </Canvas>
+      </RendererCanvas>
 
       <div
         style={{

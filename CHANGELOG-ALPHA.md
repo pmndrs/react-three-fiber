@@ -364,8 +364,8 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `null`, because the store's accessor did not survive zustand's state updates, so drei's
   `OrbitControls`, `Environment` and `Preload` threw on `gl.domElement` / `gl.compile`, and the
   notice never showed. The root and portal stores now keep the `gl` / `renderer` accessors on every
-  state object ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013),
-  [#4014](https://github.com/pmndrs/react-three-fiber/issues/4014)).
+  state object ([#4014](https://github.com/pmndrs/react-three-fiber/issues/4014),
+  [#4016](https://github.com/pmndrs/react-three-fiber/pull/4016)).
 
 ### Examples
 

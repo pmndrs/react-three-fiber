@@ -160,7 +160,7 @@ export default function FixedTimestep() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#121318' }}>
-      <Canvas renderer camera={{ position: [0, 0, 7], fov: 50 }}>
+      <Canvas camera={{ position: [0, 0, 7], fov: 50 }}>
         <ambientLight intensity={1.2} />
         <directionalLight position={[2, 4, 5]} intensity={2.5} />
         <Timestep value={timestep} />
