@@ -14,10 +14,17 @@ tester.run('prefer-local-nodes-deps', rule, {
       useLocalNodes(({ nodes }) => ({ result: pattern === 'noise' ? nodes.noise : nodes.stripes }), [pattern])
     }
   `,
-    // A creator passed by reference: its identity is the caller's business
+    // A creator passed by reference that cannot be resolved in this file
     `
+    import { createFog } from './fog'
     function Fog() {
       useLocalNodes(createFog)
+    }
+  `,
+    `
+    function Fog() {
+      const createFog = useCallback(({ uniforms }) => ({ fogNode: uniforms.uFog }), [])
+      useLocalNodes(createFog, [])
     }
   `,
     // Other hooks are untouched
@@ -94,6 +101,40 @@ tester.run('prefer-local-nodes-deps', rule, {
     }
   `,
       errors: [{ messageId: 'capturesValues', data: { names: '`mode`' } }],
+    },
+    {
+      // Referenced creators re-run too, even through useCallback
+      code: `
+    function createFog({ uniforms }) { return { fogNode: uniforms.uFog } }
+    function Fog() {
+      useLocalNodes(createFog)
+    }
+  `,
+      errors: [
+        {
+          messageId: 'missingDeps',
+          suggestions: [
+            {
+              messageId: 'addEmptyDeps',
+              output: `
+    function createFog({ uniforms }) { return { fogNode: uniforms.uFog } }
+    function Fog() {
+      useLocalNodes(createFog, [])
+    }
+  `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+    function Tinted({ color }) {
+      const create = useCallback(({ uniforms }) => ({ colorNode: mix(uniforms.uBase, color, 0.5) }), [color])
+      useLocalNodes(create)
+    }
+  `,
+      errors: [{ messageId: 'capturesValues', data: { names: '`color`' } }],
     },
   ],
 })

@@ -25,7 +25,14 @@ describe('plugin shape', () => {
   it('exposes every rule through the default export and the named exports', () => {
     expect(plugin.rules).toBe(rules)
     expect(plugin.configs).toBe(configs)
-    expect(Object.keys(configs).sort()).toEqual(['all', 'legacy-all', 'legacy-recommended', 'recommended'])
+    expect(Object.keys(configs).sort()).toEqual([
+      'all',
+      'legacy-all',
+      'legacy-migration',
+      'legacy-recommended',
+      'migration',
+      'recommended',
+    ])
   })
 
   it('enables every rule in the all configs', () => {

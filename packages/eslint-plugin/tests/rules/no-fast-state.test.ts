@@ -84,6 +84,30 @@ tester.run('no-fast-state', rule, {
     `
     useFrame(({ setSomething, camera }) => { setSomething(camera) })
   `,
+    // Discrete pointer events, DOM elements, and guarded continuous events
+    `
+    function Hover() {
+      const [hovered, setHovered] = useState(false)
+      const [x, setX] = useState(0)
+      return (
+        <>
+          <mesh onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)} />
+          <div onPointerMove={(e) => setX(e.clientX)} />
+          <mesh onPointerMove={(e) => { if (e.object !== current) setHovered(true) }} />
+        </>
+      )
+    }
+  `,
+    // events: false
+    {
+      code: `
+        function Hover() {
+          const [point, setPoint] = useState()
+          return <mesh onPointerMove={(e) => setPoint(e.point)} />
+        }
+      `,
+      options: [{ events: false }],
+    },
   ],
   invalid: [
     {
@@ -169,6 +193,26 @@ tester.run('no-fast-state', rule, {
         }
       `,
       errors: [{ messageId: 'noFastState' }],
+    },
+    {
+      // Continuous pointer events on three.js elements, inline and by reference
+      code: `
+        function Hover({ setLabel }) {
+          const [point, setPoint] = useState()
+          const onWheel = (e) => setLabel(e.deltaY)
+          return (
+            <group>
+              <mesh onPointerMove={(e) => setPoint(e.point)} />
+              <points onWheel={onWheel} />
+            </group>
+          )
+        }
+      `,
+      // Reported in source order: the onWheel handler is declared first
+      errors: [
+        { messageId: 'noEventState', data: { event: 'onWheel' } },
+        { messageId: 'noEventState', data: { event: 'onPointerMove' } },
+      ],
     },
   ],
 })
