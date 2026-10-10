@@ -264,7 +264,7 @@ clearPasses() // Remove all passes
 
 ## Error Handling
 
-`useRenderPipeline` throws if used with a WebGL (legacy) renderer - it requires the WebGPU renderer (`<Canvas renderer>`). In read-only mode, guard on `isReady` before using `renderPipeline`.
+`useRenderPipeline` throws if used with a WebGL (`/legacy`) renderer - it requires `WebGPURenderer`, which `@react-three/fiber` and `/webgpu` render with. In read-only mode, guard on `isReady` before using `renderPipeline`.
 
 ## TypeScript
 

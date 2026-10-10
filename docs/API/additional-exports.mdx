@@ -26,6 +26,11 @@ nav: 9
 | `Portal`             | Re-parents children into another container (see [Camera Parenting](/scene/camera-parenting)) |
 | `registerRootExtension` | Attaches per-root setup, dispose and HMR handling (for library authors, see [below](#extending-the-root)) |
 | `setRenderOverride`  | Replaces the default render call for a root (for library authors, see [below](#extending-the-root)) |
+| `getThree`           | Three's shared core (`Vector3`, `Scene`, constants, ...) once a root has loaded its renderer; throws before that (see [below](#reaching-three-from-the-shared-core)) |
+| `hasThree`           | Whether any root has loaded three yet                           |
+| `whenThree`          | Promise resolving with three's shared core once a root has loaded it |
+| `isLayers`           | Type guard for `THREE.Layers`, checked structurally (no `instanceof`) |
+| `isUniform`          | Type guard for `THREE.Uniform`, checked structurally (no `instanceof`) |
 
 ## Prop Utilities
 
@@ -84,6 +89,22 @@ import { once } from '@react-three/fiber'
 `once` is typed as the value the prop declares: a single argument is the argument itself, several arguments are the tuple, and a bare `once()` is `true`. Pass the arguments individually, not as an array: `once([0, 0, 5])` calls `translate([0, 0, 5])`.
 
 When `args` change (triggering element reconstruction), `once` methods run again on the new instance.
+
+## Reaching three from the shared core
+
+Every entry shares one core that never imports `three` itself; the first `<Canvas>` (or `createRoot`) to configure its renderer registers three's namespace. `getThree()` returns the classes and constants `three` and `three/webgpu` have in common. It is available before any element renders, any hook runs or `onCreated` fires, and throws if no root has loaded a renderer yet. Use `hasThree()` to check, or `await whenThree()` to wait.
+
+```tsx
+import { getThree, whenThree } from '@react-three/fiber'
+
+// Inside a component or frame callback, three is already loaded
+const v = new (getThree().Vector3)(0, 1, 0)
+
+// Module-level code that may run before any Canvas
+const { Scene } = await whenThree()
+```
+
+Most apps should keep importing classes from `three` directly; these are for libraries that want to avoid a static `three` import. Renderer-specific classes (`WebGLRenderer`, node materials, ...) are not on it. For the same reason, `isLayers` and `isUniform` test for a `THREE.Layers` or `THREE.Uniform` by shape rather than `instanceof`.
 
 ## Extending the root
 

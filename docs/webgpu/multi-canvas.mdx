@@ -10,7 +10,7 @@ v10 supports sharing a single `WebGPURenderer` across multiple `Canvas` componen
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 ```
 
-Renderer sharing is WebGPU-only. On `@react-three/fiber`, `primary` asks for the WebGPU renderer the way the `renderer` prop does; on `@react-three/fiber/webgpu` every Canvas is WebGPU and `state.renderer` is typed as a `WebGPURenderer`. Everything below works the same on either import. `@react-three/fiber/legacy` has no `primary` or `share`.
+Renderer sharing is WebGPU-only, which every Canvas from `@react-three/fiber` is (and from the deprecated `@react-three/fiber/webgpu`). `@react-three/fiber/legacy` has no `primary` or `share`.
 
 ## Basic Setup
 
@@ -176,7 +176,7 @@ Such a fallback secondary owns its renderer, so it is a standalone root: it is n
 
 | Prop        | Type                   | Description                                                                                          |
 | ----------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| `primary`   | `boolean`              | Own the renderer other canvases share. Implies WebGPU on `@react-three/fiber`                        |
+| `primary`   | `boolean`              | Own the renderer other canvases share. Not on `/legacy`                                              |
 | `id`        | `string`               | Canvas id; the name `share="id"` and `scheduler` `before`/`after` refer to                           |
 | `share`     | `string \| false`      | `"id"`: share that primary's renderer. `false`: own a renderer even while a primary is mounted        |
 | `scheduler` | `{ before, after, order, fps }` | Ordering and fps cap; a sharing canvas renders after its primary unless `before`/`after` is set |

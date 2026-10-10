@@ -16,11 +16,13 @@ npm install @react-three/fiber @react-three/tsl three
 
 ## Enabling WebGPU
 
-Opt into WebGPU by adding the `renderer` prop to `Canvas`. No manual renderer initialization is required - R3F handles it.
+There is nothing to enable: `<Canvas>` from `@react-three/fiber` renders with `WebGPURenderer`. No manual renderer initialization is required - R3F handles it. Browser WebGPU support is not required either: `WebGPURenderer` falls back to a WebGL2 backend where the browser has none, and keeps speaking TSL.
 
 ```tsx
-// Shorthand - enable the WebGPU renderer with defaults
-<Canvas renderer>
+import { Canvas } from '@react-three/fiber'
+
+// WebGPURenderer with defaults
+<Canvas>
   <Scene />
 </Canvas>
 
@@ -45,44 +47,36 @@ useFrame(({ renderer, scene, camera }) => {
 
 ## Entry Points
 
-One import covers both renderers. `@react-three/fiber` renders with WebGL until a `<Canvas>` gets the `renderer` prop, and only the renderer a Canvas asks for is downloaded: nothing of three is in your eager bundle, and the WebGL and WebGPU renderers are separate lazy chunks. A WebGPU app on this import ships the same three code as one on `/webgpu`, one request later.
+The import decides the renderer. `@react-three/fiber` renders with `WebGPURenderer`, loaded on demand: nothing of three is in your eager bundle, and three's WebGPU renderer and node system are a lazy chunk fetched when the first `<Canvas>` mounts. `WebGLRenderer` is only on `@react-three/fiber/legacy`; there is no prop that switches a Canvas from one to the other.
+
+| Import from                 | Renderer       | What you get                                                                                            |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
+| `@react-three/fiber`        | WebGPURenderer | Loaded on demand; node materials as JSX                                                                 |
+| `@react-three/fiber/webgpu` | WebGPURenderer | **Deprecated**, removed in the first beta. The same renderer, imported statically, typed against `WebGPURenderer` |
+| `@react-three/fiber/legacy` | WebGLRenderer  | No WebGPU code reachable; typed against `WebGLRenderer`; GLSL `ShaderMaterial`, `onBeforeCompile` and WebGL-only libraries |
 
 ```tsx
+// WebGPU
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useUniforms } from '@react-three/tsl'
 
-// WebGL
-<Canvas>...</Canvas>
-// WebGPU: three's WebGPU renderer and node system are fetched when this mounts
-<Canvas renderer>...</Canvas>
-```
-
-Two more entries exist for apps that have decided on one renderer:
-
-| Import from                 | Renderer       | What you get                                                                                          |
-| --------------------------- | -------------- | ----------------------------------------------------------------------------------------------------- |
-| `@react-three/fiber`        | Either         | Renderer chosen by `<Canvas renderer>`, loaded on demand                                              |
-| `@react-three/fiber/legacy` | WebGLRenderer  | No extra request; no WebGPU code reachable; `useThree`/`useFrame`/`Canvas` typed against `WebGLRenderer` |
-| `@react-three/fiber/webgpu` | WebGPURenderer | No extra request; no `renderer` prop needed; typed against `WebGPURenderer`; node materials as JSX      |
-
-```tsx
-// Legacy - WebGLRenderer only, no deprecation warning
+// WebGL - for GLSL shaders and libraries that need WebGLRenderer
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
-
-// WebGPU - WebGPURenderer only, `renderer` implied
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
-import { useUniforms } from '@react-three/tsl'
 ```
 
-All three share one core, so a library can import hooks from `@react-three/fiber` and work under a Canvas from any of them without adding a renderer or a second copy of fiber to your app. The TSL hooks (`useUniforms`, `useNodes`, `useLocalNodes`, `useRenderPipeline`, `useBuffers`, `useGPUStorage`) come from `@react-three/tsl` and work under any Canvas that runs WebGPU.
+`@react-three/fiber/webgpu` was the WebGPU entry while the default import rendered with WebGL. It stays for the v10 alphas; import from `@react-three/fiber` instead, and register the renderer type for narrowed state (see [Typing the renderer](../API/typescript#typing-the-renderer)).
 
-> **On the naming.** Three's `WebGPURenderer` is a slight misnomer — it is the renderer that speaks TSL, and WebGPU is only one of its backends. It can and does run on WebGL. So "WebGPU vs WebGL" is really two questions: which renderer (`WebGPURenderer` or the older `WebGLRenderer`), and which backend the former picks at runtime. R3F names the split by renderer, not backend: the new one is `renderer`, the old one is `legacy`. The `/webgpu` entry keeps its name to match three and the rest of the ecosystem. If you want the new renderer but not the WebGPU backend, that's `renderer={{ forceWebGL: true }}` — still TSL, still node materials.
+`WebGPURenderer` cannot compile GLSL. A `ShaderMaterial` or `RawShaderMaterial` on a WebGPU canvas renders as a blank default material, and R3F warns once in development, pointing here. Port the shader to a node material (TSL), or import from `/legacy`. Passing the WebGL `gl` prop to a `@react-three/fiber` Canvas throws for the same reason.
 
-The split exists because `three` and `three/webgpu` are different bundles on one shared core, and there is no import that gives you the core alone: anything that imports `three` carries the WebGL renderer. Fiber's core imports neither; each renderer is loaded through a small support module, which is what lets one entry serve both without shipping both — see [BUILD.md](https://github.com/pmndrs/react-three-fiber/blob/v10/docs/development/BUILD.md).
+All three share one core, so a library can import hooks from `@react-three/fiber` and work under a Canvas from any of them, `/legacy` included, without adding a renderer or a second copy of fiber to your app. The TSL hooks (`useUniforms`, `useNodes`, `useLocalNodes`, `useRenderPipeline`, `useBuffers`, `useGPUStorage`) come from `@react-three/tsl` and work under any Canvas that runs WebGPU.
+
+> **On the naming.** Three's `WebGPURenderer` is a slight misnomer — it is the renderer that speaks TSL, and WebGPU is only one of its backends. It can and does run on WebGL. So "WebGPU vs WebGL" is really two questions: which renderer (`WebGPURenderer` or the older `WebGLRenderer`), and which backend the former picks at runtime. R3F names the split by renderer, not backend: the new one is the default, the old one is `/legacy`. If you want the new renderer but not the WebGPU backend, that's `renderer={{ forceWebGL: true }}` — still TSL, still node materials.
+
+The split exists because `three` and `three/webgpu` are different bundles on one shared core, and there is no import that gives you the core alone: anything that imports `three` carries the WebGL renderer. Fiber's core imports neither; each renderer is loaded through a small support module, which is what keeps both renderers out of an app's eager bundle — see [BUILD.md](https://github.com/pmndrs/react-three-fiber/blob/v10/docs/development/BUILD.md).
 
 ## Node Materials as JSX
 
-A root resolves JSX element names against the three namespace of the renderer it loaded. Under a WebGPU renderer that is `three/webgpu`, so node materials are available declaratively - no `extend()` call needed. (Under a WebGL renderer, `<meshBasicNodeMaterial>` is not part of the namespace and errors, as it always did.)
+A root resolves JSX element names against the three namespace of the renderer it loaded. Under a WebGPU renderer that is `three/webgpu`, so node materials are available declaratively - no `extend()` call needed. (On `/legacy`, `<meshBasicNodeMaterial>` is not part of the namespace and throws an error naming the fix.)
 
 ```tsx
 import { Canvas } from '@react-three/fiber'
@@ -90,7 +84,7 @@ import { positionLocal, normalLocal } from 'three/tsl'
 
 function App() {
   return (
-    <Canvas renderer>
+    <Canvas>
       <mesh>
         <sphereGeometry />
         {/* MeshStandardNodeMaterial, MeshBasicNodeMaterial, etc. just work */}

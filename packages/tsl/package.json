@@ -1,6 +1,6 @@
 {
   "name": "@react-three/tsl",
-  "version": "10.0.0-alpha.5",
+  "version": "10.0.0-alpha.6",
   "description": "TSL resource hooks for react-three-fiber: uniforms, nodes, buffers, GPU storage and render pipelines on WebGPU",
   "keywords": [
     "react",

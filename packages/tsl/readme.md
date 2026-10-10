@@ -32,7 +32,7 @@ function Driver() {
 }
 
 export const App = () => (
-  <Canvas renderer>
+  <Canvas>
     <Wobble />
     <Driver />
   </Canvas>
@@ -48,6 +48,6 @@ export const App = () => (
 
 Resources belong to the renderer: a `<Canvas primary>`, the canvases sharing its renderer (every other WebGPU canvas, or `share="id"`) and every portal inside them share one set. They live on the primary canvas's `RootState` (`state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`); secondaries hold the same objects and portals inherit them from their parent (a portal's scene and camera stay its own), so `state.uniforms` reads the same everywhere.
 
-Works under any Canvas that runs the WebGPU renderer: `@react-three/fiber` with the `renderer` prop, or `@react-three/fiber/webgpu`. It reaches fiber only through the three-free `@react-three/fiber/extension` entry, so it adds no renderer and no second copy of fiber to your bundle.
+Works under any Canvas that runs the WebGPU renderer: `@react-three/fiber` or `@react-three/fiber/webgpu` (not `/legacy`). It reaches fiber only through the three-free `@react-three/fiber/extension` entry, so it adds no renderer and no second copy of fiber to your bundle.
 
 Full documentation: [WebGPU & TSL](https://github.com/pmndrs/react-three-fiber/tree/v10/docs/webgpu).
