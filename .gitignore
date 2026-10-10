@@ -34,3 +34,7 @@ packages/fiber/*.tgz
 
 # Node's on-disk module compile cache (NODE_COMPILE_CACHE)
 node-compile-cache/
+
+# vitest-screenshot writes these next to a baseline when it does not match
+**/__screenshots__/*.actual.png
+**/__screenshots__/*.diff.png

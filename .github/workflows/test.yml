@@ -81,6 +81,47 @@ jobs:
       - name: Check formatting
         run: pnpm run format
 
+  # Tier 3 (docs/development/TESTING.md): R3F against a real WebGPU device, headless. Dawn runs in
+  # Node through vitest-environment-webgpu-node; the runner has no GPU, so it draws on Mesa's
+  # software Vulkan driver (lavapipe).
+  gpu:
+    name: Headless WebGPU tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Install Mesa's software Vulkan driver
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Use Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Test (headless WebGPU)
+        run: pnpm run test:gpu
+
+      # A screenshot that does not match its baseline leaves <name>.actual.png and <name>.diff.png
+      # beside it
+      - name: Upload screenshot diffs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: gpu-screenshots
+          path: packages/**/tests/gpu/**/__screenshots__/
+          if-no-files-found: ignore
+          retention-days: 14
+
   docs-links:
     name: Docs link check
     runs-on: ubuntu-latest
