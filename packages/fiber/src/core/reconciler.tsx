@@ -31,7 +31,7 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
-import { assertNodeMaterialSupported } from './utils/nodeMaterial'
+import { assertNodeMaterialSupported, warnGLSLMaterialUnsupported } from './utils/nodeMaterial'
 import { removeInteractivity, swapInteractivity } from './events'
 
 //* Type Imports ==============================
@@ -171,6 +171,9 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
     child.object.__r3f = child
   }
+
+  // A GLSL material, as an element or a primitive; the `material` prop is checked in applyProps
+  warnGLSLMaterialUnsupported(state, child.object)
 
   // Set initial props
   applyProps(child.object, child.props)

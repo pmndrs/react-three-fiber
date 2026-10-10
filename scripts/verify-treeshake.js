@@ -10,8 +10,9 @@
  * The invariants:
  * - The shared core carries no renderer. A library that imports hooks from any entry adds no
  *   renderer to an app, and core is bundled once however entries are mixed.
- * - `@react-three/fiber` downloads nothing of three eagerly. Its two renderer supports are lazy
- *   chunks, and each chunk's closure carries exactly its own renderer.
+ * - `@react-three/fiber` downloads nothing of three eagerly. Its WebGPU support is a lazy chunk
+ *   whose closure carries the WebGPU renderer only, and no chunk carries the WebGL one (that is
+ *   `/legacy`'s).
  * - `/webgpu` carries the WebGPU renderer statically and never the WebGL one; `/legacy` the reverse.
  *
  * Usage: node scripts/verify-treeshake.js          (R3F_TREESHAKE_DUMP=1 keeps the outputs)
@@ -68,17 +69,17 @@ const LIB_IMPORTS = 'extend, useThree, useStore, useFrame, createPortal, useLoad
  */
 const CASES = [
   {
-    name: 'Root app: <Canvas> loads either renderer on demand',
+    name: 'Root app: <Canvas> loads the WebGPU renderer on demand',
     app: 'root',
     eager: { webgl: false, webgpu: false },
-    lazy: { webgl: { webgl: true, webgpu: false }, webgpu: { webgl: false, webgpu: true } },
+    lazy: { webgpu: { webgl: false, webgpu: true } },
   },
   {
     name: 'Root app + library on root',
     app: 'root',
     lib: 'root',
     eager: { webgl: false, webgpu: false },
-    lazy: { webgl: { webgl: true, webgpu: false }, webgpu: { webgl: false, webgpu: true } },
+    lazy: { webgpu: { webgl: false, webgpu: true } },
   },
   { name: 'WebGPU app (/webgpu)', app: 'webgpu', eager: { webgl: false, webgpu: true } },
   { name: 'WebGPU app + library on root', app: 'webgpu', lib: 'root', eager: { webgl: false, webgpu: true } },
@@ -91,7 +92,7 @@ const CASES = [
     app: 'root',
     environment: true,
     eager: { webgl: false, webgpu: false },
-    lazy: { webgl: { webgl: true, webgpu: false }, webgpu: { webgl: false, webgpu: true } },
+    lazy: { webgpu: { webgl: false, webgpu: true } },
   },
 ]
 
@@ -225,7 +226,8 @@ function analyze(chunks, testCase) {
 
   if (testCase.lazy) {
     // The renderer supports are the lazy chunks whose closure carries a renderer. Find each by its
-    // marker, then check its closure (minus what is already eager) carries only that renderer.
+    // marker, then check its closure (minus what is already eager) carries only that renderer. A
+    // renderer the case does not list must not be reachable through any lazy chunk.
     const eagerNames = new Set(eager.map((chunk) => chunk.name))
     const lazyTargets = [...new Set(eager.flatMap((chunk) => chunk.dynamicImports))]
     for (const renderer of ['webgl', 'webgpu']) {
@@ -233,6 +235,11 @@ function analyze(chunks, testCase) {
         const own = closure(chunks, [name]).filter((chunk) => !eagerNames.has(chunk.name))
         return MARKERS[renderer].test(codeOf(own))
       })
+      if (!testCase.lazy[renderer]) {
+        const name = renderer === 'webgl' ? 'WebGLRenderer' : 'WebGPURenderer'
+        results.push([!target, `lazy: no chunk carries ${name}${target ? ` (found in ${target})` : ''}`])
+        continue
+      }
       if (!target) {
         results.push([false, `lazy ${renderer}: no lazy chunk carries the renderer`])
         continue

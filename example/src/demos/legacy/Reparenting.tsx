@@ -1,4 +1,4 @@
-import { Canvas, createPortal } from '@react-three/fiber'
+import { Canvas, createPortal } from '@react-three/fiber/legacy'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import * as THREE from 'three'
 

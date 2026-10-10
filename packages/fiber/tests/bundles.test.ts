@@ -17,9 +17,9 @@
 //* Default Entry Point Tests ==============================
 
 describe('Entry Point: Default (@react-three/fiber)', () => {
-  it('should export R3F_BUILD_LEGACY as true', async () => {
+  it('should export R3F_BUILD_LEGACY as false (WebGL is on /legacy)', async () => {
     const fiber = await import('@react-three/fiber')
-    expect(fiber.R3F_BUILD_LEGACY).toBe(true)
+    expect(fiber.R3F_BUILD_LEGACY).toBe(false)
   })
 
   it('should export R3F_BUILD_WEBGPU as true', async () => {

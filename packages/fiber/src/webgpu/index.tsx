@@ -1,5 +1,10 @@
 /**
- * @fileoverview WebGPU entry point - WebGPU only
+ * @fileoverview WebGPU entry point - WebGPU only. Deprecated: removed in the first v10 beta.
+ *
+ * `@react-three/fiber` renders with WebGPU too, so this entry is now the same renderer with its
+ * support imported statically and the types narrowed. Import from `@react-three/fiber` instead, and
+ * declare `interface Register { renderer: 'webgpu' }` for the narrowed types. It stays for the v10
+ * alphas so existing imports keep working.
  *
  * A thin alias over the same core as `@react-three/fiber`, with the WebGPU renderer support imported
  * statically: no second request for the renderer, no WebGL renderer reachable at all, node
@@ -34,7 +39,11 @@ const provider: RendererProvider = {
   webgpu: () => webgpuSupport,
 }
 
-/** Create a root that always constructs a WebGPURenderer. */
+/**
+ * Create a root that always constructs a WebGPURenderer.
+ * @deprecated `@react-three/fiber/webgpu` is removed in the first v10 beta. Import `createRoot` from
+ * `@react-three/fiber`, which renders with WebGPU.
+ */
 export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
 ): ReconcilerRoot<TCanvas> {
@@ -124,6 +133,8 @@ export type { WebGPUCanvasProps as CanvasProps }
 /**
  * A DOM canvas which accepts threejs elements as children, rendered with WebGPU. `onCreated` is
  * typed against `WebGPURootState`.
+ * @deprecated `@react-three/fiber/webgpu` is removed in the first v10 beta. Import `Canvas` from
+ * `@react-three/fiber`, which renders with WebGPU, and register the renderer type for narrowed state.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = ((props: CanvasPropsCore) => <CanvasImpl {...props} provider={provider} />) as unknown as (

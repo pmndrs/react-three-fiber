@@ -42,14 +42,14 @@ vitest packages/fiber/tests/hooks.test.tsx
 
 One core, built once, shared by four entries. Core has **no static import from `three` or `three/webgpu`**: each renderer is described by a support module (`src/support/webgl.ts`, `src/support/webgpu.ts`) that owns its three namespace and the renderer-specific classes, and an entry hands `createRoot`/`Canvas` a provider saying how to load them.
 
-| Entry     | Import Path                    | Renderer                                             | Flags                     |
-| --------- | ------------------------------ | ---------------------------------------------------- | ------------------------- |
-| Default   | `@react-three/fiber`           | Either; `<Canvas renderer>` = WebGPU, loaded lazily  | Both true                 |
-| Legacy    | `@react-three/fiber/legacy`    | WebGL, support imported statically                   | LEGACY=true, WEBGPU=false |
-| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU, support imported statically                  | LEGACY=false, WEBGPU=true |
-| Extension | `@react-three/fiber/extension` | None: hooks, context and the extension registry only | n/a                       |
+| Entry     | Import Path                    | Renderer                                                                       | Flags                     |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------ | ------------------------- |
+| Default   | `@react-three/fiber`           | WebGPU, support loaded lazily                                                  | LEGACY=false, WEBGPU=true |
+| Legacy    | `@react-three/fiber/legacy`    | WebGL, support imported statically                                             | LEGACY=true, WEBGPU=false |
+| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU, support imported statically. **Deprecated**, removed in the first beta | LEGACY=false, WEBGPU=true |
+| Extension | `@react-three/fiber/extension` | None: hooks, context and the extension registry only                           | n/a                       |
 
-On the root entry both supports are dynamic imports, so an app downloads only the renderer its Canvas asks for and nothing of three before that. `/legacy` and `/webgpu` skip that request and narrow `useThree`/`useFrame`/`Canvas`/`useRenderTarget` to one renderer's types. The extension entry is the stable surface for packages that build on fiber (`@react-three/tsl`); with one shared core it adds no second copy of anything.
+On the root entry the WebGPU support is a dynamic import, so nothing of three is downloaded before a Canvas mounts, and a library importing hooks from the root entry adds no renderer to a `/legacy` app. WebGLRenderer is only on `/legacy`: `gl` on the root entry throws. `/legacy` and `/webgpu` skip that request and narrow `useThree`/`useFrame`/`Canvas`/`useRenderTarget` to one renderer's types. The core still supports a provider offering both renderers (`wantsGL` in `core/renderer.ts`); no entry uses one. The extension entry is the stable surface for packages that build on fiber (`@react-three/tsl`); with one shared core it adds no second copy of anything.
 
 How core reaches three at runtime:
 
@@ -63,7 +63,7 @@ How core reaches three at runtime:
 packages/
 ├── fiber/                  # Core @react-three/fiber package
 │   ├── src/
-│   │   ├── index.tsx       # Default entry (WebGL + WebGPU)
+│   │   ├── index.tsx       # Default entry (WebGPU, loaded lazily)
 │   │   ├── legacy.tsx      # Legacy entry (WebGL only)
 │   │   ├── core/           # Shared reconciler, hooks, events, store
 │   │   ├── webgpu/         # WebGPU-specific code
