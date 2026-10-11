@@ -1,7 +1,24 @@
 import type { Rule, Scope } from 'eslint'
 import type * as ESTree from 'estree'
-import { calleeName, type FunctionNode, isCallTo, resolve, soleDefinition } from '../lib/ast'
-import { frameLoopListener, type FrameMatch } from '../lib/frame'
+import {
+  calleeName,
+  type FunctionNode,
+  isCallTo,
+  mergeListeners,
+  resolve,
+  resolveFunction,
+  soleDefinition,
+} from '../lib/ast'
+import { frameLoopListener, type FrameMatch, insideCallbacks } from '../lib/frame'
+import {
+  attributeName,
+  attributeValue,
+  DOM_ELEMENTS,
+  elementName,
+  isIntrinsic,
+  type JSXAttribute,
+  onOpeningElement,
+} from '../lib/jsx'
 import { gitHubUrl } from '../lib/url'
 
 const STATE_HOOKS = new Set(['useState', 'useReducer'])
@@ -9,9 +26,12 @@ const USE_THREE = new Set(['useThree'])
 /** RootState setters that write to the store and re-render its subscribers. */
 const STORE_SETTERS = new Set(['set', 'setSize', 'setDpr', 'setEvents', 'setFrameloop'])
 const SETTER_NAME = /^set[A-Z]/
+/** Pointer events R3F fires continuously while the pointer moves over an object. */
+const CONTINUOUS_EVENTS = new Set(['onPointerMove', 'onWheel'])
 
 interface Options {
   allowGuarded: boolean
+  events: boolean
 }
 
 /** `const [value, setValue] = useState()` / `const [state, dispatch] = useReducer()` */
@@ -61,11 +81,21 @@ function isFrameStateSetter(def: Scope.Definition, name: string, callback: Funct
   return state?.type === 'ObjectPattern' && STORE_SETTERS.has(destructuredKey(state, name) ?? '')
 }
 
-function isReactSetter(ctx: Rule.RuleContext, call: ESTree.CallExpression, callback: FunctionNode): boolean {
+/**
+ * Whether `call` sets React state. `frameState`: the callback's first parameter is the frame state
+ * (a frame callback), rather than an event.
+ */
+function isReactSetter(
+  ctx: Rule.RuleContext,
+  call: ESTree.CallExpression,
+  callback: FunctionNode,
+  frameState: boolean,
+): boolean {
   const { callee } = call
 
   // useFrame((state) => state.set(...)), useFrame((state) => state.setDpr(...))
   if (callee.type === 'MemberExpression') {
+    if (!frameState) return false
     if (!STORE_SETTERS.has(calleeName(callee) ?? '') || callee.object.type !== 'Identifier') return false
     const def = soleDefinition(resolve(ctx, callee.object))
     const state = callback.params[0]
@@ -83,7 +113,7 @@ function isReactSetter(ctx: Rule.RuleContext, call: ESTree.CallExpression, callb
   return (
     isStateHookSetter(def, callee.name) ||
     isUseThreeSetter(def, callee.name) ||
-    isFrameStateSetter(def, callee.name, callback) ||
+    (frameState && isFrameStateSetter(def, callee.name, callback)) ||
     isSetterProp(ctx, def, callee.name, callback)
   )
 }
@@ -137,11 +167,15 @@ const rule: Rule.RuleModule = {
       noFastState:
         'Setting React state in the frame loop re-renders the component every frame. Mutate a ref (or the object itself) instead, ' +
         'or only set state when the value actually changes behind a condition.',
+      noEventState:
+        'Setting React state in `{{event}}` re-renders the component on every pointer event, which can fire every frame. ' +
+        'Mutate a ref (or the object itself) instead, or only set state when the value actually changes behind a condition.',
     },
     docs: {
       url: gitHubUrl('no-fast-state'),
       recommended: true,
-      description: 'Disallow setting React state in the frame loop, which re-renders the component every frame.',
+      description:
+        'Disallow setting React state in the frame loop and continuous pointer events, which re-renders the component every frame.',
     },
     schema: [
       {
@@ -151,22 +185,54 @@ const rule: Rule.RuleModule = {
             type: 'boolean',
             description: 'Allow state updates behind a condition, such as `if (changed) setValue(next)`.',
           },
+          events: {
+            type: 'boolean',
+            description: 'Also check `onPointerMove` and `onWheel` handlers on three.js elements.',
+          },
         },
         additionalProperties: false,
       },
     ],
-    defaultOptions: [{ allowGuarded: true }],
+    defaultOptions: [{ allowGuarded: true, events: true }],
   },
   create(ctx) {
-    const { allowGuarded = true } = (ctx.options[0] ?? {}) as Partial<Options>
+    const { allowGuarded = true, events = true } = (ctx.options[0] ?? {}) as Partial<Options>
+    const handlers = new Map<ESTree.Node, string>()
 
-    return frameLoopListener(ctx, {
+    const frame = frameLoopListener(ctx, {
       CallExpression({ node, callback, path }: FrameMatch<ESTree.CallExpression>) {
-        if (!isReactSetter(ctx, node, callback)) return
+        if (!isReactSetter(ctx, node, callback, true)) return
         if (allowGuarded && isGuarded(node, path)) return
         ctx.report({ messageId: 'noFastState', node })
       },
     })
+    if (!events) return frame
+
+    return mergeListeners(
+      frame,
+      {
+        // <mesh onPointerMove={...}>, not <div onPointerMove={...}>
+        JSXOpeningElement: onOpeningElement((element) => {
+          const name = elementName(element)
+          if (!isIntrinsic(name) || DOM_ELEMENTS.has(name)) return
+          for (const attribute of element.attributes) {
+            if (attribute.type !== 'JSXAttribute') continue
+            const event = attributeName(attribute as JSXAttribute)
+            if (!event || !CONTINUOUS_EVENTS.has(event)) continue
+            const value = attributeValue(attribute as JSXAttribute)
+            const handler = value.kind === 'expression' ? resolveFunction(ctx, value.node) : undefined
+            if (handler) handlers.set(handler, event)
+          }
+        }),
+      },
+      insideCallbacks(handlers, {
+        CallExpression({ node, callback, path }: FrameMatch<ESTree.CallExpression>) {
+          if (!isReactSetter(ctx, node, callback, false)) return
+          if (allowGuarded && isGuarded(node, path)) return
+          ctx.report({ messageId: 'noEventState', node, data: { event: handlers.get(callback)! } })
+        },
+      }),
+    )
   },
 }
 

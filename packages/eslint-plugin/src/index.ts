@@ -3,13 +3,16 @@
 
 import type { ESLint, Linter } from 'eslint'
 import all from './configs/all'
+import migration from './configs/migration'
 import recommended from './configs/recommended'
 import rules from './rules/index'
 
 type Configs = {
   all: Linter.Config
+  migration: Linter.Config
   recommended: Linter.Config
   'legacy-all': Linter.LegacyConfig
+  'legacy-migration': Linter.LegacyConfig
   'legacy-recommended': Linter.LegacyConfig
 }
 
@@ -28,8 +31,10 @@ const flat = (name: string, legacy: Linter.LegacyConfig): Linter.Config => ({
 
 export const configs: Configs = {
   all: flat('all', all),
+  migration: flat('migration', migration),
   recommended: flat('recommended', recommended),
   'legacy-all': all,
+  'legacy-migration': migration,
   'legacy-recommended': recommended,
 }
 

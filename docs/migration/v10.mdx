@@ -414,12 +414,16 @@ function GlobalEffects() {
 function WobblyMesh() {
   const { uIntensity } = useUniforms({ uIntensity: 0.5 })
 
-  const { displacement } = useLocalNodes(({ nodes }) => ({ displacement: nodes.wobble.mul(uIntensity) }), [uIntensity])
+  // Build the node once, outside JSX: a node created inline is new on every render and recompiles the shader
+  const { positionNode } = useLocalNodes(
+    ({ nodes }) => ({ positionNode: positionLocal.add(normalLocal.mul(nodes.wobble.mul(uIntensity))) }),
+    [uIntensity],
+  )
 
   return (
     <mesh>
       <sphereGeometry />
-      <meshStandardNodeMaterial positionNode={positionLocal.add(normalLocal.mul(displacement))} />
+      <meshStandardNodeMaterial positionNode={positionNode} />
     </mesh>
   )
 }

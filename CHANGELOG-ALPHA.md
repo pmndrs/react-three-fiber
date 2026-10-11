@@ -276,6 +276,27 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   argument. `no-new-in-loop` no longer reports `throw new X()` or `new SomethingError()`, which only
   run on the failure path.
 - The `codegen:eslint` script runs again (it failed under the ESM root), and generates the flat configs.
+- New `recommended` rules:
+  - `no-unstable-args`: new objects, literals, functions or `.clone()` in `args` or
+    `<primitive object>`, which rebuild the three.js object on every render.
+  - `no-inline-node-props`: TSL nodes built inline in a material's `*Node` prop, which recompile the
+    shader on every render.
+  - `no-deferred-resource-read`: shared resources read inside `Fn()` in a `useLocalNodes` creator,
+    where the read is not tracked.
+  - `no-creator-side-effects`: assignments to the scene, camera or renderer in a TSL hook creator,
+    and `useNodes`/`useLocalNodes` creators that return nothing.
+  - `no-invalid-dispose`: `dispose` values other than `null`, which are ignored (fixes `false`).
+  - `no-nested-fromref`: `fromRef()` inside an array or object, where it is never resolved.
+  - `canvas-entry-compat`: Canvas props, materials and events the Canvas entry does not support
+    (`gl` on `@react-three/fiber`, `renderer` on `/legacy`, node materials on `/legacy`, GLSL
+    materials on `@react-three/fiber`, ...).
+- `no-fast-state` also checks `onPointerMove` and `onWheel` handlers on three.js elements (`events`
+  option), and `prefer-local-nodes-deps` checks creators passed by reference, including `useCallback`.
+- New `migration` config (`configs.migration`, `plugin:@react-three/legacy-migration`) for upgrading
+  from v9, most of it autofixable: `no-deprecated-gl`, `no-frame-clock`, `no-numeric-frame-priority`,
+  `no-removed-canvas-props`, `no-onupdate-prop`, `no-removed-imports` (including the deprecated
+  `/webgpu` entry), `no-deprecated-loop-globals` and `prefer-canvas-background`.
+- Rule doc links point at the `v10` branch, where the rule docs live until v10 merges to `master`.
 
 ## 10.0.0-alpha.5
 

@@ -426,8 +426,9 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         const uniform = nextUniforms[name]
         const targetUniform = uniforms[name]
 
-        if (targetUniform) Object.assign(targetUniform, uniform)
-        else {
+        if (targetUniform) {
+          Object.assign(targetUniform, uniform)
+        } else {
           const nextUniform = isUniform(uniform) ? uniform.clone() : new (getThree().Uniform)(uniform.value)
           uniforms[name] = nextUniform
         }

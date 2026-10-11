@@ -12,6 +12,10 @@ The rule reports calls inside a frame callback to:
 A frame callback is any function handed to `useFrame`, `addEffect`, `addAfterEffect`,
 `setRenderOverride` or the frame scheduler's `register`, whether inline or by reference.
 
+The same applies to `onPointerMove` and `onWheel` handlers on three.js elements, which fire on every
+pointer event while the pointer moves: setters from `useState`/`useReducer` and `setX` props called
+there are reported too. DOM elements (`<div onPointerMove>`) are not checked.
+
 #### ❌ Incorrect
 
 This re-renders `RotatingBox` every frame.
@@ -60,6 +64,14 @@ function Boundary({ target }) {
 }
 ```
 
+```js
+// ❌ Re-renders on every pointer move
+function Hover() {
+  const [point, setPoint] = useState()
+  return <mesh onPointerMove={(e) => setPoint(e.point)} />
+}
+```
+
 ## Options
 
 ### `allowGuarded`
@@ -77,3 +89,8 @@ Set it to `false` to report every state update in the frame loop, guarded or not
   }
 }
 ```
+
+### `events`
+
+Default: `true`. Set it to `false` to check only the frame loop, not `onPointerMove` and `onWheel`
+handlers.

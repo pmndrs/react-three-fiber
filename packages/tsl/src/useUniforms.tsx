@@ -241,8 +241,9 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     input: memoizedInput,
     create: () => {
       if (isReader) return {}
-      if (typeof processedInput.candidates !== 'object' || processedInput.candidates === null)
+      if (typeof processedInput.candidates !== 'object' || processedInput.candidates === null) {
         throw new Error('Invalid uniform input')
+      }
       return processedInput.candidates as Record<string, unknown>
     },
     prepare: (name, candidate) => createUniform(name, candidate, scope),
