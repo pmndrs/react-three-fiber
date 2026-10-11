@@ -31,6 +31,7 @@
     "eslint:fix": "pnpm run eslint --fix",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
+    "test:gpu": "vitest run --config vitest.gpu.config.ts",
     "bench": "pnpm --filter @react-three/benches bench",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
     "release": "pnpm build && node scripts/release.js",
@@ -84,7 +85,9 @@
     "typescript-eslint": "^8.53.0",
     "unbuild": "^3.6.1",
     "vite": "^7.3.1",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "vitest-environment-webgpu-node": "3.0.1",
+    "vitest-screenshot": "3.0.1"
   },
   "packageManager": "pnpm@9.15.2"
 }

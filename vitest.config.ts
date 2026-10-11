@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import * as path from 'node:path'
 
 export default defineConfig({
@@ -23,6 +23,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./packages/fiber/tests/setupTests.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Tier 3 needs a real WebGPU device and runs in its own project: `pnpm test:gpu` (vitest.gpu.config.ts)
+    exclude: [...configDefaults.exclude, '**/tests/gpu/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'json', 'html'],
