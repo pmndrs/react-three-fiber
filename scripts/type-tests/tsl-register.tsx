@@ -1,10 +1,18 @@
-// An app that registers its uniforms and nodes (strict, the default). Compiled on its own:
+// An app that registers its uniforms, nodes, buffers and GPU storage (strict, the default). Compiled on its own:
 // `Register` is global to a program, so it cannot share one with the unregistered fixtures.
-import { Color, Vector3 } from 'three/webgpu'
-import type { Node, UniformNode } from 'three/webgpu'
-import { useUniforms, useUniform, useNodes, useLocalNodes, configureTSL } from '@react-three/tsl'
+import { Color, StorageTexture, Vector3 } from 'three/webgpu'
+import type { Node, StorageBufferNode, UniformNode } from 'three/webgpu'
+import {
+  useUniforms,
+  useUniform,
+  useNodes,
+  useLocalNodes,
+  useBuffers,
+  useGPUStorage,
+  configureTSL,
+} from '@react-three/tsl'
 import { useFrame, useStore, useThree } from '../../packages/fiber/dist/webgpu/index'
-import { Fn, cross, float, mix, sin, time, vec3, vec4 } from 'three/tsl'
+import { Fn, cross, float, instanceIndex, instancedArray, mix, sin, texture, time, vec3, vec4 } from 'three/tsl'
 
 export const globalUniforms = { uTime: 0, uColor: new Color('hotpink') }
 export const playerUniforms = { uHealth: 1, uTint: new Color('white') }
@@ -16,6 +24,10 @@ declare module '@react-three/tsl' {
     scopes: { player: typeof playerUniforms }
     nodes: { wobble: Node<'float'>; rimLight: typeof rimLightFn }
     nodeScopes: { fx: { blur: Node<'vec4'> } }
+    buffers: { positions: StorageBufferNode<'vec3'>; seeds: Float32Array }
+    bufferScopes: { particles: { colors: StorageBufferNode<'vec4'> } }
+    gpuStorage: { heightMap: StorageTexture }
+    gpuStorageScopes: { terrain: { normals: StorageTexture } }
   }
 }
 
@@ -152,4 +164,94 @@ export function RegisteredLocalNodes() {
   const health: number = playerHealth.value
   const dot: number = viaDot.value
   return { wobble, health, dot }
+}
+
+export function RegisteredBuffers() {
+  // Reading: typed by name, through every read path.
+  const all = useBuffers()
+  const positions: StorageBufferNode<'vec3'> = all.positions
+  all.positions.element(instanceIndex).assign(vec3(0))
+  const seed: number = all.seeds[0]
+  const colors: StorageBufferNode<'vec4'> = all.particles.colors
+  // @ts-expect-error a typo on the root is caught
+  all.positons
+  // @ts-expect-error and the type is checked: a typed array has no .element()
+  all.seeds.element(instanceIndex)
+
+  const particles = useBuffers('particles')
+  particles.colors.element(instanceIndex)
+  // @ts-expect-error not in the registered scope
+  particles.sizes
+  // Unregistered scopes keep the BufferLike reader.
+  const other = useBuffers('other').anything as Float32Array
+
+  // Creating: new keys are free, registered keys keep their registered type.
+  useBuffers(() => ({ positions: instancedArray(4, 'vec3'), extra: new Float32Array(4) }))
+  // @ts-expect-error positions is registered as a vec3 buffer node
+  useBuffers(() => ({ positions: new Float32Array(12) }))
+  useBuffers(() => ({ colors: instancedArray(4, 'vec4') }), 'particles')
+  // @ts-expect-error colors is registered as a vec4 buffer node in 'particles'
+  useBuffers(() => ({ colors: instancedArray(4, 'vec3') }), 'particles')
+  // A scope only known at runtime is not checked.
+  const runtimeScope = Math.random() > 0.5 ? 'particles' : (undefined as string | undefined)
+  useBuffers(() => ({ colors: new Float32Array(4) }), runtimeScope)
+
+  // Creators and frame state read them by name.
+  useNodes(({ buffers }) => ({
+    p: buffers.positions.element(instanceIndex),
+    c: buffers.scope('particles').colors.element(instanceIndex),
+    viaDot: buffers.particles.colors.element(instanceIndex),
+  }))
+  // @ts-expect-error a typo in a creator is caught
+  useNodes(({ buffers }) => ({ n: buffers.positons }))
+  useFrame(({ buffers }) => {
+    const p: StorageBufferNode<'vec3'> = buffers.positions
+    // @ts-expect-error a typo is caught here too
+    buffers.seedz
+    void p
+  })
+  const viaThree: Float32Array = useThree((s) => s.buffers.seeds)
+
+  void [positions, seed, colors, other, viaThree]
+  return null
+}
+
+export function RegisteredGPUStorage() {
+  const all = useGPUStorage()
+  const height: StorageTexture = all.heightMap
+  texture(all.terrain.normals)
+  // @ts-expect-error a typo on the root is caught
+  all.heightmap
+
+  const terrain = useGPUStorage('terrain')
+  const normals: StorageTexture = terrain.normals
+  // @ts-expect-error not in the registered scope
+  terrain.albedo
+  const other = useGPUStorage('other').anything as StorageTexture
+
+  useGPUStorage(() => ({ heightMap: new StorageTexture(64, 64), extra: new StorageTexture(8, 8) }))
+  // @ts-expect-error heightMap is registered as a StorageTexture, not a buffer node
+  useGPUStorage(() => ({ heightMap: instancedArray(4, 'vec3') }))
+  useGPUStorage(() => ({ normals: new StorageTexture(64, 64) }), 'terrain')
+  // @ts-expect-error normals is registered as a StorageTexture in 'terrain'
+  useGPUStorage(() => ({ normals: instancedArray(4, 'vec3') }), 'terrain')
+  const runtimeScope = Math.random() > 0.5 ? 'terrain' : (undefined as string | undefined)
+  useGPUStorage(() => ({ normals: instancedArray(4, 'vec3') }), runtimeScope)
+
+  useNodes(({ gpuStorage }) => ({
+    h: texture(gpuStorage.heightMap),
+    n: texture(gpuStorage.scope('terrain').normals),
+  }))
+  // @ts-expect-error a typo in a creator is caught
+  useNodes(({ gpuStorage }) => ({ n: gpuStorage.heightmap }))
+  useFrame(({ gpuStorage }) => {
+    const h: StorageTexture = gpuStorage.heightMap
+    // @ts-expect-error a typo is caught here too
+    gpuStorage.heightmap
+    void h
+  })
+  const viaThree: StorageTexture = useThree((s) => s.gpuStorage.terrain.normals)
+
+  void [height, normals, other, viaThree]
+  return null
 }

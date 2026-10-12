@@ -1,5 +1,5 @@
 /**
- * @fileoverview Typed uniforms and nodes by registration (the TanStack Router `Register` pattern).
+ * @fileoverview Typed TSL resources by registration (the TanStack Router `Register` pattern).
  *
  * Nothing registered: every type below falls back to loose reads (`LooseUniformNode`, `LooseNode`).
  * Registered once, anywhere in the app:
@@ -23,25 +23,39 @@
  * `useFrame(({ uniforms }) => uniforms.uTime)`, `useThree((s) => s.uniforms.uTime)` and a creator's
  * `({ uniforms }) => uniforms.uTime` are typed by name, with no generics. Nodes register the same
  * way, by their node types: `nodes: { wobble: Node<'float'>; rimLight: typeof rimLightFn }` and
- * `nodeScopes: { fx: { blur: Node<'vec4'> } }`.
+ * `nodeScopes: { fx: { blur: Node<'vec4'> } }`, and so do buffers (`buffers` / `bufferScopes`) and
+ * GPU storage (`gpuStorage` / `gpuStorageScopes`). Docs: docs/webgpu/typed-resources.mdx.
  *
  * Unregistered reads are loose: `LooseUniformNode` / `LooseNode`, which every operator accepts and
  * a single `as` makes exact (see those types for why).
  */
 
 import type { ScopedStoreMethods, ScopedStoreType } from './internal/ScopedStore'
-import type { LooseNode, LooseNodeStore, NodeLike, NodeRecord } from '../types'
+import type {
+  BufferLike,
+  BufferRecord,
+  BufferStore,
+  LooseNode,
+  LooseNodeStore,
+  NodeLike,
+  NodeRecord,
+  StorageLike,
+  StorageRecord,
+  StorageStore,
+} from '../types'
 
 //* Register ==============================
 
 /**
- * Augment this to type uniforms and nodes by name. Recognised keys:
+ * Augment this to type TSL resources by name. Recognised keys:
  * - `uniforms`: the root-level uniform inputs (e.g. `typeof globalUniforms`)
  * - `scopes`: named uniform scopes and their inputs (e.g. `{ player: typeof playerUniforms }`)
  * - `nodes`: the root-level nodes by node type (e.g. `{ wobble: Node<'float'>; rim: typeof rimFn }`)
  * - `nodeScopes`: named node scopes and their nodes (e.g. `{ fx: { blur: Node<'vec4'> } }`)
+ * - `buffers` / `bufferScopes`: buffers by name (e.g. `{ positions: StorageBufferNode<'vec3'> }`)
+ * - `gpuStorage` / `gpuStorageScopes`: GPU storage by name (e.g. `{ heightMap: StorageTexture }`)
  * - `strict`: `false` makes unregistered root keys loose instead of errors (default: strict), for
- *   uniforms and nodes alike
+ *   every resource family alike
  */
 export interface Register {}
 
@@ -148,6 +162,86 @@ export type CreatorNodes = IsNodesRegistered extends true
 
 /** A node reader's result for an explicit schema `T`, or loose nodes when none was given. */
 export type ReadNodes<T extends NodeRecord> = NodeRecord extends T ? Record<string, LooseNode> : T
+
+//* Buffers and GPU storage ==============================
+// The same shape as nodes. An unregistered read keeps the broad BufferLike / StorageLike union: a
+// typed array and a buffer node have little in common to make loose, and casts from the union work.
+
+/** The registered root-level buffers, or `{}` when none are registered. */
+export type RegisteredBuffers = Register extends { buffers: infer B extends BufferRecord } ? B : {}
+
+/** The registered buffer scopes and their buffers, or `{}` when none are registered. */
+export type RegisteredBufferScopes = Register extends { bufferScopes: infer S extends Record<string, BufferRecord> }
+  ? S
+  : {}
+
+type IsBuffersRegistered = Register extends { buffers: any } | { bufferScopes: any } ? true : false
+
+type TypedBuffers = RegisteredBuffers & RegisteredBufferScopes
+
+/** What `state.buffers` and `useBuffers()` are: the registered shape, or `BufferStore` when none are. */
+export type AppBuffers = IsBuffersRegistered extends true
+  ? IsStrict extends true
+    ? TypedBuffers
+    : TypedBuffers & BufferStore
+  : BufferStore
+
+/** Creator output at root level: new keys are free, registered keys must keep their registered type. */
+export type RootBufferInput = Partial<RegisteredBuffers> & BufferRecord
+
+/** Creator output for scope `S`: checked against the registered scope, free for any other scope. */
+export type ScopeBufferInput<S extends string> = S extends keyof RegisteredBufferScopes
+  ? Partial<RegisteredBufferScopes[S]>
+  : unknown
+
+/** `buffers` in a creator: typed by name when registered, `BufferLike` reads otherwise. */
+export type CreatorBuffers = IsBuffersRegistered extends true
+  ? {
+      scope<S extends keyof RegisteredBufferScopes & string>(
+        key: S,
+      ): ScopedStoreType<BufferLike, RegisteredBufferScopes[S]>
+    } & Readonly<AppBuffers> &
+      ScopedStoreMethods<BufferLike>
+  : ScopedStoreType<BufferLike>
+
+/** The registered root-level GPU storage, or `{}` when none is registered. */
+export type RegisteredGPUStorage = Register extends { gpuStorage: infer G extends StorageRecord } ? G : {}
+
+/** The registered GPU storage scopes and their entries, or `{}` when none are registered. */
+export type RegisteredGPUStorageScopes = Register extends {
+  gpuStorageScopes: infer S extends Record<string, StorageRecord>
+}
+  ? S
+  : {}
+
+type IsGPUStorageRegistered = Register extends { gpuStorage: any } | { gpuStorageScopes: any } ? true : false
+
+type TypedGPUStorage = RegisteredGPUStorage & RegisteredGPUStorageScopes
+
+/** What `state.gpuStorage` and `useGPUStorage()` are: the registered shape, or `StorageStore`. */
+export type AppGPUStorage = IsGPUStorageRegistered extends true
+  ? IsStrict extends true
+    ? TypedGPUStorage
+    : TypedGPUStorage & StorageStore
+  : StorageStore
+
+/** Creator output at root level: new keys are free, registered keys must keep their registered type. */
+export type RootGPUStorageInput = Partial<RegisteredGPUStorage> & StorageRecord
+
+/** Creator output for scope `S`: checked against the registered scope, free for any other scope. */
+export type ScopeGPUStorageInput<S extends string> = S extends keyof RegisteredGPUStorageScopes
+  ? Partial<RegisteredGPUStorageScopes[S]>
+  : unknown
+
+/** `gpuStorage` in a creator: typed by name when registered, `StorageLike` reads otherwise. */
+export type CreatorGPUStorage = IsGPUStorageRegistered extends true
+  ? {
+      scope<S extends keyof RegisteredGPUStorageScopes & string>(
+        key: S,
+      ): ScopedStoreType<StorageLike, RegisteredGPUStorageScopes[S]>
+    } & Readonly<AppGPUStorage> &
+      ScopedStoreMethods<StorageLike>
+  : ScopedStoreType<StorageLike>
 
 //* Readers ==============================
 

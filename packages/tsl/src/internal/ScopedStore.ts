@@ -11,7 +11,7 @@
  *
  * @example
  * ```tsx
- * // With uniforms registered (see `Register` and the Typed Uniforms guide), reads are typed by name
+ * // With uniforms registered (see `Register` and the Typed Resources guide), reads are typed by name
  * useLocalNodes(({ uniforms }) => ({
  *   wobble: sin(uniforms.uTime.mul(2)),
  *   playerHealth: uniforms.scope('player').uHealth, // or uniforms.player.uHealth
@@ -31,7 +31,7 @@ import { getTextureView, type RootState, type RootStore } from '@react-three/fib
 import type { BufferLike, NodeLike, StorageLike } from '../../types'
 import { isBufferLike, isStorageLike, isTSLNode, isUniformNode, type ResourceLeafGuard } from './resourceGuards'
 import { SCOPE, type ReadObserver, type ResourceView, type TrackedKind } from './readTracking'
-import type { CreatorNodes, CreatorUniforms } from '../register'
+import type { CreatorBuffers, CreatorGPUStorage, CreatorNodes, CreatorUniforms } from '../register'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -229,10 +229,10 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
   uniforms: CreatorUniforms
   /** Node access: each read a `LooseNode` (callable, every operator), typed by name when registered */
   nodes: CreatorNodes
-  /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */
-  buffers: ScopedStoreType<BufferLike>
-  /** Type-safe GPU storage access - property access returns StorageLike (StorageTexture, TSL nodes) */
-  gpuStorage: ScopedStoreType<StorageLike>
+  /** Buffer access: typed by name when registered, BufferLike (typed arrays, attributes, nodes) otherwise */
+  buffers: CreatorBuffers
+  /** GPU storage access: typed by name when registered, StorageLike (storage textures, nodes) otherwise */
+  gpuStorage: CreatorGPUStorage
 }
 
 //* Texture Reads ==============================

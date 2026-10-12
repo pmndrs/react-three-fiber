@@ -1,6 +1,5 @@
 import type { RenderPipeline } from 'three/webgpu'
-import type { BufferStore, StorageStore } from './resources'
-import type { AppNodes, AppUniforms } from '../src/register'
+import type { AppBuffers, AppGPUStorage, AppNodes, AppUniforms } from '../src/register'
 
 /**
  * The fields @react-three/tsl adds to RootState. Its root extension sets them up on every canvas;
@@ -19,10 +18,13 @@ export interface TSLRootState {
    * usable without casts, or typed by name once you register your nodes (see `Register`).
    */
   nodes: AppNodes
-  /** Buffers - root-level buffers + scoped sub-objects. Use useBuffers() */
-  buffers: BufferStore
-  /** GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() */
-  gpuStorage: StorageStore
+  /** Buffers - root-level buffers + scoped sub-objects. Use useBuffers(). Typed by name once registered */
+  buffers: AppBuffers
+  /**
+   * GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage().
+   * Typed by name once registered
+   */
+  gpuStorage: AppGPUStorage
   /** Internal: bumped by hot reloads and rebuilds to re-run creators */
   _hmrVersion: number
   /** The canvas's RenderPipeline, once useRenderPipeline created one. Per canvas, not shared. */
