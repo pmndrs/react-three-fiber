@@ -242,8 +242,8 @@ Uniforms, nodes, buffers and GPU storage belong to the **renderer**, not to one 
 interface RootState {
   uniforms: AppUniforms // Global uniforms + scopes (typed by name once registered, loose otherwise)
   nodes: AppNodes // Global TSL nodes + scopes (typed by name once registered, loose otherwise)
-  buffers: BufferStore // GPU buffer storage + scopes
-  gpuStorage: StorageStore // GPU texture storage + scopes
+  buffers: AppBuffers // GPU buffer storage + scopes (typed by name once registered)
+  gpuStorage: AppGPUStorage // GPU texture storage + scopes (typed by name once registered)
   renderPipeline?: RenderPipeline | null // Per canvas, set by useRenderPipeline
   passes?: PassRecord // Render pipeline passes
 }
@@ -258,7 +258,7 @@ useFrame(({ uniforms, elapsed }) => {
 const uniforms = useThree((s) => s.uniforms)
 ```
 
-To type uniforms by name across the app, see [Typed Uniforms](./typed-uniforms).
+To type uniforms, nodes, buffers and GPU storage by name across the app, see [Typed Resources](./typed-resources).
 
 ### Create-If-Not-Exists
 
@@ -280,7 +280,7 @@ This means no duplicate GPU allocations, shared state across the component tree,
 - [Render Pipeline](./render-pipeline) - `useRenderPipeline`, MRT, custom passes
 - [Compute (Buffers & Storage)](./compute) - `useBuffers`, `useGPUStorage`
 - [Textures](./textures) - `useTexture`, `useTextures`, the texture registry
-- [Typed Uniforms](./typed-uniforms) - `Register`, `configureTSL`
+- [Typed Resources](./typed-resources) - `Register`, `configureTSL`
 - [Multi-Canvas](./multi-canvas) - sharing a renderer across canvases
 - [TSL HMR](./hmr) - what rebuilds on hot reload
 

@@ -80,7 +80,7 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
   are checked against registered keys. Strict by default (unknown root keys are errors, catching
   typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
-  types, unchanged. See [Typed Uniforms](./docs/webgpu/typed-uniforms.mdx).
+  types, unchanged. See [Typed Resources](./docs/webgpu/typed-resources.mdx).
 - `@react-three/tsl`: unregistered reads by name work in TSL without casts. `useUniforms()`,
   `useUniforms('scope')`, `useUniform('name')`, a creator's `uniforms`, and `state.uniforms` in
   `useFrame`/`useThree` return `LooseUniformNode`s; `useNodes()`, `useNodes('scope')`, a creator's
@@ -95,14 +95,25 @@ UniformNode<'vec3', Vector3>`). Schemas (`useUniforms<{ blur: number }>('fx')`,
   root keys read the same way. Writing a concrete node straight into `state.uniforms` or
   `state.nodes` with `setState` (instead of through the hooks) now needs a cast. Buffers and GPU
   storage keep their `BufferLike` / `StorageLike` unions. See
-  [What stays loose](./docs/webgpu/typed-uniforms.mdx#what-stays-loose).
+  [What stays loose](./docs/webgpu/typed-resources.mdx#what-stays-loose).
 - `@react-three/tsl`: nodes register like uniforms. `Register` takes `nodes` (root-level nodes by
   node type, e.g. `ReturnType<typeof sharedNodes>`) and `nodeScopes`; `useNodes()`,
   `useNodes('fx')`, `state.nodes` and a creator's `nodes` are then typed by name, root typos are
   errors under the shared `strict` flag, and creators are checked against the registered types. A
   creator call can no longer fall through to `useNodes`' broad overload unless its scope is a
   runtime `string | undefined`. See
-  [Register your nodes](./docs/webgpu/typed-uniforms.mdx#register-your-nodes).
+  [Register your nodes](./docs/webgpu/typed-resources.mdx#register-your-nodes).
+- `@react-three/tsl`: buffers and GPU storage register too, completing `Register` for every resource
+  family. `buffers` / `bufferScopes` and `gpuStorage` / `gpuStorageScopes` type `useBuffers()`,
+  `useBuffers('particles')` (the scope name autocompletes), `useGPUStorage()`,
+  `useGPUStorage('terrain')`, `state.buffers` / `state.gpuStorage` and a creator's `buffers` /
+  `gpuStorage` by name; root typos are errors under the shared `strict` flag, and creators are
+  checked against the registered types (only a runtime `string | undefined` scope skips the check).
+  Unregistered reads keep their `BufferLike` / `StorageLike` unions. See
+  [Register buffers and GPU storage](./docs/webgpu/typed-resources.mdx#register-buffers-and-gpu-storage).
+- Docs: the "Typed Uniforms" page is now [Typed Resources](./docs/webgpu/typed-resources.mdx)
+  (`docs/webgpu/typed-uniforms.mdx` → `typed-resources.mdx`), since it covers uniforms, nodes,
+  buffers and GPU storage. Its place in the WebGPU section is unchanged.
 - `configureTSL({ uniforms, scopes })` creates registered uniforms on every primary canvas up
   front, including canvases already mounted, so registered types hold before the first frame.
   Secondaries and portals see them like any shared uniform, and hooks that declare the same names

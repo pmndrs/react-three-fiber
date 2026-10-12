@@ -53,7 +53,7 @@ const uName = useUniform(name)
 
 ### Return Value
 
-Returns a `UniformNode<T>` - a Three.js TSL uniform node. Reading by name alone (`useUniform('uTime')`) returns it typed by name when your uniforms are [registered](./typed-uniforms), exactly when you pass its type (`useUniform<Color>('uTint')`), and as a [loose](#reading-by-name) `LooseUniformNode` otherwise, which TSL accepts as is.
+Returns a `UniformNode<T>` - a Three.js TSL uniform node. Reading by name alone (`useUniform('uTime')`) returns it typed by name when your uniforms are [registered](./typed-resources), exactly when you pass its type (`useUniform<Color>('uTint')`), and as a [loose](#reading-by-name) `LooseUniformNode` otherwise, which TSL accepts as is.
 
 | Property | Type     | Description                                    |
 | -------- | -------- | ---------------------------------------------- |
@@ -258,7 +258,7 @@ The creator receives a [`CreatorState`](#scopedstore).
 
 ### Return Value
 
-Returns `NodesWithUtils<NodeRecord>` - your nodes by name, **plus three util functions**. A creator's nodes keep the types it inferred; a reader's (`useNodes()`, `useNodes('fx')`) are typed by name once you [register your nodes](./typed-uniforms#register-your-nodes), and [loose](#reading-by-name) otherwise: TSL accepts them and they can be called (`nodes.rimLightFn()`) without a cast.
+Returns `NodesWithUtils<NodeRecord>` - your nodes by name, **plus three util functions**. A creator's nodes keep the types it inferred; a reader's (`useNodes()`, `useNodes('fx')`) are typed by name once you [register your nodes](./typed-resources#register-your-nodes), and [loose](#reading-by-name) otherwise: TSL accepts them and they can be called (`nodes.rimLightFn()`) without a cast.
 
 ```typescript
 {
@@ -535,8 +535,8 @@ Creator functions for `useUniforms`, `useNodes`, `useLocalNodes`, `useBuffers`, 
 type CreatorState = RootState & {
   uniforms: CreatorUniforms // typed by name once you register your uniforms
   nodes: CreatorNodes // typed by name once you register your nodes
-  buffers: ScopedStoreType<BufferLike>
-  gpuStorage: ScopedStoreType<StorageLike>
+  buffers: CreatorBuffers // BufferLike reads, typed by name once registered
+  gpuStorage: CreatorGPUStorage // StorageLike reads, typed by name once registered
 }
 ```
 
@@ -561,7 +561,7 @@ useLocalNodes(
 )
 ```
 
-How exactly they are typed depends on [registration](./typed-uniforms). Registered, a read is typed by name: `uniforms.uTime` is a float uniform, and `uniforms.uTiem` is an error.
+How exactly they are typed depends on [registration](./typed-resources). Registered, a read is typed by name: `uniforms.uTime` is a float uniform, and `uniforms.uTiem` is an error.
 
 Unregistered, a uniform read is a `LooseUniformNode` and a node read a `LooseNode`. A string name can't tell TypeScript what the entry holds, and three's types only give operator methods to a node whose type (float, vec3, color, ...) is known, so these loose types have every member of three's nodes, typed `any` (a `LooseNode` can also be called, as an `Fn()` can). Every operator, TSL function and material slot accepts them; a misspelt member is still an error. That is a deliberate simplification: what their own methods return is `any`, and an operation that needs a specific type (`cross()` wants vec3s) isn't checked. When you want the exact type, cast once or give the scope its schema:
 
@@ -575,9 +575,9 @@ useLocalNodes(({ uniforms }) => {
 }, [])
 ```
 
-The same holds outside creators: `useUniforms()`, `useUniforms('scope')`, `useUniform('name')`, `useNodes()`, `useNodes('scope')`, and `state.uniforms` / `state.nodes` in `useFrame` and `useThree`. See [What stays loose](./typed-uniforms#what-stays-loose).
+The same holds outside creators: `useUniforms()`, `useUniforms('scope')`, `useUniform('name')`, `useNodes()`, `useNodes('scope')`, and `state.uniforms` / `state.nodes` in `useFrame` and `useThree`. See [What stays loose](./typed-resources#what-stays-loose).
 
-Buffers and GPU storage are not covered: a read is the broad `BufferLike` or `StorageLike` union (a typed array is nothing like a buffer node), which one `as` or a schema (`useBuffers<{ positions: StorageBufferNode<'vec3'> }>('particles')`) narrows.
+Buffers and GPU storage are not loose: an unregistered read is the broad `BufferLike` or `StorageLike` union (a typed array is nothing like a buffer node), which one `as` or a schema (`useBuffers<{ positions: StorageBufferNode<'vec3'> }>('particles')`) narrows. [Registered](./typed-resources#register-buffers-and-gpu-storage), they are typed by name like uniforms and nodes.
 
 The wrappers are created lazily - the underlying Proxy is only built when you actually access `uniforms`, `nodes`, `buffers`, or `gpuStorage`, so creators that don't touch them pay no cost.
 

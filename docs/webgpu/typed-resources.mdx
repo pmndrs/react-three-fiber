@@ -1,10 +1,10 @@
 ---
-title: Typed Uniforms
-description: Type @react-three/tsl uniforms and nodes by name across your app with the Register interface, choose strict or loose checking, back the types at runtime with configureTSL, and know what an unregistered read is typed as.
+title: Typed Resources
+description: Type @react-three/tsl uniforms, nodes, buffers and GPU storage by name across your app with the Register interface, choose strict or loose checking, back uniforms at runtime with configureTSL, and know what an unregistered read is typed as.
 nav: 18
 ---
 
-Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Without registration such a read is [loose](#what-stays-loose): usable in any TSL expression, but not exactly typed. Registering your uniforms once types them by name for the whole app.
+Inline creators are always typed: `useUniforms({ uTime: 0 })` returns `uTime` as a `float` uniform in the component that wrote it. Reading a uniform somewhere else — another component, `useFrame`, `useThree`, a creator, a scope — goes through a string name, and a string can't carry a type. Without registration such a read is [loose](#what-stays-loose): usable in any TSL expression, but not exactly typed. Registering your uniforms once types them by name for the whole app. [Nodes](#register-your-nodes), [buffers and GPU storage](#register-buffers-and-gpu-storage) register the same way.
 
 ## Register your uniforms
 
@@ -92,6 +92,8 @@ const uTint = uniforms.uTint as UniformNode<'color', Color>
 uTint.value.set('red') // .value is a Color
 ```
 
+> **Feedback wanted.** This loose default is new in the v10 alpha. If it gets in your way, or lets through a mistake you'd want TypeScript to catch, please [open or comment on a GitHub issue](https://github.com/pmndrs/react-three-fiber/issues).
+
 `UniformNode` here is three's (`<NodeType, Value>`). A schema does the same without a cast: `useUniforms<{ blur: number }>('fx')`, `useUniform<Color>('uTint')`, or `uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')` in a creator. Registering gives exact types everywhere and also catches a misspelt name, which no loose read can.
 
 A root read (`useUniforms().x`, `state.uniforms.x`, a creator's `uniforms.x`) may name a scope as well as a uniform, so `state.uniforms.player.uHealth` is loose the same way. Cast the uniform, not the scope.
@@ -109,7 +111,7 @@ declare module '@react-three/tsl' {
 }
 ```
 
-Registered keys stay fully typed. Unregistered root keys are allowed and read [loose](#what-stays-loose), so a typo compiles. `strict` covers registered [nodes](#register-your-nodes) the same way.
+Registered keys stay fully typed. Unregistered root keys are allowed and read [loose](#what-stays-loose), so a typo compiles. `strict` covers registered [nodes](#register-your-nodes), [buffers and GPU storage](#register-buffers-and-gpu-storage) the same way.
 
 ## Register your nodes
 
@@ -140,6 +142,27 @@ Unlike uniforms there is no `configureTSL` for nodes: a registered node exists o
 
 Without registration a node read is a loose `LooseNode`, for the same reason a uniform read is a `LooseUniformNode`: it has every member of three's nodes and of an `Fn()`, typed `any`, and can be called, so `nodes.wobble.mul(2)`, `material.colorNode = nodes.wobble` and `nodes.rimLightFn()` compile. One `as` makes it exact: `nodes.blur as Node<'vec4'>`, `nodes.rimLight as typeof rimLightFn`.
 
+## Register buffers and GPU storage
+
+`useBuffers` and `useGPUStorage` register the same way: `buffers` / `bufferScopes` and `gpuStorage` / `gpuStorageScopes`, each by the type the hook stores.
+
+```ts
+import type { StorageBufferNode, StorageTexture } from 'three/webgpu'
+
+declare module '@react-three/tsl' {
+  interface Register {
+    buffers: { positions: StorageBufferNode<'vec3'>; seeds: Float32Array }
+    bufferScopes: { particles: { colors: StorageBufferNode<'vec4'> } }
+    gpuStorage: { heightMap: StorageTexture }
+    gpuStorageScopes: { terrain: { normals: StorageTexture } }
+  }
+}
+```
+
+Then `useBuffers().positions.element(instanceIndex)`, `useBuffers('particles').colors` (the scope name autocompletes), `state.buffers.seeds[0]`, `texture(useGPUStorage().heightMap)` and a creator's `buffers` / `gpuStorage` are typed by name, root typos are errors (unless `strict: false`), and creators are checked: `useBuffers(() => ({ positions: new Float32Array(12) }))` is an error once `positions` is registered as a buffer node. A scope only known at runtime is not checked. As with nodes, a registered entry exists only once the component that creates it has rendered.
+
+Unregistered reads are not loose here. A read is the union of what the hook stores (`BufferLike`: typed arrays, buffer attributes and buffer nodes; `StorageLike`: storage textures and nodes), since a CPU array and a GPU buffer node have little in common to make loose. Narrow it with one `as` (`buffers.positions as StorageBufferNode<'vec3'>`) or a schema (`useBuffers<{ positions: StorageBufferNode<'vec3'> }>('particles')`). With `strict: false`, an unregistered root key reads as that union too.
+
 ## configureTSL
 
 `Register` only describes types. `configureTSL` makes them true at runtime: it creates the uniforms on every primary canvas's `RootState`, including canvases already mounted, before any component runs. Secondaries and portals see them like any shared uniform.
@@ -152,5 +175,5 @@ Pass the same objects you registered, so the types and the runtime come from one
 
 ## Notes
 
-- `Register` is global to your TypeScript program, like any module augmentation. Declare it once.
-- `useBuffers` and `useGPUStorage` are not covered yet. A read is the union of what the hook stores (`BufferLike`: typed arrays, buffer attributes and buffer nodes; `StorageLike`: storage textures and nodes), since a CPU array and a GPU buffer node have little in common to make loose. Narrow it with one `as` (`buffers.positions as StorageBufferNode<'vec3'>`) or a schema (`useBuffers<{ positions: StorageBufferNode<'vec3'> }>('particles')`).
+- `Register` is global to your TypeScript program, like any module augmentation. Declare it once, with every resource family you register in the same interface.
+- Each family is independent: registering nodes leaves uniforms loose, and so on. `strict` applies to every family you register.
