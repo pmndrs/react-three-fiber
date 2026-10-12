@@ -79,8 +79,8 @@ globalUniforms; scopes: { player: typeof playerUniforms } } }`) and `state.unifo
   `useFrame`, `useThree` and handlers), a creator's `uniforms`, `useUniforms()`,
   `useUniforms('player')` and `useUniform('uTime')` are typed without generics or casts; creators
   are checked against registered keys. Strict by default (unknown root keys are errors, catching
-  typos); `strict: false` in `Register` allows them. Nothing registered means the previous loose
-  types, unchanged. See [Typed Resources](./docs/webgpu/typed-resources.mdx).
+  typos); `strict: false` in `Register` allows them. With nothing registered, reads by name use the
+  loose types described in the next entry. See [Typed Resources](./docs/webgpu/typed-resources.mdx).
 - `@react-three/tsl`: unregistered reads by name work in TSL without casts. `useUniforms()`,
   `useUniforms('scope')`, `useUniform('name')`, a creator's `uniforms`, and `state.uniforms` in
   `useFrame`/`useThree` return `LooseUniformNode`s; `useNodes()`, `useNodes('scope')`, a creator's
