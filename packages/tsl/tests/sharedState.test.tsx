@@ -225,7 +225,7 @@ describe('primary + secondary canvas', () => {
     const runsBefore = runs
 
     const next = uniform(2)
-    await act(async () => primary.setState((s) => ({ uniforms: { ...s.uniforms, uRead: next } })))
+    await act(async () => primary.setState((s) => ({ uniforms: { ...s.uniforms, uRead: next as LooseUniformEntry } })))
 
     expect(runs).toBe(runsBefore + 1)
     expect(seen).toBe(next)

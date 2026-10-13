@@ -60,7 +60,8 @@ function typeAssertions() {
   const nodes = useNodes(() => ({ legacyNode }))
   const legacyAlias: TSLNode = legacyNode
   const rootNodes = useNodes()
-  const legacyRootEntry: (typeof rootNodes)['legacyNode'] = legacyNode
+  // A root read is a LooseNode: still a valid node wherever one is accepted.
+  const legacyRootEntry: TSLNodeLike = rootNodes.legacyNode
   const interleavedBuffer = new InterleavedBuffer(new Float32Array(6), 3)
   const attribute = new InterleavedBufferAttribute(interleavedBuffer, 3, 0)
   const buffers = useBuffers(() => ({ attribute }))

@@ -9,6 +9,7 @@ import { isBufferLike } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
 import type { BufferLike, BufferRecord, BufferStore } from '../types'
+import type { AppBuffers, RegisteredBufferScopes, RootBufferInput, ScopeBufferInput } from './register'
 
 //* Types ==============================
 
@@ -58,8 +59,16 @@ const disposeBuffer = (buffer: BufferLike): void => {
 
 //* Hook Overloads ==============================
 
-// Get all buffers (returns full structure with root buffers and scopes + utils)
-export function useBuffers(): BuffersWithUtils<BufferStore>
+// Registration-aware (see ./register): `buffers` / `bufferScopes` in `Register` type reads by name
+// and check creators. Unregistered reads stay BufferLike.
+
+// Get all buffers (root buffers and scopes + utils): typed by name when registered
+export function useBuffers(): BuffersWithUtils<AppBuffers>
+
+// Get a registered buffer scope: typed by name, and the scope name autocompletes (+ utils)
+export function useBuffers<S extends keyof RegisteredBufferScopes & string>(
+  scope: S,
+): BuffersWithUtils<RegisteredBufferScopes[S]>
 
 // Get buffers from a specific scope (+ utils)
 export function useBuffers(scope: string): BuffersWithUtils<Record<string, BufferLike>>
@@ -67,14 +76,22 @@ export function useBuffers(scope: string): BuffersWithUtils<Record<string, Buffe
 // Read existing buffers against an explicit schema, at root (no scope) or within a scope.
 export function useBuffers<T extends Record<string, BufferLike>>(scope?: string): BuffersWithUtils<T>
 
-// Create/get buffers at root level (no scope) (+ utils)
-export function useBuffers<T extends Record<string, BufferLike>>(creator: BufferCreator<T>): BuffersWithUtils<T>
+// Create/get buffers at root level (no scope) (+ utils). Registered keys keep their type.
+export function useBuffers<T extends RootBufferInput>(creator: BufferCreator<T>): BuffersWithUtils<T>
 
-// Create/get buffers within a scope (+ utils)
-export function useBuffers<T extends Record<string, BufferLike>>(
-  creator: BufferCreator<T>,
-  scope: string,
+// Create/get buffers within a scope (+ utils). A registered scope is type-checked.
+export function useBuffers<T extends Record<string, BufferLike>, S extends string>(
+  creator: (state: CreatorState) => T & ScopeBufferInput<S>,
+  scope: S,
 ): BuffersWithUtils<T>
+
+// Broad form for a scope only known at runtime (`string | undefined`, e.g. a prop), unchecked. A
+// call with no scope or a literal one cannot fall through to it, so a creator that breaks its
+// registered types stays an error instead of landing here.
+export function useBuffers<S extends string | undefined>(
+  creator: BufferCreator<BufferRecord>,
+  scope: S & (string extends S ? unknown : never),
+): BuffersWithUtils<BufferRecord>
 
 //* Hook Implementation ==============================
 

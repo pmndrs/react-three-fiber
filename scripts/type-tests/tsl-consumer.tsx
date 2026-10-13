@@ -1,10 +1,10 @@
 // An app's view of @react-three/tsl next to the fiber entries, compiled against the built
 // declarations with skipLibCheck off. The fiber entries resolve through tsl's own dependency
 // (a workspace link), which is also where its RootState augmentation points.
-import type { Color, UniformNode, RenderPipeline, Vector2 } from 'three/webgpu'
+import type { Color, UniformNode, RenderPipeline, Vector2, Vector3 } from 'three/webgpu'
 import { useUniforms, useUniform, useNodes, useLocalNodes, useRenderPipeline } from '../../packages/tsl/dist/index'
 import { useFrame, useStore, useThree } from '../../packages/fiber/dist/webgpu/index'
-import { float, mix, color, sin, int, vec2 } from 'three/tsl'
+import { cross, float, mix, color, normalView, sin, int, vec2 } from 'three/tsl'
 
 export function Consumer() {
   // Creator inference survives the package boundary.
@@ -53,10 +53,10 @@ export function LocalNodesDocs({ pattern }: { pattern: 'noise' | 'stripes' }) {
     [pattern],
   )
 
-  // A cast leaf
-  const { colorNode } = useLocalNodes(({ uniforms }) => {
-    const uValue = uniforms.myUniform as UniformNode<'float', number>
-    return { colorNode: mix(color('red'), color('blue'), uValue) }
+  // An unregistered uniform as is, and a cast leaf
+  const { colorNode, facing } = useLocalNodes(({ uniforms }) => {
+    const uDir = uniforms.uDir as UniformNode<'vec3', Vector3>
+    return { colorNode: mix(color('red'), color('blue'), uniforms.myUniform), facing: cross(uDir, normalView) }
   }, [])
 
   // The install form
@@ -68,5 +68,5 @@ export function LocalNodesDocs({ pattern }: { pattern: 'noise' | 'stripes' }) {
     }
   }, [])
 
-  return { damage, result, colorNode }
+  return { damage, result, colorNode, facing }
 }

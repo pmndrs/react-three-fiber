@@ -9,6 +9,7 @@ import { isStorageLike } from './internal/resourceGuards'
 import { useScopedResource } from './internal/useScopedResource'
 import { scopedNodeName } from './internal/utils'
 import type { StorageLike, StorageRecord, StorageStore } from '../types'
+import type { AppGPUStorage, RegisteredGPUStorageScopes, RootGPUStorageInput, ScopeGPUStorageInput } from './register'
 
 //* Types ==============================
 
@@ -58,8 +59,16 @@ const disposeStorage = (storage: StorageLike): void => {
 
 //* Hook Overloads ==============================
 
-// Get all storage (returns full structure with root storage and scopes + utils)
-export function useGPUStorage(): StorageWithUtils<StorageStore>
+// Registration-aware (see ./register): `gpuStorage` / `gpuStorageScopes` in `Register` type reads
+// by name and check creators. Unregistered reads stay StorageLike.
+
+// Get all storage (root storage and scopes + utils): typed by name when registered
+export function useGPUStorage(): StorageWithUtils<AppGPUStorage>
+
+// Get a registered storage scope: typed by name, and the scope name autocompletes (+ utils)
+export function useGPUStorage<S extends keyof RegisteredGPUStorageScopes & string>(
+  scope: S,
+): StorageWithUtils<RegisteredGPUStorageScopes[S]>
 
 // Get storage from a specific scope (+ utils)
 export function useGPUStorage(scope: string): StorageWithUtils<Record<string, StorageLike>>
@@ -67,14 +76,22 @@ export function useGPUStorage(scope: string): StorageWithUtils<Record<string, St
 // Read existing storage against an explicit schema, at root (no scope) or within a scope.
 export function useGPUStorage<T extends Record<string, StorageLike>>(scope?: string): StorageWithUtils<T>
 
-// Create/get storage at root level (no scope) (+ utils)
-export function useGPUStorage<T extends Record<string, StorageLike>>(creator: StorageCreator<T>): StorageWithUtils<T>
+// Create/get storage at root level (no scope) (+ utils). Registered keys keep their type.
+export function useGPUStorage<T extends RootGPUStorageInput>(creator: StorageCreator<T>): StorageWithUtils<T>
 
-// Create/get storage within a scope (+ utils)
-export function useGPUStorage<T extends Record<string, StorageLike>>(
-  creator: StorageCreator<T>,
-  scope: string,
+// Create/get storage within a scope (+ utils). A registered scope is type-checked.
+export function useGPUStorage<T extends Record<string, StorageLike>, S extends string>(
+  creator: (state: CreatorState) => T & ScopeGPUStorageInput<S>,
+  scope: S,
 ): StorageWithUtils<T>
+
+// Broad form for a scope only known at runtime (`string | undefined`, e.g. a prop), unchecked. A
+// call with no scope or a literal one cannot fall through to it, so a creator that breaks its
+// registered types stays an error instead of landing here.
+export function useGPUStorage<S extends string | undefined>(
+  creator: StorageCreator<StorageRecord>,
+  scope: S & (string extends S ? unknown : never),
+): StorageWithUtils<StorageRecord>
 
 //* Hook Implementation ==============================
 

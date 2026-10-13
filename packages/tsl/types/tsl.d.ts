@@ -103,6 +103,69 @@ declare global {
    */
   type UniformStore = Record<string, UniformNode | UniformRecord>
 
+  //* Loose reads ==============================
+
+  /** Every shader node type three's TSL declarations type separately. */
+  type TSLNodeTypeName =
+    | 'float'
+    | 'int'
+    | 'uint'
+    | 'bool'
+    | 'vec2'
+    | 'vec3'
+    | 'vec4'
+    | 'ivec2'
+    | 'ivec3'
+    | 'ivec4'
+    | 'uvec2'
+    | 'uvec3'
+    | 'uvec4'
+    | 'bvec2'
+    | 'bvec3'
+    | 'bvec4'
+    | 'color'
+    | 'mat2'
+    | 'mat3'
+    | 'mat4'
+
+  /** Every member of every constituent of `T`, each typed `any`. */
+  type TSLLooseMembers<T> = { [K in T extends unknown ? keyof T : never]: any }
+
+  /**
+   * What an unregistered uniform read is: `useUniforms().uTime`, `useUniforms('fx').blur`,
+   * `useUniform('uTime')`, a creator's `uniforms.uTime`, `state.uniforms.uTime` in `useFrame`.
+   *
+   * Why it is loose: the read goes through a string name, and TypeScript cannot know what a
+   * runtime entry under that name holds. three's types only give the operator methods (`.mul`,
+   * `.add`, swizzles, `.toVar()`, ...) to a node whose node type is known, so `UniformNode<unknown>`
+   * had none of them and every read needed a cast.
+   *
+   * So this has every member that any of three's uniform nodes has (float, vec3, color, mat4, ...),
+   * each typed `any`. Every operator, TSL function and material slot accepts it, and a misspelt member
+   * (`.valeu`) is still an error. It is a deliberate simplification: results of its own methods are
+   * `any`, and nothing checks that `cross()` gets a vec3.
+   *
+   * It converts to an exact type with a single `as`, since every member is `any`:
+   * `uniforms.uColor as UniformNode<'color', Color>`, or `as Node<'vec3'>`. A node typed as a float
+   * uniform would cover the operators with exact result types, but three's node types are not
+   * comparable to one another, so it could only be cast through `unknown`.
+   *
+   * Exact types without casts: register the uniforms (`Register` in `@react-three/tsl`, which also
+   * catches typos in the name), or pass a schema to the reader (`useUniforms<{ blur: number }>('fx')`,
+   * `useUniform<Color>('uColor')`, `uniforms.scope<{ uHealth: UniformNode<'float', number> }>('player')`).
+   */
+  interface LooseUniformNode extends TSLLooseMembers<import('three/webgpu').UniformNode<TSLNodeTypeName, any>> {}
+
+  /**
+   * A root entry of an unregistered uniform map: a uniform (its members) or a scope of uniforms (any
+   * other name), since the type cannot tell which a name holds. `uniforms.uTime.mul(2)` and
+   * `uniforms.player.uHealth` both read.
+   */
+  type LooseUniformEntry = LooseUniformNode & { readonly [name: string]: LooseUniformNode }
+
+  /** An unregistered uniform map read: `state.uniforms`, `useUniforms()`. */
+  type LooseUniformStore = Record<string, LooseUniformEntry>
+
   /**
    * Helper to safely access a uniform node from the store.
    * Use this when accessing state.uniforms to get proper typing.
