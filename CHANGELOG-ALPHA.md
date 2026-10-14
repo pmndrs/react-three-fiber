@@ -204,6 +204,12 @@ UniformNode<'vec3', Vector3>`). Schemas (`useUniforms<{ blur: number }>('fx')`,
 
 ### Fixes
 
+- `state.gl` no longer logs its deprecation for apps that never read it. @pmndrs/scheduler spreads
+  root state into each frame state, and under Vite's dev server its pre-bundled frames
+  (`_Scheduler2.tickRoot` in `@pmndrs_scheduler.js`) slipped past the check for library reads, so
+  every WebGPU app saw the notice. The scheduler now gets a copy of the state whose `gl` reads
+  silently; frame states still carry `gl`, and a real read (drei's `OrbitControls`) still warns.
+
 - Multi-canvas works under the WebGL2 fallback. When the primary's `WebGPURenderer` fell back to
   WebGL2 (no `navigator.gpu`), a secondary drew its scene into the primary's canvas and stayed
   blank, since a WebGL context is bound to the element it was created on. A secondary whose primary

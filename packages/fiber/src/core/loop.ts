@@ -2,6 +2,7 @@
 import type { WebGPURenderer } from 'three/webgpu'
 import { getScheduler } from '@pmndrs/scheduler'
 import { notifyDepreciated } from './utils/notices'
+import { stateForScheduler } from './utils/stateAccessors'
 import { is, updateFrustum } from './utils'
 import { checkVisibility } from './visibility'
 import type { RootStore, RenderProps, RootState, GlobalRenderCallback } from '#types'
@@ -30,7 +31,8 @@ export function configureScheduler(
     // Generate a unique root ID and register with global scheduler
     const newRootId = state.internal.pendingRootId ?? canvasId ?? scheduler.generateRootId()
     const unregisterRoot = scheduler.registerRoot(newRootId, {
-      getState: () => store.getState(),
+      // The scheduler spreads this into each frame state; see stateForScheduler
+      getState: () => stateForScheduler(store.getState()),
       onError: (err) => store.getState().setError(err),
       frameloop: store.getState().frameloop,
       before: rootBefore,
