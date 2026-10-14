@@ -85,6 +85,35 @@ export const keepAccessors =
 
 let glNoticeShown = false
 
+/** One scheduler view per state object; a store holds each state object until its next set(). */
+const schedulerViews = new WeakMap<object, RootState>()
+
+/**
+ * The root state as @pmndrs/scheduler receives it. The scheduler spreads root state into every frame
+ * state it builds, which reads each getter, `gl` included, and would log the deprecation for an app
+ * that never touched `gl`. Recognising that read by its stack frame breaks whenever a bundler renames
+ * it (Vite pre-bundles the package as `@pmndrs_scheduler.js` and its class as `_Scheduler2`), so the
+ * scheduler gets a copy whose `gl` answers silently instead. Frame states still carry `gl`.
+ */
+export function stateForScheduler(state: RootState): RootState {
+  let view = schedulerViews.get(state)
+  if (!view) {
+    view = cloneState<RootState>(state)
+    Object.defineProperty(view, 'gl', {
+      get(this: RootState) {
+        return this.internal?.actualRenderer
+      },
+      set(this: RootState, value) {
+        this.internal.actualRenderer = value
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    schedulerViews.set(state, view)
+  }
+  return view
+}
+
 /**
  * Installs the `renderer` and `gl` accessors on a root state object. They read through `this`, so
  * a state object copied with {@link cloneState} or {@link keepAccessors} answers for itself.

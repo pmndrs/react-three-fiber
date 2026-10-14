@@ -21,7 +21,7 @@ const { uColor } = useUniforms({
 
 ## What Rebuilds on HMR
 
-All four creator families re-run their creators when the HMR version is bumped:
+Every TSL hook re-runs when the HMR version is bumped:
 
 | Hook                          | Rebuilds on HMR | How                                |
 | ----------------------------- | --------------- | ---------------------------------- |
@@ -29,7 +29,7 @@ All four creator families re-run their creators when the HMR version is bumped:
 | `useUniforms` / `useUniform`  | Yes             | Re-runs creator                    |
 | `useBuffers`                  | Yes             | Re-runs creator                    |
 | `useGPUStorage`               | Yes             | Re-runs creator                    |
-| `useRenderPipeline`           | **No**          | Skipped on HMR - see below         |
+| `useRenderPipeline`           | Yes             | Re-runs callbacks, keeps scene pass |
 
 `useLocalNodes` also rebuilds because it subscribes to the HMR version directly, alongside its `uniforms`/`nodes`/`textures` triggers - in every mode, including `useLocalNodes(creator, [])`. The dependency array only governs ordinary component renders (see [TSL Hooks](./tsl-hooks#dependency-array)).
 
@@ -68,11 +68,11 @@ useEffect(() => {
 
 Where possible, prefer declarative props (`rotation` on the mesh) or bake transforms at creation time instead of mutating in effects.
 
-## useRenderPipeline Does NOT Rebuild on HMR
+## useRenderPipeline on HMR
 
-This is the important exception. `useRenderPipeline` callbacks do **not** re-run on a plain hot reload (same scene/camera). Re-running them rebuilds the TSL node graph, which can corrupt cached references (such as `SkinningNode`), so the hook intentionally skips re-running its `setupCB`/`mainCB` on HMR.
+`useRenderPipeline` re-runs its `setupCB`/`mainCB` after every hot update in the app, once the other TSL hooks have registered their fresh generation, so the graph picks up both your edits and the new uniform objects. It keeps the pipeline and scene pass and replaces only the graph built on them. The remount Fast Refresh does on the owning component keeps the pipeline too; a reset of that component (after adding or removing a hook, or `// @refresh reset`) builds a new pipeline and frees the old one.
 
-**To apply render-pipeline edits during development, call `rebuild()` or do a full page reload.** Pipeline callbacks only re-run on first creation, on a real scene/camera change, or when you call `rebuild()` explicitly.
+To re-run the callbacks yourself, against a fresh scene pass, call `rebuild()`:
 
 ```tsx
 function RebuildButton() {
@@ -81,7 +81,7 @@ function RebuildButton() {
 }
 ```
 
-For dynamic values you want to change without rebuilding, drive them through uniforms (which do refresh) rather than closure values. See [Render Pipeline](./render-pipeline#hmr-does-not-re-run-pipeline-callbacks).
+For values that change at runtime, drive them through uniforms rather than closure values. See [Render Pipeline](./render-pipeline#hmr).
 
 ## Disabling HMR
 

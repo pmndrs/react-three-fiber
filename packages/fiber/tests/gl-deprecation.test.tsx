@@ -152,6 +152,29 @@ describe('state.gl', () => {
     }
   })
 
+  it('a WebGPU root: the state the scheduler spreads carries gl without logging, however its frames are named', async () => {
+    const { fiber } = await freshFiber()
+    const { stateForScheduler } = await import('../src/core/utils/stateAccessors')
+
+    const root = fiber.createRoot(createCanvas({ mode: 'webgpu' }))
+    try {
+      const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(null))
+      const state = store.getState()
+
+      // Spread from this file: to the stack check, Vite's pre-bundled scheduler (`_Scheduler2.tickRoot`
+      // in `@pmndrs_scheduler.js`) looks the same as app code
+      const frame = { ...stateForScheduler(state) }
+      expect(frame.gl).toBe(state.renderer)
+      expect(deprecationCalls()).toHaveLength(0)
+
+      // Control: spreading the store's own state from here is a gl read the check cannot excuse
+      void { ...state }
+      expect(deprecationCalls()).toHaveLength(1)
+    } finally {
+      await act(async () => root.unmount())
+    }
+  })
+
   it('a WebGL (/legacy) root: gl is the WebGLRenderer and logs nothing', async () => {
     const { legacy } = await freshFiber()
     const root = legacy.createRoot(createCanvas())

@@ -1,6 +1,7 @@
 import { registerRootExtension } from '@react-three/fiber/extension'
 import { clearHmrCaches } from './hmr'
 import { trackPrimary, untrackPrimary } from './configure'
+import { releaseAllOwners } from './renderPipelineOwners'
 
 import type { RootState, RootStore } from '@react-three/fiber/extension'
 
@@ -56,6 +57,9 @@ function followPrimary(store: RootStore, primary: RootStore): void {
 }
 
 function dispose(store: RootStore): void {
+  // Before the renderer is released: a pipeline's owner may have unmounted with `persist`, or its
+  // deferred release may not have fired yet
+  releaseAllOwners(store)
   untrackPrimary(store)
   following.get(store)?.()
   following.delete(store)

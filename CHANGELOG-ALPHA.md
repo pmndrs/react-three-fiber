@@ -40,6 +40,24 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
   decodes on the CPU, so `.jpg` environments can be preloaded like the others. Apps that need the
   split format keep it through drei's `<Environment>`.
 
+- `useRenderPipeline` (`@react-three/tsl`): the component that configures the pipeline owns it.
+  Unmounting it frees its pipeline and scene pass, and the canvas renders without post-processing
+  again (before, the pipeline kept rendering until `reset()`, and `reset()` never disposed it). Pass
+  `{ persist: true }` as the third argument to keep it rendering after unmount, until another
+  component configures the pipeline, `reset()`, or canvas unmount. A call without callbacks only
+  reads and no longer creates a pipeline. With two mounted owners the most recently mounted renders,
+  the other takes over again when it unmounts, and a development warning names the overlap. Release
+  is deferred a task, so StrictMode's double mount and Fast Refresh remounts keep the pipeline and
+  scene pass: before, every StrictMode mount and every Fast Refresh ran the callbacks twice and built
+  a second scene pass. Callbacks re-run after every hot update (the TSL resource generation), on the
+  same scene pass, once the fresh uniforms are registered. `reset()`, `rebuild()` and `clearPasses()`
+  called from a reader act on the pipeline that is rendering, and each callback run registers its
+  passes from scratch instead of keeping keys from the last run. The callbacks get the same state as
+  `useNodes` creators (wrapped `uniforms`, `nodes`, ..., staged entries included) and their reads are
+  tracked as in `useLocalNodes`: a read resource that appears, is replaced or is removed re-runs them
+  on the same scene pass. Callbacks that read a uniform their parent registers from their state no
+  longer bake `null` into the graph.
+
 ### Features
 
 - React 19.3 is supported; the peer range is now `>=19.0 <19.4`. The vendored reconciler is built
@@ -185,6 +203,12 @@ UniformNode<'vec3', Vector3>`). Schemas (`useUniforms<{ blur: number }>('fx')`,
   never overwritten by the parent.
 
 ### Fixes
+
+- `state.gl` no longer logs its deprecation for apps that never read it. @pmndrs/scheduler spreads
+  root state into each frame state, and under Vite's dev server its pre-bundled frames
+  (`_Scheduler2.tickRoot` in `@pmndrs_scheduler.js`) slipped past the check for library reads, so
+  every WebGPU app saw the notice. The scheduler now gets a copy of the state whose `gl` reads
+  silently; frame states still carry `gl`, and a real read (drei's `OrbitControls`) still warns.
 
 - Multi-canvas works under the WebGL2 fallback. When the primary's `WebGPURenderer` fell back to
   WebGL2 (no `navigator.gpu`), a secondary drew its scene into the primary's canvas and stayed
