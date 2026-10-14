@@ -1,5 +1,5 @@
 import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
-import { easing } from 'maath'
+import { spring } from 'math/time'
 import * as React from 'react'
 import { useMemo, useRef, useState } from 'react'
 import { color, mix, positionLocal, sin, time, uniform, vec3 } from 'three/tsl'
@@ -16,9 +16,10 @@ function Plane(props: ThreeElements['mesh']) {
     const positionNode = positionLocal.add(vec3(0, sin(currentTime).mul(0.05), 0))
     return { colorNode, positionNode, uHovered }
   }, [])
+  const hoverSpring = useMemo(() => spring.create(0), [])
 
   useFrame((state, delta) => {
-    easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
+    uHovered.value = spring.damp(hoverSpring, hovered ? 1 : 0, 0.1, delta).value
   })
 
   return (

@@ -1,5 +1,5 @@
-import { easing } from 'maath'
-import { useState } from 'react'
+import { spring } from 'math/time'
+import { useMemo, useState } from 'react'
 import { mix, positionLocal, sin, time, vec3 } from 'three/tsl'
 import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
 import { useNodes, useUniform, useUniforms } from '@react-three/tsl'
@@ -8,6 +8,7 @@ function Scene() {
   const [hovered, setHovered] = useState(false)
   const speed = useUniform('speed', 1.5)
   const hover = useUniform('hover', 0)
+  const hoverSpring = useMemo(() => spring.create(0), [])
   const { uBaseColor, uAccentColor, uHoverColor } = useUniforms(() => ({
     uBaseColor: 'orange',
     uAccentColor: 'hotpink',
@@ -22,7 +23,9 @@ function Scene() {
     }
   })
 
-  useFrame((_, delta) => easing.damp(hover, 'value', hovered ? 1 : 0, 0.1, delta))
+  useFrame((_, delta) => {
+    hover.value = spring.damp(hoverSpring, hovered ? 1 : 0, 0.1, delta).value
+  })
 
   return (
     <group onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>

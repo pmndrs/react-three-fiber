@@ -88,7 +88,7 @@ Tools for creating custom shaders and materials.
 
 Helpful utility libraries for common tasks.
 
-- [`maath`](https://github.com/pmndrs/maath) - A kitchen sink for math helpers
+- [`math`](https://github.com/pmndrs/math) - A kitchen sink for math helpers
 - [`koota`](https://github.com/pmndrs/koota) - ECS (entity management system)
 
 ## Editors & Dev Tools
