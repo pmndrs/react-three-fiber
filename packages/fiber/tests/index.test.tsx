@@ -8,6 +8,7 @@ import {
   ReconcilerRoot,
   createRoot as createRootImpl,
   useFrame,
+  useStore,
   useThree,
   createPortal,
   RootState,
@@ -16,6 +17,15 @@ import {
 } from '../src/index'
 
 extend(THREE as any)
+
+// Activity is unavailable in React 19.0, which is also covered by CI.
+const Activity = (
+  React as unknown as {
+    Activity: React.ComponentType<React.PropsWithChildren<{ mode: 'visible' | 'hidden' }>>
+  }
+).Activity
+const testActivity = Activity ? it : it.skip
+
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
 const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
 
@@ -334,10 +344,7 @@ describe('createPortal', () => {
     expect(prevUUID).not.toBe(groupHandle!.uuid)
   })
 
-  // Regression for #3751: Portal's setEvents closure must capture only the stable
-  // store setter, not the whole previous portal state, or every replaced state stays
-  // anchored in memory through a setEvents → injectState chain (unbounded leak).
-  it('does not retain stale portal state in setEvents (#3751)', async () => {
+  it('preserves parent events when updating portal events after parent resizes', async () => {
     const container = new THREE.Group()
     let portalState: RootState = null!
 
@@ -346,7 +353,7 @@ describe('createPortal', () => {
       return null
     }
 
-    const rootStore: RootStore = await act(async () =>
+    const parentStore: RootStore = await act(async () =>
       root.render(
         <>
           <primitive object={container} />
@@ -355,82 +362,88 @@ describe('createPortal', () => {
       ),
     )
 
-    const stalePortalState = portalState
-    const staleSet = stalePortalState.set
+    const setPortalEvents = portalState.setEvents
 
-    // Mutating the parent root store rebuilds the portal state via the inject callback,
-    // replacing portalState with a fresh object.
     await act(async () => {
-      rootStore.getState().set((state) => ({ size: { ...state.size } }))
+      setPortalEvents({ priority: 2 })
     })
-    expect(portalState).not.toBe(stalePortalState)
 
-    // Poison the *property* on the stale state. The fixed setEvents captured the setter
-    // by value, so it is unaffected; the buggy version looked it up off the retained
-    // injectState at call time and would route through (and throw on) this.
-    stalePortalState.set = (() => {
-      throw new Error('stale portal state setter was retained')
-    }) as RootState['set']
-
-    try {
+    // Parent resizes update the portal's size and preserve its event setter.
+    for (const width of [640, 1280]) {
       await act(async () => {
-        portalState.setEvents({ enabled: false })
+        parentStore.getState().setSize(width, 480)
       })
-      expect(portalState.get().events.enabled).toBe(false)
-    } finally {
-      stalePortalState.set = staleSet
+
+      expect(portalState.size.width).toBe(width)
+      // Setter stays the same.
+      expect(portalState.setEvents).toBe(setPortalEvents)
     }
-  })
 
-  // Regression for #3676: the subscription to the
-  // parent (previous) root store must be torn down when the portal unmounts. It lives in
-  // a layout effect that returns its unsubscribe; if that subscription is ever moved back
-  // into the useMemo (where the unsubscribe is discarded), every portal mount would pin
-  // its THREE.Scene in the parent store's listener set for good.
-  it('unsubscribes from the parent root store when the portal unmounts', async () => {
-    const container = new THREE.Group()
-
-    // Render the parent tree once (no portal) to obtain the real root store.
-    const rootStore: RootStore = await act(async () => root.render(<primitive object={container} />))
-
-    // Track subscriptions added through the store from here on, and drop them as their
-    // unsubscribe fires, so `live` reflects the currently-attached listeners.
-    const live = new Set<() => void>()
-    const realSubscribe = rootStore.subscribe.bind(rootStore)
-    const subscribeSpy = jest.spyOn(rootStore, 'subscribe').mockImplementation((listener: any) => {
-      const unsub = realSubscribe(listener)
-      live.add(unsub)
-      return () => {
-        live.delete(unsub)
-        unsub()
-      }
+    // Using the portal setter should maintain the parent state.
+    await act(async () => {
+      setPortalEvents({ enabled: false })
     })
 
-    try {
-      const baseline = live.size
-
-      // Mount the portal — Portal subscribes to the parent store.
-      await act(async () =>
-        root.render(
-          <>
-            <primitive object={container} />
-            {createPortal(<mesh />, container)}
-          </>,
-        ),
-      )
-      expect(live.size).toBeGreaterThan(baseline)
-
-      // Unmount the portal — the subscription must be cleaned up, not leaked.
-      await act(async () => root.render(<primitive object={container} />))
-      expect(live.size).toBe(baseline)
-    } finally {
-      subscribeSpy.mockRestore()
-    }
+    expect(portalState.events).toMatchObject({ enabled: false, priority: 2 })
+    expect(parentStore.getState().events).toMatchObject({ enabled: true, priority: 1 })
   })
 
-  // The portal copies the parent state during render but only subscribes in a layout
-  // effect. Parent changes made in between, here by an earlier sibling's layout effect,
-  // must still reach the portal.
+  it('updates a portal camera, size and events when its options change', async () => {
+    const container = new THREE.Group()
+    const camera = new THREE.PerspectiveCamera()
+    camera.position.z = 5
+    let portalState: RootState = null!
+
+    function PortalProbe() {
+      portalState = useThree()
+      return null
+    }
+
+    const size = { width: 400, height: 200, top: 10, left: 20 }
+    const parentStore: RootStore = await act(async () =>
+      root.render(createPortal(<PortalProbe />, container, { camera, size, events: { priority: 2 } })),
+    )
+    expect(camera.aspect).toBe(2)
+
+    const nextSize = { width: 300, height: 600, top: 30, left: 40 }
+    await act(async () =>
+      root.render(
+        createPortal(<PortalProbe />, container, {
+          camera,
+          size: nextSize,
+          events: { priority: 3 },
+        }),
+      ),
+    )
+    await act(async () => parentStore.getState().setSize(800, 600))
+
+    expect(portalState.camera).toBe(camera)
+    expect(portalState.size).toEqual(nextSize)
+    expect(portalState.viewport.aspect).toBe(0.5)
+    expect(portalState.events.priority).toBe(3)
+    expect(camera.aspect).toBe(0.5)
+    expect(parentStore.getState().events).toMatchObject({ enabled: true, priority: 1 })
+  })
+
+  it('stops following parent resizes after the portal unmounts (#3676)', async () => {
+    const container = new THREE.Group()
+    let portalStore: RootStore = null!
+
+    function PortalProbe() {
+      portalStore = useStore()
+      return <mesh />
+    }
+
+    const parentStore: RootStore = await act(async () => root.render(createPortal(<PortalProbe />, container)))
+    await act(async () => parentStore.getState().setSize(640, 480))
+    expect(portalStore.getState().size.width).toBe(640)
+
+    await act(async () => root.render(null))
+    await act(async () => parentStore.getState().setSize(1280, 720))
+    expect(container.children).toHaveLength(0)
+    expect(portalStore.getState().size.width).toBe(640)
+  })
+
   it('picks up parent state changes made before the portal subscribes', async () => {
     const container = new THREE.Group()
     let portalState: RootState = null!
@@ -447,7 +460,7 @@ describe('createPortal', () => {
       return null
     }
 
-    // Runs after the portal's layout effect, before anything else can resync it
+    // Observe portal state after its layout effect and before later updates.
     function AfterPortal() {
       React.useLayoutEffect(() => void (widthAtCommit = portalState.get().size.width), [])
       return null
@@ -464,6 +477,55 @@ describe('createPortal', () => {
     )
 
     expect(widthAtCommit).toBe(123)
+  })
+
+  testActivity('preserves portal state and catches up after Activity hide/show', async () => {
+    const container = new THREE.Group()
+    let portalState: RootState = null!
+
+    function PortalProbe() {
+      portalState = useThree()
+      const [object] = React.useState(() => new THREE.Mesh())
+      return <primitive object={object} />
+    }
+
+    const parentStore: RootStore = await act(async () => root.render(null))
+    const initialParentState = parentStore.getState()
+    const App = ({ mode }: { mode: 'visible' | 'hidden' }) => (
+      <React.StrictMode>
+        <Activity mode={mode}>{createPortal(<PortalProbe />, container)}</Activity>
+      </React.StrictMode>
+    )
+
+    await act(async () => root.render(<App mode="visible" />))
+    const object = container.children[0]
+    await act(async () => portalState.setEvents({ enabled: false }))
+    await act(async () => parentStore.getState().setSize(640, 480))
+    expect(portalState.size.width).toBe(640)
+
+    await act(async () => root.render(<App mode="hidden" />))
+    expect(object.visible).toBe(false)
+    // Restoring a saved parent snapshot must still reach the portal on reveal.
+    await act(async () => parentStore.setState(initialParentState, true))
+    expect(portalState.get().size.width).toBe(640)
+
+    await act(async () => root.render(<App mode="visible" />))
+    expect(container.children[0]).toBe(object)
+    expect(object.visible).toBe(true)
+    expect(portalState.size).toEqual(initialParentState.size)
+    expect(portalState.events.enabled).toBe(false)
+  })
+
+  it('moves children when the portal target changes', async () => {
+    const firstContainer = new THREE.Group()
+    const secondContainer = new THREE.Group()
+
+    await act(async () => root.render(createPortal(<mesh />, firstContainer)))
+    expect(firstContainer.children).toHaveLength(1)
+
+    await act(async () => root.render(createPortal(<mesh />, secondContainer)))
+    expect(firstContainer.children).toHaveLength(0)
+    expect(secondContainer.children).toHaveLength(1)
   })
 })
 
