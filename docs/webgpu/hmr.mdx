@@ -21,7 +21,7 @@ const { uColor } = useUniforms({
 
 ## What Rebuilds on HMR
 
-All four creator families re-run their creators when the HMR version is bumped:
+Every TSL hook re-runs when the HMR version is bumped:
 
 | Hook                          | Rebuilds on HMR | How                                |
 | ----------------------------- | --------------- | ---------------------------------- |
@@ -70,7 +70,7 @@ Where possible, prefer declarative props (`rotation` on the mesh) or bake transf
 
 ## useRenderPipeline on HMR
 
-`useRenderPipeline` re-runs its `setupCB`/`mainCB` after a hot update, once the other TSL hooks have registered their fresh generation, so the graph picks up both your edits and the new uniform objects. It keeps the scene pass and replaces only the graph built on it. A plain remount that keeps component state (StrictMode, Fast Refresh) reuses the graph without re-running anything.
+`useRenderPipeline` re-runs its `setupCB`/`mainCB` after every hot update in the app, once the other TSL hooks have registered their fresh generation, so the graph picks up both your edits and the new uniform objects. It keeps the pipeline and scene pass and replaces only the graph built on them. The remount Fast Refresh does on the owning component keeps the pipeline too; a reset of that component (after adding or removing a hook, or `// @refresh reset`) builds a new pipeline and frees the old one.
 
 To re-run the callbacks yourself, against a fresh scene pass, call `rebuild()`:
 

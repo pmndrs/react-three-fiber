@@ -10,6 +10,11 @@ import type { RenderPipeline } from 'three/webgpu'
 // it takes over again with the graph it already built. Release is deferred a task, so the
 // cleanup-then-setup React runs for StrictMode and Fast Refresh (refs survive both) cancels it and
 // the graph is reused instead of rebuilt.
+//
+// A `persist` owner is not released when its component unmounts. It keeps rendering until another
+// owner claims the canvas, `reset()`, or canvas unmount. A new owner frees it rather than stacking
+// on it: nothing can bring an unmounted owner back, so under a new owner it would only hold GPU
+// memory -- one more pipeline per Fast Refresh reset of a persisted component.
 
 /** One configuring useRenderPipeline call and the GPU resources it created. */
 export interface PipelineOwner {
@@ -29,6 +34,7 @@ export interface PipelineOwner {
 
 const owners = new WeakMap<RootStore, PipelineOwner[]>()
 const warned = new WeakSet<RootStore>()
+const sweeps = new WeakMap<RootStore, ReturnType<typeof setTimeout>>()
 
 export function createOwner(store: RootStore, rebuild: () => void): PipelineOwner {
   return { store, pipeline: null, scenePass: null, passes: {}, mounted: false, releaseTimer: null, rebuild }
@@ -76,6 +82,27 @@ export function claimOwnership(owner: PipelineOwner): void {
     }
   }
   list.push(owner)
+  scheduleSweep(owner.store)
+}
+
+/**
+ * Free the persisted owners whose components have unmounted, once a new owner has claimed the
+ * canvas. Deferred a task: React runs every layout cleanup of a commit before any setup, so a
+ * persisted owner that is only re-running its effect looks unmounted until its setup runs.
+ */
+function scheduleSweep(store: RootStore): void {
+  if (sweeps.has(store)) return
+  sweeps.set(
+    store,
+    setTimeout(() => {
+      sweeps.delete(store)
+      const active = activeOwner(store)
+      for (const owner of [...(owners.get(store) ?? [])]) {
+        // Unmounted and not already on its way out: a persisted owner nothing can bring back
+        if (owner !== active && !owner.mounted && owner.releaseTimer === null) releaseOwner(owner)
+      }
+    }),
+  )
 }
 
 /** Put the owner's pipeline and passes on the store, if it is the active owner. */
@@ -122,6 +149,8 @@ export function releaseOwner(owner: PipelineOwner): void {
 
 /** Canvas unmount: free every owner's resources now, before the renderer is released. */
 export function releaseAllOwners(store: RootStore): void {
+  clearTimeout(sweeps.get(store))
+  sweeps.delete(store)
   const list = owners.get(store)
   if (!list) return
   owners.delete(store)

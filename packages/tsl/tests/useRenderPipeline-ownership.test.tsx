@@ -374,4 +374,102 @@ describe('useRenderPipeline ownership', () => {
     expect(seen[1]).toBe(store.getState().uniforms.late)
     expect(store.getState().passes!.scenePass).toBe(scenePass)
   })
+
+  //* persist ==============================
+
+  it('a Fast Refresh reset of a persisted owner frees the instance it replaces', async () => {
+    // A reset remounts the component as a new instance, which is what a key change does
+    const store = makeStore()
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      ;({ rerender } = mount(store, <Owner key="v1" persist />))
+    })
+    const old = store.getState().renderPipeline!
+    const oldPass = store.getState().passes!.scenePass!
+    const pipelineDispose = vi.spyOn(old, 'dispose')
+    const passDispose = vi.spyOn(oldPass, 'dispose')
+
+    await act(async () =>
+      rerender(
+        <context.Provider value={store}>
+          <Owner key="v2" persist />
+        </context.Provider>,
+      ),
+    )
+    await flushRelease()
+
+    expect(store.getState().renderPipeline).not.toBe(old)
+    expect(pipelineDispose).toHaveBeenCalledTimes(1)
+    expect(passDispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('a new owner frees a persisted pipeline whose component has unmounted', async () => {
+    const store = makeStore()
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      ;({ rerender } = mount(store, <Owner key="intro" persist />))
+    })
+    const persisted = store.getState().renderPipeline!
+    const disposeSpy = vi.spyOn(persisted, 'dispose')
+
+    // Unmounted, and still rendering: that is what persist is for
+    await act(async () => rerender(<context.Provider value={store}>{null}</context.Provider>))
+    await flushRelease()
+    expect(store.getState().renderPipeline).toBe(persisted)
+    expect(disposeSpy).not.toHaveBeenCalled()
+
+    await act(async () =>
+      rerender(
+        <context.Provider value={store}>
+          <Owner key="next" />
+        </context.Provider>,
+      ),
+    )
+    await flushRelease()
+
+    expect(store.getState().renderPipeline).not.toBe(persisted)
+    expect(disposeSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not free a mounted persisted owner whose effect re-runs in the commit a new owner mounts', async () => {
+    // React runs every layout cleanup of a commit before any setup, so for a moment the persisted
+    // owner looks unmounted. The new owner mounts first in tree order and must not free it.
+    const store = makeStore()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      ;({ rerender } = mount(store, <Owner key="persisted" persist />))
+    })
+    const persisted = store.getState().renderPipeline!
+    const disposeSpy = vi.spyOn(persisted, 'dispose')
+
+    await act(async () => {
+      // A camera change re-runs the persisted owner's effect in the same commit
+      store.setState({ camera: new THREE.PerspectiveCamera() } as any)
+      rerender(
+        <context.Provider value={store}>
+          <Owner key="new" />
+          <Owner key="persisted" persist />
+        </context.Provider>,
+      )
+    })
+    await flushRelease()
+
+    expect(disposeSpy).not.toHaveBeenCalled()
+  })
+
+  it('after reset(), the next hot update builds the pipeline again', async () => {
+    const store = makeStore()
+    const api = { current: null! as Api }
+    await act(async () => mount(store, <Owner apiRef={api} />))
+    const first = store.getState().renderPipeline
+
+    await act(async () => api.current.reset())
+    expect(store.getState().renderPipeline).toBeNull()
+
+    await act(async () => store.setState((s) => ({ _hmrVersion: s._hmrVersion + 1 })))
+
+    expect(store.getState().renderPipeline).toBeInstanceOf(THREE.RenderPipeline)
+    expect(store.getState().renderPipeline).not.toBe(first)
+  })
 })

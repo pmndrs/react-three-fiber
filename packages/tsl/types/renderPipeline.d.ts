@@ -82,8 +82,9 @@ declare global {
   /** Options for a configuring useRenderPipeline call */
   interface RenderPipelineOptions {
     /**
-     * Keep the pipeline rendering after the component unmounts, until `reset()` or the canvas
-     * unmounts. Off by default: an owner frees its pipeline and scene pass when it unmounts.
+     * Keep the pipeline rendering after the component unmounts, until another component configures
+     * the canvas's pipeline, `reset()`, or the canvas unmounts. Off by default: an owner frees its
+     * pipeline and scene pass when it unmounts. A remount is a new owner with a new pipeline either way.
      */
     persist?: boolean
   }
