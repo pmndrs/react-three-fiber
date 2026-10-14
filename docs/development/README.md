@@ -33,7 +33,7 @@ There is no separate pile of design docs. The _why_ sits with the thing it expla
 
 - **Frame loop** — why one global scheduler, why named dependencies instead of priority numbers,
   why throttled jobs never catch up: [frame-loop docs](https://docs.pmnd.rs/react-three-fiber/frame-loop).
-- **WebGPU / TSL** — why `outputNode` is explicit, why `useRenderPipeline` skips HMR:
+- **WebGPU / TSL** — why `outputNode` is explicit, how `useRenderPipeline` handles HMR:
   [render-pipeline](https://docs.pmnd.rs/react-three-fiber/webgpu/render-pipeline) and
   [hmr](https://docs.pmnd.rs/react-three-fiber/webgpu/hmr).
 - **Entry points, the shared core and renderer supports** — [BUILD.md](./BUILD.md).

@@ -29,13 +29,13 @@ import { useUniforms, useRenderPipeline } from '@react-three/tsl'
 // Uses useRenderPipeline hook - no manual useFrame needed!
 
 function RenderPipelineManager() {
-  // Read the blur amount uniform registered by Experience. A reader cannot infer the type from
-  // the store, so the schema names what was registered: blurAmount is a float uniform.
-  const { blurAmount } = useUniforms<{ blurAmount: number }>()
-
   useRenderPipeline(
-    // mainCB - receives full RootState, set outputNode explicitly
-    ({ renderPipeline, passes }) => {
+    // mainCB - receives the creator state, set outputNode explicitly. `uniforms.blurAmount` is
+    // registered by Experience; reading it here (not in a closure) tracks it, so a replaced
+    // uniform rebuilds the graph and a new .value needs no rebuild.
+    ({ renderPipeline, passes, uniforms }) => {
+      const { blurAmount } = uniforms
+
       // Get the rendered textures
       const beauty = passes.scenePass.getTextureNode()
       const vel = passes.scenePass.getTextureNode('velocity')
@@ -322,9 +322,10 @@ function Experience() {
     blurAmount: { value: 1.0, min: 0, max: 3, step: 0.1 },
     speed: { value: 1.0, min: 0, max: 2, step: 0.1 },
     autoRotate: { value: true },
+    effect: { value: true },
   })
 
-  // Register uniforms with R3F state (makes them available to RenderPipelineManager)
+  // Register the blur uniform; RenderPipelineManager reads it from its callback state
   useUniforms({ blurAmount: levaControls.blurAmount })
 
   return (
@@ -340,8 +341,8 @@ function Experience() {
       <AnimatedTorus position={[3.5, 1.5, -4]} direction={1} />
       <ScalingTorus position={[-3.5, 1.5, -4]} />
 
-      {/* Render pipeline manager - takes over rendering */}
-      <RenderPipelineManager />
+      {/* Render pipeline manager - takes over rendering while mounted; unmounting it frees the pipeline */}
+      {levaControls.effect && <RenderPipelineManager />}
 
       {/* Camera controls with auto-rotate */}
       <OrbitControls

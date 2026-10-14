@@ -2,7 +2,7 @@
  * RenderPipeline Types for useRenderPipeline hook (WebGPU only)
  */
 
-import type { RootState } from '@react-three/fiber/extension'
+import type { CreatorState } from '../src/internal/ScopedStore'
 
 declare global {
   /**
@@ -45,13 +45,18 @@ declare global {
   /**
    * State passed to pipeline callbacks after the active pipeline has been created.
    *
+   * The same state `useNodes` / `useLocalNodes` creators get: `uniforms`, `nodes`, `buffers`,
+   * `gpuStorage` and `textures` are the wrapped views, entries staged earlier in the render
+   * included. Reads through them are tracked, so a read resource that appears, is replaced or is
+   * removed re-runs the callbacks.
+   *
    * `passes.scenePass` is required here: the hook installs the default scene pass before either
    * callback runs, so callbacks can use it without a guard or a cast.
    *
    * `renderer` is narrowed to `WebGPURenderer` and `isLegacy` to `false`: the hook throws under
    * the legacy renderer before either callback can run, so a callback never sees WebGL.
    */
-  type RenderPipelineCallbackState = RootState & {
+  type RenderPipelineCallbackState = CreatorState & {
     renderPipeline: ThreeRenderPipeline
     passes: PassRecord & { scenePass: ScenePassNode }
     renderer: import('three/webgpu').WebGPURenderer
@@ -62,7 +67,7 @@ declare global {
    * What a callback may return to register entries into `state.passes`.
    *
    * `scenePass` is reserved. The hook owns that entry and its lifecycle: it caches the pass it
-   * created, and `rebuild()` / `reset()` dispose that cached pass. A callback overwriting the
+   * created, and `rebuild()`, `reset()` and unmount dispose that cached pass. A callback overwriting the
    * store entry would leave the store pointing at a node the hook never disposes, and the hook
    * disposing a pass nothing references. So returning it is a type error.
    */
@@ -74,15 +79,30 @@ declare global {
   /** Main callback - runs second to configure outputNode, create effect passes */
   type RenderPipelineMainCallback = (state: RenderPipelineCallbackState) => RegisteredPasses | void
 
+  /** Options for a configuring useRenderPipeline call */
+  interface RenderPipelineOptions {
+    /**
+     * Keep the pipeline rendering after the component unmounts, until `reset()` or the canvas
+     * unmounts. Off by default: an owner frees its pipeline and scene pass when it unmounts.
+     */
+    persist?: boolean
+  }
+
   /** The imperative half of useRenderPipeline's return value, present in every state */
   interface UseRenderPipelineActions {
     /** Current passes from state */
     passes: PassRecord
-    /** Clear all passes from state */
+    /** Clear the passes record. From a reader, acts on the pipeline that is rendering. */
     clearPasses: () => void
-    /** Reset RenderPipeline entirely (clears PP + passes) */
+    /**
+     * Free the pipeline and its scene pass now. The previous owner takes over, or the canvas
+     * goes back to plain rendering. From a reader, acts on the pipeline that is rendering.
+     */
     reset: () => void
-    /** Re-run setup/main callbacks with current closure values */
+    /**
+     * Re-run setup/main callbacks with current closure values, against a fresh scene pass. From
+     * a reader, rebuilds the pipeline that is rendering.
+     */
     rebuild: () => void
   }
 
@@ -102,9 +122,9 @@ declare global {
           renderPipeline: ThreeRenderPipeline
         }
       | {
-          /** False until the pipeline has been created */
+          /** False until a configuring call has created the pipeline */
           isReady: false
-          /** Not initialized yet, or torn down by reset() */
+          /** No owner yet, or torn down by reset() or the owner unmounting */
           renderPipeline: null
         }
     )
