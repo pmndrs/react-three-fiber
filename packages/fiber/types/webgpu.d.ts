@@ -41,9 +41,10 @@ export interface WebGPUInternalState extends Omit<InternalState, 'actualRenderer
  * }
  * ```
  */
-export interface WebGPURootState extends Omit<RootState, 'renderer' | 'gl' | 'internal'> {
-  /** @deprecated Use `renderer` instead */
-  gl: WebGPURenderer
+// `gl` is not narrowed: it keeps the base type (WebGLRenderer, for code written against it), so a
+// WebGPURootState stays assignable to RootState and `useFrame((state: RootState) => ...)` still
+// compiles where the hooks are WebGPU-typed. At runtime it aliases `renderer`; use that instead.
+export interface WebGPURootState extends Omit<RootState, 'renderer' | 'internal'> {
   /** The WebGPU renderer instance */
   renderer: WebGPURenderer
   /** Internals with WebGPU renderer */

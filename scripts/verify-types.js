@@ -23,10 +23,11 @@ const distDir = resolve(__dirname, '../packages/fiber/dist')
 const expectedPatterns = {
   'index.d.ts': {
     name: 'Default',
-    // Should reference both three and three/webgpu
-    threeExports: /typeof import\(['"]three['"]\)\s*&\s*typeof import\(['"]three\/webgpu['"]\)/,
-    // Should NOT be left as an unresolved namespace (the merged-namespace bug this check was born for)
-    forbiddenPatterns: [/typeof THREE\b(?!\$)/],
+    // Renders with WebGPU: only three/webgpu
+    threeExports: /typeof import\(['"]three\/webgpu['"]\)/,
+    // Not the plain `three` namespace, and not left as an unresolved namespace (the merged-namespace
+    // bug this check was born for)
+    forbiddenPatterns: [/typeof THREE\b(?!\$)/, /typeof import\(['"]three['"]\)/],
   },
   'legacy.d.ts': {
     name: 'Legacy',
