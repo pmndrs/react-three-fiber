@@ -382,7 +382,7 @@ describe('createPortal', () => {
     }
   })
 
-  // Regression for the second Portal leak reported on #3760: the subscription to the
+  // Regression for #3676: the subscription to the
   // parent (previous) root store must be torn down when the portal unmounts. It lives in
   // a layout effect that returns its unsubscribe; if that subscription is ever moved back
   // into the useMemo (where the unsubscribe is discarded), every portal mount would pin
@@ -406,24 +406,64 @@ describe('createPortal', () => {
       }
     })
 
-    const baseline = live.size
+    try {
+      const baseline = live.size
 
-    // Mount the portal — Portal subscribes to the parent store.
+      // Mount the portal — Portal subscribes to the parent store.
+      await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<mesh />, container)}
+          </>,
+        ),
+      )
+      expect(live.size).toBeGreaterThan(baseline)
+
+      // Unmount the portal — the subscription must be cleaned up, not leaked.
+      await act(async () => root.render(<primitive object={container} />))
+      expect(live.size).toBe(baseline)
+    } finally {
+      subscribeSpy.mockRestore()
+    }
+  })
+
+  // The portal copies the parent state during render but only subscribes in a layout
+  // effect. Parent changes made in between, here by an earlier sibling's layout effect,
+  // must still reach the portal.
+  it('picks up parent state changes made before the portal subscribes', async () => {
+    const container = new THREE.Group()
+    let portalState: RootState = null!
+    let widthAtCommit: number | undefined
+
+    function Resize() {
+      const set = useThree((state) => state.set)
+      React.useLayoutEffect(() => set((state) => ({ size: { ...state.size, width: 123 } })), [set])
+      return null
+    }
+
+    function PortalProbe() {
+      portalState = useThree()
+      return null
+    }
+
+    // Runs after the portal's layout effect, before anything else can resync it
+    function AfterPortal() {
+      React.useLayoutEffect(() => void (widthAtCommit = portalState.get().size.width), [])
+      return null
+    }
+
     await act(async () =>
       root.render(
         <>
-          <primitive object={container} />
-          {createPortal(<mesh />, container)}
+          <Resize />
+          {createPortal(<PortalProbe />, container)}
+          <AfterPortal />
         </>,
       ),
     )
-    expect(live.size).toBeGreaterThan(baseline)
 
-    // Unmount the portal — the subscription must be cleaned up, not leaked.
-    await act(async () => root.render(<primitive object={container} />))
-    expect(live.size).toBe(baseline)
-
-    subscribeSpy.mockRestore()
+    expect(widthAtCommit).toBe(123)
   })
 })
 

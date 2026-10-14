@@ -80,26 +80,33 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
     } as RootState
   })
 
-  const usePortalStore = React.useMemo(() => {
+  const [usePortalStore, initialRootState] = React.useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 
     // Initialize with current state synchronously (required for reconciler.createPortal)
-    const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
-    onMutate(previousRoot.getState())
+    const rootState = previousRoot.getState()
+    store.setState((state) => inject.current(rootState, state))
 
-    return store
+    return [store, rootState] as const
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousRoot, container])
 
-  // Subscribe to previous root-state and copy changes over to the mirrored portal-state
-  // This must be in useEffect to properly clean up on unmount (fixes memory leak)
+  // Subscribe to previous root-state and copy changes over to the mirrored portal-state.
+  // This lives in a layout effect so the unsubscribe runs on unmount; subscribing inside
+  // useMemo leaked every portal into the parent's listener set (#3676).
   // Note: inject is a stable ref from useMutableCallback, so not needed in deps
   useIsomorphicLayoutEffect(() => {
     const onMutate = (prev: RootState) => usePortalStore.setState((state) => inject.current(prev, state))
     const unsubscribe = previousRoot.subscribe(onMutate)
+
+    // Catch up on parent changes made between the useMemo snapshot and this subscription,
+    // e.g. by layout effects of earlier siblings or of the portal's own children
+    const rootState = previousRoot.getState()
+    if (rootState !== initialRootState) onMutate(rootState)
+
     return unsubscribe
-  }, [previousRoot, usePortalStore])
+  }, [previousRoot, usePortalStore, initialRootState])
 
   return (
     // @ts-ignore, reconciler types are not maintained
