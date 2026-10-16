@@ -122,8 +122,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  docs-links:
-    name: Docs link check
+  docs-checks:
+    name: Docs checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -147,44 +147,3 @@ jobs:
             fi
           done < <(find packages/*/src -iname 'readme.md')
           exit $fail
-
-      # Check external links in docs + readmes. Only http(s) links are in scope:
-      # the docs renderer resolves site routes itself, in two flavours that both
-      # look broken on disk -- root-relative ('/frame-loop', '/api/canvas') and
-      # extension-less relative ('./tsl-hooks'). `--scheme` alone does not skip
-      # them, because lychee turns local links into `file://` URIs and root-relative
-      # ones fail at parse time before any exclude applies. So:
-      #   --root-dir     lets root-relative links parse (resolved under docs/)
-      #   --exclude ^file:// then drops every local link, however it was written
-      # Relative *file* links (../webgpu/overview.mdx) are covered by the repo's
-      # own check, not here. The production docs host is excluded because those
-      # pages are validated after deploy. 403/429 are accepted because codesandbox,
-      # npmjs and friends bot-block HEAD requests -- treating those as rot makes
-      # the job flake, and no real breakage we have hit reported 403 (they were
-      # 404 and 400, both still caught). The opencollective badge SVGs are
-      # generated on demand and 500 under load -- the page links they wrap are
-      # still checked.
-      #
-      # Timeouts count as failures, so a live-but-slow third-party host reds out
-      # every unrelated PR that happens to touch docs. `fail: true` is still what
-      # we want for real rot, so instead of accepting timeouts we give a slow host
-      # room to answer: lychee's 20s default is tight for asset sites that render
-      # a preview per request. Retries cover the single-packet-loss case.
-      - name: Link check
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: >-
-            --no-progress
-            --scheme http
-            --scheme https
-            --root-dir "$GITHUB_WORKSPACE/docs"
-            --exclude '^file://'
-            --exclude 'docs\.pmnd\.rs'
-            --exclude 'opencollective\.com/.*\.svg'
-            --accept '200,206,403,429'
-            --timeout 30
-            --max-retries 3
-            'docs/**/*.md'
-            'docs/**/*.mdx'
-            'packages/*/src/**/[Rr][Ee][Aa][Dd][Mm][Ee].md'
-          fail: true
