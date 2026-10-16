@@ -55,8 +55,7 @@ function Shape({ children, colorNode, positionNode, ...props }: ShapeProps) {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ position: [0, 0, 6], fov: 45 }}>
-      <color attach="background" args={['#271442']} />
+    <Canvas background="#271442" camera={{ position: [0, 0, 6], fov: 45 }}>
       <Scene />
     </Canvas>
   )

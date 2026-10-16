@@ -18,7 +18,7 @@ export default function App() {
   }, [])
 
   return (
-    <Canvas renderer>
+    <Canvas>
       <Cube position={[-0.5, 0, 0]} color="hotpink" />
       {createPortal(
         <group>

@@ -54,7 +54,6 @@ export default function WebGPURendererRelease() {
       {mounted && (
         <Canvas
           key={mountId}
-          renderer
           camera={{ position: [0, 0, 4] }}
           onCreated={({ renderer }) => {
             const id = mountId

@@ -57,7 +57,7 @@ export default function WebGPUPrimaryOnly() {
       {/* `primary` is the trigger: it registers this canvas as a primary and gives it a canvas
           target. An id alone no longer does. `renderer` selects WebGPU: the examples app compiles
           the /webgpu entry with both build flags on, where an absent renderer prop still means WebGL. */}
-      <Canvas id="primary-only" primary renderer dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
+      <Canvas id="primary-only" primary dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 4, 5]} intensity={2} />
         <SpinningBox />

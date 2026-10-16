@@ -71,7 +71,7 @@ export default function App() {
   const [active, setActive] = useState('A')
 
   return (
-    <Canvas renderer camera={{ position: [4, 3, 6], fov: 50 }}>
+    <Canvas camera={{ position: [4, 3, 6], fov: 50 }}>
       <ambientLight intensity={Math.PI} />
 
       <Environment preset="apartment" />

@@ -80,7 +80,8 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
   const mixerRef = useRef<THREE.AnimationMixer | null>(cachedModel?.mixer ?? null)
   const renderer = useThree((s) => s.renderer)
 
-  // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility)
+  // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility). Loading in an
+  // effect rather than useLoader lets the model survive hot updates through cachedModel.
   useEffect(() => {
     // If we have a cached model from HMR, use it
     if (cachedModel) {

@@ -203,7 +203,7 @@ export default function useFrameControls() {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <Canvas renderer camera={{ position: [0, 0, 8], fov: 50 }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
         <DemoScene onControlsReady={setSphereControls} />
         <CameraControls />
       </Canvas>

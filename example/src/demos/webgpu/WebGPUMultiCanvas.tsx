@@ -107,8 +107,7 @@ export default function WebGPUMultiCanvas() {
           gridRow: '1 / 3',
           overflow: 'hidden',
         }}>
-        <Canvas id="main" primary camera={{ position: [0, 0, 4], fov: 45 }}>
-          <color attach="background" args={['#211813']} />
+        <Canvas background="#211813" id="main" primary camera={{ position: [0, 0, 4], fov: 45 }}>
           <ambientLight intensity={0.7} />
           <directionalLight position={[5, 5, 5]} intensity={2} />
           <RotatingBox />
@@ -135,8 +134,7 @@ export default function WebGPUMultiCanvas() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <Canvas camera={{ position: [0, 0, 4] }}>
-          <color attach="background" args={['#241522']} />
+        <Canvas background="#241522" camera={{ position: [0, 0, 4] }}>
           <ambientLight intensity={0.7} />
           <directionalLight position={[-5, 5, 5]} intensity={2} />
           <RotatingSphere />
@@ -145,8 +143,7 @@ export default function WebGPUMultiCanvas() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <Canvas scheduler={{ fps: 30 }} camera={{ position: [0, 0, 4] }}>
-          <color attach="background" args={['#102224']} />
+        <Canvas background="#102224" scheduler={{ fps: 30 }} camera={{ position: [0, 0, 4] }}>
           <ambientLight intensity={0.7} />
           <directionalLight position={[0, 5, -5]} intensity={2} />
           <RotatingTorus />

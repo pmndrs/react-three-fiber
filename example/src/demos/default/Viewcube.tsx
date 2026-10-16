@@ -21,15 +21,18 @@ function Viewcube() {
   const [hover, setHover] = useState<number | null>(null)
   const matrix = new THREE.Matrix4()
 
-  useFrame(() => {
-    matrix.copy(defaultCamera.matrix).invert()
-    ref.current.quaternion.setFromRotationMatrix(matrix)
-    renderer.autoClear = true
-    renderer.render(defaultScene, defaultCamera)
-    renderer.autoClear = false
-    renderer.clearDepth()
-    renderer.render(scene, camera)
-  }, 1)
+  useFrame(
+    () => {
+      matrix.copy(defaultCamera.matrix).invert()
+      ref.current.quaternion.setFromRotationMatrix(matrix)
+      renderer.autoClear = true
+      renderer.render(defaultScene, defaultCamera)
+      renderer.autoClear = false
+      renderer.clearDepth()
+      renderer.render(scene, camera)
+    },
+    { phase: 'render' },
+  )
 
   return (
     <>
@@ -39,7 +42,10 @@ function Viewcube() {
             ref={ref}
             position={[size.width / 2 - 120, size.height / 2 - 120, 0]}
             onPointerOut={(e) => setHover(null)}
-            onPointerMove={(e) => setHover(Math.floor((e.faceIndex || 0) / 2))}>
+            onPointerMove={(e) => {
+              const face = Math.floor((e.faceIndex || 0) / 2)
+              if (face !== hover) setHover(face)
+            }}>
             {[...Array(6)].map((_, index) => (
               <meshLambertMaterial
                 attach={`material-${index}`}
@@ -61,7 +67,7 @@ function Viewcube() {
 
 export default function App() {
   return (
-    <Canvas renderer>
+    <Canvas>
       <mesh>
         <torusGeometry args={[1, 0.5, 32, 100]} />
         <meshNormalMaterial />

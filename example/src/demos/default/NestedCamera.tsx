@@ -117,8 +117,7 @@ export default function App() {
   const curve = useMemo(() => createFigure8Curve(3.5), [])
 
   return (
-    <Canvas camera={{ fov: 60, near: 0.1, far: 50 }} renderer>
-      <color attach="background" args={['#eeeeec']} />
+    <Canvas background="#eeeeec" camera={{ fov: 60, near: 0.1, far: 50 }}>
       <Track curve={curve} />
       <Objects curve={curve} />
       <CameraRig curve={curve} />
