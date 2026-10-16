@@ -124,13 +124,15 @@ function Foo() {
 ```
 
 > [!NOTE]
-> There is no `state.clock` in v10. Timing comes through the frame state instead: `state.delta` (seconds since last frame), `state.elapsed` (seconds since the first frame), `state.time` (the RAF timestamp), and `state.frame` (frame count). For example, `useFrame((state) => (mesh.rotation.y = state.elapsed))`.
+> There is no `state.clock` in v10. Timing comes through the frame state instead: `state.delta` (seconds since last frame), `state.elapsed` (seconds since the first frame), `state.time` (the RAF timestamp), `state.frame` (frame count), and `state.overstep` (how far, in `[0, 1)`, the loop is into the next fixed physics step). For example, `useFrame((state) => (mesh.rotation.y = state.elapsed))`.
 
 > [!CAUTION]
 > Be careful about what you do inside useFrame! You should never setState in there! Your calculations should be slim and
 > you should mind all the commonly known pitfalls when dealing with loops in general, like re-use of variables, etc.
 
 `useFrame` accepts an options object for phase placement, ordering, fps throttling, and pause/resume — and the priority/render-takeover behavior below is part of a larger scheduler. See [Frame Loop & Scheduler](../frame-loop) for the full API.
+
+Jobs in the `physics` phase run on a fixed 1/60 s step rather than once per frame: `useFrame((_, delta) => world.step(delta), { phase: 'physics' })` is called zero or more times a frame, always with `delta` equal to the step. See [Fixed timestep and interpolation](../frame-loop#fixed-timestep-and-interpolation).
 
 ### Taking over the render-loop
 
@@ -271,6 +273,24 @@ function Material() {
 ```
 
 The optional second argument accepts `{ onLoad, cache }` or an `onLoad` callback. `cache` defaults to `true`, enrolling the textures in the registry for access through `useTextures`; pass `{ cache: false }` to skip enrollment. See [Loading Textures](../tutorials/loading-textures) for examples and registry lifetime details.
+
+## `useEnvironment`
+
+Loads an environment map with Suspense and returns a texture ready for `scene.environment` or `scene.background`, with its mapping and color space already set. It is what `<Environment>` and the Canvas [`background`](./canvas#canvas-background) prop use under the hood.
+
+```jsx
+import { useEnvironment } from '@react-three/fiber'
+
+function Lighting() {
+  const texture = useEnvironment({ files: '/studio.hdr' }) // or { preset: 'sunset' }
+  return <primitive attach="environment" object={texture} />
+}
+```
+
+Options: `files`, `path`, `preset` (one of `apartment`, `city`, `dawn`, `forest`, `lobby`, `night`, `park`, `studio`, `sunset`, `warehouse`), `colorSpace`, and `extensions(loader)` to configure the loader. `files` is a single `.hdr`, `.exr` or Ultra HDR `.jpg`/`.jpeg` (decoded by three's `UltraHDRLoader`), or an array of six cube faces (`.hdr` faces load as an HDR cubemap). Each decoder is downloaded only when a file needs it. `useEnvironment.preload(options)` and `useEnvironment.clear({ files, preset })` warm and evict the cache.
+
+> [!NOTE]
+> The split gain map format (`['sdr.webp', 'gainmap.webp', 'metadata.json']`) is no longer supported. Use a single-file Ultra HDR `.jpg`, or drei's `<Environment>` if you need the split format.
 
 ## `useGraph`
 

@@ -37,7 +37,16 @@ Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new 
 
 #### Does it support WebGPU?
 
-Yes. With minor changes in v9 and significant work in v10 WebGPU support is first class. We support all ThreeJS WebGPU features/Nodes and expand it with our own hooks and utilities.
+Yes. In v10 it is the default: `<Canvas>` from `@react-three/fiber` renders with three's `WebGPURenderer`, which falls back to a WebGL2 backend where the browser has no WebGPU, and the hooks are typed for it. Node materials and TSL work out of the box, with our own hooks in [`@react-three/tsl`](https://github.com/pmndrs/react-three-fiber/tree/v10/packages/tsl). Scenes that need `WebGLRenderer` (GLSL `ShaderMaterial`s, `onBeforeCompile`, `postprocessing`) import from `@react-three/fiber/legacy`.
+
+#### Upgrading to v10?
+
+v10 is in alpha (`npm install @react-three/fiber@alpha`). Read the [migration guide](https://r3f.docs.pmnd.rs/next/migration/v10) and the [list of breaking changes](https://github.com/pmndrs/react-three-fiber/blob/v10/BREAKING-CHANGES.md). The short version:
+
+- `@react-three/fiber` renders with WebGPU; WebGL is `@react-three/fiber/legacy`, chosen by the import.
+- `useThree`, `useFrame` and `onCreated` are typed for the import's renderer, so `state.renderer.compute(...)` needs no cast. Libraries that run on both renderers type against `@react-three/fiber/extension`.
+- `state.gl` is `state.renderer` (deprecated), `state.clock` is gone (`state.elapsed`, `state.delta`), and `shadows` and the color props moved into `renderer={{ ... }}` / `gl={{ ... }}`.
+- The TSL hooks live in `@react-three/tsl`; the `physics` frame phase runs on a fixed timestep.
 
 ### What does it look like?
 
