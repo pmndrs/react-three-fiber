@@ -17,7 +17,7 @@ three, so the renderer is a lazy chunk and libraries add none. The root and Canv
 hardened (teardown at React's commit, renderer ownership and disposal, `<Activity>`, `root.ready`),
 and shader-shaping material props set `needsUpdate` for you. Start with the
 [migration guide](./docs/migration/v10.mdx): GLSL scenes and WebGL-only libraries need `/legacy`.
-Every breaking change since v9 is listed in [BREAKING-CHANGES.md](./BREAKING-CHANGES.md).
+Every breaking change since v9 is listed in [v10 Breaking Changes](./docs/migration/breaking-changes.mdx).
 
 ### Breaking Changes
 
@@ -84,8 +84,8 @@ Every breaking change since v9 is listed in [BREAKING-CHANGES.md](./BREAKING-CHA
   `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline` and the
   `rebuildAll*` helpers. They are no longer exported from `@react-three/fiber/webgpu`, and
   `@react-three/test-renderer/webgpu` no longer re-exports them. Install `@react-three/tsl` and
-  change the import; the API is the same. See the
-  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved).
+  change the import. The API is the same except `useRenderPipeline`'s ownership (below). See the
+  [migration guide](./docs/migration/v10.mdx#tsl-hooks-moved-to-react-threetsl).
 - `state.uniforms`, `state.nodes`, `state.buffers`, `state.gpuStorage`, `state.renderPipeline` and
   `state.passes` are added to `RootState` by `@react-three/tsl` (its root extension sets them up and
   its types augment `RootState` on the default, `/webgpu` and `/extension` entries). They still read
@@ -112,17 +112,6 @@ Every breaking change since v9 is listed in [BREAKING-CHANGES.md](./BREAKING-CHA
   `getScheduler().setPhaseTimestep('physics', undefined)`. See
   [Frame Loop](./docs/frame-loop.mdx)
   ([#4009](https://github.com/pmndrs/react-three-fiber/pull/4009)).
-
-### Deprecations
-
-- `@react-three/fiber/webgpu` and `@react-three/test-renderer/webgpu` are deprecated and will be
-  removed in the first v10 beta. With WebGPU the default, `/webgpu` is the same renderer as
-  `@react-three/fiber`, imported statically and typed against `WebGPURenderer`. Import from
-  `@react-three/fiber` (and `@react-three/test-renderer`) instead, and declare
-  `interface Register { renderer: 'webgpu' }` for the narrowed types. Both entries keep working
-  through the alphas; their exports are marked `@deprecated`, with no runtime notice
-  ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
-
 - `useRenderPipeline` (`@react-three/tsl`): the component that configures the pipeline owns it.
   Unmounting it frees its pipeline and scene pass, and the canvas renders without post-processing
   again (before, the pipeline kept rendering until `reset()`, and `reset()` never disposed it). Pass
@@ -139,7 +128,18 @@ Every breaking change since v9 is listed in [BREAKING-CHANGES.md](./BREAKING-CHA
   `useNodes` creators (wrapped `uniforms`, `nodes`, ..., staged entries included) and their reads are
   tracked as in `useLocalNodes`: a read resource that appears, is replaced or is removed re-runs them
   on the same scene pass. Callbacks that read a uniform their parent registers from their state no
-  longer bake `null` into the graph.
+  longer bake `null` into the graph
+  ([#4029](https://github.com/pmndrs/react-three-fiber/pull/4029)).
+
+### Deprecations
+
+- `@react-three/fiber/webgpu` and `@react-three/test-renderer/webgpu` are deprecated and will be
+  removed in the first v10 beta. With WebGPU the default, `/webgpu` is the same renderer as
+  `@react-three/fiber`, imported statically and typed against `WebGPURenderer`. Import from
+  `@react-three/fiber` (and `@react-three/test-renderer`) instead; its hooks are already typed for
+  WebGPU, with nothing to register. Both entries keep working
+  through the alphas; their exports are marked `@deprecated`, with no runtime notice
+  ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
 
 ### Features
 

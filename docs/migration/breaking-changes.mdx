@@ -1,11 +1,25 @@
-# Breaking changes in v10
+---
+title: 'v10 Breaking Changes'
+description: Every change that can break an app or library moving from v9 to v10, and what to do
+nav: 33
+---
+
+# v10 Breaking Changes
 
 Everything that can break an app or library moving from `@react-three/fiber` v9 to v10, in one
-list. Each entry says what to do; the [migration guide](./docs/migration/v10.mdx) has the detail
-and examples, and [`CHANGELOG-ALPHA.md`](./CHANGELOG-ALPHA.md) has the history per alpha.
+list. Each entry says what to do; the [migration guide](/migration/v10) has the detail and
+examples, and [`CHANGELOG-ALPHA.md`](https://github.com/pmndrs/react-three-fiber/blob/v10/CHANGELOG-ALPHA.md)
+has the history per alpha.
 
-Most of these fail loudly: a prop that moved throws an error naming its new place. The ones marked
-**silent** change behaviour or types without an error, so check for them.
+Many of these throw an error that names the fix. The ones marked **silent** change behaviour or
+types without an error, so check for them.
+
+> [!TIP]
+> `@react-three/eslint-plugin`'s `migration` config finds most of these in your code and fixes many
+> of them with `--fix`: the `gl` and `clock` reads, numeric `useFrame` priorities, removed Canvas
+> props and imports, `onUpdate` and `<color attach="background">`. Add `configs.migration` to your
+> `eslint.config.js` (eslintrc: `plugin:@react-three/legacy-migration`) while you upgrade; see the
+> [plugin readme](https://github.com/pmndrs/react-three-fiber/tree/v10/packages/eslint-plugin#migration).
 
 ## Renderer and entries
 
@@ -17,14 +31,14 @@ Most of these fail loudly: a prop that moved throws an error naming its new plac
 | **Types:** `useThree`, `useFrame`, `useRenderTarget` and `Canvas`'s `onCreated` from `@react-three/fiber` are typed for `WebGPURenderer`, and its JSX map is `three/webgpu`.                                    | Nothing for most apps (WebGPU members need no cast now). Code typed against the WebGL renderer imports from `/legacy`. Libraries that run on both type against `@react-three/fiber/extension`.                         | alpha.6 |
 | `@react-three/fiber/webgpu` and `@react-three/test-renderer/webgpu` are deprecated, removed in the first beta.                                                                                                  | Import from `@react-three/fiber` and `@react-three/test-renderer`.                                                                                                                                                     | alpha.6 |
 | `state.gl` is deprecated. On a WebGPU canvas it aliases the `WebGPURenderer`, with a one-time notice.                                                                                                           | Use `state.renderer`. Code calling WebGL-only APIs on `gl` needs `/legacy`.                                                                                                                                            | alpha.1 |
-| React Native moved to its own package.                                                                                                                                                                          | `@react-three/fiber/native` → `@react-three/native`.                                                                                                                                                                   | alpha.1 |
+| React Native moved to its own package.                                                                                                                                                                          | `@react-three/fiber/native` → `@react-three/native` ([pmndrs/native](https://github.com/pmndrs/native), not on npm yet; stay on v9 until it is).                                                                       | alpha.1 |
 
 ## Dependencies
 
 | Change                                               | What to do                                    | Since   |
 | ---------------------------------------------------- | --------------------------------------------- | ------- |
 | `three` peer is `>=0.185.0`.                         | Upgrade three (r181–r184 cannot install v10). | alpha.3 |
-| `react` / `react-dom` peer is `>=19.0 <19.4`.        | React 19.0–19.3.                              | alpha.3 |
+| `react` / `react-dom` peer is `>=19.0 <19.4`.        | React 19.0–19.3 (alpha.3 to alpha.5: `<19.3`). | alpha.3 |
 | `@react-three/drei` has no release for fiber 10 yet. | Expect peer warnings during the alpha.        | —       |
 
 ## Canvas props
@@ -32,8 +46,8 @@ Most of these fail loudly: a prop that moved throws an error naming its new plac
 | Change                                                                                                      | What to do                                                                                    | Since   |
 | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- |
 | `shadows` moved into the renderer settings; the Canvas prop throws.                                         | `renderer={{ shadows }}` (WebGPU) or `gl={{ shadows }}` (`/legacy`).                          | alpha.6 |
-| `legacy`, `linear`, `flat`, `colorSpace` and `toneMapping` Canvas props are removed.                        | Pass `outputColorSpace` / `toneMapping` in `renderer` or `gl`. Color management is always on. | alpha.3 |
-| `textureColorSpace` is not a Canvas prop.                                                                   | Put it in the `renderer` / `gl` bag.                                                          | alpha.3 |
+| **silent:** `legacy`, `linear`, `flat`, `colorSpace` and `toneMapping` Canvas props are removed and ignored (TypeScript reports them). | Pass `outputColorSpace` / `toneMapping` in `renderer` or `gl`. Color management is always on. | alpha.3 |
+| **silent:** `textureColorSpace` is not a Canvas prop and is ignored there.                                  | Put it in the `renderer` / `gl` bag.                                                          | alpha.3 |
 | `onUpdate` is removed.                                                                                      | An effect keyed on the props, `useFrame`, or a ref callback.                                  | alpha.6 |
 | **silent:** the default shadow type is `PCFShadowMap` (three made it soft; `'soft'` is a deprecated alias). | Nothing, unless you relied on `PCFSoftShadowMap` by name.                                     | alpha.3 |
 | `<color attach="background">` is deprecated.                                                                | The `background` Canvas prop.                                                                 | alpha.3 |
@@ -74,6 +88,13 @@ On top of the above, alpha users also meet these changes to APIs that only exist
   `useBuffers`, `useGPUStorage`, `useRenderPipeline`, `rebuildAll*`); the standalone utilities
   (`removeUniforms(set, …)`, `clearScope`, `clearRootUniforms`, `removeNodes(set, …)`, `clearNodeScope`,
   `clearRootNodes`) are removed. _alpha.6_
+- **`useRenderPipeline` belongs to the component that configures it.** Unmounting that component
+  frees the pipeline and its scene pass, and the canvas renders without post-processing again.
+  Pass `{ persist: true }` as the third argument to keep it rendering after unmount. A call without
+  callbacks only reads and no longer creates a pipeline. _alpha.6_
+- **Unregistered TSL reads are typed `LooseUniformNode` / `LooseNode`**, so they work in TSL
+  without casts. Writing a concrete node straight into `state.uniforms` or `state.nodes` with
+  `setState` (instead of through the hooks) now needs a cast. _alpha.6_
 - **`useLocalNodes` with no dependency array re-runs every render**; pass `[]` for the old memoised
   behaviour. _alpha.6_
 - **Multi-canvas is configured on the Canvas.** `renderer={{ primaryCanvas }}` and

@@ -22,6 +22,18 @@
   creator reads values from the component, it names them and points to a uniform first; otherwise
   it suggests `[]`.
 
+- New `migration` config (`configs.migration`, eslintrc `plugin:@react-three/legacy-migration`) for
+  upgrading from v9, most of it autofixable: `no-deprecated-gl`, `no-frame-clock`,
+  `no-numeric-frame-priority`, `no-removed-canvas-props`, `no-onupdate-prop`, `no-removed-imports`,
+  `no-deprecated-loop-globals` and `prefer-canvas-background`.
+
+- New rules in `recommended`: `no-unstable-args`, `no-inline-node-props`,
+  `no-deferred-resource-read`, `no-creator-side-effects`, `no-invalid-dispose`, `no-nested-fromref`
+  and `canvas-entry-compat`. `no-fast-state` also checks `onPointerMove` and `onWheel` handlers, and
+  `prefer-local-nodes-deps` checks creators passed by reference.
+
+- Rule doc links point at the `v10` branch, where the rule docs live until v10 merges to `master`.
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes

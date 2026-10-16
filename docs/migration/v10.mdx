@@ -25,6 +25,8 @@ A few other things break, and most of them fail loudly rather than silently: `<C
 
 ## Quick Checklist
 
+`@react-three/eslint-plugin`'s `migration` config finds most of these in your code, and `--fix` rewrites many of them: add `configs.migration` to your `eslint.config.js` while you upgrade (see the [plugin readme](https://github.com/pmndrs/react-three-fiber/tree/v10/packages/eslint-plugin#migration)).
+
 - [ ] Decide on the renderer: keep `@react-three/fiber` (WebGPU), or import `Canvas` from `@react-three/fiber/legacy` (WebGL) for GLSL and WebGL-only libraries (see [`@react-three/fiber` Renders With WebGPU](#react-threefiber-renders-with-webgpu))
 - [ ] Upgrade `three` to `>=0.185.0` (see [Dependency ranges moved](#dependency-ranges-moved))
 - [ ] Replace `state.gl` with `state.renderer`
@@ -38,8 +40,9 @@ Upgrading from an earlier v10 alpha? Also:
 
 - [ ] Import the TSL hooks from `@react-three/tsl` (see [TSL hooks moved](#tsl-hooks-moved-to-react-threetsl))
 - [ ] Replace `renderer={{ primaryCanvas }}` and `renderer={{ scheduler }}` with `<Canvas primary>` and `<Canvas scheduler>` (see [Multi-Canvas Props](#multi-canvas-props-alpha-upgraders))
+- [ ] Pass `{ persist: true }` to `useRenderPipeline` where post-processing should outlive the component that set it up (see [TSL hooks moved](#tsl-hooks-moved-to-react-threetsl))
 - [ ] Drop the `renderer` boolean: `<Canvas renderer>` is now the same as `<Canvas>`. An app on `@react-three/fiber` without it, which was on WebGL, is now on WebGPU
-- [ ] Move imports from the deprecated `@react-three/fiber/webgpu` (and `@react-three/test-renderer/webgpu`) to `@react-three/fiber` (and `@react-three/test-renderer`); register `renderer: 'webgpu'` for narrowed types (see [Typing the renderer](../API/typescript#typing-the-renderer)). They are removed in the first beta
+- [ ] Move imports from the deprecated `@react-three/fiber/webgpu` (and `@react-three/test-renderer/webgpu`) to `@react-three/fiber` (and `@react-three/test-renderer`); its hooks are already typed for WebGPU (see [Hooks Typed for WebGPU](#hooks-typed-for-webgpu)). They are removed in the first beta
 
 WebGPU needs no manual init. Pass renderer parameters or a pre-created renderer instance through `renderer`, and R3F handles initialization:
 
@@ -55,7 +58,7 @@ WebGPU needs no manual init. Pass renderer parameters or a pre-created renderer 
 
 ## Breaking Changes at a Glance
 
-Every change below is covered in its own section. The same list, with the alpha each one landed in, is kept at the root of the repository as `BREAKING-CHANGES.md`. **Silent** changes alter behaviour or types without an error, so check for those.
+Every change below is covered in its own section. The same list, with the alpha each one landed in, is on its own page: [v10 Breaking Changes](/migration/breaking-changes). **Silent** changes alter behaviour or types without an error, so check for those.
 
 | Change | What to do |
 | --- | --- |
@@ -540,10 +543,10 @@ function WobblyMesh() {
 
 #### TSL hooks moved to `@react-three/tsl`
 
-The TSL resource hooks live in their own package. Install it and change the import; nothing else changes. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
+The TSL resource hooks live in their own package. Install it and change the import; apart from `useRenderPipeline` (below), they work as before. `state.uniforms`, `state.nodes`, `state.buffers` and `state.gpuStorage` stay on `RootState` (the package adds them), so `useFrame(({ uniforms }) => ...)` and `useThree((s) => s.uniforms)` keep working.
 
 ```bash
-npm install @react-three/tsl
+npm install @react-three/tsl@alpha
 ```
 
 ```tsx
@@ -551,11 +554,13 @@ npm install @react-three/tsl
 import { Canvas, useUniforms, useNodes } from '@react-three/fiber/webgpu'
 
 // After
-import { Canvas } from '@react-three/fiber/webgpu'
+import { Canvas } from '@react-three/fiber'
 import { useUniforms, useNodes } from '@react-three/tsl'
 ```
 
 This covers `useUniforms`, `useUniform`, `useNodes`, `useLocalNodes`, `useBuffers`, `useGPUStorage`, `useRenderPipeline`, and the `rebuildAll*` helpers. In tests, import them from `@react-three/tsl` too: `@react-three/test-renderer/webgpu` no longer re-exports them.
+
+`useRenderPipeline` now belongs to the component that configures it. When that component unmounts, its pipeline and scene pass are freed and the canvas renders without post-processing again; before, the pipeline kept rendering until `reset()`. Pass `{ persist: true }` as the third argument to keep the old behaviour. A call without callbacks only reads the pipeline and no longer creates one. See [Render Pipeline](/webgpu/render-pipeline).
 
 #### Deprecated standalone TSL utilities removed
 

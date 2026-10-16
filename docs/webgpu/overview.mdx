@@ -11,7 +11,7 @@ react-three-fiber v10 brings first-class WebGPU support. The WebGPU hooks provid
 The TSL hooks ship in their own package, `@react-three/tsl`, next to `@react-three/fiber`:
 
 ```bash
-npm install @react-three/fiber @react-three/tsl three
+npm install @react-three/fiber@alpha @react-three/tsl@alpha three
 ```
 
 ## Enabling WebGPU
@@ -64,7 +64,7 @@ import { useUniforms } from '@react-three/tsl'
 import { Canvas, useFrame } from '@react-three/fiber/legacy'
 ```
 
-`@react-three/fiber/webgpu` was the WebGPU entry while the default import rendered with WebGL. It stays for the v10 alphas; import from `@react-three/fiber` instead, and register the renderer type for narrowed state (see [Typing the renderer](../API/typescript#typing-the-renderer)).
+`@react-three/fiber/webgpu` was the WebGPU entry while the default import rendered with WebGL. It stays for the v10 alphas; import from `@react-three/fiber` instead, whose hooks are typed for WebGPU with nothing to register (see [Typing the renderer](../API/typescript#typing-the-renderer)).
 
 `WebGPURenderer` cannot compile GLSL. A `ShaderMaterial` or `RawShaderMaterial` on a WebGPU canvas renders as a blank default material, and R3F warns once in development, pointing here. Port the shader to a node material (TSL), or import from `/legacy`. Passing the WebGL `gl` prop to a `@react-three/fiber` Canvas throws for the same reason.
 

@@ -3,7 +3,7 @@
 TSL resource hooks for [react-three-fiber](https://github.com/pmndrs/react-three-fiber) on WebGPU: shared uniforms, nodes, buffers, GPU storage and render pipelines.
 
 ```bash
-npm install @react-three/tsl
+npm install @react-three/tsl@alpha
 ```
 
 ```tsx
