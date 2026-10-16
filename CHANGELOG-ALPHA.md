@@ -465,6 +465,9 @@ UniformNode<'vec3', Vector3>`). Schemas (`useUniforms<{ blur: number }>('fx')`,
   instead of throttling it with `fps`.
 - The `legacy` demos import from `@react-three/fiber/legacy`; they relied on the default import
   rendering with WebGL ([#4013](https://github.com/pmndrs/react-three-fiber/pull/4013)).
+- The demos pass the eslint-plugin `migration` config: no boolean `<Canvas renderer>`, no
+  `@react-three/fiber/webgpu` imports, and `<Canvas background>` instead of
+  `<color attach="background">`.
 
 ### eslint-plugin
 

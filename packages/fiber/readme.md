@@ -41,7 +41,7 @@ Yes. In v10 it is the default: `<Canvas>` from `@react-three/fiber` renders with
 
 #### Upgrading to v10?
 
-v10 is in alpha (`npm install @react-three/fiber@alpha`). Read the [migration guide](https://r3f.docs.pmnd.rs/next/migration/v10) and the [list of breaking changes](https://github.com/pmndrs/react-three-fiber/blob/v10/BREAKING-CHANGES.md). The short version:
+v10 is in alpha (`npm install @react-three/fiber@alpha`). Read the [migration guide](https://r3f.docs.pmnd.rs/next/migration/v10) and the [list of breaking changes](https://r3f.docs.pmnd.rs/next/migration/breaking-changes). The short version:
 
 - `@react-three/fiber` renders with WebGPU; WebGL is `@react-three/fiber/legacy`, chosen by the import.
 - `useThree`, `useFrame` and `onCreated` are typed for the import's renderer, so `state.renderer.compute(...)` needs no cast. Libraries that run on both renderers type against `@react-three/fiber/extension`.
