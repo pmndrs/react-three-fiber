@@ -25,7 +25,6 @@ pnpm examples
 - **[Development Guide](./DEVELOPMENT.md)** — Workflow, project structure, and technical documentation index.
 - **[Build](./BUILD.md)** — Entry points, the shared core, renderer supports, and how the bundles are produced.
 - **[Testing](./TESTING.md)** — Test layout, the WebGPU mocks, and what runs in CI.
-- **[Native migration](./NATIVE-MIGRATION.md)** — The `@react-three/fiber/native` → `@react-three/native` split.
 
 ## Where design rationale lives
 

@@ -1,0 +1,167 @@
+# AGENTS.md
+
+Guidance for coding agents (Claude Code, Codex, Cursor, Copilot, ...) working in this repository. `CLAUDE.md` imports this file, so there is one copy to keep current. Human contributors start at [docs/development/README.md](./docs/development/README.md).
+
+## Overview
+
+react-three-fiber (R3F) is a React renderer for Three.js that enables declarative 3D graphics with React components. This is a monorepo using pnpm workspaces.
+
+**Branch**: `v10` is the v10 prerelease line (React 19, WebGPU by default); `master` is v9. The version is in `packages/fiber/package.json`.
+
+## Essential Commands
+
+```bash
+# Development
+pnpm install          # Install dependencies (runs postinstall: stub + patch-react-reconciler)
+pnpm dev              # Generate stubs (src → dist links for immediate change reflection)
+pnpm examples         # Run Vite example app for visual testing
+pnpm test:watch       # Watch mode testing
+pnpm test:gpu         # Tier-3 tests on a real WebGPU device (Linux: needs mesa-vulkan-drivers)
+
+# Building & Verification
+pnpm build            # Build fiber, tsl, test-renderer and eslint-plugin
+pnpm verify-treeshake # Bundle consumer apps from dist and check which renderer each carries
+pnpm verify-types     # Check the built declarations per entry
+pnpm typecheck        # TypeScript type checking
+
+# Code Quality
+pnpm eslint           # Run ESLint
+pnpm eslint:fix       # Auto-fix linting issues
+pnpm format           # Check Prettier formatting
+pnpm format:fix       # Auto-fix formatting
+
+# Full CI Suite
+pnpm run ci           # build → verify-treeshake → verify-types → typecheck → eslint → dev → test → format
+
+# Single Test File
+pnpm vitest run packages/fiber/tests/hooks.test.tsx
+```
+
+## Architecture
+
+### Entry Points
+
+One core, built once, shared by four entries. Core has **no static import from `three` or `three/webgpu`**: each renderer is described by a support module (`src/support/webgl.ts`, `src/support/webgpu.ts`) that owns its three namespace and the renderer-specific classes, and an entry hands `createRoot`/`Canvas` a provider saying how to load them.
+
+| Entry     | Import Path                    | Renderer                                                                       | Flags                     |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------ | ------------------------- |
+| Default   | `@react-three/fiber`           | WebGPU, support loaded lazily                                                  | LEGACY=false, WEBGPU=true |
+| Legacy    | `@react-three/fiber/legacy`    | WebGL, support imported statically                                             | LEGACY=true, WEBGPU=false |
+| WebGPU    | `@react-three/fiber/webgpu`    | WebGPU, support imported statically. **Deprecated**, removed in the first beta | LEGACY=false, WEBGPU=true |
+| Extension | `@react-three/fiber/extension` | None: hooks, context and the extension registry only                           | n/a                       |
+
+On the root entry the WebGPU support is a dynamic import, so nothing of three is downloaded before a Canvas mounts, and a library importing hooks from the root entry adds no renderer to a `/legacy` app. WebGLRenderer is only on `/legacy`: `gl` on the root entry throws. The root entry and `/webgpu` export `useThree`/`useFrame`/`useRenderTarget`/`Canvas` narrowed to WebGPU types (`src/webgpu/narrowed.tsx`, types only); `/legacy` narrows them to WebGL. `RootState` stays the base type (the renderer union) on every entry, so packages can augment it and `/extension` gives libraries types that hold for both renderers. `/legacy` and `/webgpu` skip the support request. The core still supports a provider offering both renderers (`wantsGL` in `core/renderer.ts`); no entry uses one. The extension entry is the stable surface for packages that build on fiber (`@react-three/tsl`); with one shared core it adds no second copy of anything.
+
+How core reaches three at runtime:
+
+- `state.internal.support` — the loaded support: `kind`, `three` (the namespace, also the JSX constructors for this root), `Renderer`, `RenderTarget`, `CubeRenderTarget`, and on WebGPU `CanvasTarget` + `occlusion`.
+- `getThree()` (`src/core/three.ts`) — three's shared core (`Vector3`, `Scene`, constants, ...), registered by the first support that loads. Both flavours export the same objects for these.
+- JSX names resolve explicit `extend()` registrations first, then `support.three` (`src/core/extend.ts`). No entry calls `extend(THREE)` at import time.
+
+### Package Structure
+
+```
+packages/
+├── fiber/                  # Core @react-three/fiber package
+│   ├── src/
+│   │   ├── index.tsx       # Default entry (WebGPU, loaded lazily)
+│   │   ├── legacy.tsx      # Legacy entry (WebGL only)
+│   │   ├── extension.tsx   # Extension entry (hooks, context, extension registry)
+│   │   ├── web/            # Canvas
+│   │   ├── core/           # Shared reconciler, hooks, events, store
+│   │   ├── webgpu/         # WebGPU-specific code
+│   │   └── support/        # webgl.ts / webgpu.ts: the only modules that import three
+│   ├── types/              # TypeScript definitions
+│   └── tests/              # Vitest tests
+├── tsl/                    # @react-three/tsl - TSL resource hooks (built on fiber/extension)
+├── eslint-plugin/          # @react-three/eslint-plugin
+└── test-renderer/          # @react-three/test-renderer (its /webgpu entry is deprecated too)
+```
+
+### Key Source Files
+
+- **Reconciler**: `packages/fiber/src/core/reconciler.tsx` - React Reconciler → Three.js mapping
+- **Store**: `packages/fiber/src/core/store.ts` - Zustand state (canvas, renderer, scene, camera)
+- **Events**: `packages/fiber/src/core/events.ts` - Pointer events, raycasting, event bubbling
+- **Canvas**: `packages/fiber/src/web/Canvas.tsx` - Top-level Canvas component
+- **Hooks**: `packages/fiber/src/core/hooks/` - useFrame, useThree, useLoader, etc.
+
+### Adding Features
+
+**For all entry points**: Add to `src/core/`, export from `src/core/index.tsx`
+
+**For WebGPU only**: Add to `src/webgpu/`, export from `src/webgpu/index.tsx`. A renderer-specific class core needs goes on the support object (`types/provider.d.ts`, `src/support/*.ts`) and is read from `state.internal.support`.
+
+**TSL resource hooks** (`useUniforms`, `useNodes`, `useRenderPipeline`, ...) live in `packages/tsl`. That package imports fiber only from `@react-three/fiber/extension` (never another entry or fiber's source) and three only from `three/webgpu` / `three/tsl`.
+
+**New THREE.js imports**: In `src/core/`, only `import type`. A class from three's shared core comes from `getThree()`; a renderer-specific one from `state.internal.support`. A three addon (`three/examples/jsm/*`) imports from `three`, so it is loaded with a dynamic import where it is used (see `useEnvironment.tsx`).
+
+### React Reconciler
+
+The react-reconciler package is patched during postinstall (via Vite) and bundled into dist (not externalized). Source is transformed to ESM at `packages/fiber/react-reconciler/`.
+
+## Testing
+
+- **Framework**: Vitest with jsdom environment
+- **Coverage**: v8 provider
+- **Setup**: `packages/fiber/tests/setupTests.ts` (mocks WebGL2, ResizeObserver, PointerEvent)
+- **Real GPU (Tier 3)**: `pnpm test:gpu` runs `vitest.gpu.config.ts` in `vitest-environment-webgpu-node` (Dawn in Node, a headless canvas, no DOM). Tests are `packages/*/tests/gpu/**/*.gpu.test.tsx`, use `createRoot` (never `<Canvas>`) through the helpers in `packages/fiber/tests/gpu/harness.tsx`, and read pixels back. No mocks, no coverage, excluded from `pnpm test`. On Linux without a GPU, install `mesa-vulkan-drivers` (lavapipe) first; macOS needs nothing. Screenshot baselines live in `__screenshots__/`: regenerate with `UPDATE_SCREENSHOTS=1` only for an intended rendering change. CI runs it as its own job; it is not in `pnpm run ci`. See `docs/development/TESTING.md`.
+
+Tests run against source files. `pnpm verify-treeshake` bundles consumer apps from the built `dist` with Vite and esbuild and checks which renderer each carries; `pnpm verify-types` checks the built declarations.
+
+## Code Style
+
+- **Prettier**: No semicolons, single quotes, trailing commas, 120 char width
+- **ESLint**: Flat config (v9), TypeScript-eslint, React hooks rules
+- **Pre-commit**: Husky runs `eslint --fix` on staged files
+
+## Code Patterns
+
+Prefer clean, minimal code patterns:
+
+- **Avoid dead initial assignments**: Don't initialize variables to values that are immediately overwritten in all branches. Use the intended default directly with explicit typing:
+
+  ```tsx
+  // Bad - initial value is never used
+  let result = state.items
+  if (condition1) {
+    result = something
+  } else if (condition2) {
+    result = somethingElse
+  } else {
+    result = {}
+  }
+
+  // Good - default is explicit, unnecessary else removed
+  let result: typeof state.items = {}
+  if (condition1) {
+    result = something
+  } else if (condition2) {
+    result = somethingElse
+  }
+  // else: stays as {} (default)
+  ```
+
+- **Use `typeof` for type inference** when initializing to a different value than the source but needing the same type
+
+## Commits & Releases
+
+- **Conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`
+- **Release**: `pnpm release` (build + publish all packages under the `alpha` dist-tag); `pnpm release:dry` to check first
+- **Changelogs**: `CHANGELOG-ALPHA.md` at the root has the full v10 alpha notes; each package has a short `CHANGELOG.md` that links to it. New entries go under `## Unreleased` in `CHANGELOG-ALPHA.md`, plus the package changelog when the change is user-facing.
+- **Breaking changes** also go on the docs page `docs/migration/breaking-changes.mdx` and, when they need steps, in `docs/migration/v10.mdx`.
+
+## Common Pitfalls
+
+1. **Never import a value from `three` or `three/webgpu` in `src/core/`** - either one would put that renderer into every app's eager bundle. Types are free; values come from `getThree()` or `state.internal.support`
+2. **Run `pnpm dev`** after `pnpm install` if stubs seem stale
+3. **Windows symlinks**: May need Developer Mode enabled for stub generation
+4. **"Multiple instances of Three.js" warning**: Safe to ignore in tests, suppressed in setupTests.ts
+5. **Don't commit working notes**: plans, task lists, audits, session links and gate IDs stay out of the repo. Put the lasting facts in the feature's docs page or a code comment that explains the code, not the session that wrote it.
+
+## Dependencies
+
+- **Peer**: react and react-dom `>=19.0 <19.4`, three `>=0.185.0`
+- **State**: zustand@5
+- **Build**: unbuild with Rollup alias plugin
+- **Runtime**: suspend-react, react-use-measure, its-fine, dequal

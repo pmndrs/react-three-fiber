@@ -1,22 +1,20 @@
 /**
- * @fileoverview HMR rebuild correctness for the TSL resource hooks (C16).
+ * @fileoverview HMR rebuild correctness for the TSL resource hooks.
  *
- * Browser validation C16 found that Vite hot updates corrupt TSL state: the
- * rebuilt scene reuses stale scoped nodes and React reports setState-during-
- * render from the creator hooks. Full audit ("the plan" below):
- * https://app.notion.com/p/3aa0baf6021681829f5ddb5129d40430
- *
- * These tests pin the INTENDED semantics (plan §5) and are written red-first
- * against the defects (plan §3):
+ * Vite hot updates used to corrupt TSL state: the rebuilt scene reused stale
+ * scoped nodes, readers saw empty scopes mid-rebuild (which stripped the
+ * material `*Node` props and left a black scene), and React reported
+ * setState-during-render from the creator hooks. These tests pin the defects:
  *   D1 — creator hooks must not write to the store during render
  *   D2 — `useUniforms` must not mutate store state in place
  *   D3 — cache reuse must not resurrect entries from a previous generation
  *
  * "HMR" here is simulated exactly as the Canvas listener performs it
- * (`web/Canvas.tsx`): `clearHmrCaches(store)` — wipe all four maps and bump
- * `_hmrVersion`. jsdom cannot run Vite, but the store transition is identical,
- * so everything except the vite event plumbing is covered at this tier.
- * The browser protocol in plan §6 covers the rest.
+ * (`web/Canvas.tsx`): `clearHmrCaches(store)` invalidates all four maps and
+ * bumps `_hmrVersion`. jsdom cannot run Vite, but the store transition is
+ * identical, so everything except the Vite event plumbing is covered here.
+ * The hot-update path itself is covered by the TSL demos in a browser
+ * (`docs/webgpu/hmr.mdx`).
  */
 import * as React from 'react'
 import { act } from 'react'
@@ -77,7 +75,7 @@ function renderPhaseViolations() {
   return errorSpy.mock.calls.filter((args: unknown[]) => String(args[0]).includes('Cannot update a component'))
 }
 
-describe('TSL HMR rebuild (C16) — creator + mounted reader', () => {
+describe('TSL HMR rebuild — creator + mounted reader', () => {
   it('T1: never triggers setState-during-render, on mount or across a simulated hot update', async () => {
     const store = makeStore()
     const { Creator, Reader } = makeCreatorReaderPair('sea')
@@ -121,7 +119,7 @@ describe('TSL HMR rebuild (C16) — creator + mounted reader', () => {
     const final = committed.at(-1)!
     expect(Object.keys(final)).toEqual(['tint'])
     // …and once populated, no later COMMIT may observe the scope empty.
-    // (old-complete → new-complete is the only legal transition, plan §5.3)
+    // (old-complete → new-complete is the only legal transition)
     const firstPopulated = committed.findIndex((c) => Object.keys(c).length > 0)
     const emptyAfterPopulated = committed.slice(firstPopulated).filter((c) => Object.keys(c).length === 0)
     expect(emptyAfterPopulated).toEqual([])
@@ -156,7 +154,7 @@ describe('TSL HMR rebuild (C16) — creator + mounted reader', () => {
     await act(async () => clearHmrCaches(store))
 
     // The node the reader received must BE the uniform currently in the store —
-    // not a captured reference to the wiped generation (plan H2/D3).
+    // not a captured reference to the wiped generation (D3).
     const current = (store.getState().uniforms.sea as any).uEmissive
     expect(current).toBeDefined()
     expect(seen.emissive).toBe(current)
@@ -267,7 +265,7 @@ describe('TSL HMR rebuild (C16) — creator + mounted reader', () => {
     expect((store.getState().nodes.sea as any).tint).toBe(oldTint)
 
     // A hot update swaps the module: new creator closure + cache wipe. The
-    // edited creator's output must replace the cached entry (C16's trigger).
+    // edited creator's output must replace the cached entry.
     await act(async () => {
       clearHmrCaches(store)
       rerender(
