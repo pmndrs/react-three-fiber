@@ -20,7 +20,7 @@
  * own settings, and the labels say so. See docs/webgpu/multi-canvas.mdx.
  */
 
-import { Canvas, useFrame, type RootState } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, type RootState } from '@react-three/fiber'
 import { useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three/webgpu'
 

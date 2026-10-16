@@ -747,7 +747,7 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
       )
     })
 
-    expect(ref.error?.message).toMatch(/only available with WebGPU/)
+    expect(ref.error?.message).toMatch(/needs WebGPU/)
     errSpy.mockRestore()
   })
 

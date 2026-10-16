@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 

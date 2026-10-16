@@ -269,14 +269,11 @@ console.log(store.getState())
 |-------------------|---------------------|
 | `@react-three/fiber` | `@react-three/test-renderer` |
 | `@react-three/fiber/legacy` | `@react-three/test-renderer/legacy` |
-| `@react-three/fiber/webgpu` | `@react-three/test-renderer/webgpu` |
+| `@react-three/fiber/webgpu` (deprecated) | `@react-three/test-renderer/webgpu` (deprecated) |
+
+The default entry renders with WebGPU, like `@react-three/fiber`. Tests for a scene that imports `Canvas` from `/legacy` switch entry:
 
 ```diff
-// If using WebGPU with TSL hooks
--import ReactThreeTestRenderer from '@react-three/test-renderer'
-+import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
-
-// If using legacy WebGL-only
 -import ReactThreeTestRenderer from '@react-three/test-renderer'
 +import ReactThreeTestRenderer from '@react-three/test-renderer/legacy'
 ```
@@ -284,7 +281,7 @@ console.log(store.getState())
 The TSL hooks come from `@react-three/tsl`, in tests as in app code:
 
 ```tsx
-import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
+import ReactThreeTestRenderer from '@react-three/test-renderer'
 import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/tsl'
 
 describe('WebGPU Hooks', () => {
@@ -303,4 +300,4 @@ describe('WebGPU Hooks', () => {
 })
 ```
 
-For more details, see the [WebGPU Testing Guide](https://github.com/pmndrs/react-three-fiber/blob/v10/packages/test-renderer/markdown/webgpu-testing.md).
+For more details, see [Testing WebGPU and TSL](/api/testing#testing-webgpu-and-tsl).

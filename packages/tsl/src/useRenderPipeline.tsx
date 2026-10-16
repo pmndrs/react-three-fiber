@@ -197,7 +197,9 @@ export function useRenderPipeline(
   useLayoutEffect(() => {
     // WebGPU only - throw if used with WebGL
     if (isLegacy) {
-      throw new Error('useRenderPipeline is only available with WebGPU renderer. Set renderer prop on Canvas.')
+      throw new Error(
+        'useRenderPipeline needs WebGPU: import Canvas from @react-three/fiber, not @react-three/fiber/legacy.',
+      )
     }
 
     // Readers only subscribe (below)
