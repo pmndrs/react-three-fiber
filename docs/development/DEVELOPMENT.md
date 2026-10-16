@@ -7,7 +7,7 @@ This is the hub for all technical documentation. It covers day-to-day workflow, 
 v10 introduces significant architectural changes:
 
 - **WebGPU by default** — `<Canvas>` on `@react-three/fiber` renders with WebGPURenderer; `/legacy` keeps WebGLRenderer, `/webgpu` loads WebGPU statically
-- **Native Split** — React Native support moved to separate `@react-three/native` package
+- **Native Split** — React Native support moves to the separate `@react-three/native` package ([pmndrs/native](https://github.com/pmndrs/native), not yet on npm)
 - **New Build System** — Unbuild, one build with a shared core; renderer supports loaded on demand
 - **Modern Tooling** — pnpm workspaces and Vitest for testing
 
@@ -79,11 +79,10 @@ packages/fiber/
 
 ## Documentation Index
 
-| Guide                                         | Purpose                                                           |
-| :-------------------------------------------- | :---------------------------------------------------------------- |
-| **[BUILD](./BUILD.md)**                       | Build system architecture, renderer supports, adding entry points |
-| **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting            |
-| **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                  |
+| Guide                       | Purpose                                                           |
+| :-------------------------- | :---------------------------------------------------------------- |
+| **[BUILD](./BUILD.md)**     | Build system architecture, renderer supports, adding entry points |
+| **[TESTING](./TESTING.md)** | Testing strategy, bundle verification, troubleshooting            |
 
 Design rationale is not kept as separate documents — it lives with the feature it explains. See
 [README](./README.md#where-design-rationale-lives).

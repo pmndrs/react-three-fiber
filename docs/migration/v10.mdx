@@ -72,6 +72,9 @@ is verified.
 
 `@react-three/fiber/native` is now **`@react-three/native`**, versioned independently.
 
+> [!WARNING]
+> `@react-three/native` is not on npm yet; its source lives at [pmndrs/native](https://github.com/pmndrs/native). v10 has no `/native` entry, so React Native apps stay on v9 until it is published.
+
 ```diff
 - import { Canvas, useFrame } from '@react-three/fiber/native'
 + import { Canvas, useFrame } from '@react-three/native'

@@ -145,6 +145,9 @@ ReactDOM.render(
 
 React Native support lives in its own package, `@react-three/native` (in v9 and earlier this was the `@react-three/fiber/native` entry point). It uses `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and three.js loaders.
 
+> [!WARNING]
+> `@react-three/native` is not on npm yet. Its source lives at [pmndrs/native](https://github.com/pmndrs/native). Until it is published, React Native apps stay on v9 and import from `@react-three/fiber/native`.
+
 To get started, create an app via `expo` or `react-native`:
 
 ```bash
