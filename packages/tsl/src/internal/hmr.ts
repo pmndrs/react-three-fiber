@@ -10,7 +10,7 @@ import type { RootStore } from '@react-three/fiber/extension'
  * The maps (`nodes`, `uniforms`, `buffers`, `gpuStorage`) are deliberately
  * NOT wiped: a wipe notifies every subscribed reader with an empty scope
  * before the creators have re-run, and the reconciler then strips the
- * corresponding `*Node` material props (the C16 black-scene failure).
+ * corresponding `*Node` material props, leaving a black scene.
  * Invalidation instead makes committed entries invisible to creator reuse
  * while readers keep the previous generation until the rebuilt one lands in
  * a single atomic transition (see `resourceRegistry.ts`).

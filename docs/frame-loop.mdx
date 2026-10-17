@@ -27,11 +27,12 @@ interface FrameState extends RootState {
   delta: number // time since last frame (seconds — THREE.Clock compatible)
   elapsed: number // time since the first frame (seconds)
   frame: number // incrementing frame counter
+  overstep: number // fraction of the next fixed physics step already banked, in [0, 1)
   // ...plus all RootState (gl/renderer, scene, camera, etc.)
 }
 ```
 
-The `delta` passed as the second callback argument is the same value as `state.delta`.
+The `delta` passed as the second callback argument is the same value as `state.delta`. Inside a [fixed-timestep phase](#fixed-timestep-and-interpolation) such as `physics`, `delta` is the phase's timestep and `elapsed` is its simulated time.
 
 ## Ordering Canvas roots
 
@@ -53,14 +54,14 @@ The same options go to `createRoot(canvas).configure({ scheduler })`. A canvas s
 
 Jobs run inside named **phases** that execute in a fixed sequence each frame. The six default phases are:
 
-| Phase     | Purpose                                            |
-| --------- | -------------------------------------------------- |
-| `start`   | Early frame setup / initialization                 |
-| `input`   | Input processing, event handling                   |
-| `physics` | Physics simulation                                 |
-| `update`  | Game logic and animations (**default phase**)      |
-| `render`  | Rendering and custom render passes                 |
-| `finish`  | Cleanup, stats, telemetry                          |
+| Phase     | Purpose                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------ |
+| `start`   | Early frame setup / initialization                                                         |
+| `input`   | Input processing, event handling                                                           |
+| `physics` | Physics simulation on a fixed 1/60 s step (see [below](#fixed-timestep-and-interpolation)) |
+| `update`  | Game logic and animations (**default phase**)                                              |
+| `render`  | Rendering and custom render passes                                                         |
+| `finish`  | Cleanup, stats, telemetry                                                                  |
 
 A `useFrame` callback with no phase runs in `update`:
 
@@ -77,7 +78,7 @@ Organize a game loop by assigning phases:
 
 ```tsx
 useFrame(processInput, { phase: 'input' })
-useFrame(() => world.step(1 / 60), { phase: 'physics' })
+useFrame((_, delta) => world.step(delta), { phase: 'physics' }) // delta is the fixed step, 1 / 60
 useFrame(updateGameState, { phase: 'update' })
 useFrame(renderEffects, { phase: 'render' })
 useFrame(recordStats, { phase: 'finish' })
@@ -98,7 +99,7 @@ useEffect(() => {
 useFrame(aiSystemUpdate, { phase: 'ai' })
 ```
 
-Adding a phase with no position appends it to the end. Duplicate phase names are ignored with a warning. Inspect the current order with the `scheduler.phases` getter and check existence with `scheduler.hasPhase(name)`.
+Adding a phase with no position appends it to the end. Duplicate phase names are ignored with a warning. Inspect the current order with the `scheduler.phases` getter and check existence with `scheduler.hasPhase(name)`. Pass `timestep` (and optionally `maxSubsteps`) to make the new phase a [fixed-timestep phase](#fixed-timestep-and-interpolation) like `physics`.
 
 ## Ordering jobs
 
@@ -155,6 +156,49 @@ useFrame(updateUI, { fps: 30, drop: true })
 
 // Simulation: keep interval timing consistent (still one call per frame)
 useFrame(physicsStep, { fps: 60, drop: false })
+```
+
+`fps` throttles by wall clock, so it has no meaning in a [fixed-timestep phase](#fixed-timestep-and-interpolation): a job in `physics` with `fps` set logs a warning and runs every step.
+
+## Fixed timestep and interpolation
+
+The `physics` phase runs on a fixed timestep of 1/60 s. Each frame the root banks its frame delta, and the phase's jobs run once per whole step banked: zero to `maxSubsteps` times per frame (default 8, surplus time beyond that is dropped). Every call receives the step as `delta` (`1 / 60`), and `state.elapsed` is the phase's simulated time. So a simulation steps at the same rate on a 30 Hz, 60 Hz or 144 Hz display, but a physics job no longer runs exactly once per frame.
+
+```tsx
+useFrame((_, delta) => world.step(delta), { phase: 'physics', id: 'world-step' })
+```
+
+Because steps and frames don't line up, drawing the latest physics state directly can stutter. `state.overstep` is the fraction of the next step already banked, in `[0, 1)`; use it in a per-frame job to blend between the previous and current simulated states:
+
+```tsx
+function Ball({ body }) {
+  const ref = useRef<THREE.Mesh>(null!)
+  const [previous, current] = useMemo(() => [new THREE.Vector3(), new THREE.Vector3()], [])
+
+  // Once per physics step, after the world has stepped
+  useFrame(
+    () => {
+      previous.copy(current)
+      current.copy(body.position)
+    },
+    { phase: 'physics', after: 'world-step' },
+  )
+
+  // Once per frame: draw between the last two physics states
+  useFrame(({ overstep }) => ref.current.position.lerpVectors(previous, current, overstep))
+
+  return <mesh ref={ref}>{/* ... */}</mesh>
+}
+```
+
+Change the step, or turn it off, with `scheduler.setPhaseTimestep`. Phases are shared by every root, and changing a timestep resets that phase's banked time. `scheduler.getPhaseTimestep(name)` reads the current value, and `scheduler.getOverstep(phase?, rootId?)` reads an overstep from outside a callback or for a second fixed phase.
+
+```tsx
+const { scheduler } = useThree()
+
+scheduler.setPhaseTimestep('physics', 1 / 120, { maxSubsteps: 4 }) // 120 Hz, at most 4 steps per frame
+scheduler.setPhaseTimestep('physics', undefined) // opt out: once per frame with the frame delta
+scheduler.addPhase('navigation', { after: 'physics', timestep: 1 / 10 }) // a custom fixed phase at 10 Hz
 ```
 
 ## Pause, resume & enabled
@@ -379,16 +423,24 @@ Calling `useFrame()` with **no callback** is a valid way to get scheduler access
 
 ### Using useFrame outside Canvas
 
-`useFrame` does not throw when used outside `<Canvas>`. The scheduler runs with **no setup required**: the first `useFrame` (or `getScheduler().register`) lazily creates an internal **ambient root**, so frame-based logic works in non-R3F apps out of the box. On the ambient root, callbacks receive a timing-only state (`{ time, delta, elapsed, frame }`, with no `gl`/`scene`/`camera`). If a `<Canvas>` mounts later, it **adopts** those jobs and they begin receiving the full `RootState`.
+`useFrame` does not throw when used outside `<Canvas>`, for example in a DOM component next to it. The first `useFrame` (or `getScheduler().register`) lazily creates an internal **ambient root**, so the job registers right away. R3F's `useFrame` always hands its callback the full `RootState`, though, so the callback is held until a `<Canvas>` mounts and **adopts** the job; from then on it runs every frame with that Canvas's state.
 
 ```tsx
 import { useFrame } from '@react-three/fiber'
 
-// No Canvas, no flag — the ambient root is created on demand
-function GameLoop() {
-  useFrame((state, delta) => updateGame(delta))
-  return null
+// A DOM component beside the Canvas: runs once the Canvas mounts, with its state
+function Hud() {
+  useFrame(({ camera }) => updateCompass(camera))
+  return <div className="compass" />
 }
+```
+
+For a loop with no Canvas at all, register with the scheduler directly. Its callbacks receive timing-only state (`{ time, delta, elapsed, frame }`):
+
+```tsx
+import { getScheduler } from '@react-three/fiber'
+
+const unregister = getScheduler().register((state, delta) => updateGame(delta))
 ```
 
 > The scheduler itself lives in [`@pmndrs/scheduler`](https://www.npmjs.com/package/@pmndrs/scheduler) and is consumed by R3F; you still reach it through `getScheduler()` / `useThree().scheduler`.
@@ -397,9 +449,9 @@ function GameLoop() {
 
 `getScheduler()` (or `useThree().scheduler`) returns the singleton. Key members:
 
-**Phases:** `addPhase(name, { before?, after? })`, `hasPhase(name)`, `phases` (getter).
+**Phases:** `addPhase(name, { before?, after?, timestep?, maxSubsteps? })`, `hasPhase(name)`, `phases` (getter), `setPhaseTimestep(name, timestep | undefined, { maxSubsteps? })`, `getPhaseTimestep(name)`, `getOverstep(phase?, rootId?)`.
 
-**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `getRootIds()`, `getRootFrameloop(id)`, `setRootFrameloop(id, mode)`, `setRootOrder(id, order)`, `setRootConstraints(id, { before?, after? })`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically.
+**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `getRootIds()`, `getRootFrameloop(id)`, `setRootFrameloop(id, mode)`, `setRootOrder(id, order)`, `setRootConstraints(id, { before?, after? })`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically. Each root gets its own `onError` (a Canvas reports to its error boundary), so a job that throws on one canvas never reaches another canvas's handler.
 
 **Jobs:** `register(callback, options?)`, `unregister(id, rootId?)`, `updateJob(id, partialOptions)`, `getJobCount()`, `getJobIds()`, `hasUserJobsInPhase(phase, rootId?)`.
 
@@ -440,8 +492,8 @@ function GameLoop() {
   // Input first
   useFrame(processInput, { phase: 'input', id: 'input-handler' })
 
-  // Physics at 60fps with catch-up timing
-  useFrame(() => physicsWorld.step(1 / 60), { phase: 'physics', fps: 60, drop: false })
+  // Physics on the fixed 1/60 s step (0..8 steps per frame)
+  useFrame((_, delta) => physicsWorld.step(delta), { phase: 'physics' })
 
   // AI at 20fps, dropping missed intervals
   useFrame(aiSystemUpdate, { phase: 'ai', fps: 20, drop: true })

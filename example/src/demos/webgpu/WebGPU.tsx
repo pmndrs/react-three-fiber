@@ -34,7 +34,6 @@ export default function App() {
   const meshRef = useRef<React.ComponentRef<'mesh'>>(null)
   return (
     <Canvas
-      renderer
       background={{
         preset: 'city',
         backgroundBlurriness: 0.3,

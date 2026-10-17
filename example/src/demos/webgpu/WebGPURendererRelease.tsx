@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
 
@@ -54,7 +54,6 @@ export default function WebGPURendererRelease() {
       {mounted && (
         <Canvas
           key={mountId}
-          renderer
           camera={{ position: [0, 0, 4] }}
           onCreated={({ renderer }) => {
             const id = mountId

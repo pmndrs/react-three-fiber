@@ -60,10 +60,13 @@ We'll create a new mesh using a **BoxGeometry** and a **MeshStandardMaterial** w
 Let's pause for a moment to understand exactly what is happening here. The code we just wrote is the equivalent to this three.js code:
 
 ```jsx
+import * as THREE from 'three/webgpu'
+
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
 
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGPURenderer()
+await renderer.init()
 renderer.setSize(width, height)
 document.querySelector('#canvas-container').appendChild(renderer.domElement)
 

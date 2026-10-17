@@ -187,7 +187,6 @@ export default function FileDragDrop() {
 
   return (
     <Canvas
-      renderer
       {...preventDragDropDefaults}
       onDropMissed={(e: DragEvent) => {
         setActiveBg(false)

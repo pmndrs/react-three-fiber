@@ -63,7 +63,7 @@ function Scene() {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ position: [0, 8, 28], fov: 60, far: 300 }}>
+    <Canvas camera={{ position: [0, 8, 28], fov: 60, far: 300 }}>
       <Scene />
       <OrbitControls maxPolarAngle={Math.PI / 2 - 0.05} />
     </Canvas>

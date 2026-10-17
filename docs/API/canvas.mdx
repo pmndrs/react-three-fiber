@@ -27,10 +27,10 @@ const App = () => (
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | children        | three.js JSX elements or regular components                                                                                                       |                                                            |
 | fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                            |
-| renderer        | Selects/configures the renderer. Omit for WebGL (default). Pass `renderer` (boolean shorthand for `renderer={{}}`), a props bag, a renderer instance, or a sync/async callback to use **WebGPU** — R3F handles `init()` for you. The props bag takes constructor parameters, renderer properties and R3F's renderer settings `shadows` and `textureColorSpace`; all of it is honored only by a canvas that owns its renderer (see [Renderer settings](#renderer-settings)) | WebGL |
-| gl              | **Deprecated** — WebGL-only renderer props/instance. Prefer `renderer`. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`, and the same `shadows` / `textureColorSpace` settings as `renderer` | `{}`                                  |
+| renderer        | Configures the `WebGPURenderer` (`@react-three/fiber`, `/webgpu`): a props bag, a renderer instance, or a sync/async callback — R3F handles `init()` for you. The props bag takes constructor parameters, renderer properties and R3F's renderer settings `shadows` and `textureColorSpace`; all of it is honored only by a canvas that owns its renderer (see [Renderer settings](#renderer-settings)). `renderer` alone is the same as omitting it. Not on `/legacy` | `WebGPURenderer` |
+| gl              | **`/legacy` only.** Configures the `WebGLRenderer`: props, an instance, or a sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`, and the same `shadows` / `textureColorSpace` settings as `renderer`. Throws on `@react-three/fiber` and `/webgpu` | `{}`                                  |
 | id              | Canvas id: sets the `<canvas>` element's `id`, names the canvas for `scheduler` `before`/`after`, and for `share="id"` on a `primary` | `undefined` |
-| primary         | **WebGPU.** This canvas owns the renderer other canvases share: every other WebGPU canvas mounted with or after it borrows its renderer unless it passes `share={false}` or its own renderer instance/factory. Implies WebGPU on `@react-three/fiber`; not on `/legacy`. See [Multi-Canvas](../webgpu/multi-canvas) | `false` |
+| primary         | **WebGPU.** This canvas owns the renderer other canvases share: every other WebGPU canvas mounted with or after it borrows its renderer unless it passes `share={false}` or its own renderer instance/factory. Not on `/legacy`. See [Multi-Canvas](../webgpu/multi-canvas) | `false` |
 | share           | **WebGPU.** `"id"` shares the renderer of `<Canvas id="id" primary>` (needed when several primaries are mounted); `false` owns a renderer even while a primary is mounted. Omitted: share the single primary, if any. Not on `/legacy` | `undefined` |
 | scheduler       | This canvas's place in the frame loop: `{ before, after, order, fps }`. `before`/`after` take canvas ids, `order` sorts numerically (lower first), `fps` caps the default render. A canvas sharing a primary's renderer renders after it unless `before`/`after` is set. See [Frame Loop](../frame-loop#ordering-canvas-roots) | `undefined` |
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
@@ -40,7 +40,7 @@ const App = () => (
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
 | orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                    |
-| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                   |
+| dpr             | Pixel-ratio: a fixed number, or automatic: [min, max], which clamps `window.devicePixelRatio` and follows display changes. See [Pixel ratio](#pixel-ratio) | `[1, 2]`                                                   |
 | width           | Fixed drawing-buffer width in pixels. When set, R3F stops auto-sizing to the container width. See [Canvas Size Control](#canvas-size-control)     | container width                                            |
 | height          | Fixed drawing-buffer height in pixels. When set, R3F stops auto-sizing to the container height                                                    | container height                                           |
 | forceEven       | Round computed width/height down to even numbers (useful for video encoders)                                                                      | `false`                                                    |
@@ -180,9 +180,20 @@ setSize() // reset to props/container
 > [!NOTE]
 > `width`/`height` are logical pixels; DPR multiplies as usual. Set `dpr={1}` for exact pixel dimensions. Use `forceEven` to round dimensions down to even numbers for video encoders.
 
+## Pixel ratio
+
+`dpr` is either a fixed number or a `[min, max]` range (the default is `[1, 2]`). A range clamps `window.devicePixelRatio` into it, and keeps following it: when the window moves to a display with a different pixel ratio, or the user zooms the page, R3F re-resolves the range and resizes the drawing buffer. It listens with `matchMedia`, since neither change resizes the canvas element. A fixed number never follows the display.
+
+```tsx
+<Canvas dpr={[1, 2]} /> // follows the display, clamped between 1 and 2
+<Canvas dpr={1.5} /> // always 1.5
+```
+
+A value set imperatively with `setDpr()` wins until the `dpr` prop itself changes. During a WebXR session the change waits until the session ends, since three.js manages the pixel ratio while presenting.
+
 ## Renderer settings
 
-Renderer-wide settings go into the `renderer` prop (WebGPU) or `gl` prop (WebGL): constructor parameters (`antialias`, `forceWebGL`, `depth`, ...), renderer properties (`toneMapping`, `outputColorSpace`, ...), and two settings R3F applies itself:
+Renderer-wide settings go into the `renderer` prop (WebGPU, `@react-three/fiber`) or the `gl` prop (WebGL, `@react-three/fiber/legacy`): constructor parameters (`antialias`, `forceWebGL`, `depth`, ...), renderer properties (`toneMapping`, `outputColorSpace`, ...), and two settings R3F applies itself:
 
 - `shadows`: `true` for `THREE.PCFShadowMap`, one of `'basic'`, `'percentage'`, `'soft'`, `'variance'`, or props assigned to `renderer.shadowMap`. `'soft'` is kept only as a deprecated alias of `'percentage'`: both use `THREE.PCFShadowMap` (three.js deprecated `PCFSoftShadowMap` and made `PCFShadowMap` soft), and `'soft'` logs a deprecation notice. Default `false`. Applied to a renderer R3F builds; a renderer instance or factory keeps the `shadowMap` you give it.
 - `textureColorSpace`: the color space of 8-bit input textures loaded in this canvas.
@@ -198,7 +209,7 @@ These configure a renderer the canvas owns. A canvas sharing a `<Canvas primary>
 Renderer color options — `textureColorSpace`, `outputColorSpace`, `toneMapping`:
 
 ```tsx
-// WebGL
+// WebGL (@react-three/fiber/legacy)
 <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping, textureColorSpace: THREE.LinearSRGBColorSpace }} />
 
 // WebGPU
@@ -207,15 +218,15 @@ Renderer color options — `textureColorSpace`, `outputColorSpace`, `toneMapping
 
 Defaults: `outputColorSpace` = `THREE.SRGBColorSpace`, `toneMapping` = `THREE.ACESFilmicToneMapping`, `textureColorSpace` = `THREE.SRGBColorSpace`.
 
-## WebGPU
+## WebGPU and WebGL
 
-Recent Three.js ships a WebGPU renderer that requires async initialization. In v10 you opt in with the `renderer` prop and R3F handles `init()` for you — no manual `await renderer.init()`:
+`<Canvas>` from `@react-three/fiber` renders with three's `WebGPURenderer`, which needs async initialization; R3F handles `init()` for you — no manual `await renderer.init()`. Browser WebGPU support is not required: `WebGPURenderer` falls back to a WebGL2 backend automatically. Node materials are available as JSX:
 
 ```tsx
 import { Canvas } from '@react-three/fiber'
 
 export default () => (
-  <Canvas renderer>
+  <Canvas>
     <mesh>
       <meshBasicNodeMaterial />
       <boxGeometry />
@@ -224,9 +235,27 @@ export default () => (
 )
 ```
 
-`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. R3F disposes a renderer it built from a config bag or a callback once the last Canvas using it unmounts; an instance you pass in is yours to dispose. Only the renderer a Canvas asks for is downloaded: three's WebGPU renderer is a separate chunk fetched when a `<Canvas renderer>` mounts, and a plain `<Canvas>` fetches only the WebGL one. For the single-renderer entries, node materials as JSX, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
+`renderer` takes a config bag, a renderer instance, or a sync/async callback. R3F disposes a renderer it built from a config bag or a callback once the last Canvas using it unmounts; an instance you pass in is yours to dispose. Three's WebGPU renderer is a separate chunk, fetched when the first `<Canvas>` mounts. For node materials, TSL hooks and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
-Node materials and TSL need `WebGPURenderer`, so pass `renderer` to use them. Browser WebGPU support is not required: `WebGPURenderer` falls back to WebGL2 automatically.
+`WebGLRenderer` is on `@react-three/fiber/legacy`. Use it for GLSL `ShaderMaterial`s, `onBeforeCompile` and libraries that need `WebGLRenderer`: `WebGPURenderer` cannot compile GLSL, and R3F warns in development when a GLSL material reaches a WebGPU canvas.
+
+```tsx
+import { Canvas } from '@react-three/fiber/legacy'
+
+export default () => <Canvas gl={{ antialias: false }}>{/* ... */}</Canvas>
+```
+
+## View transitions
+
+React 19.3's `<ViewTransition>` can wrap elements inside a Canvas. React hands a commit that touches a `<ViewTransition>` to the renderer, and R3F applies it synchronously, the same way react-dom does in browsers without `document.startViewTransition`. Nothing is animated: the scene is not a DOM snapshot, so `enter`, `exit` and `update` animations don't play on 3D content, but the update commits and effects run as usual. Gesture transitions are not supported.
+
+```tsx
+import { ViewTransition } from 'react'
+
+<Canvas>
+  <ViewTransition enter="fade">{shown && <Model />}</ViewTransition>
+</Canvas>
+```
 
 ## Custom Canvas
 

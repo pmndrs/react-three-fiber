@@ -15,7 +15,7 @@
 
 import { useRef, useEffect, useState, useMemo } from 'react'
 // The /webgpu entry types `state.renderer` as a WebGPURenderer, which this demo needs for `renderer.backend`
-import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber'
 import { useControls } from 'leva'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three/webgpu'
@@ -80,7 +80,8 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
   const mixerRef = useRef<THREE.AnimationMixer | null>(cachedModel?.mixer ?? null)
   const renderer = useThree((s) => s.renderer)
 
-  // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility)
+  // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility). Loading in an
+  // effect rather than useLoader lets the model survive hot updates through cachedModel.
   useEffect(() => {
     // If we have a cached model from HMR, use it
     if (cachedModel) {

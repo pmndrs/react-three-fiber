@@ -6,7 +6,7 @@ import { Mesh, Group } from 'three'
 
 export default function App() {
   return (
-    <Canvas renderer>
+    <Canvas>
       <ambientLight intensity={Math.PI} />
       <Suspense fallback={null}>
         <PortalTestScene />

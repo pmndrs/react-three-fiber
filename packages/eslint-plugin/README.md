@@ -12,7 +12,7 @@ An ESLint plugin which provides lint rules for [@react-three/fiber](https://gith
 ## Installation
 
 ```bash
-npm install @react-three/eslint-plugin --save-dev
+npm install @react-three/eslint-plugin@alpha --save-dev
 ```
 
 ## Configuration

@@ -12,11 +12,11 @@ const noop = () => {}
 const isLeaf = () => true
 
 describe('clearHmrCaches', () => {
-  // Regression for Bug #4: the HMR handler invalidated only nodes/uniforms,
+  // Regression: the HMR handler invalidated only nodes/uniforms,
   // leaving buffers/gpuStorage reusable after a hot reload. All four kinds
-  // must go stale. Since the C16 fix that means INVALIDATION, not wiping:
+  // must go stale. That means INVALIDATION, not wiping:
   // wiping notified readers with empty scopes mid-rebuild and stripped the
-  // material *Node props (see tests/webgpu/hmr-rebuild.test.tsx).
+  // material *Node props (see hmr-rebuild.test.tsx).
   it('invalidates all four TSL resource kinds, keeps entries visible to readers, and bumps _hmrVersion', () => {
     const store = createStore(noop, noop)
 

@@ -243,8 +243,7 @@ export default function VisibilityEventsDemo() {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <Canvas camera={{ position: [0, 0, 7], fov: 50, near: 0.01, far: 100 }} renderer>
-        <color attach="background" args={[palette.background]} />
+      <Canvas background={palette.background} camera={{ position: [0, 0, 7], fov: 50, near: 0.01, far: 100 }}>
         <Scene onVisibilityChange={handleVisibilityChange} />
       </Canvas>
       <Status state={state} />

@@ -13,7 +13,7 @@ We will be testing the [sandbox](https://codesandbox.io/s/98ppy) we created in [
 Let's start by installing the React Three Test Renderer:
 
 ```bash
-npm install @react-three/test-renderer --save-dev
+npm install @react-three/test-renderer@alpha --save-dev
 ```
 
 Afterwards, if you are using Create React App you can just add a file that ends in `.test.js` and start writing your code, because React Three Test Renderer is testing library agnostic, so it works with libraries such as `jest`, `jasmine` etc.
@@ -105,12 +105,43 @@ test('click event makes box bigger', async () => {
 })
 ```
 
+## Testing WebGPU and TSL
+
+`@react-three/test-renderer` has an entry for each fiber entry. Test with the one that matches the import your app's `Canvas` comes from:
+
+| Your app's `Canvas` comes from        | Test with                           |
+| ------------------------------------- | ----------------------------------- |
+| `@react-three/fiber` (WebGPU)         | `@react-three/test-renderer`        |
+| `@react-three/fiber/legacy` (WebGL)   | `@react-three/test-renderer/legacy` |
+
+The default entry mocks the GPU, and every root it creates renders with `WebGPURenderer`, so node materials such as `<meshStandardNodeMaterial />` work as JSX without `extend()`. `@react-three/test-renderer/webgpu` does the same and is deprecated; it is removed in the first beta.
+
+The TSL hooks come from `@react-three/tsl` in tests, as in your app:
+
+```tsx
+import ReactThreeTestRenderer from '@react-three/test-renderer'
+import { useUniforms } from '@react-three/tsl'
+
+it('creates a uniform', async () => {
+  let uniforms
+  function Uniforms() {
+    uniforms = useUniforms({ uTime: 0 })
+    return null
+  }
+
+  const renderer = await ReactThreeTestRenderer.create(<Uniforms />)
+  expect(uniforms.uTime.value).toBe(0)
+  await renderer.unmount()
+})
+```
+
+Unmount every renderer at the end of its test. Uniforms, nodes and other TSL resources belong to the root, and unmounting it releases them. The mock does not draw, so these tests check state and the scene graph, not pixels.
+
 If you want to learn more about React Three Test Renderer you can checkout the repo and their docs:
 
 - [Repo](https://github.com/pmndrs/react-three-fiber/tree/v10/packages/test-renderer)
 - [React Three Test Renderer API](https://github.com/pmndrs/react-three-fiber/blob/v10/packages/test-renderer/markdown/rttr.md#create)
 - [React Three Test Instance API](https://github.com/pmndrs/react-three-fiber/blob/v10/packages/test-renderer/markdown/rttr-instance.md)
-- [WebGPU Testing Guide](https://github.com/pmndrs/react-three-fiber/blob/v10/packages/test-renderer/markdown/webgpu-testing.md)
 
 ## Exercises
 

@@ -207,7 +207,6 @@ export default function App() {
         but also includes some new and ground-breaking features.
       </div>
       <Canvas
-        renderer
         onCreated={(state) => state.events.connect?.(ref.current)}
         style={{
           pointerEvents: 'none',
