@@ -163,3 +163,7 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 - The visibility scan runs in the `preRender` phase, after frustum updates.
 - Objects are unregistered automatically when they unmount.
 - When occlusion is enabled, R3F adds an invisible internal helper group named `__r3fInternal` to the scene, containing a tiny observer mesh that caches `isOccluded()` results during the render pass (WebGPU's `isOccluded()` only returns valid results while rendering). Both are invisible, carry a `__r3fInternal` flag, and are cleaned up on unmount — relevant only if you are counting scene children.
+
+## Examples
+
+- [WebGPU Visibility Events](https://pmndrs.github.io/examples/webgpu-visibility-events) - `onFramed`, `onOccluded` and `onVisible` recoloring objects through TSL uniforms

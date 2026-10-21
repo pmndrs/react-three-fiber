@@ -583,6 +583,12 @@ Buffers and GPU storage are not loose: an unregistered read is the broad `Buffer
 
 The wrappers are created lazily - the underlying Proxy is only built when you actually access `uniforms`, `nodes`, `buffers`, or `gpuStorage`, so creators that don't touch them pay no cost.
 
+## Examples
+
+- [WebGPU Shared Uniforms](https://pmndrs.github.io/examples/webgpu-shared-uniforms) - `useUniform`, `useUniforms` and `useNodes` driving one graph across three meshes
+- [WebGPU Raging Sea](https://pmndrs.github.io/examples/webgpu-raging-sea) - Leva values into `useUniforms`, nodes built once under a name with `useNodes`
+- [WebGPU Fog](https://pmndrs.github.io/examples/webgpu-fog) - scoped uniforms and `useLocalNodes` installing `fogNode` and `backgroundNode`
+
 ## Related
 
 - [WebGPU Overview](./overview) - concepts and architecture
