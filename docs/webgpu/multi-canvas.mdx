@@ -191,6 +191,11 @@ Such a fallback secondary owns its renderer, so it is a standalone root: it is n
 | `internal.sharedRendererFallback` | `boolean` | Whether this secondary stopped sharing because the primary fell back to WebGL2 |
 | `internal.isMultiCanvas` | `boolean`   | Whether multi-canvas mode is active  |
 
+## Examples
+
+- [WebGPU Multi Canvas](https://pmndrs.github.io/examples/webgpu-multi-canvas) - four canvases on one device, per-canvas `scheduler` fps, and the HUD pattern
+- [WebGPU Shared Renderer](https://pmndrs.github.io/examples/webgpu-shared-renderer) - `primary`, automatic sharing, `share="id"` and `share={false}` side by side
+
 ## Related
 
 - [WebGPU Overview](./overview) - the `renderer` prop and entry points
