@@ -417,8 +417,12 @@ function swapReconstructedInstances(): void {
     if (instance.type !== 'primitive') disposeOnIdle(instance.object)
   }
 
+  // Siblings that still hold their old, detached object
+  const pending = new Set(reconstructed.map(([instance]) => instance))
+
   // Update instance
   for (const [instance, props, fiber] of reconstructed) {
+    pending.delete(instance)
     instance.props = props
 
     const parent = instance.parent
@@ -440,6 +444,23 @@ function swapReconstructedInstances(): void {
         attach(parent, instance)
       } else if (isObject3D(instance.object) && isObject3D(parent.object)) {
         parent.object.add(instance.object)
+
+        // Keep the object's place among its siblings: insert it before the next one already in the scene
+        const index = parent.children.indexOf(instance)
+        const next =
+          index === -1
+            ? undefined
+            : parent.children
+                .slice(index + 1)
+                .find(
+                  (sibling) =>
+                    !pending.has(sibling) && !sibling.props.attach && sibling.object?.parent === parent.object,
+                )
+        if (next) {
+          const children = parent.object.children
+          children.splice(children.indexOf(instance.object), 1)
+          children.splice(children.indexOf(next.object), 0, instance.object)
+        }
       }
 
       for (const child of instance.children) {
