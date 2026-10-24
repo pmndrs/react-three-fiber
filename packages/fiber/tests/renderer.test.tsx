@@ -756,6 +756,28 @@ describe('renderer', () => {
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
   })
 
+  it('should keep the order of siblings when reconstructing an instance', async () => {
+    const group = React.createRef<THREE.Group>()
+    const second = React.createRef<THREE.Mesh>()
+
+    const Test = ({ geometry }: { geometry?: THREE.BufferGeometry }) => (
+      <group ref={group}>
+        <mesh name="first" />
+        <mesh name="second" ref={second} args={[geometry]} />
+        <mesh name="third" />
+      </group>
+    )
+
+    await act(async () => root.render(<Test />))
+    expect(group.current!.children.map((child) => child.name)).toEqual(['first', 'second', 'third'])
+
+    const geometry = new THREE.BoxGeometry()
+    await act(async () => root.render(<Test geometry={geometry} />))
+    expect(second.current!.geometry).toBe(geometry)
+    expect(group.current!.children.map((child) => child.name)).toEqual(['first', 'second', 'third'])
+    expect(group.current!.children[1]).toBe(second.current)
+  })
+
   it('should handle the object prop reactively', async () => {
     const ref = React.createRef<THREE.Object3D>()
     const child = React.createRef<THREE.Object3D>()
