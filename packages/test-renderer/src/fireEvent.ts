@@ -53,7 +53,7 @@ export const createEventFirer = (act: Act, store: RootStore) => {
     let returnValue: any
 
     await act(async () => {
-      returnValue = handler(createSyntheticEvent(element, data))
+      returnValue = await handler(createSyntheticEvent(element, data))
     })
 
     return returnValue
