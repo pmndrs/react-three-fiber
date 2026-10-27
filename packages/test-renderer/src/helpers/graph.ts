@@ -30,7 +30,11 @@ export const toGraph = (object: Instance): SceneGraphItem[] => {
 
     // For primitives, also include THREE.js object children
     if (child.type === 'primitive' && child.object.children?.length) {
-      const threeChildren = processThreeChildren(child.object.children)
+      const threeChildren = processThreeChildren(
+        child.object.children.filter(
+          (object: THREE.Object3D) => !child.children.some((instance) => instance.object === object),
+        ),
+      )
       children.push(...threeChildren)
     }
 

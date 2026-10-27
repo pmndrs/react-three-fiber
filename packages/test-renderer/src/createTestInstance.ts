@@ -81,11 +81,13 @@ export class ReactThreeTestInstance<TObject extends THREE.Object3D = THREE.Objec
 
     // For primitives, also add THREE.js object children
     if (fiber.type === 'primitive' && fiber.object.children?.length) {
-      const threeChildren = fiber.object.children.map((child: THREE.Object3D) => {
-        // Create a virtual instance that wraps the THREE.js child
-        const virtualInstance = createVirtualInstance(child, fiber)
-        return wrapFiber(virtualInstance)
-      })
+      const threeChildren = fiber.object.children
+        .filter((child: THREE.Object3D) => !fiber.children.some((instance) => instance.object === child))
+        .map((child: THREE.Object3D) => {
+          // Create a virtual instance that wraps the THREE.js child
+          const virtualInstance = createVirtualInstance(child, fiber)
+          return wrapFiber(virtualInstance)
+        })
 
       r3fChildren.push(...threeChildren)
 

@@ -447,4 +447,44 @@ describe('ReactThreeTestRenderer Core', () => {
 
     expect(renderer.toGraph()).toMatchSnapshot()
   })
+
+  it.each([false, true])('includes JSX children of primitives once (nested: %s)', async (nested) => {
+    const group = new THREE.Group()
+    const native = new THREE.Mesh()
+    native.name = 'native'
+    group.add(native)
+    const primitive = (
+      <primitive object={group}>
+        <mesh name="managed">
+          <mesh name="nested" />
+        </mesh>
+      </primitive>
+    )
+    const renderer = await ReactThreeTestRenderer.create(nested ? <group>{primitive}</group> : primitive)
+    const instance = renderer.scene.findByProps({ object: group })
+    expect(instance.children.map((child) => child.instance)).toEqual([group.children[1], native])
+    expect(instance.allChildren).toHaveLength(2)
+    expect(instance.findAllByType('Mesh').map((child) => child.instance.name)).toEqual(['managed', 'nested', 'native'])
+    expect(instance.findByProps({ name: 'managed' }).parent).toBe(instance)
+    const graph = renderer.toGraph()
+    const primitiveGraph = nested ? graph?.[0]?.children?.[0] : graph?.[0]
+    expect(primitiveGraph?.children?.map((child) => child.name)).toEqual(['managed', 'native'])
+    expect(primitiveGraph?.children?.[0]?.children?.map((child) => child.name)).toEqual(['nested'])
+    await renderer.unmount()
+  })
+
+  it('keeps attached JSX children out of children but in exhaustive queries', async () => {
+    const mesh = new THREE.Mesh()
+    const renderer = await ReactThreeTestRenderer.create(
+      <primitive object={mesh}>
+        <boxGeometry args={[2, 2, 2]} />
+      </primitive>,
+    )
+    const instance = renderer.scene.findByType('Mesh')
+    expect(instance.children).toHaveLength(0)
+    expect(instance.allChildren).toHaveLength(1)
+    expect(instance.findByType('BoxGeometry').instance).toBe(mesh.geometry)
+    expect(renderer.toGraph()?.[0]?.children).toHaveLength(1)
+    await renderer.unmount()
+  })
 })
