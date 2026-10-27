@@ -129,6 +129,55 @@ describe('events', () => {
     expect(handleMissed).not.toHaveBeenCalled()
   })
 
+  it.each(
+    ['click', 'dblclick', 'contextmenu'].flatMap((type) => [false, true].map((bubble) => [type, bubble] as const)),
+  )('fires an object miss once for %s (bubbling: %s)', async (type, bubble) => {
+    const handleMissed = jest.fn()
+    const handleClick = jest.fn()
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh position-x={100} onUpdate={(object) => object.updateMatrixWorld()} onPointerMissed={handleMissed}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+          <group
+            onClick={bubble ? handleClick : undefined}
+            onDoubleClick={bubble ? handleClick : undefined}
+            onContextMenu={bubble ? handleClick : undefined}>
+            {[0, -1].map((z) => (
+              <mesh
+                key={z}
+                position-z={z}
+                onClick={handleClick}
+                onDoubleClick={handleClick}
+                onContextMenu={handleClick}>
+                <boxGeometry args={[2, 2]} />
+                <meshBasicMaterial />
+              </mesh>
+            ))}
+          </group>
+        </Canvas>,
+      )
+    })
+    for (const eventType of ['pointerdown', type]) {
+      const event = eventType === 'pointerdown' ? new PointerEvent(eventType) : new MouseEvent(eventType)
+      Object.defineProperty(event, 'offsetX', { get: () => 577 })
+      Object.defineProperty(event, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), event)
+    }
+    expect(handleClick).toHaveBeenCalledTimes(bubble ? 4 : 2)
+    expect(handleMissed).toHaveBeenCalledTimes(1)
+    expect(handleMissed.mock.invocationCallOrder[0]).toBeLessThan(handleClick.mock.invocationCallOrder[0])
+
+    const secondClick = new MouseEvent(type)
+    Object.defineProperty(secondClick, 'offsetX', { get: () => 577 })
+    Object.defineProperty(secondClick, 'offsetY', { get: () => 480 })
+    fireEvent(getContainer(), secondClick)
+    expect(handleMissed).toHaveBeenCalledTimes(2)
+    expect(handleClick).toHaveBeenCalledTimes(bubble ? 8 : 4)
+  })
+
   it('can handle onPointerMissed on Canvas', async () => {
     const handleMissed = jest.fn()
 

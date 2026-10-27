@@ -485,6 +485,16 @@ export function createEvents(store: RootStore) {
       // Take care of unhover
       if (isPointerMove) cancelPointer(hits)
 
+      let missed = false
+      function handlePointerMissed() {
+        if (isClickEvent && missed) return
+        missed = true
+        pointerMissed(
+          event,
+          internal.interaction.filter((object) => !internal.initialHits.includes(object)),
+        )
+      }
+
       function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
         const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
@@ -534,20 +544,14 @@ export function createEvents(store: RootStore) {
             // which must use the initial target
             if (!isClickEvent || internal.initialHits.includes(eventObject)) {
               // Missed events have to come first
-              pointerMissed(
-                event,
-                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
-              )
+              handlePointerMissed()
               // Now call the handler
               handler(data as ThreeEvent<PointerEvent>)
             }
           } else {
             // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
             if (isClickEvent && internal.initialHits.includes(eventObject)) {
-              pointerMissed(
-                event,
-                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
-              )
+              handlePointerMissed()
             }
           }
         }
