@@ -159,6 +159,23 @@ describe('hooks', () => {
     expect(extensions).toHaveBeenCalledTimes(1)
   })
 
+  it('returns arrays for readonly loader inputs', async () => {
+    class Loader extends THREE.Loader<string, string> {
+      load(url: string, onLoad: (result: string) => void): void {
+        onLoad(url)
+      }
+    }
+    const urls = ['/readonly-first', '/readonly-second'] as const
+    let results!: string[]
+    function Component() {
+      results = useLoader(Loader, urls)
+      return null
+    }
+    await act(async () => root.render(<Component />))
+    expect(results).toEqual(urls)
+    expect(Array.isArray(results)).toBe(true)
+  })
+
   it('can handle useLoader with an existing loader instance', async () => {
     class Loader extends THREE.Loader<null, string> {
       load(_url: string, onLoad: (result: null) => void): void {

@@ -1,5 +1,6 @@
 import * as React from 'react'
-import type { ThreeElements } from '../src'
+import * as THREE from 'three'
+import { useLoader, type ThreeElements } from '../src'
 
 // Type-level regressions; enforced by `yarn typecheck`.
 
@@ -30,8 +31,19 @@ function Elements() {
   )
 }
 
+function ReadonlyLoaderResults() {
+  const tuple = useLoader(THREE.TextureLoader, ['first.png', 'second.png'] as const)
+  const first: THREE.Texture = tuple[0]
+  const second: THREE.Texture = tuple[1]
+  const urls: readonly string[] = ['third.png']
+  const list: THREE.Texture[] = useLoader(THREE.TextureLoader, urls)
+  const mutable: THREE.Texture[] = useLoader(THREE.TextureLoader, ['fourth.png'])
+  const single: THREE.Texture = useLoader(THREE.TextureLoader, 'fifth.png')
+  return [first, second, list, mutable, single]
+}
+
 describe('types', () => {
   it('compiles', () => {
-    expect([Polymorphic, PolymorphicNoProps, Elements]).toHaveLength(3)
+    expect([Polymorphic, PolymorphicNoProps, Elements, ReadonlyLoaderResults]).toHaveLength(4)
   })
 })

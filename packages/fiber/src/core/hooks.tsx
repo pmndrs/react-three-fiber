@@ -146,7 +146,7 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
   // Return the object(s)
-  return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
+  return (Array.isArray(input) ? results : results[0]) as I extends readonly any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
 
 /**
