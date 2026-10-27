@@ -3,6 +3,7 @@ import { act } from 'react'
 import { type RootStore, type Instance, createRoot } from '../src'
 import {
   is,
+  buildGraph,
   dispose,
   REACT_INTERNAL_PROPS,
   getInstanceProps,
@@ -604,5 +605,54 @@ describe('findInitialRoot', () => {
     const root = findInitialRoot(instance)
 
     expect(root).toBe(store)
+  })
+})
+
+describe('buildGraph', () => {
+  it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__'])('collects objects named %s', (name) => {
+    const group = new THREE.Group()
+    const material = new THREE.MeshBasicMaterial()
+    material.name = name
+    const mesh = new THREE.Mesh(undefined, material)
+    mesh.name = name
+    group.add(mesh)
+
+    const graph = buildGraph(group)
+    expect(Object.prototype.hasOwnProperty.call(graph.nodes, name)).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(graph.materials, name)).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(graph.meshes, name)).toBe(true)
+    expect(graph.nodes[name]).toBe(mesh)
+    expect(graph.materials[name]).toBe(material)
+    expect(graph.meshes[name]).toBe(mesh)
+    expect(Object.getPrototypeOf(graph.nodes)).toBe(Object.prototype)
+    expect(Object.getPrototypeOf(graph.materials)).toBe(Object.prototype)
+    expect(Object.getPrototypeOf(graph.meshes)).toBe(Object.prototype)
+  })
+  it('preserves duplicate-name precedence', () => {
+    const group = new THREE.Group()
+    const firstMaterial = new THREE.MeshBasicMaterial()
+    const lastMaterial = new THREE.MeshBasicMaterial()
+    firstMaterial.name = lastMaterial.name = 'shared'
+    const firstMesh = new THREE.Mesh(undefined, firstMaterial)
+    const lastMesh = new THREE.Mesh(undefined, lastMaterial)
+    firstMesh.name = lastMesh.name = 'shared'
+    group.add(firstMesh, lastMesh)
+
+    const graph = buildGraph(group)
+    expect(graph.nodes.shared).toBe(lastMesh)
+    expect(graph.meshes.shared).toBe(firstMesh)
+    expect(graph.materials.shared).toBe(firstMaterial)
+  })
+
+  it('collects unnamed meshes and materials without adding unnamed nodes', () => {
+    const group = new THREE.Group()
+    const material = new THREE.MeshBasicMaterial()
+    const mesh = new THREE.Mesh(undefined, material)
+    group.add(mesh)
+
+    const graph = buildGraph(group)
+    expect(graph.nodes).toEqual({})
+    expect(graph.meshes['']).toBe(mesh)
+    expect(graph.materials['']).toBe(material)
   })
 })

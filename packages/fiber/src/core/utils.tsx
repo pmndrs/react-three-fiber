@@ -159,11 +159,15 @@ export const is = {
 // Collects nodes and materials from a THREE.Object3D
 export function buildGraph(object: THREE.Object3D): ObjectMap {
   const data: ObjectMap = { nodes: {}, materials: {}, meshes: {} }
+  const add = (map: Record<string, any>, name: string, value: any) =>
+    Object.defineProperty(map, name, { value, writable: true, enumerable: true, configurable: true })
   if (object) {
     object.traverse((obj: any) => {
-      if (obj.name) data.nodes[obj.name] = obj
-      if (obj.material && !data.materials[obj.material.name]) data.materials[obj.material.name] = obj.material
-      if (obj.isMesh && !data.meshes[obj.name]) data.meshes[obj.name] = obj
+      if (obj.name) add(data.nodes, obj.name, obj)
+      if (obj.material && !Object.prototype.hasOwnProperty.call(data.materials, obj.material.name)) {
+        add(data.materials, obj.material.name, obj.material)
+      }
+      if (obj.isMesh && !Object.prototype.hasOwnProperty.call(data.meshes, obj.name)) add(data.meshes, obj.name, obj)
     })
   }
   return data
