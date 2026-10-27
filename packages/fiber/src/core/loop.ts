@@ -1,5 +1,5 @@
 import { _roots } from './root'
-import type { RootState, Subscription } from './store'
+import type { RootState } from './store'
 
 export type GlobalRenderCallback = (timestamp: number) => void
 interface SubItem {
@@ -54,9 +54,6 @@ export function flushGlobalEffects(type: GlobalEffectType, timestamp: number): v
   }
 }
 
-let subscribers: Subscription[]
-let subscription: Subscription
-
 function update(timestamp: number, state: RootState, frame?: XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
@@ -69,9 +66,9 @@ function update(timestamp: number, state: RootState, frame?: XRFrame) {
   }
 
   // Call subscribers (useFrame)
-  subscribers = state.internal.subscribers
+  const subscribers = state.internal.subscribers
   for (let i = 0; i < subscribers.length; i++) {
-    subscription = subscribers[i]
+    const subscription = subscribers[i]
     subscription.ref.current(subscription.store.getState(), delta, frame)
   }
 

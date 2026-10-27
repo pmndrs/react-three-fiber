@@ -86,6 +86,49 @@ describe('hooks', () => {
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
+  it.each([1, 3])('keeps outer frame subscribers when a nested root has %i subscribers', async (count) => {
+    const secondRoot = createRoot(document.createElement('canvas'))
+    const calls: string[] = []
+    let secondState!: ReturnType<ReturnType<typeof root.render>['getState']>
+    function First() {
+      useFrame(() => {
+        calls.push('first')
+        advance(1, false, secondState)
+      })
+      useFrame(() => calls.push('last'))
+      return null
+    }
+    function Second({ index }: { index: number }) {
+      useFrame(() => calls.push(`nested ${index + 1}`))
+      return null
+    }
+    let state!: ReturnType<ReturnType<typeof root.render>['getState']>
+    await act(async () => {
+      await secondRoot.configure({ frameloop: 'never' })
+      secondState = secondRoot
+        .render(
+          <>
+            {Array.from({ length: count }, (_, index) => (
+              <Second key={index} index={index} />
+            ))}
+          </>,
+        )
+        .getState()
+      await root.configure({ frameloop: 'never' })
+      state = root.render(<First />).getState()
+    })
+    try {
+      const expected = ['first', 'nested 1', ...(count === 3 ? ['nested 2', 'nested 3'] : []), 'last']
+      advance(1, false, state)
+      expect(calls).toEqual(expected)
+      calls.length = 0
+      advance(2, false, state)
+      expect(calls).toEqual(expected)
+    } finally {
+      await act(async () => secondRoot.unmount())
+    }
+  })
+
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
     MockMesh.name = 'Scene'
