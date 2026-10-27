@@ -20,6 +20,54 @@ async function mount(props: RenderProps<HTMLCanvasElement> = {}) {
   return act(async () => (await root.configure(props)).render(null))
 }
 
+describe('current viewport', () => {
+  it.each([0.5, 1, 2])('matches perspective camera projection at zoom %s', async (zoom) => {
+    const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 100)
+    camera.position.z = 10
+    camera.zoom = zoom
+    camera.updateProjectionMatrix()
+    camera.updateMatrixWorld()
+    const store = await mount({ camera, size: { width: 200, height: 100, top: 4, left: 8 } })
+    const viewport = store.getState().viewport.getCurrentViewport()
+    const topRight = new THREE.Vector3(1, 1, 0.5).unproject(camera)
+    const direction = topRight.sub(camera.position)
+    const atTarget = camera.position.clone().add(direction.multiplyScalar(-camera.position.z / direction.z))
+    expect(viewport.width).toBeCloseTo(atTarget.x * 2)
+    expect(viewport.height).toBeCloseTo(atTarget.y * 2)
+    expect(viewport.factor).toBeCloseTo(200 / (atTarget.x * 2))
+    expect(viewport.distance).toBe(10)
+    expect(viewport.aspect).toBe(2)
+    expect(viewport.top).toBe(4)
+    expect(viewport.left).toBe(8)
+  })
+})
+
+describe('viewport camera changes', () => {
+  it('reads the current perspective zoom without a root reconfiguration', async () => {
+    const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 100)
+    camera.position.z = 10
+    const store = await mount({ camera, size: { width: 200, height: 100, top: 0, left: 0 } })
+    const getViewport = store.getState().viewport.getCurrentViewport
+    const before = getViewport()
+    camera.zoom = 2
+    camera.updateProjectionMatrix()
+    const after = getViewport()
+    expect(after.width).toBeCloseTo(before.width / 2)
+    expect(after.height).toBeCloseTo(before.height / 2)
+    expect(after.factor).toBeCloseTo(before.factor * 2)
+  })
+
+  it('preserves orthographic zoom calculations', async () => {
+    const camera = new THREE.OrthographicCamera(-100, 100, 50, -50)
+    camera.zoom = 2
+    const store = await mount({ camera, size: { width: 200, height: 100, top: 4, left: 8 } })
+    const viewport = store.getState().viewport.getCurrentViewport()
+    expect(viewport.width).toBe(100)
+    expect(viewport.height).toBe(50)
+    expect(viewport.factor).toBe(1)
+  })
+})
+
 describe('configuration inputs', () => {
   it.each([undefined, 'always'] as const)('preserves a runtime frameloop with prop %s', async (frameloop) => {
     const store = await mount({ frameloop })

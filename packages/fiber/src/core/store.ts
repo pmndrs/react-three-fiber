@@ -165,7 +165,7 @@ export const createStore = (
         return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
       } else {
         const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
-        const h = 2 * Math.tan(fov / 2) * distance // visible height
+        const h = (2 * Math.tan(fov / 2) * distance) / camera.zoom // visible height
         const w = h * (width / height)
         return { width: w, height: h, top, left, factor: width / w, distance, aspect }
       }
