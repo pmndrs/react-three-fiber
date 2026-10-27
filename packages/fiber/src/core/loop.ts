@@ -162,7 +162,7 @@ export function invalidate(state?: RootState, frames = 1): void {
  */
 export function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState, frame?: XRFrame): void {
   if (runGlobalEffects) flushGlobalEffects('before', timestamp)
-  if (!state) for (const root of _roots.values()) update(timestamp, root.store.getState())
+  if (!state) for (const root of _roots.values()) update(timestamp, root.store.getState(), frame)
   else update(timestamp, state, frame)
   if (runGlobalEffects) flushGlobalEffects('after', timestamp)
 }

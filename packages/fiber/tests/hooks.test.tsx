@@ -86,6 +86,32 @@ describe('hooks', () => {
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
+  it.each([false, true])('forwards an XR frame when advancing roots (scoped: %s)', async (scoped) => {
+    const frames: Array<XRFrame | undefined> = []
+    const secondRoot = createRoot(document.createElement('canvas'))
+    function Subscriber() {
+      useFrame((_, _delta, frame) => frames.push(frame))
+      return null
+    }
+    let state!: ReturnType<ReturnType<typeof root.render>['getState']>
+    await act(async () => {
+      await root.configure({ frameloop: 'never' })
+      state = root.render(<Subscriber />).getState()
+      await secondRoot.configure({ frameloop: 'never' })
+      secondRoot.render(<Subscriber />)
+    })
+    try {
+      const frame = {} as XRFrame
+      advance(1, false, scoped ? state : undefined, frame)
+      expect(frames).toEqual(scoped ? [frame] : [frame, frame])
+      frames.length = 0
+      advance(2, false, scoped ? state : undefined)
+      expect(frames).toEqual(scoped ? [undefined] : [undefined, undefined])
+    } finally {
+      await act(async () => secondRoot.unmount())
+    }
+  })
+
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
     MockMesh.name = 'Scene'
