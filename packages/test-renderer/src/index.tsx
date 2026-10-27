@@ -81,7 +81,9 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
         for (let i = 0; i < frames; i++) {
           if (Array.isArray(delta)) {
             promises.push(
-              new Promise(() => subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])),
+              new Promise(() =>
+                subscriber.ref.current(state, (delta as number[])[i] ?? (delta as number[])[delta.length - 1]),
+              ),
             )
           } else {
             promises.push(new Promise(() => subscriber.ref.current(state, delta as number)))

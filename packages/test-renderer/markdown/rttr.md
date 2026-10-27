@@ -96,6 +96,8 @@ renderer.advanceFrames(frames, delta)
 
 Native method to advance the frames (therefore running subscribers to the GL Render loop such as `useFrame`). Requires an amount of frames to advance by & a parameter of delta to pass to the subscribers creating a more controlled testing environment.
 
+`delta` can be a number used for every frame or an array of per-frame values. When fewer values than frames are supplied, the final array value is reused. Zero is a valid delta.
+
 ### `update()` <a id="create-update"></a>
 
 ```tsx

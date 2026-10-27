@@ -77,4 +77,27 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     expect(renderer.scene.children[0].instance.rotation.x).toEqual(2)
   })
+
+  it.each([
+    { delta: [0.25, 0, 0.5], frames: 3, expected: [0.25, 0, 0.5] },
+    { delta: [0.25, 0], frames: 4, expected: [0.25, 0, 0, 0] },
+    { delta: [0.25, 0.5], frames: 4, expected: [0.25, 0.5, 0.5, 0.5] },
+    { delta: [0], frames: 3, expected: [0, 0, 0] },
+    { delta: [0.25, 0.5, 1], frames: 2, expected: [0.25, 0.5] },
+    { delta: 0, frames: 3, expected: [0, 0, 0] },
+    { delta: 0.5, frames: 3, expected: [0.5, 0.5, 0.5] },
+  ])('passes frame deltas to every subscriber: %j', async ({ delta, frames, expected }) => {
+    const first: number[] = []
+    const second: number[] = []
+    function Component() {
+      useFrame((_, delta) => first.push(delta))
+      useFrame((_, delta) => second.push(delta))
+      return null
+    }
+    const renderer = await ReactThreeTestRenderer.create(<Component />)
+    await renderer.advanceFrames(frames, delta)
+    expect(first).toEqual(expected)
+    expect(second).toEqual(expected)
+    await renderer.unmount()
+  })
 })
