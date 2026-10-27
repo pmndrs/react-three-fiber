@@ -50,12 +50,18 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       // Bail if canvas is unmounted
       if (!mockRoots.has(canvas)) return null
 
-      // Traverse fiber nodes for R3F root
-      const root = { current: mockRoots.get(canvas)!.fiber.current }
-      while (!root.current.child?.stateNode) root.current = root.current.child
-
-      // Return R3F instance from root
-      return reconciler.getPublicRootInstance(root)
+      // Find the first public instance, including siblings of empty components.
+      const root = mockRoots.get(canvas)!.fiber
+      const fibers = root.current.child ? [root.current.child] : []
+      while (fibers.length) {
+        const fiber = fibers.pop()!
+        if (fiber.stateNode) {
+          return reconciler.getPublicRootInstance({ current: { child: fiber } })
+        }
+        if (fiber.sibling) fibers.push(fiber.sibling)
+        if (fiber.child) fibers.push(fiber.child)
+      }
+      return null
     },
     async update(newElement: React.ReactNode) {
       if (!mockRoots.has(canvas)) return console.warn('RTTR: attempted to update an unmounted root!')

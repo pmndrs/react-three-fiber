@@ -447,4 +447,55 @@ describe('ReactThreeTestRenderer Core', () => {
 
     expect(renderer.toGraph()).toMatchSnapshot()
   })
+
+  it.each([null, <></>, <React.Fragment>{false}</React.Fragment>])(
+    'returns null from getInstance for empty trees: %p',
+    async (element) => {
+      const renderer = await ReactThreeTestRenderer.create(element)
+      expect(renderer.getInstance()).toBeNull()
+      await renderer.unmount()
+    },
+  )
+
+  it('finds a host sibling after nested empty components', async () => {
+    function Empty() {
+      return null
+    }
+    const Mesh = React.memo(React.forwardRef<THREE.Mesh>((_, ref) => <mesh ref={ref} name="visible" />))
+    const renderer = await ReactThreeTestRenderer.create(
+      <>
+        <>
+          <Empty />
+          <Empty />
+        </>
+        <Mesh />
+      </>,
+    )
+    expect(renderer.getInstance()).toBe(renderer.scene.findByType('Mesh').instance)
+    await renderer.update(
+      <>
+        <Empty />
+      </>,
+    )
+    expect(renderer.getInstance()).toBeNull()
+    await renderer.update(
+      <>
+        <Empty />
+        <group />
+      </>,
+    )
+    expect(renderer.getInstance()).toBe(renderer.scene.findByType('Group').instance)
+    await renderer.unmount()
+  })
+
+  it('preserves class public instances even when they render null', async () => {
+    class Empty extends React.Component {
+      render() {
+        return null
+      }
+    }
+    const renderer = await ReactThreeTestRenderer.create(<Empty />)
+    expect(renderer.getInstance()).toBeInstanceOf(Empty)
+    await renderer.unmount()
+  })
 })
