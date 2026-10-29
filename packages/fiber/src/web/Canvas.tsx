@@ -89,6 +89,8 @@ function CanvasImpl({
   // Waits for an async renderer without hiding the canvas
   const [gate, waitFor] = useGate()
   const rootState = React.useRef<RootState>(null)
+  // The target this Canvas itself connected. Others (drei ScrollControls) may connect their own
+  const connectedTarget = React.useRef<HTMLElement | null>(null)
   const eventTarget = () => (eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
 
   // Insertion effects survive Activity hiding and StrictMode effect replay. Only
@@ -127,7 +129,7 @@ function CanvasImpl({
           onCreated: (state) => {
             rootState.current = state
             // A ref to an ancestor is not attached yet. The effect below settles it
-            state.events.connect?.(eventTarget() ?? divRef.current)
+            state.events.connect?.((connectedTarget.current = eventTarget() ?? divRef.current))
             // Set up compute function
             if (eventPrefix) {
               state.setEvents({
@@ -164,7 +166,9 @@ function CanvasImpl({
   React.useEffect(() => {
     const state = rootState.current?.get()
     const target = eventTarget()
-    if (state && target && state.events.connected !== target) state.events.connect?.(target)
+    if (state && target && connectedTarget.current !== target) {
+      state.events.connect?.((connectedTarget.current = target))
+    }
   })
 
   // Before 19.2, React skips insertion cleanups in a subtree Suspense has hidden but keeps its

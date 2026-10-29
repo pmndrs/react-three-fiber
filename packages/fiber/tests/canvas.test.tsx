@@ -591,6 +591,39 @@ describe('web Canvas', () => {
     expect(state.get().events.connected).toBe(ref.current)
   })
 
+  it('keeps an event target connected by someone else when it re-renders', async () => {
+    const target = document.createElement('div')
+    let state!: RootState
+    const App = ({ name }: { name: string }) => (
+      <Canvas onCreated={(created) => (state = created)}>
+        <group name={name} />
+      </Canvas>
+    )
+
+    const renderer = await act(async () => render(<App name="a" />))
+    await act(async () => state.get().events.connect?.(target))
+    await act(async () => renderer.rerender(<App name="b" />))
+
+    expect(state.get().events.connected).toBe(target)
+  })
+
+  it('reconnects when the eventSource prop changes', async () => {
+    const first = document.createElement('div')
+    const second = document.createElement('div')
+    let state!: RootState
+    const App = ({ source }: { source: HTMLElement }) => (
+      <Canvas eventSource={source} onCreated={(created) => (state = created)}>
+        <group />
+      </Canvas>
+    )
+
+    const renderer = await act(async () => render(<App source={first} />))
+    expect(state.get().events.connected).toBe(first)
+
+    await act(async () => renderer.rerender(<App source={second} />))
+    expect(state.get().events.connected).toBe(second)
+  })
+
   describe('with an async renderer', () => {
     it('mounts once the renderer resolves', async () => {
       let ready!: () => void
