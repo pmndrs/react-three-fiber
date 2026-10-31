@@ -1,5 +1,13 @@
 # @react-three/fiber
 
+## Unreleased
+
+- Loading both the default and `/legacy` entry types in one program no longer fails with
+  `error TS2320` under `skipLibCheck: false` (`IntrinsicElements … 'pMREMGenerator' … are not
+identical`): the ambient JSX map each entry augments React with omits `pMREMGenerator`, the one
+  element whose class differs between the two namespaces (#4032).
+  `ThreeElements['pMREMGenerator']` is unchanged on every entry.
+
 ## 10.0.0-alpha.6
 
 Full detail is in

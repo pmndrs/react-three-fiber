@@ -4,6 +4,18 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Fixes
+
+- A program that loads the types of both the default import and `/legacy` typechecks again under
+  `skipLibCheck: false`. Each entry augments React's ambient `IntrinsicElements` with its own
+  `ThreeElements` without `pMREMGenerator`, the one element whose class differs between the entries'
+  namespaces (the `three/webgpu` generator versus the WebGL one), so the merged JSX map held two
+  non-identical declarations and strict consumers got `error TS2320` on React's own types
+  ([#4032](https://github.com/pmndrs/react-three-fiber/issues/4032)). `ThreeElements['pMREMGenerator']`
+  is unchanged on every entry for typed usage.
+
 ## 10.0.0-alpha.6
 
 Alpha 6 makes WebGPU the default. `<Canvas>` from `@react-three/fiber` renders with
