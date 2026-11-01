@@ -120,9 +120,11 @@ export type ThreeExports = typeof import('three')
 
 export interface ThreeElements extends ThreeElementsOf<ThreeExports> {}
 
-// react/jsx-runtime and react/jsx-dev-runtime inherit React's IntrinsicElements
+// react/jsx-runtime and react/jsx-dev-runtime inherit React's IntrinsicElements. `pMREMGenerator`
+// is the one element whose class differs between the entries' three namespaces, so a program that
+// loads two entries' types cannot also augment React with the same name from both.
 declare module 'react' {
   namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
+    interface IntrinsicElements extends Omit<ThreeElements, 'pMREMGenerator'> {}
   }
 }

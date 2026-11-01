@@ -99,10 +99,12 @@ function verifyDtsFile(filename, config) {
     console.log(`   ✅ ThreeElements interface exists`)
   }
 
-  // Each entry augments react's JSX with its own map; the shared chunk must not (it would give
-  // every entry every element)
+  // Each entry augments react's JSX with its own map, minus the one element that differs between
+  // the entries' namespaces; the shared chunk must not (it would give every entry every element)
   if (
-    !/declare module 'react' \{\s*namespace JSX \{\s*interface IntrinsicElements extends ThreeElements/.test(content)
+    !/declare module 'react' \{\s*namespace JSX \{\s*interface IntrinsicElements extends Omit<ThreeElements/.test(
+      content,
+    )
   ) {
     console.error(`   ❌ JSX IntrinsicElements augmentation not declared in this entry`)
     passed = false
@@ -227,6 +229,7 @@ function runPublicConsumerTest() {
   const projects = [
     ['Default', 'scripts/type-tests/tsconfig.default.json'],
     ['Legacy', 'scripts/type-tests/tsconfig.legacy.json'],
+    ['Mixed (default + legacy)', 'scripts/type-tests/tsconfig.mixed.json'],
     ['WebGPU', 'scripts/type-tests/tsconfig.json'],
     ['Extension', 'scripts/type-tests/tsconfig.extension.json'],
     ['Register (webgpu)', 'scripts/type-tests/tsconfig.register.webgpu.json'],
