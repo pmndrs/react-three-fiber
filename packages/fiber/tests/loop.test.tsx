@@ -8,6 +8,7 @@ import { advance, createRoot, useFrame } from '../src/index'
 
 v8.setFlagsFromString('--expose-gc')
 const gc: () => void = vm.runInNewContext('gc')
+v8.setFlagsFromString('--no-expose-gc')
 
 // Mounts a root with a frame subscriber, runs its frames, unmounts it, and keeps only a weak reference.
 // The canvas comes from the DOM because createCanvas from test-renderer closes over the canvas it returns.
@@ -42,6 +43,48 @@ async function isCollected(target: WeakRef<object>) {
   }
   return false
 }
+
+describe('frame loop subscribers', () => {
+  it('runs the remaining subscribers when a subscriber advances another root', async () => {
+    const calls: string[] = []
+    const Subscriber = ({ name, onFrame }: { name: string; onFrame?: () => void }) => {
+      useFrame(() => {
+        calls.push(name)
+        onFrame?.()
+      })
+      return null
+    }
+
+    const first = createRoot(document.createElement('canvas'))
+    const second = createRoot(document.createElement('canvas'))
+    const secondStore = await act(async () =>
+      (
+        await second.configure({ frameloop: 'never' })
+      ).render(
+        <>
+          <Subscriber name="B1" />
+          <Subscriber name="B2" />
+        </>,
+      ),
+    )
+    const firstStore = await act(async () =>
+      (
+        await first.configure({ frameloop: 'never' })
+      ).render(
+        <>
+          <Subscriber name="A1" onFrame={() => secondStore.getState().advance(1)} />
+          <Subscriber name="A2" />
+        </>,
+      ),
+    )
+
+    firstStore.getState().advance(1)
+    expect(calls).toEqual(['A1', 'B1', 'B2', 'A2'])
+
+    await act(async () => first.unmount())
+    await act(async () => second.unmount())
+  })
+})
 
 describe('frame loop retention', () => {
   it('releases an unmounted root that never ran a frame', async () => {
