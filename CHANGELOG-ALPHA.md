@@ -4,6 +4,17 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Fixes
+
+- `onDoubleClick` fires in Chrome. `dblclick` is a `MouseEvent` with no `pointerId`, so it read the
+  press state of pointer 0, where only Firefox's mouse records its presses; Chrome's mouse is
+  pointer 1, so the handler was always skipped. Click-type events without a `pointerId`
+  (`dblclick`, and `click` / `contextmenu` where the browser still sends them as `MouseEvent`s) now
+  read the pointer that pressed last. That also covers a `dblclick` after a double tap, where each
+  touch is a new pointer ([#4053](https://github.com/pmndrs/react-three-fiber/issues/4053)).
+
 ## 10.0.0-alpha.6
 
 Alpha 6 makes WebGPU the default. `<Canvas>` from `@react-three/fiber` renders with

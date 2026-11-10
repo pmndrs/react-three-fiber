@@ -171,6 +171,9 @@ export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
 }
 
 export function createEvents(store: RootStore) {
+  /** The pointer whose press was recorded last; click-type events without a `pointerId` belong to it */
+  let lastPointerId = DEFAULT_POINTER_ID
+
   /** Calculates delta from initial click position */
   function calculateDistance(event: DomEvent, pointerId: number) {
     const { internal } = store.getState()
@@ -567,7 +570,6 @@ export function createEvents(store: RootStore) {
     return function handleEvent(event: DomEvent) {
       const state = store.getState()
       const { onPointerMissed, onDragOverMissed, onDropMissed, internal, events } = state
-      const pointerId = getPointerId(event)
 
       // Store last event for events.update()
       internal.lastEvent.current = event
@@ -583,6 +585,11 @@ export function createEvents(store: RootStore) {
       const isPointerDown = name === 'onPointerDown'
       const isPointerUp = name === 'onPointerUp'
       const isWheel = name === 'onWheel'
+
+      // `dblclick` is a plain MouseEvent in every browser, as are `click` and `contextmenu` in older ones, so it
+      // has no `pointerId`. It completes a press, so it reads the state of the pointer that pressed last. Falling
+      // back to DEFAULT_POINTER_ID only found the press where the mouse is pointer 0 (Firefox), not 1 (Chrome) (#4053)
+      const pointerId = isClickEvent && !('pointerId' in event) ? lastPointerId : getPointerId(event)
 
       // Frame-timed raycasting: defer pointer move if enabled and frameloop is 'always'
       // When frameloop is 'demand' or 'never', we must process immediately since the loop may not run
@@ -618,6 +625,7 @@ export function createEvents(store: RootStore) {
 
       // Save initial coordinates on pointer-down
       if (isPointerDown) {
+        lastPointerId = pointerId
         const pointerState = getPointerState(internal, pointerId)
         pointerState.initialClick = [event.offsetX, event.offsetY]
         pointerState.initialHits = hits.map((hit) => hit.eventObject)
