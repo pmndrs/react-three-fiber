@@ -1,5 +1,12 @@
 # @react-three/fiber
 
+## Unreleased
+
+### Bug Fixes
+
+- `onDoubleClick` fires in Chrome: a `dblclick`, which has no `pointerId`, reads the pointer that
+  pressed last instead of pointer 0 (#4053).
+
 ## 10.0.0-alpha.6
 
 Full detail is in

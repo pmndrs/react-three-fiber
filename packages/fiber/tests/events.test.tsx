@@ -17,6 +17,16 @@ function createPointerEvent(type: string, props: any = {}) {
   return evt
 }
 
+/** A plain MouseEvent, with no `pointerId`: what browsers send for `dblclick` (and older ones for `click`) */
+function createMouseEvent(type: string, props: any = {}) {
+  const evt = new MouseEvent(type, { bubbles: true, cancelable: true, ...props })
+  Object.defineProperty(evt, 'clientX', { value: props.clientX ?? 640 })
+  Object.defineProperty(evt, 'clientY', { value: props.clientY ?? 400 })
+  Object.defineProperty(evt, 'offsetX', { value: props.offsetX ?? 640 })
+  Object.defineProperty(evt, 'offsetY', { value: props.offsetY ?? 400 })
+  return evt
+}
+
 describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = vi.fn()
@@ -921,6 +931,96 @@ describe('events', () => {
       fireEvent(getContainer(), createPointerEvent('wheel', at))
     })
     expect(handleWheel).toHaveBeenCalled()
+  })
+
+  // Regression for #4053: `dblclick` is a MouseEvent with no `pointerId`. It used to read the state of
+  // pointer 0, which only holds the press where the mouse is pointer 0 (Firefox). Chrome's mouse is
+  // pointer 1, so the press was never found and `onDoubleClick` never fired.
+  describe('click-type events without a pointerId', () => {
+    const at = { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 }
+    const off = { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 }
+
+    async function renderMesh(handlers: Record<string, any>) {
+      const handleMissed = vi.fn()
+      await act(async () => {
+        render(
+          <Canvas>
+            <mesh onPointerMissed={handleMissed} {...handlers}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+      return handleMissed
+    }
+
+    /** One press and release, as the browser sends it before `click` */
+    function press(pointerId: number, props: any = at) {
+      fireEvent(getContainer(), createPointerEvent('pointerdown', { pointerId, ...props }))
+      fireEvent(getContainer(), createPointerEvent('pointerup', { pointerId, ...props }))
+      fireEvent(getContainer(), createPointerEvent('click', { pointerId, ...props }))
+    }
+
+    it.each([
+      [0, 'Firefox'],
+      [1, 'Chrome'],
+    ])('fires onDoubleClick when the mouse is pointer %i (%s)', async (pointerId) => {
+      const handleDoubleClick = vi.fn()
+      const handleMissed = await renderMesh({ onDoubleClick: handleDoubleClick })
+
+      await act(async () => {
+        press(pointerId)
+        press(pointerId)
+        fireEvent(getContainer(), createMouseEvent('dblclick', at))
+      })
+
+      expect(handleDoubleClick).toHaveBeenCalledTimes(1)
+      expect(handleMissed).not.toHaveBeenCalled()
+    })
+
+    it('fires onDoubleClick for a double tap, where every touch is a new pointer', async () => {
+      const handleDoubleClick = vi.fn()
+      await renderMesh({ onDoubleClick: handleDoubleClick })
+
+      await act(async () => {
+        press(2)
+        press(3)
+        fireEvent(getContainer(), createMouseEvent('dblclick', at))
+      })
+
+      expect(handleDoubleClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('reads the press of the pointer that went down last', async () => {
+      const handleDoubleClick = vi.fn()
+      await renderMesh({ onDoubleClick: handleDoubleClick })
+
+      // Pointer 1 pressed the mesh, then pointer 2 pressed beside it: the dblclick completes pointer 2's press
+      await act(async () => {
+        press(1)
+        press(2, off)
+        fireEvent(getContainer(), createMouseEvent('dblclick', at))
+      })
+
+      expect(handleDoubleClick).not.toHaveBeenCalled()
+    })
+
+    it('fires onClick and onContextMenu sent as MouseEvents', async () => {
+      const handleClick = vi.fn()
+      const handleContextMenu = vi.fn()
+      await renderMesh({ onClick: handleClick, onContextMenu: handleContextMenu })
+
+      await act(async () => {
+        fireEvent(getContainer(), createPointerEvent('pointerdown', { pointerId: 1, ...at }))
+        fireEvent(getContainer(), createPointerEvent('pointerup', { pointerId: 1, ...at }))
+        fireEvent(getContainer(), createMouseEvent('click', at))
+        fireEvent(getContainer(), createMouseEvent('contextmenu', at))
+      })
+
+      expect(handleClick).toHaveBeenCalledTimes(1)
+      expect(handleContextMenu).toHaveBeenCalledTimes(1)
+    })
   })
 
   //* Frame-Timed Raycasting Tests ==============================
