@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { act } from 'react'
-import { View, type LayoutChangeEvent } from 'react-native'
+import { PanResponder, View, type LayoutChangeEvent } from 'react-native'
 import * as THREE from 'three'
 import * as Expo from 'expo-gl'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
@@ -125,6 +125,38 @@ describe('native Canvas', () => {
       expect(mounted.mock.calls).toEqual([[320]])
       expect(created.mock.calls).toEqual([[320]])
     })
+  })
+
+  it('dispatches a pointer event for each changed touch', async () => {
+    const create = jest.spyOn(PanResponder, 'create')
+    let state!: RootState
+    await act(async () =>
+      render(
+        <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+          <group />
+        </Canvas>,
+      ),
+    )
+    const config = create.mock.calls[create.mock.calls.length - 1][0]
+    const canvas = state.gl.domElement
+    const ups: [number, number][] = []
+    const clicks = jest.fn()
+    canvas.addEventListener('pointerup', (e) => ups.push([e.pointerId, e.offsetX]))
+    canvas.addEventListener('click', clicks)
+
+    // Two fingers lift in the same frame: one event, the first touch on its top level
+    const first = { identifier: 1, locationX: 10, locationY: 0, pageX: 10, pageY: 0 }
+    const second = { identifier: 2, locationX: 20, locationY: 0, pageX: 20, pageY: 0 }
+    const event = { persist() {}, nativeEvent: { ...first, changedTouches: [first, second], touches: [] } } as any
+    config.onPanResponderEnd!(event, { dx: 0, dy: 0 } as any)
+
+    expect(ups).toEqual([
+      [1, 10],
+      [2, 20],
+    ])
+    expect(clicks).toHaveBeenCalledTimes(1)
+    create.mockRestore()
+    await act(async () => render(null))
   })
 
   it('should forward ref', async () => {
