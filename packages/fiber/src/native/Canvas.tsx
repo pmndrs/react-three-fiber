@@ -151,15 +151,25 @@ function CanvasImpl({
     function handleTouch(gestureEvent: GestureResponderEvent, type: string): true {
       gestureEvent.persist()
 
-      canvas.dispatchEvent(
-        Object.assign(gestureEvent.nativeEvent, {
+      // React Native fills the event's top level from its first changed touch only. When two fingers change
+      // in the same frame (a pinch that lands or lifts at once), the other finger's event was lost, and
+      // controls kept its pointer forever: later pinches jumped or stopped responding.
+      // Dispatch one pointer event per changed touch, a click once.
+      const { nativeEvent } = gestureEvent
+      const touches =
+        type === 'click' || !nativeEvent.changedTouches?.length ? [nativeEvent] : nativeEvent.changedTouches
+
+      for (const touch of touches) {
+        canvas.dispatchEvent({
+          ...nativeEvent,
+          ...touch,
           type,
-          offsetX: gestureEvent.nativeEvent.locationX,
-          offsetY: gestureEvent.nativeEvent.locationY,
+          offsetX: touch.locationX,
+          offsetY: touch.locationY,
           pointerType: 'touch',
-          pointerId: gestureEvent.nativeEvent.identifier,
-        }) as unknown as Event,
-      )
+          pointerId: touch.identifier,
+        } as unknown as Event)
+      }
 
       return true
     }
@@ -177,7 +187,11 @@ function CanvasImpl({
         if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'click')
       },
       onPanResponderRelease: (e) => handleTouch(e, 'pointerleave'),
-      onPanResponderTerminate: (e) => handleTouch(e, 'lostpointercapture'),
+      onPanResponderTerminate: (e) => {
+        // Another view took the gesture: controls listen for pointercancel to drop these pointers
+        handleTouch(e, 'pointercancel')
+        return handleTouch(e, 'lostpointercapture')
+      },
       onPanResponderReject: (e) => handleTouch(e, 'lostpointercapture'),
     })
     setBind(responder.panHandlers)
