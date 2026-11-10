@@ -100,8 +100,13 @@ function CanvasImpl({
       style: {},
       width: context.drawingBufferWidth,
       height: context.drawingBufferHeight,
-      clientWidth: context.drawingBufferWidth,
-      clientHeight: context.drawingBufferHeight,
+      // In points like touch locations, not in drawing buffer pixels: controls divide touch deltas by these
+      get clientWidth() {
+        return context.drawingBufferWidth / PixelRatio.get()
+      },
+      get clientHeight() {
+        return context.drawingBufferHeight / PixelRatio.get()
+      },
       getContext: (_: any, { antialias = false }) => {
         setAntialias(antialias)
         return context
