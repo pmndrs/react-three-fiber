@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { act } from 'react'
-import { View, type LayoutChangeEvent } from 'react-native'
+import { PixelRatio, View, type LayoutChangeEvent } from 'react-native'
 import * as THREE from 'three'
 import * as Expo from 'expo-gl'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
@@ -125,6 +125,26 @@ describe('native Canvas', () => {
       expect(mounted.mock.calls).toEqual([[320]])
       expect(created.mock.calls).toEqual([[320]])
     })
+  })
+
+  it('reports the canvas client size in points, like touch locations', async () => {
+    const pixelRatio = jest.spyOn(PixelRatio, 'get').mockReturnValue(2)
+    let state!: RootState
+    await act(async () =>
+      render(
+        <Canvas frameloop="never" onCreated={(created) => (state = created)}>
+          <group />
+        </Canvas>,
+      ),
+    )
+    const canvas = state.gl.domElement
+    const context = state.gl.getContext()
+
+    // Controls divide touch deltas (in points) by these, so they must not be in drawing buffer pixels
+    expect(canvas.clientWidth).toBe(context.drawingBufferWidth / 2)
+    expect(canvas.clientHeight).toBe(context.drawingBufferHeight / 2)
+    pixelRatio.mockRestore()
+    await act(async () => render(null))
   })
 
   it('should forward ref', async () => {
