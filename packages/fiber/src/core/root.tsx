@@ -269,7 +269,13 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   reconciler.updateContainer(null, root.fiber, null, () => {
     // A root used again since the unmount keeps its new children
     if (root.state.status !== 'closing' || root.state.token !== token) return
-    // Effect cleanups flush before the next update
-    reconciler.updateContainer(null, root.fiber, null, teardown)
+    // Flush passive effect cleanups before teardown in a single commit, preventing React Refresh
+    // from re-registering and retaining unmounted canvas roots in development (#4054)
+    queueMicrotask(() => {
+      try {
+        reconciler.flushPassiveEffects?.()
+      } catch {}
+      teardown()
+    })
   })
 }

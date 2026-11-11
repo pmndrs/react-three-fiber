@@ -11,6 +11,7 @@ import {
   flushSync,
   useThree,
   unmountComponentAtNode,
+  reconciler,
   type GLProps,
 } from '../src/index'
 import { suspend } from 'suspend-react'
@@ -421,6 +422,29 @@ describe('renderer', () => {
         if (settle === 'reject') expect(warn).toHaveBeenCalledWith(expect.any(String), failure)
       },
     )
+
+    it('unmounts in a single commit and flushes passive effects before teardown', async () => {
+      const order: string[] = []
+      function Component() {
+        React.useEffect(() => {
+          return () => {
+            order.push('cleanup')
+          }
+        }, [])
+        return <mock name="test" />
+      }
+
+      await act(async () => root.render(<Component />))
+
+      const updateSpy = jest.spyOn(reconciler, 'updateContainer')
+      try {
+        await act(async () => unmountComponentAtNode(canvas))
+        expect(order).toEqual(['cleanup'])
+        expect(updateSpy).toHaveBeenCalledTimes(1)
+      } finally {
+        updateSpy.mockRestore()
+      }
+    })
   })
 
   it('should render empty JSX', async () => {
