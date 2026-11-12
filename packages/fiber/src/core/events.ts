@@ -171,6 +171,8 @@ export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
 }
 
 export function createEvents(store: RootStore) {
+  let lastPointerId = DEFAULT_POINTER_ID
+
   /** Calculates delta from initial click position */
   function calculateDistance(event: DomEvent, pointerId: number) {
     const { internal } = store.getState()
@@ -567,7 +569,7 @@ export function createEvents(store: RootStore) {
     return function handleEvent(event: DomEvent) {
       const state = store.getState()
       const { onPointerMissed, onDragOverMissed, onDropMissed, internal, events } = state
-      const pointerId = getPointerId(event)
+      const pointerId = 'pointerId' in event ? event.pointerId : lastPointerId
 
       // Store last event for events.update()
       internal.lastEvent.current = event
@@ -618,6 +620,7 @@ export function createEvents(store: RootStore) {
 
       // Save initial coordinates on pointer-down
       if (isPointerDown) {
+        lastPointerId = pointerId
         const pointerState = getPointerState(internal, pointerId)
         pointerState.initialClick = [event.offsetX, event.offsetY]
         pointerState.initialHits = hits.map((hit) => hit.eventObject)

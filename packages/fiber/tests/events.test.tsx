@@ -17,6 +17,13 @@ function createPointerEvent(type: string, props: any = {}) {
   return evt
 }
 
+function createMouseEvent(type: string, props: any = {}) {
+  const evt = new MouseEvent(type, { bubbles: true, cancelable: true, ...props })
+  Object.defineProperty(evt, 'offsetX', { value: props.offsetX ?? props.clientX ?? 640 })
+  Object.defineProperty(evt, 'offsetY', { value: props.offsetY ?? props.clientY ?? 400 })
+  return evt
+}
+
 describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = vi.fn()
@@ -912,7 +919,7 @@ describe('events', () => {
     await act(async () => {
       fireEvent(getContainer(), createPointerEvent('pointerdown', at))
       fireEvent(getContainer(), createPointerEvent('pointerup', at))
-      fireEvent(getContainer(), createPointerEvent('dblclick', at))
+      fireEvent(getContainer(), createMouseEvent('dblclick', at))
     })
     expect(handleDoubleClick).toHaveBeenCalled()
 
