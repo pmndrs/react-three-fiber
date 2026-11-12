@@ -327,6 +327,8 @@ UniformNode<'vec3', Vector3>`). Schemas (`useUniforms<{ blur: number }>('fx')`,
 
 ### Fixes
 
+- `onDoubleClick` works in Chrome when the `dblclick` event has no `pointerId`; the event handler uses the most recent pointer-down ID instead ([#4053](https://github.com/pmndrs/react-three-fiber/issues/4053)).
+
 - `state.gl` no longer logs its deprecation for apps that never read it. @pmndrs/scheduler spreads
   root state into each frame state, and under Vite's dev server its pre-bundled frames
   (`_Scheduler2.tickRoot` in `@pmndrs_scheduler.js`) slipped past the check for library reads, so
