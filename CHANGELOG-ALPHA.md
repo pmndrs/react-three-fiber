@@ -4,6 +4,15 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## Unreleased
+
+### Fixes
+
+- `useLoader` names the URL again when a loader's `loadAsync` rejects. Since v10 prefers
+  `loadAsync`, a network failure surfaced as a bare `TypeError: Failed to fetch`; it is now
+  `Could not load <url>: Failed to fetch`, as the `load` fallback already reported
+  ([#4064](https://github.com/pmndrs/react-three-fiber/issues/4064)).
+
 ## 10.0.0-alpha.6
 
 Alpha 6 makes WebGPU the default. `<Canvas>` from `@react-three/fiber` renders with
