@@ -33,6 +33,10 @@ function getLoader<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
   return Proto as L extends ConstructorRepresentation<infer T> ? T : L
 }
 
+// Name the URL in load errors. A network failure only says "Failed to fetch", which doesn't
+// say which asset failed.
+const loadError = (input: string, error: unknown) => new Error(`Could not load ${input}: ${(error as Error)?.message}`)
+
 function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
@@ -45,10 +49,15 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
 
     // Prefer loadAsync if available (supports abort, cleaner Promise API)
     if ('loadAsync' in loader && typeof loader.loadAsync === 'function') {
-      return loader.loadAsync(input, onProgress).then((data: any) => {
-        if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
-        return data
-      }) as Promise<LoaderResult<L>>
+      return loader.loadAsync(input, onProgress).then(
+        (data: any) => {
+          if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
+          return data
+        },
+        (error: unknown) => {
+          throw loadError(input, error)
+        },
+      ) as Promise<LoaderResult<L>>
     }
 
     // Fall back to callback-based load
@@ -60,7 +69,7 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
           res(data)
         },
         onProgress,
-        (error: unknown) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
+        (error: unknown) => reject(loadError(input, error)),
       ),
     )
   }

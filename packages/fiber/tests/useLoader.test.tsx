@@ -349,4 +349,57 @@ describe('useLoader', () => {
     newLoader.abort()
     useLoader.clear(AbortableLoader, URL_SLOW)
   })
+
+  it('names the URL when loadAsync rejects', async () => {
+    const URL_BLOCKED = '/hdri/blocked.exr'
+    const networkError = new TypeError('Failed to fetch')
+
+    class FailingLoader extends THREE.Loader<string, string> {
+      loadAsync(_url: string): Promise<string> {
+        return Promise.reject(networkError)
+      }
+      load(_url: string, _onLoad: (result: string) => void): void {}
+    }
+
+    const originalError = console.error
+    console.error = vi.fn()
+
+    let caughtError: Error | null = null
+    class TestErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+      state = { hasError: false }
+      static getDerivedStateFromError() {
+        return { hasError: true }
+      }
+      componentDidCatch(error: Error) {
+        caughtError = error
+      }
+      render() {
+        if (this.state.hasError) return null
+        return this.props.children
+      }
+    }
+
+    const Component = () => {
+      const result = useLoader(FailingLoader, URL_BLOCKED)
+      return <mesh name={result} />
+    }
+
+    try {
+      await act(async () => {
+        root.render(
+          <TestErrorBoundary>
+            <React.Suspense fallback={null}>
+              <Component />
+            </React.Suspense>
+          </TestErrorBoundary>,
+        )
+      })
+    } finally {
+      console.error = originalError
+      useLoader.clear(FailingLoader, URL_BLOCKED)
+    }
+
+    expect(caughtError).toBeInstanceOf(Error)
+    expect(caughtError!.message).toBe(`Could not load ${URL_BLOCKED}: Failed to fetch`)
+  })
 })
